@@ -1,0 +1,40 @@
+# ========== General Rules ==========
+
+# Use LF line endings for all text files (cross-platform consistency)
+* text=auto eol=lf
+
+# Force LF for common code files
+*.js     text eol=lf
+*.jsx    text eol=lf
+*.ts     text eol=lf
+*.tsx    text eol=lf
+*.json   text eol=lf
+*.css    text eol=lf
+*.scss   text eol=lf
+*.md     text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.html   text eol=lf
+*.sh     text eol=lf
+*.env*   text eol=lf
+
+# ========== Binary / Non-Text Files ==========
+# Mark as binary to avoid Git changing line endings or diffing
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.ico     binary
+*.svg     binary
+*.ttf     binary
+*.woff    binary
+*.woff2   binary
+*.eot     binary
+*.mp4     binary
+*.webm    binary
+*.mov     binary
+
+# ========== OS-Specific ==========
+# Avoid Mac/Windows OS-generated files from being tracked
+.DS_Store  export-ignore
+Thumbs.db  export-ignore
