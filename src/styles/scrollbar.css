@@ -1,0 +1,67 @@
+/* Kustomisasi scrollbar modern dengan auto-hide */
+
+/* Default scrollbar styling untuk seluruh situs */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+  margin: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: oklch(0.69 0 0 / 30%);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.69 0 0 / 60%);
+}
+
+/* Setting untuk Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.69 0 0 / 30%) transparent;
+}
+
+/* Auto-hide scrollbar implementation */
+.content-area {
+  overflow: auto;
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Auto-hide untuk Webkit (Chrome, Safari, Opera) */
+.content-area::-webkit-scrollbar-thumb {
+  background-color: rgba(155, 155, 155, 0);
+  transition: background-color 0.5s ease;
+}
+
+.content-area:hover::-webkit-scrollbar-thumb {
+  background-color: oklch(0.69 0 0 / 30%);
+}
+
+.content-area:hover::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.69 0 0 / 60%);
+}
+
+/* Custom scrollbar untuk elemen spesifik jika diperlukan */
+.custom-scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background-color: oklch(0.57 0.1812 294.13 / 30%); /* Warna ungu sesuai tema */
+}
+
+.custom-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: oklch(0.57 0.1812 294.13 / 50%);
+}
+
+.custom-scroll:hover::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(0.57 0.1812 294.13 / 70%);
+} 

@@ -82,7 +82,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange={true}
         >
-          <main>
+          <main className="content-area">
             <ScrollToTop />
             <FloatingNav navItems={NavItems} />
             {children}
