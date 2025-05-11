@@ -5,6 +5,7 @@ import "@/styles/globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { NavItems } from "@/data/nav-items";
 import { FloatingNav } from "@/components/layouts/floating-nav";
+import ScrollToTop from "@/components/ui/scroll-to-top";
 import Footer from "@/components/layouts/footer";
 
 const roboto_font = localFont({
@@ -82,6 +83,7 @@ export default function RootLayout({
           disableTransitionOnChange={true}
         >
           <main>
+            <ScrollToTop />
             <FloatingNav navItems={NavItems} />
             {children}
             <Footer />
