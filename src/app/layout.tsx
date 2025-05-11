@@ -3,6 +3,9 @@ import localFont from "next/font/local";
 import { ThemeProvider } from "next-themes";
 import "@/styles/globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import { NavItems } from "@/data/nav-items";
+import { FloatingNav } from "@/components/layouts/floating-nav";
+import Footer from "@/components/layouts/footer";
 
 const roboto_font = localFont({
   src: [
@@ -71,7 +74,7 @@ export default function RootLayout({
       suppressHydrationWarning={true}
       className={`${roboto_font.variable} ${jetbrains_mono_font.variable} antialiased`}
     >
-      <body>
+      <body className="dark">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -79,10 +82,12 @@ export default function RootLayout({
           disableTransitionOnChange={true}
         >
           <main>
+            <FloatingNav navItems={NavItems} />
             {children}
-            <Analytics />
+            <Footer />
           </main>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
