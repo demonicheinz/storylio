@@ -1,0 +1,22 @@
+/* Animasi Scroll untuk InfiniteCards */
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-33.33% - 0.5rem));
+  }
+}
+
+.animate-scroll {
+  animation: scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite;
+  width: max-content;
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+/* Animasi akan berhenti saat hover */
+.animate-scroll.paused {
+  animation-play-state: paused;
+} 
