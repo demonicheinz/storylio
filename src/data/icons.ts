@@ -51,6 +51,7 @@ import {
   LuMinus,
   LuRadioTower,
   LuCircleX,
+  LuSearchX,
 } from "react-icons/lu";
 
 // Material Design Icons (Md)
@@ -122,6 +123,7 @@ export const iconLibrary: Record<string, IconType> = {
   close: FaXmark,
   menu: IoIosMenu,
   search: IoMdSearch,
+  searchX: LuSearchX,
   globe: FaGlobeAsia,
   quote: MdFormatQuote,
 
