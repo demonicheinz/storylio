@@ -28,7 +28,12 @@ import {
 import { IoIosMenu, IoMdSearch, IoIosMail } from "react-icons/io";
 
 // IonIcons5 (Io)
-import { IoCheckmarkCircleOutline, IoWarning, IoHelpCircle } from "react-icons/io5";
+import {
+  IoCheckmarkCircleOutline,
+  IoWarning,
+  IoWarningOutline,
+  IoHelpCircle,
+} from "react-icons/io5";
 
 // Lucide Icons (Lu)
 import {
@@ -39,26 +44,20 @@ import {
   LuHouse,
   LuCircleUser,
   LuFolderCode,
+  LuFolder,
   LuLoader,
   LuBell,
   LuPlus,
   LuMinus,
+  LuRadioTower,
+  LuCircleX,
 } from "react-icons/lu";
 
 // Material Design Icons (Md)
-import {
-  MdWarning,
-  MdError,
-  MdSettings,
-  MdLogout,
-  MdEdit,
-  MdDelete,
-  MdShare,
-  MdFormatQuote,
-} from "react-icons/md";
+import { MdLogout, MdEdit, MdDelete, MdShare, MdFormatQuote } from "react-icons/md";
 
 // Remix Icons (Ri)
-import { RiArticleLine } from "react-icons/ri";
+import { RiArticleLine, RiGitBranchLine } from "react-icons/ri";
 
 // Tabler Icons (Tb)
 import {
@@ -96,6 +95,17 @@ import {
   TbBrandPrisma,
   TbClipboardCopy,
   TbPhoto,
+  TbBrandHtml5,
+  TbBrandCss3,
+  TbJson,
+  TbMarkdown,
+  TbFileText,
+  TbFolder,
+  TbPencil,
+  TbSettings,
+  TbSearch,
+  TbBrandVscode,
+  TbArrowUpRight,
 } from "react-icons/tb";
 
 export const iconLibrary: Record<string, IconType> = {
@@ -106,6 +116,7 @@ export const iconLibrary: Record<string, IconType> = {
   chevronLeft: FaChevronLeft,
   arrowRight: FaArrowRight,
   arrowLeft: FaArrowLeft,
+  arrowUpRight: TbArrowUpRight,
   arrowRightLong: FaLongArrowAltRight,
   arrowLeftLong: FaLongArrowAltLeft,
   close: FaXmark,
@@ -118,8 +129,8 @@ export const iconLibrary: Record<string, IconType> = {
   check: LuCheck,
   refresh: FaArrowsRotate,
   info: IoWarning,
-  warning: MdWarning,
-  error: MdError,
+  warning: IoWarningOutline,
+  error: LuCircleX,
   success: IoCheckmarkCircleOutline,
   helpCircle: IoHelpCircle,
   loader: LuLoader,
@@ -137,9 +148,10 @@ export const iconLibrary: Record<string, IconType> = {
   home: LuHouse,
   about: LuCircleUser,
   projects: LuFolderCode,
+  folder: LuFolder,
   blog: RiArticleLine,
   gallery: TbPhoto,
-  settings: MdSettings,
+  settings: TbSettings,
   notifications: LuBell,
   logOut: MdLogout,
 
@@ -188,6 +200,22 @@ export const iconLibrary: Record<string, IconType> = {
   rust: TbBrandRust,
   prisma: TbBrandPrisma,
   server: TbServer,
+  vscode: TbBrandVscode,
+
+  // File Types
+  html: TbBrandHtml5,
+  css: TbBrandCss3,
+  json: TbJson,
+  markdown: TbMarkdown,
+  document: TbFileText,
+  fileCode: TbPencil,
+  folderOpen: TbFolder,
+  settingsGear: TbSettings,
+  searchFile: TbSearch,
+
+  // Lainnya
+  gitBranch: RiGitBranchLine,
+  radioTower: LuRadioTower,
 };
 
 // Tipe untuk komponen Icon
