@@ -1,5 +1,5 @@
-import Hero from "@/components/home/hero";
 import { cn } from "@/lib/utils";
+import { Hero, Clients } from "@/components/home";
 
 export default function Home() {
   const mainStyles = cn(
@@ -22,8 +22,8 @@ export default function Home() {
       {/* Main content */}
       <div className={contentContainerStyles}>
         <div className="flex flex-col gap-10">
-          <section className="flex flex-col justify-center items-center w-full h-screen">
-            <h1 className="font-bold text-4xl">Section 2</h1>
+          <section className="w-full">
+            <Clients />
           </section>
         </div>
       </div>
