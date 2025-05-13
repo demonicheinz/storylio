@@ -1,5 +1,3 @@
-import Image from "next/image";
-// import MagicButton from "@/components/ui/MagicButton";
 import { Spotlight } from "@/components/ui/spotlight";
 import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
 import { ConnectButton } from "@/components/ui/connect-button";

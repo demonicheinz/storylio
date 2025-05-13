@@ -1,7 +1,7 @@
 import React from "react";
 import { Icon, type IconProps } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
-import type { IconName } from "@/data/icons";
+import type { IconName } from "@/data";
 import Image from "next/image";
 
 export interface ConnectButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

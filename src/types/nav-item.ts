@@ -1,7 +1,7 @@
-import type { IconName } from "@/data/icons";
+import type { IconName } from "@/data";
 
-export type NavItem = {
+export interface NavItem {
   icon: IconName;
   name: string;
   link: string;
-};
+}
