@@ -1,26 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Icon } from "@/components/ui/icon";
+import { Icon } from "@/components/ui";
+import { useScrollToTop } from "@/hooks";
 import { cn } from "@/lib/utils";
+import type { ScrollToTopProps } from "@/types/ui";
+import { AnimatePresence, motion } from "framer-motion";
 
-interface ScrollToTopProps {
-  // Jarak scroll sebelum tombol muncul (px)
-  threshold?: number;
-  // Posisi tombol di layar
-  position?: "right" | "left";
-  // Ukuran tombol
-  size?: "sm" | "md" | "lg";
-  // Ukuran ikon
-  iconSize?: number;
-  // Warna latar belakang (opsional)
-  color?: string;
-  // Tampilkan pada perangkat mobile
-  showOnMobile?: boolean;
-}
-
-export default function ScrollToTop({
+/**
+ * Scroll to top button component that appears when the user scrolls down
+ * @param threshold - Scroll distance in pixels before the button appears (default: 300)
+ * @param position - Button position on screen, either "right" or "left" (default: "right")
+ * @param size - Button size variant: "sm", "md", or "lg" (default: "md")
+ * @param iconSize - Size of the chevron icon in pixels (default: 20)
+ * @param color - Optional custom background color
+ * @param showOnMobile - Whether to display the button on mobile devices (default: true)
+ * @returns A scroll-to-top button with animation
+ */
+export function ScrollToTop({
   threshold = 300,
   position = "right",
   size = "md",
@@ -28,12 +24,7 @@ export default function ScrollToTop({
   color,
   showOnMobile = true,
 }: ScrollToTopProps) {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const { isVisible, isMounted, scrollToTop } = useScrollToTop({ threshold });
 
   const buttonSizeOptions = {
     sm: "w-10 h-10 p-2",
@@ -42,59 +33,14 @@ export default function ScrollToTop({
   };
   const buttonSize = buttonSizeOptions[size];
 
-  // Perbaikan untuk posisi tombol
+  // Button position configuration
   const buttonPositionOptions = {
     right: "right-6 left-auto",
     left: "left-6 right-auto",
   };
   const buttonPosition = buttonPositionOptions[position];
 
-  // Fungsi throttle untuk membatasi jumlah pemanggilan
-  const throttle = <T extends (...args: unknown[]) => unknown>(fn: T, delay: number) => {
-    let lastCall = 0;
-    return (...args: Parameters<T>): ReturnType<T> | undefined => {
-      const now = new Date().getTime();
-      if (now - lastCall < delay) {
-        return undefined;
-      }
-      lastCall = now;
-      return fn(...args) as ReturnType<T>;
-    };
-  };
-
-  // Tampilkan tombol ketika scroll melebihi threshold
-  const toggleVisibility = useCallback(
-    throttle(() => {
-      if (window.scrollY > threshold) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
-    }, 100), // Throttle 100ms untuk performa
-    [threshold],
-  );
-
-  // Scroll ke atas ketika tombol diklik
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
-
-  // Event listener untuk scroll
-  useEffect(() => {
-    if (!isMounted) return;
-
-    window.addEventListener("scroll", toggleVisibility);
-
-    // Periksa posisi scroll saat komponen dimount
-    toggleVisibility();
-
-    return () => window.removeEventListener("scroll", toggleVisibility);
-  }, [isMounted, toggleVisibility]);
-
-  // Jangan render apa pun saat komponen belum dimount
+  // Don't render anything when component is not mounted
   if (!isMounted) return null;
 
   // Custom background color style
