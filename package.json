@@ -21,6 +21,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@radix-ui/react-avatar": "^1.1.9",
     "@radix-ui/react-slot": "^1.2.2",
     "@vercel/analytics": "^1.5.0",
     "class-variance-authority": "^0.7.1",

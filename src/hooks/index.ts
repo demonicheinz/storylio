@@ -9,4 +9,5 @@
  * import { useScrollToTop, useActiveSection } from "@/hooks";
  * ```
  */
+export * from "@/hooks/use-action-section";
 export * from "@/hooks/use-scroll-to-top";
