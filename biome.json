@@ -64,8 +64,7 @@
     }
   },
   "organizeImports": {
-    "enabled": true,
-    "include": ["*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx}"]
+    "enabled": true
   },
   "css": {
     "parser": {
