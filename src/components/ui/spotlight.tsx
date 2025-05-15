@@ -1,8 +1,8 @@
 "use client";
 
-import React, { memo } from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import React, { memo } from "react";
 
 type SpotlightProps = {
   gradientFirst?: string;

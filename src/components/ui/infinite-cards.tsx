@@ -1,9 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import React, { useEffect, useState, useRef } from "react";
+import type { InfiniteCardsProps } from "@/types/ui";
 import Image from "next/image";
-import type { InfiniteCardsProps } from "@/types";
+import React, { useEffect, useRef, useState } from "react";
 
 export const InfiniteCards = ({
   clientItems,
