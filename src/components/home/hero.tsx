@@ -1,8 +1,14 @@
-import { Spotlight } from "@/components/ui/spotlight";
-import { TextGenerateEffect } from "@/components/ui/text-generate-effect";
-import { ConnectButton } from "@/components/ui/connect-button";
+import { ConnectButton, Spotlight, TextGenerateEffect } from "@/components/ui";
+import type { HeroProps } from "@/types/ui";
+import Link from "next/link";
 
-const Hero = () => {
+export function Hero({
+  title = "Transforming Concepts into Seamless User Experiences",
+  subtitle = "Dynamic Web Magic with Next.js",
+  description = "Hi! I'm Heinz, a Web Developer based in Central Java, Indonesia.",
+  buttonText = "About me",
+  buttonLink = "/about",
+}: HeroProps = {}) {
   return (
     <div className="relative flex flex-col justify-center items-center w-full h-screen">
       {/* Background elements with lower priority */}
@@ -15,22 +21,22 @@ const Hero = () => {
       <div className="z-10 relative flex justify-center px-4">
         <div className="flex flex-col justify-center items-center max-w-[89vw] lg:max-w-[60vw] md:max-w-2xl">
           <p className="max-w-80 text-blue-100 text-xs text-center uppercase tracking-widest">
-            Dynamic Web Magic with Next.js
+            {subtitle}
           </p>
 
           {/* Headline - Critical for LCP */}
           <TextGenerateEffect
-            words="Transforming Concepts into Seamless User Experiences"
+            words={title}
             highlightWords={["User", "Experiences"]}
             className="text-[40px] text-foreground dark:text-white md:text-5xl lg:text-6xl text-center"
           />
 
           <p className="mb-6 text-blue-100 text-sm md:text-lg lg:text-2xl text-center md:tracking-wider">
-            Hi! I&apos;m Heinz, a Web Developer based in Central Java, Indonesia.
+            {description}
           </p>
 
           {/* Connect Button */}
-          <a href="/about">
+          <Link href={buttonLink}>
             <ConnectButton
               iconName="arrowUpRight"
               imageSrc="/images/heinz.jpg"
@@ -40,13 +46,11 @@ const Hero = () => {
               variant="default"
               iconSize={20}
             >
-              About me
+              {buttonText}
             </ConnectButton>
-          </a>
+          </Link>
         </div>
       </div>
     </div>
   );
-};
-
-export default Hero;
+}

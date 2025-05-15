@@ -1,21 +1,23 @@
 "use client";
 
-import React from "react";
+import { InfiniteCards } from "@/components/ui";
+import { companies, testimonials } from "@/data";
+import type { ClientsProps } from "@/types/ui";
 import Image from "next/image";
-import { testimonials, companies } from "@/data";
-import { InfiniteCards } from "@/components/ui/infinite-cards";
+import React from "react";
 
-const Clients = () => {
-  const isCompactLogo = (id: number) => id === 4 || id === 5;
-
+export function Clients({
+  title = "Kind words from",
+  subtitle = "satisfied clients",
+}: ClientsProps = {}) {
   return (
     <section
       id="testimonials"
       className="py-10"
     >
       <h1 className="heading">
-        Kind words from
-        <span className="text-purple"> satisfied clients</span>
+        {title}
+        <span className="text-purple"> {subtitle}</span>
       </h1>
 
       <div className="flex flex-col items-center max-lg:mt-10">
@@ -31,22 +33,22 @@ const Clients = () => {
           {companies.map((company) => (
             <React.Fragment key={company.id}>
               <div className="flex justify-center items-center gap-2 max-w-32 md:max-w-60">
-                <div className="relative w-5 md:w-10 aspect-auto">
+                <div className="relative w-5 md:w-10 h-5 md:h-10">
                   <Image
                     src={company.img}
                     alt={company.name}
-                    width={40}
-                    height={40}
+                    fill
+                    sizes="(max-width: 768px) 20px, 40px"
                     className="invert-0 dark:invert-0 object-contain filter"
                     loading="lazy"
                   />
                 </div>
-                <div className="relative w-20 md:w-24 aspect-auto">
+                <div className="relative w-20 md:w-24 h-6 md:h-8">
                   <Image
                     src={company.nameImg}
                     alt={company.name}
-                    width={isCompactLogo(company.id) ? 100 : 150}
-                    height={40}
+                    fill
+                    sizes="(max-width: 768px) 80px, 96px"
                     className="invert-0 dark:invert-0 object-contain filter"
                     loading="lazy"
                   />
@@ -58,6 +60,4 @@ const Clients = () => {
       </div>
     </section>
   );
-};
-
-export default Clients;
+}
