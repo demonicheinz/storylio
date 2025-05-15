@@ -1,5 +1,4 @@
-// Import the reusable NotFoundPage component
-import { NotFoundPage } from "@/components/clients/not-found-page";
+import { NotFoundPage } from "@/components/clients";
 
 export default function NotFound() {
   return <NotFoundPage />;

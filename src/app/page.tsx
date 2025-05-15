@@ -1,5 +1,5 @@
+import { Clients, Hero } from "@/components/home";
 import { cn } from "@/lib/utils";
-import { Hero, Clients } from "@/components/home";
 
 export default function Home() {
   const mainStyles = cn(

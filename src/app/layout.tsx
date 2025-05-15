@@ -1,13 +1,12 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
-import { ThemeProvider } from "next-themes";
 import "@/styles/globals.css";
+import { FloatingNav, Footer } from "@/components/layouts";
+import { ScrollToTop } from "@/components/ui";
+import { NavItems } from "@/data";
 import { Analytics } from "@vercel/analytics/next";
-import { NavItems } from "@/data/nav-items";
-import { FloatingNav } from "@/components/layouts/floating-nav";
-import ScrollToTop from "@/components/ui/scroll-to-top";
-import Footer from "@/components/layouts/footer";
+import { ThemeProvider } from "next-themes";
+import localFont from "next/font/local";
 
+import type { Metadata } from "next";
 const roboto_font = localFont({
   src: [
     {
@@ -75,7 +74,7 @@ export default function RootLayout({
       suppressHydrationWarning={true}
       className={`${roboto_font.variable} ${jetbrains_mono_font.variable} antialiased`}
     >
-      <body className="dark">
+      <body>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

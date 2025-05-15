@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icon";
+import { Button, Icon } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 interface NotFoundPageProps {
   title?: string;
@@ -78,7 +77,7 @@ export function NotFoundPage({
         >
           <div className="mb-8">
             <motion.h1
-              className="bg-clip-text bg-gradient-to-r from-primary to-secondary mb-2 font-extrabold text-transparent text-8xl"
+              className="bg-clip-text bg-gradient-to-r from-secondary via-primary to-secondary mb-2 font-extrabold text-transparent text-8xl"
               initial={{ scale: 1.5 }}
               animate={{ scale: 1 }}
               transition={{
@@ -93,7 +92,7 @@ export function NotFoundPage({
               initial={{ width: 0 }}
               animate={{ width: "100%" }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="bg-gradient-to-r from-primary to-secondary mx-auto mb-6 rounded-full h-1"
+              className="bg-gradient-to-r from-purple via-dark-purple to-purple mx-auto mb-6 rounded-full h-1"
             />
             <h2 className="mb-4 font-semibold text-2xl">{title}</h2>
           </div>
