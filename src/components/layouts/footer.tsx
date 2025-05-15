@@ -1,21 +1,15 @@
 "use client";
 
-import { Icon } from "@/components/ui/icon";
+import { Icon } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import type { FooterProps } from "@/types/ui";
 
-interface FooterProps {
-  copyrightName?: string;
-  copyrightYear?: string | number;
-  showSocialMedia?: boolean;
-  className?: string;
-}
-
-const Footer: React.FC<FooterProps> = ({
+export function Footer({
   copyrightName = "Storylio",
   copyrightYear,
   showSocialMedia = true,
   className = "",
-}) => {
+}: FooterProps) {
   const year = copyrightYear || new Date().getFullYear();
 
   return (
@@ -128,6 +122,4 @@ const Footer: React.FC<FooterProps> = ({
       </div>
     </footer>
   );
-};
-
-export default Footer;
+}

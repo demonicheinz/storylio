@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
-import Link from "next/link";
+import { Icon } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import type { NavItem } from "@/types/navigation";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Icon } from "@/components/ui/icon";
-import type { NavItem } from "@/types/nav-item";
+import React, { useState } from "react";
 
 export const FloatingNav = ({
   navItems,
