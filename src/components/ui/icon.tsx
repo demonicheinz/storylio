@@ -1,18 +1,14 @@
-import React from "react";
-import { iconLibrary, type IconName } from "@/data";
+"use client";
+
+import { iconLibrary } from "@/data";
 import { cn } from "@/lib/utils";
-import type { IconBaseProps } from "react-icons";
+import type { IconProps } from "@/types/ui";
+import React from "react";
 
-export interface IconProps {
-  name: IconName;
-  size?: number;
-  className?: string;
-  wrapperClassName?: string;
-  useWrapper?: boolean;
-  iconProps?: IconBaseProps;
-  wrapperProps?: React.HTMLAttributes<HTMLDivElement>;
-}
-
+/**
+ * Komponen Icon dengan dukungan untuk berbagai library ikon.
+ * Mendukung penggunaan dengan atau tanpa wrapper.
+ */
 const Icon = React.forwardRef<HTMLDivElement, IconProps>(
   (
     {

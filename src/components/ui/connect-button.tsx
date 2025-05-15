@@ -1,8 +1,8 @@
-import React from "react";
-import { Icon, type IconProps } from "@/components/ui/icon";
+import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
-import type { IconName } from "@/data";
+import type { IconName, IconProps } from "@/types/ui";
 import Image from "next/image";
+import React from "react";
 
 export interface ConnectButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
