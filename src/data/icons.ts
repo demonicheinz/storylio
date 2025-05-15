@@ -4,109 +4,109 @@ import type { IconType } from "react-icons";
 import { BiLogoTailwindCss } from "react-icons/bi";
 
 // Font Awesome (Fa)
-import { FaGlobeAsia, FaLongArrowAltRight, FaLongArrowAltLeft } from "react-icons/fa";
+import { FaGlobeAsia, FaLongArrowAltLeft, FaLongArrowAltRight } from "react-icons/fa";
 
 // Font Awesome (Fa)
 import {
-  FaChevronUp,
-  FaChevronDown,
-  FaChevronRight,
-  FaChevronLeft,
-  FaArrowRight,
   FaArrowLeft,
-  FaXmark,
+  FaArrowRight,
   FaArrowsRotate,
+  FaChevronDown,
+  FaChevronLeft,
+  FaChevronRight,
+  FaChevronUp,
   FaDiscord,
+  FaFacebookF,
   FaGithub,
+  FaInstagram,
   FaLinkedin,
   FaXTwitter,
-  FaFacebookF,
-  FaInstagram,
+  FaXmark,
 } from "react-icons/fa6";
 
 // IonIcons4 (Io)
-import { IoIosMenu, IoMdSearch, IoIosMail } from "react-icons/io";
+import { IoIosMail, IoIosMenu, IoMdSearch } from "react-icons/io";
 
 // IonIcons5 (Io)
 import {
   IoCheckmarkCircleOutline,
+  IoHelpCircle,
   IoWarning,
   IoWarningOutline,
-  IoHelpCircle,
 } from "react-icons/io5";
 
 // Lucide Icons (Lu)
 import {
+  LuBell,
   LuCheck,
+  LuCircleUser,
+  LuCircleX,
+  LuClipboard,
   LuEye,
   LuEyeClosed,
-  LuClipboard,
-  LuHouse,
-  LuCircleUser,
-  LuFolderCode,
   LuFolder,
+  LuFolderCode,
+  LuHouse,
   LuLoader,
-  LuBell,
-  LuPlus,
   LuMinus,
+  LuPlus,
   LuRadioTower,
-  LuCircleX,
   LuSearchX,
 } from "react-icons/lu";
 
 // Material Design Icons (Md)
-import { MdLogout, MdEdit, MdDelete, MdShare, MdFormatQuote } from "react-icons/md";
+import { MdDelete, MdEdit, MdFormatQuote, MdLogout, MdShare } from "react-icons/md";
 
 // Remix Icons (Ri)
 import { RiArticleLine, RiGitBranchLine } from "react-icons/ri";
 
 // Tabler Icons (Tb)
 import {
-  TbBrandNodejs,
-  TbBrandReact,
-  TbBrandNextjs,
-  TbBrandTypescript,
-  TbBrandReactNative,
-  TbBrandFlutter,
-  TbBrandFigma,
+  TbArrowUpRight,
   TbBrandAdobeXd,
-  TbBrandVue,
   TbBrandAngular,
-  TbBrandGraphql,
-  TbBrandVercel,
-  TbBrandDocker,
-  TbBrandGit,
-  TbServer,
-  TbBrandPython,
-  TbBrandJavascript,
+  TbBrandAstro,
   TbBrandAws,
+  TbBrandCss3,
+  TbBrandDocker,
+  TbBrandFigma,
   TbBrandFirebase,
+  TbBrandFlutter,
+  TbBrandGit,
   TbBrandGolang,
+  TbBrandGraphql,
+  TbBrandHtml5,
+  TbBrandJavascript,
+  TbBrandKotlin,
   TbBrandLaravel,
   TbBrandMongodb,
   TbBrandMysql,
+  TbBrandNextjs,
+  TbBrandNodejs,
+  TbBrandPrisma,
+  TbBrandPython,
+  TbBrandReact,
+  TbBrandReactNative,
+  TbBrandRust,
   TbBrandStripe,
   TbBrandSupabase,
   TbBrandSvelte,
-  TbBrandThreejs,
-  TbBrandAstro,
-  TbBrandKotlin,
   TbBrandSwift,
-  TbBrandRust,
-  TbBrandPrisma,
+  TbBrandThreejs,
+  TbBrandTypescript,
+  TbBrandVercel,
+  TbBrandVscode,
+  TbBrandVue,
   TbClipboardCopy,
-  TbPhoto,
-  TbBrandHtml5,
-  TbBrandCss3,
-  TbJson,
-  TbMarkdown,
   TbFileText,
   TbFolder,
+  TbJson,
+  TbMarkdown,
   TbPencil,
-  TbSettings,
+  TbPhoto,
   TbSearch,
-  TbBrandVscode,
-  TbArrowUpRight,
+  TbServer,
+  TbSettings,
 } from "react-icons/tb";
 
 export const iconLibrary: Record<string, IconType> = {
@@ -219,6 +219,3 @@ export const iconLibrary: Record<string, IconType> = {
   gitBranch: RiGitBranchLine,
   radioTower: LuRadioTower,
 };
-
-// Tipe untuk komponen Icon
-export type IconName = keyof typeof iconLibrary;
