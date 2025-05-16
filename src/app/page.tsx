@@ -1,4 +1,4 @@
-import { Clients, Hero } from "@/components/home";
+import { ApproachSection, ClientsSection, HeroSection } from "@/components/home";
 import { cn } from "@/lib/utils";
 
 export default function Home() {
@@ -16,14 +16,17 @@ export default function Home() {
     <main className={mainStyles}>
       {/* Hero Section - Full screen */}
       <section className="w-full h-screen">
-        <Hero />
+        <HeroSection />
       </section>
 
       {/* Main content */}
       <div className={contentContainerStyles}>
         <div className="flex flex-col gap-10">
           <section className="w-full">
-            <Clients />
+            <ApproachSection />
+          </section>
+          <section className="w-full">
+            <ClientsSection />
           </section>
         </div>
       </div>

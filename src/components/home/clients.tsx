@@ -6,7 +6,7 @@ import type { ClientsProps } from "@/types/ui";
 import Image from "next/image";
 import React from "react";
 
-export function Clients({
+export function ClientsSection({
   title = "Kind words from",
   subtitle = "satisfied clients",
 }: ClientsProps = {}) {

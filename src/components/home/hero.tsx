@@ -2,7 +2,7 @@ import { ConnectButton, Spotlight, TextGenerateEffect } from "@/components/ui";
 import type { HeroProps } from "@/types/ui";
 import Link from "next/link";
 
-export function Hero({
+export function HeroSection({
   title = "Transforming Concepts into Seamless User Experiences",
   subtitle = "Dynamic Web Magic with Next.js",
   description = "Hi! I'm Heinz, a Web Developer based in Central Java, Indonesia.",
