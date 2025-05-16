@@ -17,37 +17,35 @@ export const InfiniteCards = ({
   const [start, setStart] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Buat array dengan item yang diulang untuk animasi mulus
+  const repeatedItems = [...clientItems, ...clientItems, ...clientItems];
+
   useEffect(() => {
     if (!containerRef.current || !scrollerRef.current) return;
 
-    const scrollerContent = Array.from(scrollerRef.current.children);
+    // Atur arah dan kecepatan animasi
+    if (containerRef.current) {
+      containerRef.current.style.setProperty(
+        "--animation-direction",
+        direction === "left" ? "forwards" : "reverse",
+      );
 
-    for (let i = 0; i < 2; i++) {
-      scrollerContent.forEach((item) => {
-        const duplicate = item.cloneNode(true);
-        scrollerRef.current?.appendChild(duplicate);
-      });
+      const duration = speed === "fast" ? "20s" : speed === "normal" ? "40s" : "80s";
+      containerRef.current.style.setProperty("--animation-duration", duration);
     }
 
-    containerRef.current.style.setProperty(
-      "--animation-direction",
-      direction === "left" ? "forwards" : "reverse",
-    );
-
-    const duration = speed === "fast" ? "20s" : speed === "normal" ? "40s" : "80s";
-
-    containerRef.current.style.setProperty("--animation-duration", duration);
-
     setStart(true);
-  }, []);
+
+    // Cleanup function untuk mencegah duplikasi animasi saat komponen unmount
+    return () => {
+      setStart(false);
+    };
+  }, [clientItems, direction, speed]);
 
   return (
     <div
       ref={containerRef}
-      className={cn(
-        "scroller relative z-20 w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_20%,white_80%,transparent)]",
-        className,
-      )}
+      className={cn("scroller relative z-20 w-full overflow-hidden", className)}
     >
       <ul
         ref={scrollerRef}
@@ -56,10 +54,11 @@ export const InfiniteCards = ({
           start && "animate-scroll",
           isHovered && pauseOnHover && "paused",
         )}
+        style={{ paddingLeft: "0", paddingRight: "0" }}
         onMouseEnter={() => pauseOnHover && setIsHovered(true)}
         onMouseLeave={() => pauseOnHover && setIsHovered(false)}
       >
-        {clientItems.map((item, idx) => (
+        {repeatedItems.map((item, idx) => (
           <li
             key={`${item.name}-${idx}`}
             className="relative flex-shrink-0 bg-dark-purple/90 hover:bg-hover shadow-md hover:shadow-xl backdrop-blur-sm px-8 py-6 border border-border/40 hover:border-border-secondary/60 rounded-3xl w-[350px] md:w-[450px] max-w-full transition-all hover:-translate-y-2 duration-300"

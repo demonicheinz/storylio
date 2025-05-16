@@ -1,10 +1,10 @@
 /* Animasi Scroll untuk InfiniteCards */
 @keyframes scroll {
-  from {
+  0% {
     transform: translateX(0);
   }
-  to {
-    transform: translateX(calc(-33.33% - 0.5rem));
+  100% {
+    transform: translateX(calc(-33.33%));
   }
 }
 
@@ -20,3 +20,10 @@
 .animate-scroll.paused {
   animation-play-state: paused;
 } 
+
+/* Membuat efek fading di tepi untuk transisi lebih halus */
+.scroller {
+  mask-image: linear-gradient(to right, transparent 0%, white 5%, white 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, white 5%, white 95%, transparent 100%);
+  overflow: hidden;
+}
