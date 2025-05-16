@@ -1,4 +1,5 @@
 export * from "@/data/about-data";
+export * from "@/data/approach-data";
 export * from "@/data/companies";
 export * from "@/data/icons";
 export * from "@/data/nav-items";
