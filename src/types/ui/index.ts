@@ -12,8 +12,10 @@
  */
 export * from "@/types/ui/common";
 export * from "@/types/ui/complex/about";
+export * from "@/types/ui/complex/approach";
 export * from "@/types/ui/complex/badge";
 export * from "@/types/ui/complex/button";
+export * from "@/types/ui/complex/canvas-reveal-effect";
 export * from "@/types/ui/complex/footer";
 export * from "@/types/ui/complex/heading";
 export * from "@/types/ui/complex/home";
