@@ -1,0 +1,43 @@
+{
+  "name": "storylio",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "biome check --no-errors-on-unmatched",
+    "format": "bun biome check --write --no-errors-on-unmatched",
+    "typecheck": "tsc --noEmit",
+    "lint-staged": "lint-staged"
+  },
+  "dependencies": {
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "ignoreScripts": [
+    "sharp",
+    "unrs-resolver"
+  ],
+  "trustedDependencies": [
+    "sharp",
+    "unrs-resolver"
+  ],
+  "lint-staged": {
+    "*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc,css}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
+  }
+}
