@@ -3,12 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "dotenvx run -f .env.local -- next dev",
+    "dev:preview": "dotenvx run -f .env.preview -- next dev",
+    "dev:prod-env": "dotenvx run -f .env.production -- next dev",
+
+    "build": "dotenvx run -f .env.local -- next build",
+    "build:preview": "dotenvx run -f .env.preview -- next build",
+    "build:prod-env": "dotenvx run -f .env.production -- next build",
+
+    "start": "dotenvx run -f .env.local -- next start",
+    "start:preview": "dotenvx run -f .env.preview -- next start",
+    "start:prod-env": "dotenvx run -f .env.production -- next start",
+
     "lint": "biome check --no-errors-on-unmatched",
-    "format": "bun biome check --write --no-errors-on-unmatched",
+    "format": "biome check --write --no-errors-on-unmatched",
     "typecheck": "tsc --noEmit",
+
     "lint-staged": "lint-staged"
   },
   "dependencies": {
@@ -18,6 +28,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.16",
+    "@dotenvx/dotenvx": "^1.69.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
