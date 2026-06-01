@@ -8,28 +8,65 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  name      String?
-  password  String
-  avatar    String?
-  tagline   String?
-  bio       String?
-  github    String?
-  instagram String?
-  twitter   String?
-  createdAt DateTime  @default(now())
-  sessions  Session[]
-  posts     Post[]
-  projects  Project[]
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tagline       String?
+  bio           String?
+  github        String?
+  instagram     String?
+  twitter       String?
+
+  sessions      Session[]
+  accounts      Account[]
+  posts         Post[]
+  projects      Project[]
 }
 
 model Session {
   id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
   expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+
+  userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
 }
 
 model Post {
@@ -42,9 +79,12 @@ model Post {
   status      PostStatus @default(DRAFT)
   publishedAt DateTime?
   viewCount   Int        @default(0)
-  tags        Tag[]
+
   authorId    String
-  author      User       @relation(fields: [authorId], references: [id])
+  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  tags        Tag[]
+
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 }
@@ -62,8 +102,10 @@ model Project {
   githubUrl    String?
   order        Int           @default(0)
   status       ProjectStatus @default(DRAFT)
+
   authorId     String
-  author       User          @relation(fields: [authorId], references: [id])
+  author       User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -84,13 +126,13 @@ model Tag {
 }
 
 model Media {
-  id          String   @id @default(cuid())
-  url         String
-  publicId    String
-  filename    String
-  size        Int
-  format      String
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  url       String
+  publicId  String
+  filename  String
+  size      Int
+  format    String
+  createdAt DateTime @default(now())
 }
 
 model Testimonial {
