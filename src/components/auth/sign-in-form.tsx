@@ -18,14 +18,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 
-const loginSchema = z.object({
+const signInSchema = z.object({
   email: z.string().email("Email tidak valid"),
   password: z.string().min(1, "Password tidak boleh kosong"),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type SignInFormData = z.infer<typeof signInSchema>;
 
-export function LoginForm() {
+export function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -36,11 +36,11 @@ export function LoginForm() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<SignInFormData>({
+    resolver: zodResolver(signInSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: SignInFormData) => {
     setIsLoading(true);
     setError(null);
 
@@ -70,7 +70,7 @@ export function LoginForm() {
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="font-heading text-2xl">Sign In</CardTitle>
         <CardDescription>
-          Masukkan kredensial Anda untuk mengakses dashboard
+          Enter your credentials to access the dashboard
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -133,7 +133,7 @@ export function LoginForm() {
             {isLoading ? (
               <>
                 <CircleNotchIcon className="mr-2 h-4 w-4 animate-spin" />
-                Memproses...
+                Signing in...
               </>
             ) : (
               "Sign In"

@@ -11,7 +11,7 @@ export default async function proxy(request: NextRequest) {
     });
 
     if (!session) {
-      const loginUrl = new URL("/login", request.url);
+      const loginUrl = new URL("/sign-in", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }

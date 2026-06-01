@@ -1,9 +1,9 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { SignInForm } from "@/components/auth/sign-in-form";
 import { auth } from "@/lib/auth";
-import { LoginForm } from "./login-form";
 
-export default async function LoginPage() {
+export default async function SignInPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -14,7 +14,7 @@ export default async function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <LoginForm />
+      <SignInForm />
     </div>
   );
 }

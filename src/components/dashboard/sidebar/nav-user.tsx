@@ -38,7 +38,7 @@ export function NavUser({ user }: { user: User }) {
 
   const handleLogout = async () => {
     await authClient.signOut();
-    router.push("/login");
+    router.push("/sign-in");
     router.refresh();
   };
 
