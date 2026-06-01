@@ -8,7 +8,7 @@ export const clashDisplay = localFont({
       style: "normal",
     },
   ],
-  variable: "--font-clash-display",
+  variable: "--font-heading",
   display: "swap",
 });
 
@@ -25,7 +25,7 @@ export const satoshi = localFont({
       style: "italic",
     },
   ],
-  variable: "--font-satoshi",
+  variable: "--font-sans",
   display: "swap",
 });
 
@@ -42,7 +42,7 @@ export const jetBrainsMono = localFont({
       style: "italic",
     },
   ],
-  variable: "--font-jetbrains-mono",
+  variable: "--font-mono",
   display: "swap",
 });
 

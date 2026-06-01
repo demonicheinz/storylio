@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  password  String
+  avatar    String?
+  tagline   String?
+  bio       String?
+  github    String?
+  instagram String?
+  twitter   String?
+  createdAt DateTime  @default(now())
+  sessions  Session[]
+  posts     Post[]
+  projects  Project[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  excerpt     String?
+  content     String     @db.Text
+  coverImage  String?
+  status      PostStatus @default(DRAFT)
+  publishedAt DateTime?
+  viewCount   Int        @default(0)
+  tags        Tag[]
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Project {
+  id           String        @id @default(cuid())
+  title        String
+  slug         String        @unique
+  description  String?
+  content      String?       @db.Text
+  coverImage   String?
+  screenshots  String[]
+  techStack    String[]
+  liveUrl      String?
+  githubUrl    String?
+  order        Int           @default(0)
+  status       ProjectStatus @default(DRAFT)
+  authorId     String
+  author       User          @relation(fields: [authorId], references: [id])
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model GalleryItem {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  caption   String?
+  category  String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  posts Post[]
+}
+
+model Media {
+  id          String   @id @default(cuid())
+  url         String
+  publicId    String
+  filename    String
+  size        Int
+  format      String
+  createdAt   DateTime @default(now())
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  role      String?
+  company   String?
+  avatar    String?
+  content   String   @db.Text
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model HomeSection {
+  id        String          @id @default(cuid())
+  type      HomeSectionType
+  label     String
+  content   String?
+  imageUrl  String?
+  order     Int             @default(0)
+  createdAt DateTime        @default(now())
+}
+
+enum HomeSectionType {
+  PHASE
+  LOGO
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+}
