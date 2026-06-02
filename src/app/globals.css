@@ -53,6 +53,13 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --animate-scroll: scroll var(--animation-duration, 40s)
+    var(--animation-direction, forwards) linear infinite;
+  @keyframes scroll {
+    to {
+      transform: translate(calc(-50% - 0.5rem));
+    }
+  }
 }
 
 :root {
@@ -151,4 +158,43 @@
   html {
     @apply font-sans;
   }
+}
+
+@layer utilities {
+  .heading {
+    @apply font-bold text-4xl md:text-5xl text-center;
+  }
+}
+
+.animate-scroll {
+  animation: scroll var(--animation-duration, 40s)
+    var(--animation-direction, forwards) linear infinite;
+  width: max-content;
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+/* Animasi akan berhenti saat hover */
+.animate-scroll.paused {
+  animation-play-state: paused;
+}
+
+/* Membuat efek fading di tepi untuk transisi lebih halus */
+.scroller {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    white 5%,
+    white 95%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    white 5%,
+    white 95%,
+    transparent 100%
+  );
+  overflow: hidden;
 }

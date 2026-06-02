@@ -6,11 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 export function Providers({ children }: { children: ReactNode }) {
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    ).matches;
-
-    const theme = storedTheme || (prefersDark ? "dark" : "light");
+    const theme = storedTheme || "dark";
 
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, []);

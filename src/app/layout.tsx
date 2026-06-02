@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { fontVariables } from "@/lib/font";
 import "@/app/globals.css";
 import { cn } from "@/lib/utils";
 import { Providers } from "@/providers/index";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  ),
   title: "Storylio",
   description: "A personal journey through code, creativity, and craft.",
 };
@@ -17,11 +21,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full antialiased", fontVariables)}
+      className={cn("dark h-full antialiased", fontVariables)}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col font-sans">
-        <Providers>{children}</Providers>
+        <Suspense fallback={null}>
+          <Providers>{children}</Providers>
+        </Suspense>
       </body>
     </html>
   );
