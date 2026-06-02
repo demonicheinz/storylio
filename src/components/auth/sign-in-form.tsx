@@ -66,7 +66,7 @@ export function SignInForm() {
   };
 
   return (
-    <Card className="w-full max-w-md border-border bg-card">
+    <Card className="w-full max-w-md border bg-card">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="font-heading text-2xl">Sign In</CardTitle>
         <CardDescription>
