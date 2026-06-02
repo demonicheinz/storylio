@@ -4,6 +4,8 @@ import {
   FolderOpenIcon,
   ImageIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +52,42 @@ async function getRecentProjects() {
   });
 }
 
-export default async function DashboardHomePage() {
+export default function DashboardHomePage() {
+  return (
+    <Suspense fallback={<DashboardHomeFallback />}>
+      <DashboardHomeContent />
+    </Suspense>
+  );
+}
+
+function DashboardHomeFallback() {
+  return (
+    <div className="flex flex-col gap-8">
+      <div>
+        <h1 className="font-heading text-3xl font-bold">Overview</h1>
+        <p className="mt-2 text-muted-foreground">
+          Loading your site overview...
+        </p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {["Posts", "Projects", "Gallery", "Testimonials"].map((label) => (
+          <Card key={label}>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">{label}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 w-16 rounded-md bg-muted" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+async function DashboardHomeContent() {
+  await connection();
+
   const [stats, recentPosts, recentProjects] = await Promise.all([
     getStats(),
     getRecentPosts(),
