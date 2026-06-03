@@ -33,7 +33,8 @@
     "domains": {
       "next": "recommended",
       "react": "recommended"
-    }
+    },
+    "includes": ["!src/components/ui/"]
   },
   "javascript": {
     "formatter": {
