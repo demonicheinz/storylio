@@ -16,7 +16,7 @@ export function ProjectScreenshots({
   return (
     <section className="mt-14">
       <div className="mb-6 flex flex-col gap-2">
-        <p className="text-brand-soft text-xs font-semibold tracking-[0.28em] uppercase">
+        <p className="text-xs font-semibold tracking-[0.28em] text-brand-soft uppercase">
           Screenshots
         </p>
         <h2 className="font-heading text-3xl font-semibold text-foreground">
