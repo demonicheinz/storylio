@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
+import Link from "next/link";
 import { Suspense } from "react";
 import { PublicBackground } from "@/components/common";
 import {
@@ -45,6 +46,16 @@ function getSelectedTag(value: string | string[] | undefined) {
   const tag = Array.isArray(value) ? value[0] : value;
 
   return tag?.trim() || undefined;
+}
+
+function formatBlogSummary(postsCount: number, selectedTag?: string) {
+  const noun = postsCount === 1 ? "article" : "articles";
+
+  if (selectedTag) {
+    return `Showing ${postsCount} ${noun} tagged ${selectedTag}`;
+  }
+
+  return `Showing ${postsCount} ${noun} across all topics`;
 }
 
 async function getBlogData(selectedTag?: string) {
@@ -145,6 +156,19 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         >
           <BlogFilters tags={tags} selectedTag={selectedTag} />
         </Suspense>
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+          <p>{formatBlogSummary(posts.length, selectedTag)}</p>
+          {selectedTag && (
+            <Link
+              href="/blog"
+              scroll={false}
+              className="text-brand-soft underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            >
+              Reset topic
+            </Link>
+          )}
+        </div>
 
         <div className="flex flex-col gap-8 py-10 md:py-12">
           {featuredPost ? (
