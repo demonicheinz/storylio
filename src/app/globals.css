@@ -157,12 +157,60 @@
   }
   html {
     @apply font-sans;
+    scrollbar-color: color-mix(in oklch, var(--brand-soft) 55%, transparent)
+      color-mix(in oklch, var(--background) 88%, black);
+    scrollbar-width: thin;
+  }
+
+  ::-webkit-scrollbar {
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklch, var(--background) 88%, black),
+      color-mix(in oklch, var(--surface) 78%, black)
+    );
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklch, var(--brand-soft) 72%, white),
+      color-mix(in oklch, var(--brand) 78%, black)
+    );
+    border: 0.18rem solid color-mix(in oklch, var(--background) 88%, black);
+    border-radius: 999px;
+    box-shadow: 0 0 18px color-mix(in oklch, var(--brand-soft) 28%, transparent);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklch, var(--brand-soft) 88%, white),
+      color-mix(in oklch, var(--brand) 92%, black)
+    );
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
 
 @layer utilities {
   .heading {
     @apply font-bold text-4xl md:text-5xl text-center;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 
