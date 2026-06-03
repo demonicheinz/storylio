@@ -1,5 +1,6 @@
 import { hashPassword } from "better-auth/crypto";
 import { db } from "@/lib/db";
+import { seedProjects } from "./seeds/projects";
 
 async function main() {
   const ownerEmail = process.env.OWNER_EMAIL;
@@ -62,7 +63,7 @@ async function main() {
       name: "Ahmad Haizul Amany",
       emailVerified: true,
       tagline: "Full Stack Developer",
-      bio: "Personal portfolio of Ahmad Haizul Amany (Heinz)",
+      bio: "Hi! I'm Heinz, a Full Stack Developer based in Central Java, Indonesia.",
       github: "https://github.com/demonicheinz",
       instagram: "https://instagram.com/heinzdev",
       twitter: "https://x.com/chrysantastix",
@@ -155,6 +156,11 @@ async function main() {
 
     console.log("Created sample testimonials");
   }
+
+  await seedProjects({
+    db,
+    ownerId: owner.id,
+  });
 
   console.log("Seeding completed!");
 }
