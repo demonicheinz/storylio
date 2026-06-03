@@ -5,6 +5,7 @@ type BlogCoverProps = {
   src: string | null;
   alt: string;
   className?: string;
+  fetchPriority?: "auto" | "high" | "low";
   loading?: "eager" | "lazy";
 };
 
@@ -12,6 +13,7 @@ export function BlogCover({
   src,
   alt,
   className,
+  fetchPriority,
   loading = "lazy",
 }: BlogCoverProps) {
   return (
@@ -27,6 +29,7 @@ export function BlogCover({
           alt={alt}
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
+          fetchPriority={fetchPriority}
           loading={loading}
           className="object-cover transition-transform duration-500 group-hover/post:scale-105"
           unoptimized

@@ -168,6 +168,8 @@ export default async function ProjectDetailPage({
               src={project.coverImage}
               alt={project.title}
               className="aspect-[16/11] shadow-[0_0_80px_rgba(139,92,246,0.14)]"
+              fetchPriority="high"
+              loading="eager"
             />
           </div>
 

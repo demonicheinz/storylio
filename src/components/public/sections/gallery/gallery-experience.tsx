@@ -139,6 +139,7 @@ export function GalleryExperience({
                   photo={photo}
                   width={width}
                   height={height}
+                  priority={photo.id === filteredPhotos[0]?.id}
                   onClick={onClick}
                 />
               ),
@@ -186,6 +187,7 @@ type GalleryPhotoCardProps = {
   width: number;
   height: number;
   onClick?: React.MouseEventHandler;
+  priority?: boolean;
 };
 
 function GalleryPhotoCard({
@@ -193,6 +195,7 @@ function GalleryPhotoCard({
   width,
   height,
   onClick,
+  priority = false,
 }: GalleryPhotoCardProps) {
   const [hasImageError, setHasImageError] = useState(false);
 
@@ -212,6 +215,8 @@ function GalleryPhotoCard({
           alt={photo.alt}
           fill
           sizes="(min-width: 1280px) 360px, (min-width: 768px) 45vw, 100vw"
+          fetchPriority={priority ? "high" : "auto"}
+          loading={priority ? "eager" : "lazy"}
           className="object-cover transition-transform duration-500 group-hover/photo:scale-105"
           unoptimized
           onError={() => setHasImageError(true)}

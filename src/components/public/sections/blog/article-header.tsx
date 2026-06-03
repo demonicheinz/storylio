@@ -52,6 +52,7 @@ export function ArticleHeader({ post }: ArticleHeaderProps) {
       <BlogCover
         src={post.coverImage}
         alt={post.title}
+        fetchPriority="high"
         loading="eager"
         className="aspect-[16/9] shadow-[0_0_80px_rgba(139,92,246,0.14)]"
       />

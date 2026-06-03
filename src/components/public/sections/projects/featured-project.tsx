@@ -30,7 +30,9 @@ export function FeaturedProject({ project }: FeaturedProjectProps) {
           <ProjectCover
             src={project.coverImage}
             alt={project.title}
+            fetchPriority="high"
             className="aspect-[16/11] h-full rounded-[1.55rem] border-brand-soft/20 shadow-[0_0_80px_rgba(139,92,246,0.18)] lg:aspect-auto"
+            loading="eager"
           />
         </Link>
 
