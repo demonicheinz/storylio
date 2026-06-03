@@ -1,5 +1,6 @@
 import { hashPassword } from "better-auth/crypto";
 import { db } from "@/lib/db";
+import { seedGallery } from "./seeds/gallery";
 import { seedPosts } from "./seeds/posts";
 import { seedProjects } from "./seeds/projects";
 
@@ -166,6 +167,10 @@ async function main() {
   await seedPosts({
     db,
     ownerId: owner.id,
+  });
+
+  await seedGallery({
+    db,
   });
 
   console.log("Seeding completed!");
