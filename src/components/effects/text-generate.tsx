@@ -5,6 +5,7 @@ import { useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 export const TextGenerateEffect = ({
+  as,
   words,
   highlightWords = [],
   highlightClass = "text-brand-soft",
@@ -12,6 +13,7 @@ export const TextGenerateEffect = ({
   staggerDuration = 0.2,
   animationDuration = 2,
 }: {
+  as?: "div" | "h1";
   words: string;
   highlightWords?: string[];
   highlightClass?: string;
@@ -42,29 +44,31 @@ export const TextGenerateEffect = ({
     // Dependency array yang lebih lengkap
   }, [scope, animate, staggerDuration, animationDuration]);
 
-  return (
-    <div className={cn("font-bold", className)}>
-      <div className="my-4">
-        <div className="leading-tight tracking-wide text-white">
-          <motion.div
-            ref={scope}
-            className="flex flex-wrap justify-center gap-y-0"
+  const content = (
+    <span className="block leading-tight tracking-wide text-white">
+      <motion.span
+        ref={scope}
+        className="flex flex-wrap justify-center gap-y-0"
+      >
+        {wordsArray.map((word, idx) => (
+          <motion.span
+            // biome-ignore lint/suspicious/noArrayIndexKey: .
+            key={`${word}-${idx}`}
+            className={cn(
+              highlightWordsSet.has(word) ? highlightClass : "text-white",
+              "opacity-0",
+            )}
           >
-            {wordsArray.map((word, idx) => (
-              <motion.span
-                // biome-ignore lint/suspicious/noArrayIndexKey: .
-                key={`${word}-${idx}`}
-                className={cn(
-                  highlightWordsSet.has(word) ? highlightClass : "text-white",
-                  "opacity-0",
-                )}
-              >
-                {word}&nbsp;
-              </motion.span>
-            ))}
-          </motion.div>
-        </div>
-      </div>
-    </div>
+            {word}&nbsp;
+          </motion.span>
+        ))}
+      </motion.span>
+    </span>
   );
+
+  if (as === "h1") {
+    return <h1 className={cn("my-4 font-bold", className)}>{content}</h1>;
+  }
+
+  return <div className={cn("my-4 font-bold", className)}>{content}</div>;
 };
