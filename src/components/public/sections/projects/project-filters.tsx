@@ -47,7 +47,7 @@ export function ProjectFilters({
 
       <div
         className={cn(
-          "flex gap-2 overflow-x-auto pb-1",
+          "flex [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden",
           isPending && "opacity-70",
         )}
       >
@@ -69,11 +69,7 @@ export function ProjectFilters({
               type="button"
               size="sm"
               variant={isActive ? "default" : "outline"}
-              className={cn(
-                "shrink-0 rounded-full border-border/60 bg-surface/70",
-                isActive &&
-                  "border-brand-soft/60 bg-brand-soft text-primary-foreground shadow-[0_0_32px_rgba(139,92,246,0.18)]",
-              )}
+              className="shrink-0 rounded-full"
               onClick={() => updateFilter(tech)}
             >
               {tech}

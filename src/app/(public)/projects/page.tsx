@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
+import Link from "next/link";
 import { Suspense } from "react";
 import { PublicBackground } from "@/components/common";
 import {
@@ -45,6 +46,16 @@ function getSelectedTech(value: string | string[] | undefined) {
   const tech = Array.isArray(value) ? value[0] : value;
 
   return tech?.trim() || undefined;
+}
+
+function formatProjectsSummary(projectsCount: number, selectedTech?: string) {
+  const noun = projectsCount === 1 ? "project" : "projects";
+
+  if (selectedTech) {
+    return `Showing ${projectsCount} ${noun} using ${selectedTech}`;
+  }
+
+  return `Showing ${projectsCount} ${noun} across all stacks`;
 }
 
 async function getProjectsData(selectedTech?: string) {
@@ -120,7 +131,7 @@ export default async function ProjectsPage({
     <main className="min-h-screen overflow-x-hidden">
       <PublicBackground variant="projects" />
 
-      <div className="relative mx-auto flex w-full max-w-[1280px] flex-col px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex w-full max-w-[1180px] flex-col px-4 sm:px-6 lg:px-8">
         <ProjectsHero
           totalProjects={totalProjects}
           totalTech={technologies.length}
@@ -137,6 +148,19 @@ export default async function ProjectsPage({
             selectedTech={selectedTech}
           />
         </Suspense>
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+          <p>{formatProjectsSummary(projects.length, selectedTech)}</p>
+          {selectedTech && (
+            <Link
+              href="/projects"
+              scroll={false}
+              className="text-brand-soft underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            >
+              Reset stack
+            </Link>
+          )}
+        </div>
 
         <div className="flex flex-col gap-8 py-10 md:py-12">
           {featuredProject ? (
