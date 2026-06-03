@@ -3,15 +3,28 @@ import { evaluate } from "next-mdx-remote-client/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
+import { cn } from "@/lib/utils";
 
 const components: MDXComponents = {
-  h2: ({ children }) => (
-    <h2 className="mt-12 scroll-mt-28 font-heading text-3xl font-semibold text-foreground first:mt-0">
+  h2: ({ children, className, ...props }) => (
+    <h2
+      className={cn(
+        "mt-12 scroll-mt-28 font-heading text-3xl font-semibold text-foreground first:mt-0",
+        className,
+      )}
+      {...props}
+    >
       {children}
     </h2>
   ),
-  h3: ({ children }) => (
-    <h3 className="mt-8 scroll-mt-28 font-heading text-2xl font-semibold text-foreground">
+  h3: ({ children, className, ...props }) => (
+    <h3
+      className={cn(
+        "mt-8 scroll-mt-28 font-heading text-2xl font-semibold text-foreground",
+        className,
+      )}
+      {...props}
+    >
       {children}
     </h3>
   ),
@@ -42,7 +55,7 @@ const components: MDXComponents = {
     <li className="text-base leading-7 text-muted-foreground">{children}</li>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="border-brand-soft/50 border-l-2 pl-5 text-foreground">
+    <blockquote className="border-l-2 border-brand-soft/50 pl-5 text-foreground">
       {children}
     </blockquote>
   ),
