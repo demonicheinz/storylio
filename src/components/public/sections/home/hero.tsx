@@ -33,6 +33,7 @@ export function HeroSection({
 
           {/* Headline - Critical for LCP */}
           <TextGenerateEffect
+            as="h1"
             words={title}
             highlightWords={["User", "Experiences"]}
             className="text-center text-[40px] text-foreground md:text-5xl lg:text-6xl dark:text-white"

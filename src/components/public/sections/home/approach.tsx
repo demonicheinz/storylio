@@ -42,9 +42,9 @@ const visualPresets = [
 export function ApproachSection({ phases }: { phases: HomePhase[] }) {
   return (
     <section className="w-full py-10">
-      <h1 className="heading">
+      <h2 className="heading">
         My <span className="text-brand-soft">approach</span>
-      </h1>
+      </h2>
       <div className="mx-auto my-20 flex w-full max-w-7xl flex-wrap justify-center gap-6 px-4">
         {phases.map((phase, index) => {
           const visual = visualPresets[index % visualPresets.length];

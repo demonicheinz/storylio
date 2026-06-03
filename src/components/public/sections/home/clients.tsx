@@ -42,10 +42,10 @@ export function ClientsSection({
 
   return (
     <section id="testimonials" className="py-10">
-      <h1 className="heading">
+      <h2 className="heading">
         {title}
         <span className="text-brand-soft"> {subtitle}</span>
-      </h1>
+      </h2>
 
       <div className="flex flex-col items-center max-lg:mt-10">
         {testimonialItems.length > 0 ? (
