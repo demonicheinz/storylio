@@ -63,7 +63,7 @@ export function ArticleToc({ items }: ArticleTocProps) {
                 }
                 onClick={() => scrollTo(item.id)}
                 className={cn(
-                  "flex w-full cursor-pointer items-center gap-2 text-left text-sm leading-6 transition-colors hover:text-foreground",
+                  "flex w-full cursor-pointer items-center gap-2 text-left text-sm leading-6 transition-colors hover:text-brand-soft",
                   item.level === 3 && "pl-4",
                   displayActiveId === `#${item.id}`
                     ? "font-medium text-brand-soft"
@@ -74,7 +74,7 @@ export function ArticleToc({ items }: ArticleTocProps) {
               >
                 <span
                   className={cn(
-                    "h-px w-3 shrink-0 bg-muted-foreground transition-all group-hover:w-5 group-hover:bg-foreground",
+                    "h-px w-3 shrink-0 bg-muted-foreground transition-all group-hover:w-5 group-hover:bg-brand-soft",
                     displayActiveId === `#${item.id}` && "w-5 bg-brand-soft",
                   )}
                 />
