@@ -5,9 +5,17 @@ type ProjectCoverProps = {
   src: string | null;
   alt: string;
   className?: string;
+  fetchPriority?: "auto" | "high" | "low";
+  loading?: "eager" | "lazy";
 };
 
-export function ProjectCover({ src, alt, className }: ProjectCoverProps) {
+export function ProjectCover({
+  src,
+  alt,
+  className,
+  fetchPriority,
+  loading = "lazy",
+}: ProjectCoverProps) {
   return (
     <div
       className={cn(
@@ -21,6 +29,8 @@ export function ProjectCover({ src, alt, className }: ProjectCoverProps) {
           alt={alt}
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
+          fetchPriority={fetchPriority}
+          loading={loading}
           className="object-cover transition-transform duration-500 group-hover/project:scale-105"
           unoptimized
         />
