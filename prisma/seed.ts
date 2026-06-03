@@ -1,5 +1,6 @@
 import { hashPassword } from "better-auth/crypto";
 import { db } from "@/lib/db";
+import { seedPosts } from "./seeds/posts";
 import { seedProjects } from "./seeds/projects";
 
 async function main() {
@@ -158,6 +159,11 @@ async function main() {
   }
 
   await seedProjects({
+    db,
+    ownerId: owner.id,
+  });
+
+  await seedPosts({
     db,
     ownerId: owner.id,
   });
