@@ -62,10 +62,16 @@ async function getBlogData(selectedTag?: string) {
   "use cache";
   cacheLife("minutes");
 
+  const now = new Date();
+  const publishedWhere = {
+    status: PostStatus.PUBLISHED,
+    OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],
+  };
+
   const [posts, allPublishedPosts] = await Promise.all([
     db.post.findMany({
       where: {
-        status: PostStatus.PUBLISHED,
+        ...publishedWhere,
         ...(selectedTag
           ? {
               tags: {
@@ -106,9 +112,7 @@ async function getBlogData(selectedTag?: string) {
       ],
     }),
     db.post.findMany({
-      where: {
-        status: PostStatus.PUBLISHED,
-      },
+      where: publishedWhere,
       select: {
         id: true,
         tags: {

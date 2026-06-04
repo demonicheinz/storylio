@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     db.post.findMany({
       where: {
         status: PostStatus.PUBLISHED,
+        OR: [{ publishedAt: null }, { publishedAt: { lte: new Date() } }],
       },
       select: {
         slug: true,

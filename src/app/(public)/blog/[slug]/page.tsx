@@ -32,6 +32,7 @@ async function getPostBySlug(slug: string) {
     where: {
       slug,
       status: PostStatus.PUBLISHED,
+      OR: [{ publishedAt: null }, { publishedAt: { lte: new Date() } }],
     },
     select: {
       id: true,
@@ -63,6 +64,7 @@ async function getArticleCompanions(currentPostId: string, tagNames: string[]) {
   const posts = await db.post.findMany({
     where: {
       status: PostStatus.PUBLISHED,
+      OR: [{ publishedAt: null }, { publishedAt: { lte: new Date() } }],
     },
     select: {
       id: true,

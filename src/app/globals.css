@@ -246,3 +246,152 @@
   );
   overflow: hidden;
 }
+
+@layer components {
+  .storylio-native-control {
+    color-scheme: dark;
+  }
+
+  .storylio-native-control option {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
+
+  .storylio-native-control::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(1) saturate(0.8);
+    opacity: 0.72;
+  }
+
+  .storylio-native-control::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+
+  .storylio-mdx-editor {
+    --baseBase: var(--background);
+    --baseBgSubtle: color-mix(in oklch, var(--surface) 72%, black);
+    --baseBg: color-mix(in oklch, var(--surface) 82%, black);
+    --baseBgHover: color-mix(in oklch, var(--surface-hover) 86%, black);
+    --baseBgActive: color-mix(in oklch, var(--accent) 52%, var(--surface));
+    --baseLine: var(--border);
+    --baseBorder: var(--border);
+    --baseBorderHover: var(--border-hover, var(--ring));
+    --baseSolid: var(--muted-foreground);
+    --baseSolidHover: var(--foreground);
+    --baseText: var(--muted-foreground);
+    --baseTextContrast: var(--foreground);
+    --accentBase: var(--background);
+    --accentBgSubtle: color-mix(in oklch, var(--primary) 12%, var(--surface));
+    --accentBg: color-mix(in oklch, var(--primary) 18%, var(--surface));
+    --accentBgHover: color-mix(in oklch, var(--primary) 26%, var(--surface));
+    --accentBgActive: color-mix(in oklch, var(--primary) 34%, var(--surface));
+    --accentLine: color-mix(in oklch, var(--primary) 45%, var(--border));
+    --accentBorder: color-mix(in oklch, var(--primary) 55%, var(--border));
+    --accentBorderHover: var(--ring);
+    --accentSolid: var(--primary);
+    --accentSolidHover: color-mix(in oklch, var(--primary) 88%, white);
+    --accentText: var(--brand-soft);
+    --accentTextContrast: var(--foreground);
+    background: color-mix(in oklch, var(--surface) 78%, black);
+    color: var(--foreground);
+  }
+
+  .storylio-mdx-editor [class*="_toolbarRoot_"] {
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in oklch, var(--surface) 88%, black);
+    color: var(--foreground);
+  }
+
+  .storylio-mdx-editor [class*="_toolbarButton_"],
+  .storylio-mdx-editor [class*="_toolbarToggleItem_"],
+  .storylio-mdx-editor [class*="_toolbarNodeKindSelectTrigger_"],
+  .storylio-mdx-editor [class*="_toolbarButtonSelectTrigger_"],
+  .storylio-mdx-editor [class*="_selectTrigger_"] {
+    color: var(--foreground);
+  }
+
+  .storylio-mdx-editor [class*="_toolbarButton_"]:hover,
+  .storylio-mdx-editor [class*="_toolbarToggleItem_"]:hover,
+  .storylio-mdx-editor [class*="_toolbarNodeKindSelectTrigger_"]:hover,
+  .storylio-mdx-editor [class*="_toolbarButtonSelectTrigger_"]:hover,
+  .storylio-mdx-editor [class*="_selectTrigger_"]:hover {
+    background: var(--accent);
+  }
+
+  .storylio-mdx-editor [class*="_toolbarButton_"][data-state="on"],
+  .storylio-mdx-editor [class*="_toolbarToggleItem_"][data-state="on"] {
+    background: color-mix(in oklch, var(--primary) 28%, var(--surface));
+    color: var(--foreground);
+  }
+
+  .storylio-mdx-editor .cm-editor,
+  .storylio-mdx-editor .cm-gutters {
+    background: color-mix(in oklch, var(--background) 88%, black);
+    color: var(--foreground);
+  }
+
+  .storylio-mdx-editor .cm-gutters {
+    border-color: var(--border);
+    color: var(--muted-foreground);
+  }
+
+  .storylio-mdx-editor .cm-activeLine,
+  .storylio-mdx-editor .cm-activeLineGutter {
+    background: color-mix(in oklch, var(--primary) 12%, transparent);
+  }
+
+  .storylio-mdx-editor .cm-cursor {
+    border-left-color: var(--brand-soft);
+  }
+
+  .storylio-mdx-editor .cm-selectionBackground,
+  .storylio-mdx-editor .cm-focused .cm-selectionBackground {
+    background: color-mix(in oklch, var(--primary) 36%, transparent);
+  }
+
+  [class*="_linkDialogPopoverContent_"],
+  [class*="_popoverContent_"],
+  [class*="_toolbarNodeKindSelectContainer_"],
+  [class*="_toolbarButtonDropdownContainer_"],
+  [class*="_toolbarCodeBlockLanguageSelectContent_"],
+  [class*="_popupContainer_"],
+  [class*="_tooltipContent_"] {
+    z-index: 60;
+    border: 1px solid var(--border);
+    background: var(--popover);
+    color: var(--popover-foreground);
+    box-shadow: 0 22px 60px
+      color-mix(in oklch, var(--background) 70%, transparent);
+  }
+
+  [class*="_popoverArrow_"] {
+    fill: var(--popover);
+  }
+
+  [class*="_linkDialogInput_"],
+  [class*="_dialogInput_"] {
+    background: color-mix(in oklch, var(--input) 78%, var(--background));
+    color: var(--foreground);
+  }
+
+  [class*="_linkDialogInput_"]::placeholder,
+  [class*="_dialogInput_"]::placeholder {
+    color: var(--muted-foreground);
+  }
+
+  [class*="_linkDialogPreviewAnchor_"],
+  [class*="_linkDialogAnchor_"] {
+    color: var(--brand-soft);
+  }
+
+  [class*="_selectItem_"],
+  [class*="_toolbarNodeKindSelectItem_"] {
+    color: var(--foreground);
+  }
+
+  [class*="_selectItem_"][data-highlighted],
+  [class*="_toolbarNodeKindSelectItem_"][data-highlighted] {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+}

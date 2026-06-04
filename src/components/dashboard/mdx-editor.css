@@ -1,0 +1,160 @@
+.storylio-mdx-editor.dark-theme {
+  --baseBase: var(--background);
+  --baseBgSubtle: color-mix(in oklch, var(--surface) 72%, black);
+  --baseBg: color-mix(in oklch, var(--surface) 82%, black);
+  --baseBgHover: color-mix(in oklch, var(--surface-hover) 86%, black);
+  --baseBgActive: color-mix(in oklch, var(--accent) 52%, var(--surface));
+  --baseLine: var(--border);
+  --baseBorder: var(--border);
+  --baseBorderHover: var(--border-hover, var(--ring));
+  --baseSolid: var(--muted-foreground);
+  --baseSolidHover: var(--foreground);
+  --baseText: var(--muted-foreground);
+  --baseTextContrast: var(--foreground);
+  --accentBase: var(--background);
+  --accentBgSubtle: color-mix(in oklch, var(--primary) 12%, var(--surface));
+  --accentBg: color-mix(in oklch, var(--primary) 18%, var(--surface));
+  --accentBgHover: color-mix(in oklch, var(--primary) 26%, var(--surface));
+  --accentBgActive: color-mix(in oklch, var(--primary) 34%, var(--surface));
+  --accentLine: color-mix(in oklch, var(--primary) 45%, var(--border));
+  --accentBorder: color-mix(in oklch, var(--primary) 55%, var(--border));
+  --accentBorderHover: var(--ring);
+  --accentSolid: var(--primary);
+  --accentSolidHover: color-mix(in oklch, var(--primary) 88%, white);
+  --accentText: var(--brand-soft);
+  --accentTextContrast: var(--foreground);
+  background: color-mix(in oklch, var(--surface) 78%, black) !important;
+  color: var(--foreground) !important;
+}
+
+.storylio-mdx-editor.dark-theme [class*="_toolbarRoot_"] {
+  border-bottom: 1px solid var(--border) !important;
+  background: color-mix(in oklch, var(--surface) 88%, black) !important;
+  color: var(--foreground) !important;
+}
+
+.storylio-mdx-editor.dark-theme [class*="_toolbarButton_"],
+.storylio-mdx-editor.dark-theme [class*="_toolbarToggleItem_"],
+.storylio-mdx-editor.dark-theme [class*="_toolbarNodeKindSelectTrigger_"],
+.storylio-mdx-editor.dark-theme [class*="_toolbarButtonSelectTrigger_"],
+.storylio-mdx-editor.dark-theme [class*="_selectTrigger_"],
+.storylio-mdx-editor.dark-theme
+  [class*="_toolbarCodeBlockLanguageSelectTrigger_"] {
+  border-color: var(--border) !important;
+  background: color-mix(in oklch, var(--surface) 88%, black) !important;
+  color: var(--foreground) !important;
+}
+
+.storylio-mdx-editor.dark-theme [class*="_toolbarButton_"]:hover,
+.storylio-mdx-editor.dark-theme [class*="_toolbarToggleItem_"]:hover,
+.storylio-mdx-editor.dark-theme [class*="_toolbarNodeKindSelectTrigger_"]:hover,
+.storylio-mdx-editor.dark-theme [class*="_toolbarButtonSelectTrigger_"]:hover,
+.storylio-mdx-editor.dark-theme [class*="_selectTrigger_"]:hover,
+.storylio-mdx-editor.dark-theme
+  [class*="_toolbarCodeBlockLanguageSelectTrigger_"]:hover {
+  background: var(--accent) !important;
+}
+
+.storylio-mdx-editor.dark-theme [class*="_toolbarButton_"][data-state="on"],
+.storylio-mdx-editor.dark-theme
+  [class*="_toolbarToggleItem_"][data-state="on"] {
+  background: color-mix(
+    in oklch,
+    var(--primary) 28%,
+    var(--surface)
+  ) !important;
+  color: var(--foreground) !important;
+}
+
+.storylio-mdx-editor.dark-theme [class*="_codeMirrorWrapper_"],
+.storylio-mdx-editor.dark-theme [class*="_codeBlockEditor_"],
+.storylio-mdx-editor.dark-theme .cm-editor,
+.storylio-mdx-editor.dark-theme .cm-scroller,
+.storylio-mdx-editor.dark-theme .cm-content,
+.storylio-mdx-editor.dark-theme .cm-gutters {
+  background: color-mix(in oklch, var(--background) 88%, black) !important;
+  color: var(--foreground) !important;
+}
+
+.storylio-mdx-editor.dark-theme .cm-gutters {
+  border-color: var(--border) !important;
+  color: var(--muted-foreground) !important;
+}
+
+.storylio-mdx-editor.dark-theme .cm-activeLine,
+.storylio-mdx-editor.dark-theme .cm-activeLineGutter {
+  background: color-mix(in oklch, var(--primary) 12%, transparent) !important;
+}
+
+.storylio-mdx-editor.dark-theme .cm-cursor {
+  border-left-color: var(--brand-soft) !important;
+}
+
+.storylio-mdx-editor.dark-theme .cm-selectionBackground,
+.storylio-mdx-editor.dark-theme .cm-focused .cm-selectionBackground {
+  background: color-mix(in oklch, var(--primary) 36%, transparent) !important;
+}
+
+.storylio-mdx-editor.dark-theme
+  [class*="_toolbarCodeBlockLanguageSelectContent_"],
+.storylio-mdx-editor.dark-theme [class*="_toolbarButtonDropdownContainer_"],
+.storylio-mdx-editor.dark-theme [class*="_toolbarNodeKindSelectContainer_"],
+[class*="_toolbarCodeBlockLanguageSelectContent_"],
+[class*="_toolbarButtonDropdownContainer_"],
+[class*="_toolbarNodeKindSelectContainer_"],
+[class*="_linkDialogPopoverContent_"],
+[class*="_popoverContent_"],
+[class*="_popupContainer_"],
+[class*="_tooltipContent_"] {
+  z-index: 60 !important;
+  border: 1px solid var(--border) !important;
+  background: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+  box-shadow: 0 22px 60px
+    color-mix(in oklch, var(--background) 70%, transparent) !important;
+}
+
+[class*="_popoverArrow_"] {
+  fill: var(--popover) !important;
+}
+
+[class*="_linkDialogEditForm_"],
+[class*="_linkDialogInputWrapper_"] {
+  background: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+}
+
+[class*="_linkDialogInput_"],
+[class*="_dialogInput_"] {
+  border-color: var(--border) !important;
+  background: color-mix(
+    in oklch,
+    var(--input) 78%,
+    var(--background)
+  ) !important;
+  color: var(--foreground) !important;
+}
+
+[class*="_linkDialogInput_"]::placeholder,
+[class*="_dialogInput_"]::placeholder {
+  color: var(--muted-foreground) !important;
+}
+
+[class*="_linkDialogPreviewAnchor_"],
+[class*="_linkDialogAnchor_"] {
+  color: var(--brand-soft) !important;
+}
+
+[class*="_selectItem_"],
+[class*="_toolbarNodeKindSelectItem_"] {
+  background: var(--popover) !important;
+  color: var(--foreground) !important;
+}
+
+[class*="_selectItem_"][data-highlighted],
+[class*="_selectItem_"][data-state="checked"],
+[class*="_toolbarNodeKindSelectItem_"][data-highlighted],
+[class*="_toolbarNodeKindSelectItem_"][data-state="checked"] {
+  background: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}

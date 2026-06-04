@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect } from "react";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -11,5 +12,10 @@ export function Providers({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, []);
 
-  return <TooltipProvider>{children}</TooltipProvider>;
+  return (
+    <TooltipProvider>
+      {children}
+      <Toaster />
+    </TooltipProvider>
+  );
 }
