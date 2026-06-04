@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { MediaLibraryClient } from "@/app/(dashboard)/dashboard/media/media-client";
+import { MediaLibraryClient } from "@/features/dashboard/media/components/media-client";
 import { db } from "@/lib/db";
 
 async function getMedia() {

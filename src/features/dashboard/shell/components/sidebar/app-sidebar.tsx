@@ -15,8 +15,6 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import type * as React from "react";
-import { NavMain } from "@/components/dashboard/sidebar/nav-main";
-import { NavUser } from "@/components/dashboard/sidebar/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -28,6 +26,8 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { NavMain } from "@/features/dashboard/shell/components/sidebar/nav-main";
+import { NavUser } from "@/features/dashboard/shell/components/sidebar/nav-user";
 
 const navItems = [
   { title: "Overview", url: "/dashboard", icon: HouseIcon },

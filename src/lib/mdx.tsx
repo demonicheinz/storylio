@@ -79,7 +79,7 @@ const components: MDXComponents = {
     );
   },
   pre: ({ children }) => (
-    <pre className="overflow-x-auto rounded-2xl border border-border/40 bg-background/80 p-4 text-sm leading-7 [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit [&_mark]:bg-transparent [&_[data-highlighted-line]]:bg-transparent [&_[data-highlighted-chars]]:bg-transparent">
+    <pre className="overflow-x-auto rounded-2xl border border-border/40 bg-background/80 p-4 text-sm leading-7 [&_[data-highlighted-chars]]:bg-transparent [&_[data-highlighted-line]]:bg-transparent [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit [&_mark]:bg-transparent">
       {children}
     </pre>
   ),

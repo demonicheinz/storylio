@@ -12,11 +12,6 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import {
-  actionChangePassword,
-  actionUpdateProfileSettings,
-} from "@/app/(dashboard)/dashboard/actions/settings-actions";
-import { ImageUpload } from "@/components/dashboard/image-upload";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,12 +25,17 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  actionChangePassword,
+  actionUpdateProfileSettings,
+} from "@/features/dashboard/settings/actions";
+import {
   type AccountPasswordActionInput,
   accountPasswordActionSchema,
   type ProfileSettingsActionInput,
   type ProfileSettingsActionValues,
   profileSettingsActionSchema,
-} from "@/lib/validations/settings";
+} from "@/features/dashboard/settings/validations";
+import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 
 type SettingsManagerProps = {
   profile: {

@@ -1,14 +1,14 @@
 "use client";
 
 import { Suspense } from "react";
-import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
-import { AppSidebar } from "@/components/dashboard/sidebar/app-sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { DashboardBreadcrumb } from "@/features/dashboard/shell/components/dashboard-breadcrumb";
+import { AppSidebar } from "@/features/dashboard/shell/components/sidebar/app-sidebar";
 
 export default function DashboardLayout({
   children,

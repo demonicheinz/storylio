@@ -17,13 +17,6 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
-  actionCreateGalleryItem,
-  actionDeleteGalleryItem,
-  actionReorderGalleryItems,
-  actionUpdateGalleryItem,
-} from "@/app/(dashboard)/dashboard/actions/gallery-actions";
-import { ImageUpload } from "@/components/dashboard/image-upload";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -55,12 +48,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { formatDate } from "@/lib/utils";
+import {
+  actionCreateGalleryItem,
+  actionDeleteGalleryItem,
+  actionReorderGalleryItems,
+  actionUpdateGalleryItem,
+} from "@/features/dashboard/gallery/actions";
 import {
   type GalleryItemActionInput,
   type GalleryItemActionValues,
   galleryItemActionSchema,
-} from "@/lib/validations/gallery";
+} from "@/features/dashboard/gallery/validations";
+import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
+import { formatDate } from "@/lib/utils";
 
 export type DashboardGalleryItem = {
   id: string;

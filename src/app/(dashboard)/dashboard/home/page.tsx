@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { HomeContentManager } from "@/components/dashboard/home-section-form";
+import { HomeContentManager } from "@/features/dashboard/home/components/home-section-form";
 import { HomeSectionType } from "@/generated/prisma";
 import { db } from "@/lib/db";
 

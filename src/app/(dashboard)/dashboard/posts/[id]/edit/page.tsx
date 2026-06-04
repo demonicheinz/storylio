@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { PostEditor } from "@/components/dashboard/post-editor";
+import { PostEditor } from "@/features/dashboard/posts/components/post-editor";
 import { PostStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
 

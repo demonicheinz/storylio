@@ -22,7 +22,7 @@ import {
   UndoRedo,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import "@/components/dashboard/mdx-editor.css";
+import "@/features/dashboard/shared/components/mdx-editor.css";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 

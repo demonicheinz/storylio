@@ -2,17 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import type { ActionResult } from "@/lib/action-result";
-import { actionError, actionSuccess } from "@/lib/action-result";
-import { auth } from "@/lib/auth";
-import { getActionSession } from "@/lib/auth-session";
-import { db } from "@/lib/db";
 import {
   type AccountPasswordActionInput,
   accountPasswordActionSchema,
   type ProfileSettingsActionInput,
   profileSettingsActionSchema,
-} from "@/lib/validations/settings";
+} from "@/features/dashboard/settings/validations";
+import type { ActionResult } from "@/lib/action-result";
+import { actionError, actionSuccess } from "@/lib/action-result";
+import { auth } from "@/lib/auth";
+import { getActionSession } from "@/lib/auth-session";
+import { db } from "@/lib/db";
 
 type ProfileSettingsActionData = {
   id: string;

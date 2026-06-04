@@ -4,8 +4,8 @@ import { ArrowDownIcon, ArrowUpIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { actionReorderProjects } from "@/app/(dashboard)/dashboard/actions/project-actions";
 import { Button } from "@/components/ui/button";
+import { actionReorderProjects } from "@/features/dashboard/projects/actions";
 
 type ProjectReorderButtonProps = {
   direction: "up" | "down";
