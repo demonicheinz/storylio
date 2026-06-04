@@ -46,3 +46,6 @@ CLAUDE.md
 
 # prisma generated client
 src/generated/
+
+# editor
+.vscode/

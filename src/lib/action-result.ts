@@ -4,14 +4,17 @@
  * can handle success/error consistently.
  */
 export type ActionResult<T = undefined> =
-  | { success: true; data: T }
-  | { success: false; error: string };
+  | { success: true; data?: T; message?: string }
+  | { success: false; error: string; fieldErrors?: Record<string, string[]> };
 
 /** Convenience constructors */
-export function actionSuccess<T>(data: T): ActionResult<T> {
-  return { success: true, data };
+export function actionSuccess<T>(data?: T, message?: string): ActionResult<T> {
+  return { success: true, data, message };
 }
 
-export function actionError(error: string): ActionResult<never> {
-  return { success: false, error };
+export function actionError(
+  error: string,
+  fieldErrors?: Record<string, string[]>,
+): ActionResult<never> {
+  return { success: false, error, fieldErrors };
 }

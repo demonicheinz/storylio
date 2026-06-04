@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -25,22 +25,72 @@ const segmentLabels: Record<string, string> = {
   testimonials: "Testimonials",
 };
 
-function getBreadcrumbItems(pathname: string) {
+type BreadcrumbItemData = {
+  href: string;
+  label: string;
+};
+
+type BreadcrumbLabelMap = Record<string, BreadcrumbItemData>;
+type BreadcrumbItem = BreadcrumbItemData & {
+  isDynamic: boolean;
+};
+
+function getStoredLabels(pathname: string): BreadcrumbLabelMap {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  const segments = pathname.split("/").filter(Boolean);
+  const labels: BreadcrumbLabelMap = {};
+
+  for (let index = 0; index < segments.length; index += 1) {
+    if (segments[index - 1] !== "posts") {
+      continue;
+    }
+
+    const postId = segments[index];
+    const item = window.localStorage.getItem(
+      `dashboard-breadcrumb:post:${postId}`,
+    );
+
+    if (!item) {
+      continue;
+    }
+
+    try {
+      const parsed = JSON.parse(item) as BreadcrumbItemData;
+      if (parsed.label && parsed.href) {
+        labels[postId] = parsed;
+      }
+    } catch {
+      window.localStorage.removeItem(`dashboard-breadcrumb:post:${postId}`);
+    }
+  }
+
+  return labels;
+}
+
+function getBreadcrumbItems(
+  pathname: string,
+  dynamicLabels: BreadcrumbLabelMap,
+): BreadcrumbItem[] {
   const segments = pathname.split("/").filter(Boolean);
   const dashboardIndex = segments.indexOf("dashboard");
   const dashboardSegments =
     dashboardIndex >= 0 ? segments.slice(dashboardIndex + 1) : [];
 
   if (dashboardSegments.length === 0) {
-    return [{ href: "/dashboard", label: "Overview" }];
+    return [{ href: "/dashboard", isDynamic: false, label: "Overview" }];
   }
 
   return dashboardSegments.map((segment, index) => {
     const href = `/dashboard/${dashboardSegments.slice(0, index + 1).join("/")}`;
-    const label = segmentLabels[segment] ?? segment;
+    const dynamicLabel = dynamicLabels[segment];
+    const label = dynamicLabel?.label ?? segmentLabels[segment] ?? segment;
 
     return {
       href,
+      isDynamic: !!dynamicLabel,
       label,
     };
   });
@@ -48,7 +98,27 @@ function getBreadcrumbItems(pathname: string) {
 
 export function DashboardBreadcrumb() {
   const pathname = usePathname();
-  const items = getBreadcrumbItems(pathname);
+  const [dynamicLabels, setDynamicLabels] = useState<BreadcrumbLabelMap>({});
+  const items = useMemo(
+    () => getBreadcrumbItems(pathname, dynamicLabels),
+    [dynamicLabels, pathname],
+  );
+
+  useEffect(() => {
+    const syncLabels = () => setDynamicLabels(getStoredLabels(pathname));
+
+    syncLabels();
+    window.addEventListener("dashboard-breadcrumb-labels-changed", syncLabels);
+    window.addEventListener("storage", syncLabels);
+
+    return () => {
+      window.removeEventListener(
+        "dashboard-breadcrumb-labels-changed",
+        syncLabels,
+      );
+      window.removeEventListener("storage", syncLabels);
+    };
+  }, [pathname]);
 
   return (
     <Breadcrumb>
@@ -72,11 +142,16 @@ export function DashboardBreadcrumb() {
           }
 
           return (
-            <Fragment key={item.href}>
+            <Fragment key={`${item.href}-${index}`}>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                {isLast ? (
-                  <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                {isLast || item.isDynamic ? (
+                  <BreadcrumbPage
+                    aria-current={isLast ? "page" : undefined}
+                    className={!isLast ? "text-muted-foreground" : undefined}
+                  >
+                    {item.label}
+                  </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink asChild>
                     <Link href={item.href}>{item.label}</Link>

@@ -15,6 +15,7 @@ export async function POST(_request: Request, { params }: ViewRouteContext) {
     where: {
       slug,
       status: PostStatus.PUBLISHED,
+      OR: [{ publishedAt: null }, { publishedAt: { lte: new Date() } }],
     },
     select: {
       id: true,
