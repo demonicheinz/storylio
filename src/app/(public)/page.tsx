@@ -5,9 +5,10 @@ import {
   ApproachSection,
   ClientsSection,
   HeroSection,
-  // RecentPostsSection,
-  // RecentProjectsSection,
+  RecentPostsSection,
+  RecentProjectsSection,
 } from "@/components/public/sections/home";
+import { PostStatus, ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -36,71 +37,135 @@ async function getHomeData() {
   "use cache";
   cacheLife("hours");
 
-  const [owner, phases, logos, testimonials] = await Promise.all([
-    db.user.findFirst({
-      select: {
-        name: true,
-        tagline: true,
-        bio: true,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-    }),
-    db.homeSection.findMany({
-      where: {
-        type: "PHASE",
-      },
-      select: {
-        id: true,
-        label: true,
-        content: true,
-        order: true,
-      },
-      orderBy: {
-        order: "asc",
-      },
-    }),
-    db.homeSection.findMany({
-      where: {
-        type: "LOGO",
-      },
-      select: {
-        id: true,
-        label: true,
-        imageUrl: true,
-        order: true,
-      },
-      orderBy: {
-        order: "asc",
-      },
-    }),
-    db.testimonial.findMany({
-      select: {
-        id: true,
-        name: true,
-        role: true,
-        company: true,
-        avatar: true,
-        content: true,
-        order: true,
-      },
-      orderBy: {
-        order: "asc",
-      },
-    }),
-  ]);
+  const now = new Date();
+  const [owner, phases, logos, testimonials, recentProjects, recentPosts] =
+    await Promise.all([
+      db.user.findFirst({
+        select: {
+          name: true,
+          image: true,
+          tagline: true,
+          bio: true,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      }),
+      db.homeSection.findMany({
+        where: {
+          type: "PHASE",
+        },
+        select: {
+          id: true,
+          label: true,
+          content: true,
+          order: true,
+        },
+        orderBy: {
+          order: "asc",
+        },
+      }),
+      db.homeSection.findMany({
+        where: {
+          type: "LOGO",
+        },
+        select: {
+          id: true,
+          label: true,
+          imageUrl: true,
+          order: true,
+        },
+        orderBy: {
+          order: "asc",
+        },
+      }),
+      db.testimonial.findMany({
+        select: {
+          id: true,
+          name: true,
+          role: true,
+          company: true,
+          avatar: true,
+          content: true,
+          order: true,
+        },
+        orderBy: {
+          order: "asc",
+        },
+      }),
+      db.project.findMany({
+        where: {
+          status: ProjectStatus.PUBLISHED,
+        },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          description: true,
+          coverImage: true,
+          techStack: true,
+          order: true,
+          createdAt: true,
+        },
+        orderBy: [
+          {
+            order: "asc",
+          },
+          {
+            createdAt: "desc",
+          },
+        ],
+        take: 4,
+      }),
+      db.post.findMany({
+        where: {
+          status: PostStatus.PUBLISHED,
+          OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],
+        },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          excerpt: true,
+          content: true,
+          coverImage: true,
+          publishedAt: true,
+          createdAt: true,
+          tags: {
+            select: {
+              id: true,
+              name: true,
+            },
+            orderBy: {
+              name: "asc",
+            },
+          },
+        },
+        orderBy: [
+          {
+            publishedAt: "desc",
+          },
+          {
+            createdAt: "desc",
+          },
+        ],
+        take: 3,
+      }),
+    ]);
 
   return {
     owner,
     phases,
     logos,
     testimonials,
+    recentProjects,
+    recentPosts,
   };
 }
 
 export default async function HomePage() {
-  const { owner, phases, logos, testimonials } = await getHomeData();
+  const { owner, phases, logos, testimonials, recentProjects, recentPosts } =
+    await getHomeData();
   const title = "Transforming Concepts into Seamless User Experiences";
   const description =
     owner?.bio ??
@@ -115,14 +180,16 @@ export default async function HomePage() {
             title={title}
             subtitle="Dynamic Web Magic with Next.js"
             description={description}
+            avatar={owner?.image}
+            avatarAlt={owner?.name ?? "Heinz Avatar"}
           />
         </section>
 
         <div className="relative z-10 mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-10">
-            {/* <RecentProjectsSection /> */}
+            <RecentProjectsSection projects={recentProjects} />
             <ApproachSection phases={phases} />
-            {/* <RecentPostsSection /> */}
+            <RecentPostsSection posts={recentPosts} />
             <ClientsSection logos={logos} testimonials={testimonials} />
           </div>
         </div>

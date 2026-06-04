@@ -6,9 +6,19 @@ import { cn } from "@/lib/utils";
 
 interface ProfileSectionProps {
   isMobile?: boolean;
+  profile?: {
+    name?: string | null;
+    image?: string | null;
+  };
 }
 
-export function ProfileSection({ isMobile = false }: ProfileSectionProps) {
+export function ProfileSection({
+  isMobile = false,
+  profile,
+}: ProfileSectionProps) {
+  const name = profile?.name ?? person.name;
+  const avatar = profile?.image ?? person.avatar;
+
   return (
     <aside
       className={cn(
@@ -18,7 +28,7 @@ export function ProfileSection({ isMobile = false }: ProfileSectionProps) {
     >
       <div className="flex flex-col items-center gap-4">
         <Avatar className="size-40 border border-brand-soft/40">
-          <AvatarImage src={person.avatar} alt={person.name} />
+          <AvatarImage src={avatar} alt={name} />
           <AvatarFallback>HZ</AvatarFallback>
         </Avatar>
 

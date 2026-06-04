@@ -3,7 +3,7 @@
 import { ArrowUpRightIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { type ButtonHTMLAttributes, type ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
 
 type MagicButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -53,7 +53,8 @@ export function MagicButton({
   ...props
 }: MagicButtonProps) {
   const content = children ?? order;
-  const showImage = Boolean(imageSrc);
+  const [hasImageError, setHasImageError] = useState(false);
+  const showImage = Boolean(imageSrc) && !hasImageError;
   const showIcon = iconName === "arrowUpRight";
 
   const classNames = cn(
@@ -78,6 +79,7 @@ export function MagicButton({
             width={imageSize}
             height={imageSize}
             className="rounded-full object-cover"
+            onError={() => setHasImageError(true)}
           />
         ) : null}
         {showIcon && iconPosition === "left" ? (
@@ -98,6 +100,7 @@ export function MagicButton({
             width={imageSize}
             height={imageSize}
             className="rounded-full object-cover"
+            onError={() => setHasImageError(true)}
           />
         ) : null}
       </span>

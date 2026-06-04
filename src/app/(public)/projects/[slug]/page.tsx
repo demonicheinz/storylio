@@ -107,26 +107,28 @@ export async function generateMetadata({
     };
   }
 
+  const description =
+    project.description ??
+    `Read the project details for ${project.title} by Heinz on Storylio.`;
+  const image =
+    project.coverImage ??
+    `/og?title=${encodeURIComponent(project.title)}&type=project`;
+
   return {
-    title: project.title,
-    description:
-      project.description ??
-      `Read the project details for ${project.title} by Ahmad Haizul Amany.`,
+    title: `${project.title} — Storylio`,
+    description,
     openGraph: {
-      title: project.title,
-      description:
-        project.description ??
-        `Read the project details for ${project.title} by Ahmad Haizul Amany.`,
+      title: `${project.title} — Storylio`,
+      description,
       type: "article",
-      images: [`/og?title=${encodeURIComponent(project.title)}&type=project`],
+      siteName: "Storylio",
+      images: [image],
     },
     twitter: {
       card: "summary_large_image",
-      title: project.title,
-      description:
-        project.description ??
-        `Read the project details for ${project.title} by Ahmad Haizul Amany.`,
-      images: [`/og?title=${encodeURIComponent(project.title)}&type=project`],
+      title: `${project.title} — Storylio`,
+      description,
+      images: [image],
     },
   };
 }
