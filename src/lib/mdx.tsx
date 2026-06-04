@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { MDXComponents } from "next-mdx-remote-client/rsc";
 import { evaluate } from "next-mdx-remote-client/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
@@ -59,15 +60,26 @@ const components: MDXComponents = {
       {children}
     </blockquote>
   ),
-  img: ({ alt, src }) => (
-    <img
-      src={src}
-      alt={alt ?? ""}
-      className="my-8 aspect-video w-full rounded-2xl border border-border/40 object-cover"
-    />
-  ),
+  img: ({ alt, src }) => {
+    if (!src || typeof src !== "string") {
+      return null;
+    }
+
+    return (
+      <span className="relative my-8 block aspect-video w-full overflow-hidden rounded-2xl border border-border/40 bg-surface/60">
+        <Image
+          src={src}
+          alt={alt ?? ""}
+          fill
+          sizes="(min-width: 1280px) 760px, calc(100vw - 3rem)"
+          className="object-cover"
+          unoptimized
+        />
+      </span>
+    );
+  },
   pre: ({ children }) => (
-    <pre className="overflow-x-auto rounded-2xl border border-border/40 bg-background/80 p-4 text-sm leading-7">
+    <pre className="overflow-x-auto rounded-2xl border border-border/40 bg-background/80 p-4 text-sm leading-7 [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit [&_mark]:bg-transparent [&_[data-highlighted-line]]:bg-transparent [&_[data-highlighted-chars]]:bg-transparent">
       {children}
     </pre>
   ),
