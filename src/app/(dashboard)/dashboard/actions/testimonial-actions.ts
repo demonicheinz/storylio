@@ -1,0 +1,208 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import type { ActionResult } from "@/lib/action-result";
+import { actionError, actionSuccess } from "@/lib/action-result";
+import { getActionSession } from "@/lib/auth-session";
+import { db } from "@/lib/db";
+import {
+  type TestimonialActionInput,
+  testimonialActionSchema,
+  testimonialReorderSchema,
+} from "@/lib/validations/testimonial";
+
+type TestimonialActionData = {
+  id: string;
+};
+
+function flattenFieldErrors(
+  fieldErrors: Record<string, string[] | undefined>,
+): Record<string, string[]> {
+  return Object.fromEntries(
+    Object.entries(fieldErrors).filter((entry): entry is [string, string[]] =>
+      Array.isArray(entry[1]),
+    ),
+  );
+}
+
+function parseTestimonialInput(input: unknown) {
+  const parsed = testimonialActionSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return {
+      success: false as const,
+      result: actionError(
+        "Please fix the highlighted fields.",
+        flattenFieldErrors(parsed.error.flatten().fieldErrors),
+      ),
+    };
+  }
+
+  return {
+    success: true as const,
+    data: parsed.data,
+  };
+}
+
+function revalidateTestimonialPaths() {
+  revalidatePath("/dashboard/testimonials");
+  revalidatePath("/dashboard");
+  revalidatePath("/");
+}
+
+async function getNextTestimonialOrder() {
+  const lastItem = await db.testimonial.findFirst({
+    orderBy: { order: "desc" },
+    select: { order: true },
+  });
+
+  return (lastItem?.order ?? -1) + 1;
+}
+
+export async function actionCreateTestimonial(
+  input: TestimonialActionInput,
+): Promise<ActionResult<TestimonialActionData>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsed = parseTestimonialInput(input);
+  if (!parsed.success) {
+    return parsed.result;
+  }
+
+  try {
+    const testimonial = await db.testimonial.create({
+      data: {
+        name: parsed.data.name,
+        role: parsed.data.role || null,
+        company: parsed.data.company || null,
+        avatar: parsed.data.avatar ?? null,
+        content: parsed.data.content,
+        order: parsed.data.order || (await getNextTestimonialOrder()),
+      },
+      select: { id: true },
+    });
+
+    revalidateTestimonialPaths();
+
+    return actionSuccess({ id: testimonial.id }, "Testimonial created.");
+  } catch (error) {
+    console.error("Create testimonial failed:", error);
+    return actionError("Failed to create testimonial.");
+  }
+}
+
+export async function actionUpdateTestimonial(
+  testimonialId: string,
+  input: TestimonialActionInput,
+): Promise<ActionResult<TestimonialActionData>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsed = parseTestimonialInput(input);
+  if (!parsed.success) {
+    return parsed.result;
+  }
+
+  try {
+    const existingTestimonial = await db.testimonial.findUnique({
+      where: { id: testimonialId },
+      select: { id: true },
+    });
+
+    if (!existingTestimonial) {
+      return actionError("Testimonial not found.");
+    }
+
+    const testimonial = await db.testimonial.update({
+      where: { id: testimonialId },
+      data: {
+        name: parsed.data.name,
+        role: parsed.data.role || null,
+        company: parsed.data.company || null,
+        avatar: parsed.data.avatar ?? null,
+        content: parsed.data.content,
+        order: parsed.data.order,
+      },
+      select: { id: true },
+    });
+
+    revalidateTestimonialPaths();
+
+    return actionSuccess({ id: testimonial.id }, "Testimonial updated.");
+  } catch (error) {
+    console.error("Update testimonial failed:", error);
+    return actionError("Failed to update testimonial.");
+  }
+}
+
+export async function actionDeleteTestimonial(
+  testimonialId: string,
+): Promise<ActionResult> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  try {
+    const existingTestimonial = await db.testimonial.findUnique({
+      where: { id: testimonialId },
+      select: { id: true },
+    });
+
+    if (!existingTestimonial) {
+      return actionError("Testimonial not found.");
+    }
+
+    await db.testimonial.delete({
+      where: { id: testimonialId },
+    });
+
+    revalidateTestimonialPaths();
+
+    return actionSuccess(undefined, "Testimonial deleted.");
+  } catch (error) {
+    console.error("Delete testimonial failed:", error);
+    return actionError("Failed to delete testimonial.");
+  }
+}
+
+export async function actionReorderTestimonials(
+  input: unknown,
+): Promise<ActionResult> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsed = testimonialReorderSchema.safeParse(input);
+  if (!parsed.success) {
+    return actionError("Invalid testimonial order.");
+  }
+
+  try {
+    await db.$transaction(
+      parsed.data.map((item) =>
+        db.testimonial.update({
+          where: { id: item.id },
+          data: { order: item.order },
+        }),
+      ),
+    );
+
+    revalidateTestimonialPaths();
+
+    return actionSuccess(undefined, "Testimonial order updated.");
+  } catch (error) {
+    console.error("Reorder testimonials failed:", error);
+    return actionError("Failed to reorder testimonials.");
+  }
+}
