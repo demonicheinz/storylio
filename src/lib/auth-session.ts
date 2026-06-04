@@ -1,0 +1,18 @@
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+
+/**
+ * Get the authenticated session for a Server Action.
+ * Throws if not authenticated — callers should catch and return actionError.
+ */
+export async function getActionSession() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  return session;
+}
