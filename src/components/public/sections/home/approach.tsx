@@ -39,21 +39,47 @@ const visualPresets = [
   dotSize?: number;
 }[];
 
+const fallbackPhases: HomePhase[] = [
+  {
+    id: "fallback-discover",
+    label: "Discover",
+    content:
+      "Clarify the goal, constraints, and user path before a line of production code is written.",
+    order: 1,
+  },
+  {
+    id: "fallback-build",
+    label: "Build",
+    content:
+      "Shape a fast, accessible interface with a maintainable full-stack foundation.",
+    order: 2,
+  },
+  {
+    id: "fallback-polish",
+    label: "Polish",
+    content:
+      "Refine motion, edge cases, content, and release details until the experience feels intentional.",
+    order: 3,
+  },
+];
+
 export function ApproachSection({ phases }: { phases: HomePhase[] }) {
+  const visiblePhases = phases.length > 0 ? phases : fallbackPhases;
+
   return (
     <section className="w-full py-10">
       <h2 className="heading">
         My <span className="text-brand-soft">approach</span>
       </h2>
       <div className="mx-auto my-20 flex w-full max-w-7xl flex-wrap justify-center gap-6 px-4">
-        {phases.map((phase, index) => {
+        {visiblePhases.map((phase, index) => {
           const visual = visualPresets[index % visualPresets.length];
 
           return (
             <Card
               key={phase.id}
               title={phase.label}
-              icon={<MagicButton as="span" order={`Phase ${phase.order}`} />}
+              icon={<MagicButton as="span" order={`Phase ${index + 1}`} />}
               des={
                 phase.content ??
                 "A focused phase in the process from idea to launch."

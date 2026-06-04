@@ -158,24 +158,27 @@ export async function generateMetadata({
     };
   }
 
+  const description =
+    post.excerpt ?? `Read ${post.title}, an article by Heinz on Storylio.`;
+  const image =
+    post.coverImage ?? `/og?title=${encodeURIComponent(post.title)}&type=post`;
+
   return {
-    title: post.title,
-    description:
-      post.excerpt ?? `Read ${post.title}, an article by Ahmad Haizul Amany.`,
+    title: `${post.title} — Storylio`,
+    description,
     openGraph: {
-      title: post.title,
-      description:
-        post.excerpt ?? `Read ${post.title}, an article by Ahmad Haizul Amany.`,
+      title: `${post.title} — Storylio`,
+      description,
       type: "article",
+      siteName: "Storylio",
       publishedTime: post.publishedAt?.toISOString(),
-      images: [`/og?title=${encodeURIComponent(post.title)}&type=post`],
+      images: [image],
     },
     twitter: {
       card: "summary_large_image",
-      title: post.title,
-      description:
-        post.excerpt ?? `Read ${post.title}, an article by Ahmad Haizul Amany.`,
-      images: [`/og?title=${encodeURIComponent(post.title)}&type=post`],
+      title: `${post.title} — Storylio`,
+      description,
+      images: [image],
     },
   };
 }

@@ -16,7 +16,45 @@ const icons = {
   email: EnvelopeIcon,
 };
 
-export function BioSection() {
+type ProfileBio = {
+  name?: string | null;
+  email?: string | null;
+  tagline?: string | null;
+  bio?: string | null;
+  github?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+};
+
+export function BioSection({ profile }: { profile?: ProfileBio }) {
+  const name = profile?.name ?? person.name;
+  const role = profile?.tagline ?? person.role;
+  const links = socialLinks.map((item) => {
+    if (item.icon === "github") {
+      return { ...item, link: profile?.github ?? item.link };
+    }
+
+    if (item.icon === "instagram") {
+      return { ...item, link: profile?.instagram ?? item.link };
+    }
+
+    if (item.icon === "twitter") {
+      return { ...item, link: profile?.twitter ?? item.link };
+    }
+
+    if (item.icon === "email" && profile?.email) {
+      return { ...item, link: `mailto:${profile.email}` };
+    }
+
+    return item;
+  });
+  const introOverride = profile?.bio
+    ? {
+        en: profile.bio,
+        id: profile.bio,
+      }
+    : undefined;
+
   return (
     <div className="flex flex-col gap-8 md:py-2">
       <div className="flex flex-col items-center md:items-start">
@@ -24,14 +62,14 @@ export function BioSection() {
           About Heinz
         </p>
         <h1 className="text-center font-heading text-[34px] leading-none font-bold text-foreground sm:text-[48px] md:text-left md:text-[56px]">
-          {person.name}
+          {name}
         </h1>
         <p className="mt-3 text-center text-[20px] text-brand-soft sm:text-[28px] md:text-left md:text-[32px]">
-          {person.role}
+          {role}
         </p>
 
         <div className="mt-6 mb-2 flex flex-wrap justify-center gap-2 md:justify-start">
-          {socialLinks.map((item) => {
+          {links.map((item) => {
             const Icon = icons[item.icon];
 
             return (
@@ -52,7 +90,7 @@ export function BioSection() {
         </div>
       </div>
 
-      <LanguageIntro />
+      <LanguageIntro introCopyOverride={introOverride} />
     </div>
   );
 }

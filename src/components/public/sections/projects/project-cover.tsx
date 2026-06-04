@@ -1,4 +1,8 @@
+"use client";
+
+import { ImageIcon } from "@phosphor-icons/react";
 import Image from "next/image";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 type ProjectCoverProps = {
@@ -16,6 +20,9 @@ export function ProjectCover({
   fetchPriority,
   loading = "lazy",
 }: ProjectCoverProps) {
+  const [hasImageError, setHasImageError] = useState(false);
+  const shouldShowImage = Boolean(src) && !hasImageError;
+
   return (
     <div
       className={cn(
@@ -23,7 +30,7 @@ export function ProjectCover({
         className,
       )}
     >
-      {src ? (
+      {shouldShowImage && src ? (
         <Image
           src={src}
           alt={alt}
@@ -33,6 +40,7 @@ export function ProjectCover({
           loading={loading}
           className="object-cover transition-transform duration-500 group-hover/project:scale-105"
           unoptimized
+          onError={() => setHasImageError(true)}
         />
       ) : (
         <div className="flex h-full min-h-56 flex-col justify-between p-5">
@@ -42,7 +50,9 @@ export function ProjectCover({
             <div className="h-3 w-1/2 rounded-full bg-foreground/20" />
             <div className="grid grid-cols-3 gap-2 pt-3">
               <div className="h-16 rounded-xl bg-foreground/10" />
-              <div className="h-16 rounded-xl bg-brand-soft/20" />
+              <div className="grid h-16 place-items-center rounded-xl bg-brand-soft/20 text-brand-soft">
+                <ImageIcon size={22} />
+              </div>
               <div className="h-16 rounded-xl bg-foreground/10" />
             </div>
           </div>

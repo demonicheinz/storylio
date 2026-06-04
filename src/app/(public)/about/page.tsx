@@ -11,6 +11,7 @@ import {
   SkillsSection,
 } from "@/components/public/sections/about";
 import AboutContent from "@/content/about.mdx";
+import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 
 const sectionSpacing = "mt-16 scroll-mt-28 md:mt-24";
@@ -37,9 +38,32 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+async function getAboutProfile() {
+  "use cache";
+  cacheLife("hours");
+
+  return db.user.findFirst({
+    select: {
+      name: true,
+      email: true,
+      image: true,
+      tagline: true,
+      bio: true,
+      github: true,
+      instagram: true,
+      twitter: true,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+}
+
 export default async function AboutPage() {
   "use cache";
   cacheLife("hours");
+  const profile = await getAboutProfile();
+  const publicProfile = profile ?? undefined;
 
   return (
     <main className="min-h-screen">
@@ -53,16 +77,16 @@ export default async function AboutPage() {
         <div className="relative mx-auto flex w-full max-w-[1056px] min-w-0 flex-col justify-center px-4 pt-32 sm:px-6 lg:px-8">
           <div className="flex w-full flex-col md:flex-row">
             <div className="flex w-full flex-col items-center gap-4 pb-8 md:hidden">
-              <ProfileSection isMobile />
+              <ProfileSection isMobile profile={publicProfile} />
             </div>
 
             <div className="z-10 hidden shrink-0 md:sticky md:top-28 md:flex md:w-[280px] md:self-start lg:w-[320px]">
-              <ProfileSection />
+              <ProfileSection profile={publicProfile} />
             </div>
 
             <div className="relative flex w-full max-w-full flex-col md:max-w-[calc(100%-280px)] md:pl-8 lg:max-w-[calc(100%-320px)] lg:pl-10 xl:max-w-[42rem]">
               <section id="introduction" className="scroll-mt-28">
-                <BioSection />
+                <BioSection profile={publicProfile} />
               </section>
 
               <section id="story" className={sectionSpacing}>

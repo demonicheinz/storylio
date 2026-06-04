@@ -1,6 +1,8 @@
 "use client";
 
+import { ImageIcon } from "@phosphor-icons/react";
 import Image from "next/image";
+import { useState } from "react";
 import { InfiniteCards } from "@/components/common";
 
 export type HomeLogo = {
@@ -56,32 +58,54 @@ export function ClientsSection({
               speed="normal"
             />
           </div>
-        ) : null}
+        ) : (
+          <div className="mt-10 rounded-3xl border border-dashed border-border/60 bg-surface/45 px-6 py-8 text-center text-sm leading-7 text-muted-foreground backdrop-blur-xl">
+            Testimonials will appear here when they are added from the CMS.
+          </div>
+        )}
 
         {logos.length > 0 ? (
           <div className="flex flex-wrap items-center justify-center gap-4 max-lg:mt-10 md:gap-10">
             {logos.map((logo) => (
-              <div
-                key={logo.id}
-                className="flex min-h-14 min-w-32 items-center justify-center rounded-2xl border border-border/40 bg-surface/90 px-5 py-3 text-sm font-semibold text-blue-100 shadow-[0_0_32px_rgba(139,92,246,0.08)] backdrop-blur-md transition-colors hover:border-brand-soft/40 hover:text-white"
-              >
-                {logo.imageUrl ? (
-                  <Image
-                    src={logo.imageUrl}
-                    alt={logo.label}
-                    width={120}
-                    height={40}
-                    className="h-8 w-auto object-contain"
-                    loading="lazy"
-                  />
-                ) : (
-                  <span>{logo.label}</span>
-                )}
-              </div>
+              <LogoCard key={logo.id} logo={logo} />
             ))}
           </div>
-        ) : null}
+        ) : (
+          <div className="mt-10 rounded-3xl border border-dashed border-border/60 bg-surface/45 px-6 py-8 text-center text-sm leading-7 text-muted-foreground backdrop-blur-xl">
+            Client and technology logos will appear here when they are added
+            from the CMS.
+          </div>
+        )}
       </div>
     </section>
+  );
+}
+
+function LogoCard({ logo }: { logo: HomeLogo }) {
+  const [hasImageError, setHasImageError] = useState(false);
+  const shouldShowImage = Boolean(logo.imageUrl) && !hasImageError;
+
+  return (
+    <div className="flex min-h-14 min-w-32 items-center justify-center rounded-2xl border border-border/40 bg-surface/90 px-5 py-3 text-sm font-semibold text-blue-100 shadow-[0_0_32px_rgba(139,92,246,0.08)] backdrop-blur-md transition-colors hover:border-brand-soft/40 hover:text-white">
+      {shouldShowImage && logo.imageUrl ? (
+        <Image
+          src={logo.imageUrl}
+          alt={logo.label}
+          width={120}
+          height={40}
+          className="h-8 w-auto object-contain"
+          loading="lazy"
+          unoptimized
+          onError={() => setHasImageError(true)}
+        />
+      ) : (
+        <span className="inline-flex items-center gap-2">
+          {!logo.imageUrl || hasImageError ? (
+            <ImageIcon size={16} className="text-brand-soft" />
+          ) : null}
+          {logo.label}
+        </span>
+      )}
+    </div>
   );
 }

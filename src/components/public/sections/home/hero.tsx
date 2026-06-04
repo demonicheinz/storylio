@@ -7,6 +7,8 @@ export interface HeroProps {
   description?: string;
   buttonText?: string;
   buttonLink?: string;
+  avatar?: string | null;
+  avatarAlt?: string;
 }
 
 export function HeroSection({
@@ -15,6 +17,8 @@ export function HeroSection({
   description = "Hi! I'm Heinz, a Full Stack Developer based in Central Java, Indonesia.",
   buttonText = "About me",
   buttonLink = "/about",
+  avatar,
+  avatarAlt = "Heinz Avatar",
 }: HeroProps = {}) {
   return (
     <section className="relative flex h-screen w-full flex-col items-center justify-center">
@@ -47,8 +51,8 @@ export function HeroSection({
           <MagicButton
             href={buttonLink}
             iconName="arrowUpRight"
-            imageSrc="/images/heinz.jpg"
-            imageAlt="Heinz Avatar"
+            imageSrc={avatar ?? "/images/heinz.jpg"}
+            imageAlt={avatarAlt}
             size="lg"
             variant="default"
             iconSize={20}

@@ -85,7 +85,7 @@ async function getGalleryData() {
         .map((photo) => photo.category)
         .filter((category): category is string => Boolean(category)),
     ),
-  ).sort((a, b) => a.localeCompare(b));
+  );
 
   return {
     photos,

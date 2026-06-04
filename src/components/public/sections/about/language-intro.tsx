@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type Language = keyof typeof introCopy;
+type IntroCopy = Record<Language, string>;
 
 const languages: {
   label: string;
@@ -15,8 +16,16 @@ const languages: {
   { label: "Indonesia", value: "id" },
 ];
 
-export function LanguageIntro() {
+export function LanguageIntro({
+  introCopyOverride,
+}: {
+  introCopyOverride?: Partial<IntroCopy>;
+}) {
   const [language, setLanguage] = useState<Language>("en");
+  const copy = {
+    ...introCopy,
+    ...introCopyOverride,
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -42,7 +51,7 @@ export function LanguageIntro() {
         })}
       </div>
       <p className="text-lg leading-8 text-muted-foreground">
-        {introCopy[language]}
+        {copy[language]}
       </p>
     </div>
   );

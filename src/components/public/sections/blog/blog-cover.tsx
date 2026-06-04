@@ -1,4 +1,8 @@
+"use client";
+
+import { ImageIcon } from "@phosphor-icons/react";
 import Image from "next/image";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 type BlogCoverProps = {
@@ -16,6 +20,9 @@ export function BlogCover({
   fetchPriority,
   loading = "lazy",
 }: BlogCoverProps) {
+  const [hasImageError, setHasImageError] = useState(false);
+  const shouldShowImage = Boolean(src) && !hasImageError;
+
   return (
     <div
       className={cn(
@@ -23,7 +30,7 @@ export function BlogCover({
         className,
       )}
     >
-      {src ? (
+      {shouldShowImage && src ? (
         <Image
           src={src}
           alt={alt}
@@ -33,6 +40,7 @@ export function BlogCover({
           loading={loading}
           className="object-cover transition-transform duration-500 group-hover/post:scale-105"
           unoptimized
+          onError={() => setHasImageError(true)}
         />
       ) : (
         <div className="flex h-full min-h-52 flex-col justify-between p-6">
@@ -45,7 +53,9 @@ export function BlogCover({
             <div className="h-4 w-3/5 rounded-full bg-foreground/20" />
             <div className="mt-6 grid grid-cols-[1fr_0.6fr] gap-3">
               <div className="h-24 rounded-2xl bg-foreground/10" />
-              <div className="h-24 rounded-2xl bg-brand-soft/15" />
+              <div className="grid h-24 place-items-center rounded-2xl bg-brand-soft/15 text-brand-soft">
+                <ImageIcon size={26} />
+              </div>
             </div>
           </div>
         </div>
