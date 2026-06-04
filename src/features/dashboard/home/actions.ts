@@ -1,17 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { HomeSectionType } from "@/generated/prisma";
-import type { ActionResult } from "@/lib/action-result";
-import { actionError, actionSuccess } from "@/lib/action-result";
-import { getActionSession } from "@/lib/auth-session";
-import { db } from "@/lib/db";
 import {
   type HomeSectionActionInput,
   type HomeSectionActionValues,
   homeSectionActionSchema,
   homeSectionReorderSchema,
-} from "@/lib/validations/home";
+} from "@/features/dashboard/home/validations";
+import { HomeSectionType } from "@/generated/prisma";
+import type { ActionResult } from "@/lib/action-result";
+import { actionError, actionSuccess } from "@/lib/action-result";
+import { getActionSession } from "@/lib/auth-session";
+import { db } from "@/lib/db";
 
 type HomeSectionActionData = {
   id: string;

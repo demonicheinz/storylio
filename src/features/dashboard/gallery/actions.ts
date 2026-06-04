@@ -1,15 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { ActionResult } from "@/lib/action-result";
-import { actionError, actionSuccess } from "@/lib/action-result";
-import { getActionSession } from "@/lib/auth-session";
-import { db } from "@/lib/db";
 import {
   type GalleryItemActionInput,
   galleryItemActionSchema,
   galleryReorderSchema,
-} from "@/lib/validations/gallery";
+} from "@/features/dashboard/gallery/validations";
+import type { ActionResult } from "@/lib/action-result";
+import { actionError, actionSuccess } from "@/lib/action-result";
+import { getActionSession } from "@/lib/auth-session";
+import { db } from "@/lib/db";
 
 type GalleryActionData = {
   id: string;

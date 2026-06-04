@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { ProjectEditor } from "@/components/dashboard/project-editor";
+import { ProjectEditor } from "@/features/dashboard/projects/components/project-editor";
 import { ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
 

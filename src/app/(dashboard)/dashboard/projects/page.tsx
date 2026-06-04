@@ -6,8 +6,6 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { connection } from "next/server";
-import { ProjectDeleteButton } from "@/components/dashboard/project-delete-button";
-import { ProjectReorderButton } from "@/components/dashboard/project-reorder-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ProjectDeleteButton } from "@/features/dashboard/projects/components/project-delete-button";
+import { ProjectReorderButton } from "@/features/dashboard/projects/components/project-reorder-button";
 import { ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/utils";

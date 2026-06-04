@@ -4,7 +4,6 @@ import { TrashIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { actionDeletePost } from "@/app/(dashboard)/dashboard/actions/post-actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,23 +16,27 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { actionDeleteProject } from "@/features/dashboard/projects/actions";
 
-type PostDeleteButtonProps = {
-  postId: string;
+type ProjectDeleteButtonProps = {
+  projectId: string;
   title: string;
 };
 
-export function PostDeleteButton({ postId, title }: PostDeleteButtonProps) {
+export function ProjectDeleteButton({
+  projectId,
+  title,
+}: ProjectDeleteButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = () => {
     startTransition(async () => {
-      const result = await actionDeletePost(postId);
+      const result = await actionDeleteProject(projectId);
 
       if (result.success) {
-        toast.success(result.message ?? "Post deleted.");
+        toast.success(result.message ?? "Project deleted.");
         setOpen(false);
         router.refresh();
       } else {
@@ -52,7 +55,7 @@ export function PostDeleteButton({ postId, title }: PostDeleteButtonProps) {
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete post?</AlertDialogTitle>
+          <AlertDialogTitle>Delete project?</AlertDialogTitle>
           <AlertDialogDescription>
             This will permanently delete{" "}
             <span className="font-medium text-foreground">{title}</span>. This

@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { GalleryManager } from "@/components/dashboard/gallery-item-form";
+import { GalleryManager } from "@/features/dashboard/gallery/components/gallery-item-form";
 import { db } from "@/lib/db";
 
 async function getGalleryItems() {

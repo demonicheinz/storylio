@@ -6,7 +6,6 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { connection } from "next/server";
-import { PostDeleteButton } from "@/components/dashboard/post-delete-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PostDeleteButton } from "@/features/dashboard/posts/components/post-delete-button";
 import { PostStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/utils";

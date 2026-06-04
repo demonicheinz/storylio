@@ -16,13 +16,6 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
-  actionCreateTestimonial,
-  actionDeleteTestimonial,
-  actionReorderTestimonials,
-  actionUpdateTestimonial,
-} from "@/app/(dashboard)/dashboard/actions/testimonial-actions";
-import { ImageUpload } from "@/components/dashboard/image-upload";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -55,11 +48,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
+import {
+  actionCreateTestimonial,
+  actionDeleteTestimonial,
+  actionReorderTestimonials,
+  actionUpdateTestimonial,
+} from "@/features/dashboard/testimonials/actions";
 import {
   type TestimonialActionInput,
   type TestimonialActionValues,
   testimonialActionSchema,
-} from "@/lib/validations/testimonial";
+} from "@/features/dashboard/testimonials/validations";
 
 export type DashboardTestimonial = {
   id: string;

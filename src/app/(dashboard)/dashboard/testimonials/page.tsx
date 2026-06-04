@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { TestimonialsManager } from "@/components/dashboard/testimonial-form";
+import { TestimonialsManager } from "@/features/dashboard/testimonials/components/testimonial-form";
 import { db } from "@/lib/db";
 
 async function getTestimonials() {

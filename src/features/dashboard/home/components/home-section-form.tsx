@@ -18,13 +18,6 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
-  actionCreateHomeSection,
-  actionDeleteHomeSection,
-  actionReorderHomeSections,
-  actionUpdateHomeSection,
-} from "@/app/(dashboard)/dashboard/actions/home-actions";
-import { ImageUpload } from "@/components/dashboard/image-upload";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -58,11 +51,18 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  actionCreateHomeSection,
+  actionDeleteHomeSection,
+  actionReorderHomeSections,
+  actionUpdateHomeSection,
+} from "@/features/dashboard/home/actions";
+import {
   type HomeSectionActionInput,
   type HomeSectionActionValues,
   type HomeSectionTypeValue,
   homeSectionActionSchema,
-} from "@/lib/validations/home";
+} from "@/features/dashboard/home/validations";
+import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 
 export type DashboardHomeSection = {
   id: string;

@@ -1,15 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { ActionResult } from "@/lib/action-result";
-import { actionError, actionSuccess } from "@/lib/action-result";
-import { getActionSession } from "@/lib/auth-session";
-import { db } from "@/lib/db";
 import {
   type TestimonialActionInput,
   testimonialActionSchema,
   testimonialReorderSchema,
-} from "@/lib/validations/testimonial";
+} from "@/features/dashboard/testimonials/validations";
+import type { ActionResult } from "@/lib/action-result";
+import { actionError, actionSuccess } from "@/lib/action-result";
+import { getActionSession } from "@/lib/auth-session";
+import { db } from "@/lib/db";
 
 type TestimonialActionData = {
   id: string;

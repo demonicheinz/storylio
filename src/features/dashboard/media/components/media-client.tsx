@@ -29,7 +29,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { actionDeleteMedia } from "./actions";
+import { actionDeleteMedia } from "../actions";
 
 type MediaItem = {
   id: string;

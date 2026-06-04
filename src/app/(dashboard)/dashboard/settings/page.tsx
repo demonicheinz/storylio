@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { SettingsManager } from "@/components/dashboard/profile-settings-form";
+import { SettingsManager } from "@/features/dashboard/settings/components/profile-settings-form";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 

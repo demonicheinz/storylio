@@ -1,17 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ProjectStatus } from "@/generated/prisma";
-import type { ActionResult } from "@/lib/action-result";
-import { actionError, actionSuccess } from "@/lib/action-result";
-import { getActionSession } from "@/lib/auth-session";
-import { db } from "@/lib/db";
 import {
   type ProjectActionInput,
   type ProjectActionValues,
   projectActionSchema,
   projectReorderSchema,
-} from "@/lib/validations/project";
+} from "@/features/dashboard/projects/validations";
+import { ProjectStatus } from "@/generated/prisma";
+import type { ActionResult } from "@/lib/action-result";
+import { actionError, actionSuccess } from "@/lib/action-result";
+import { getActionSession } from "@/lib/auth-session";
+import { db } from "@/lib/db";
 
 type ProjectActionData = {
   id: string;

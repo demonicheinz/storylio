@@ -15,12 +15,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import {
-  actionPublishPost,
-  actionSavePostDraft,
-} from "@/app/(dashboard)/dashboard/actions/post-actions";
-import { DateTimePicker } from "@/components/dashboard/date-time-picker";
-import { ImageUpload } from "@/components/dashboard/image-upload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,17 +35,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  actionPublishProject,
+  actionSaveProjectDraft,
+} from "@/features/dashboard/projects/actions";
+import { ScreenshotsUpload } from "@/features/dashboard/projects/components/screenshots-upload";
+import {
+  type ProjectFormInput,
+  type ProjectFormValues,
+  projectFormSchema,
+} from "@/features/dashboard/projects/validations";
+import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { createSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
-import {
-  type PostFormInput,
-  type PostFormValues,
-  postFormSchema,
-} from "@/lib/validations/post";
 
 const MdxEditor = dynamic(
   () =>
-    import("@/components/dashboard/mdx-editor").then(
+    import("@/features/dashboard/shared/components/mdx-editor").then(
       (module) => module.DashboardMdxEditor,
     ),
   {
@@ -66,57 +66,66 @@ const MdxEditor = dynamic(
   },
 );
 
-type PostEditorPost = {
+type ProjectEditorProject = {
   id: string;
   title: string;
   slug: string;
-  excerpt: string | null;
-  content: string;
+  description: string | null;
+  content: string | null;
   coverImage: string | null;
+  screenshots: string[];
+  techStack: string[];
+  liveUrl: string | null;
+  githubUrl: string | null;
+  order: number;
   status: "draft" | "published";
-  publishedAt: string | null;
-  tags: string[];
 };
 
-type PostEditorProps =
+type ProjectEditorProps =
   | {
       mode: "create";
-      post?: never;
+      project?: never;
     }
   | {
       mode: "edit";
-      post: PostEditorPost;
+      project: ProjectEditorProject;
     };
 
-const emptyDefaults: PostFormValues = {
+const emptyDefaults: ProjectFormValues = {
   title: "",
   slug: "",
-  excerpt: "",
-  coverImage: undefined,
-  tags: "",
-  status: "draft",
-  scheduledPublishDate: undefined,
+  description: "",
   content: "",
+  coverImage: undefined,
+  screenshots: [],
+  techStack: "",
+  liveUrl: undefined,
+  githubUrl: undefined,
+  order: 0,
+  status: "draft",
 };
 
-function getDefaults(post?: PostEditorPost): PostFormValues {
-  if (!post) {
+function getDefaults(project?: ProjectEditorProject): ProjectFormValues {
+  if (!project) {
     return emptyDefaults;
   }
 
   return {
-    title: post.title,
-    slug: post.slug,
-    excerpt: post.excerpt ?? "",
-    coverImage: post.coverImage ?? undefined,
-    tags: post.tags.join(", "),
-    status: post.status,
-    scheduledPublishDate: post.publishedAt ?? undefined,
-    content: post.content,
+    title: project.title,
+    slug: project.slug,
+    description: project.description ?? "",
+    content: project.content ?? "",
+    coverImage: project.coverImage ?? undefined,
+    screenshots: project.screenshots,
+    techStack: project.techStack.join(", "),
+    liveUrl: project.liveUrl ?? undefined,
+    githubUrl: project.githubUrl ?? undefined,
+    order: project.order,
+    status: project.status,
   };
 }
 
-function getSubmitLabels(status: PostFormValues["status"]) {
+function getSubmitLabels(status: ProjectFormValues["status"]) {
   if (status === "published") {
     return {
       draft: "Move to Draft",
@@ -134,13 +143,13 @@ function getSubmitLabels(status: PostFormValues["status"]) {
   };
 }
 
-export function PostEditor({ mode, post }: PostEditorProps) {
+export function ProjectEditor({ mode, project }: ProjectEditorProps) {
   const router = useRouter();
   const [pendingAction, setPendingAction] = useState<
     "draft" | "publish" | null
   >(null);
   const [slugEdited, setSlugEdited] = useState(mode === "edit");
-  const defaults = useMemo(() => getDefaults(post), [post]);
+  const defaults = useMemo(() => getDefaults(project), [project]);
 
   const {
     control,
@@ -150,8 +159,8 @@ export function PostEditor({ mode, post }: PostEditorProps) {
     setError,
     setValue,
     watch,
-  } = useForm<PostFormInput, unknown, PostFormValues>({
-    resolver: zodResolver(postFormSchema),
+  } = useForm<ProjectFormInput, unknown, ProjectFormValues>({
+    resolver: zodResolver(projectFormSchema),
     defaultValues: defaults,
   });
 
@@ -159,6 +168,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
   const slug = watch("slug");
   const coverImage = watch("coverImage");
   const status = watch("status");
+  const screenshots = watch("screenshots") ?? [];
   const slugRegistration = register("slug");
   const isPending = pendingAction !== null;
   const submitLabels = getSubmitLabels(status);
@@ -173,20 +183,20 @@ export function PostEditor({ mode, post }: PostEditorProps) {
   }, [setValue, slugEdited, title]);
 
   useEffect(() => {
-    if (!post?.id) {
+    if (!project?.id) {
       return;
     }
 
-    const label = title.trim() || slug || post.slug;
+    const label = title.trim() || slug || project.slug;
     window.localStorage.setItem(
-      `dashboard-breadcrumb:post:${post.id}`,
+      `dashboard-breadcrumb:project:${project.id}`,
       JSON.stringify({
-        href: `/dashboard/posts/${post.id}/edit`,
+        href: `/dashboard/projects/${project.id}/edit`,
         label,
       }),
     );
     window.dispatchEvent(new Event("dashboard-breadcrumb-labels-changed"));
-  }, [post?.id, post?.slug, slug, title]);
+  }, [project?.id, project?.slug, slug, title]);
 
   const applyFieldErrors = (fieldErrors?: Record<string, string[]>) => {
     if (!fieldErrors) {
@@ -195,7 +205,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
 
     for (const [field, messages] of Object.entries(fieldErrors)) {
       if (messages[0]) {
-        setError(field as keyof PostFormValues, {
+        setError(field as keyof ProjectFormValues, {
           message: messages[0],
           type: "server",
         });
@@ -214,13 +224,13 @@ export function PostEditor({ mode, post }: PostEditorProps) {
 
       const result =
         nextStatus === "published"
-          ? await actionPublishPost(payload, post?.id)
-          : await actionSavePostDraft(payload, post?.id);
+          ? await actionPublishProject(payload, project?.id)
+          : await actionSaveProjectDraft(payload, project?.id);
 
       if (result.success) {
         const message =
           result.message ??
-          (nextStatus === "published" ? "Post published." : "Draft saved.");
+          (nextStatus === "published" ? "Project published." : "Draft saved.");
 
         toast.success(message);
 
@@ -228,7 +238,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
           setValue("status", result.data.status);
 
           if (mode === "create") {
-            router.replace(`/dashboard/posts/${result.data.id}/edit`);
+            router.replace(`/dashboard/projects/${result.data.id}/edit`);
           } else {
             router.refresh();
           }
@@ -247,7 +257,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
       return;
     }
 
-    window.open(`/blog/${slug}`, "_blank", "noopener,noreferrer");
+    window.open(`/projects/${slug}`, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -255,17 +265,17 @@ export function PostEditor({ mode, post }: PostEditorProps) {
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex flex-col gap-2">
           <Button asChild variant="ghost" className="w-fit">
-            <Link href="/dashboard/posts">
+            <Link href="/dashboard/projects">
               <ArrowLeftIcon data-icon="inline-start" />
-              Posts
+              Projects
             </Link>
           </Button>
           <div>
             <h1 className="font-heading text-3xl font-bold">
-              {mode === "create" ? "New Post" : "Edit Post"}
+              {mode === "create" ? "New Project" : "Edit Project"}
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Write MDX content, manage metadata, and publish when it is ready.
+              Shape portfolio case studies, visuals, links, and publish state.
             </p>
           </div>
         </div>
@@ -315,14 +325,13 @@ export function PostEditor({ mode, post }: PostEditorProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Content</CardTitle>
+              <CardTitle>Case Study</CardTitle>
               <CardDescription>
-                MDX supports headings, links, lists, quotes, images, and code
-                blocks.
+                Long-form MDX content for the public project detail page.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -352,7 +361,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
             <CardHeader>
               <CardTitle>Details</CardTitle>
               <CardDescription>
-                Public metadata for the blog listing and article header.
+                Public metadata for project cards and the detail header.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
@@ -360,7 +369,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                 <Label htmlFor="title">Title</Label>
                 <Input
                   id="title"
-                  placeholder="Designing durable interfaces"
+                  placeholder="Storylio CMS"
                   aria-invalid={!!errors.title}
                   disabled={isPending}
                   {...register("title")}
@@ -376,7 +385,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                 <Label htmlFor="slug">Slug</Label>
                 <Input
                   id="slug"
-                  placeholder="designing-durable-interfaces"
+                  placeholder="storylio-cms"
                   aria-invalid={!!errors.slug}
                   disabled={isPending}
                   name={slugRegistration.name}
@@ -396,23 +405,40 @@ export function PostEditor({ mode, post }: PostEditorProps) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="excerpt">Excerpt</Label>
+                <Label htmlFor="description">Short description</Label>
                 <Textarea
-                  id="excerpt"
-                  placeholder="A short summary for cards and metadata."
-                  aria-invalid={!!errors.excerpt}
+                  id="description"
+                  placeholder="A concise summary for project cards."
+                  aria-invalid={!!errors.description}
                   disabled={isPending}
                   className="min-h-24"
-                  {...register("excerpt")}
+                  {...register("description")}
                 />
                 <p
                   className={cn(
                     "text-xs text-muted-foreground",
-                    errors.excerpt && "text-destructive",
+                    errors.description && "text-destructive",
                   )}
                 >
-                  {errors.excerpt?.message ?? "Maximum 280 characters."}
+                  {errors.description?.message ?? "Maximum 320 characters."}
                 </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="order">Display order</Label>
+                <Input
+                  id="order"
+                  type="number"
+                  min={0}
+                  aria-invalid={!!errors.order}
+                  disabled={isPending}
+                  {...register("order")}
+                />
+                {errors.order?.message && (
+                  <p className="text-sm text-destructive">
+                    {errors.order.message}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -426,7 +452,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                 </Badge>
               </CardAction>
               <CardDescription>
-                Save as draft while editing, or publish to make it public.
+                Keep projects as drafts until they are ready for the portfolio.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
@@ -456,7 +482,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                         <DropdownMenuRadioGroup
                           value={field.value}
                           onValueChange={(value) =>
-                            field.onChange(value as PostFormValues["status"])
+                            field.onChange(value as ProjectFormValues["status"])
                           }
                         >
                           <DropdownMenuRadioItem value="draft">
@@ -471,26 +497,60 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                   )}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Links & Stack</CardTitle>
+              <CardDescription>
+                External URLs and comma-separated technologies.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="techStack">Tech stack</Label>
+                <Input
+                  id="techStack"
+                  placeholder="Next.js, Prisma, Cloudinary"
+                  disabled={isPending}
+                  {...register("techStack")}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Separate technologies with commas.
+                </p>
+              </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="scheduledPublishDate">
-                  Scheduled publish date
-                </Label>
-                <Controller
-                  control={control}
-                  name="scheduledPublishDate"
-                  render={({ field }) => (
-                    <DateTimePicker
-                      id="scheduledPublishDate"
-                      value={field.value}
-                      onChange={field.onChange}
-                      disabled={isPending}
-                    />
-                  )}
+                <Label htmlFor="liveUrl">Live URL</Label>
+                <Input
+                  id="liveUrl"
+                  type="url"
+                  placeholder="https://heinz.id"
+                  aria-invalid={!!errors.liveUrl}
+                  disabled={isPending}
+                  {...register("liveUrl")}
                 />
-                {errors.scheduledPublishDate?.message && (
+                {errors.liveUrl?.message && (
                   <p className="text-sm text-destructive">
-                    {errors.scheduledPublishDate.message}
+                    {errors.liveUrl.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="githubUrl">GitHub URL</Label>
+                <Input
+                  id="githubUrl"
+                  type="url"
+                  placeholder="https://github.com/username/repo"
+                  aria-invalid={!!errors.githubUrl}
+                  disabled={isPending}
+                  {...register("githubUrl")}
+                />
+                {errors.githubUrl?.message && (
+                  <p className="text-sm text-destructive">
+                    {errors.githubUrl.message}
                   </p>
                 )}
               </div>
@@ -499,9 +559,9 @@ export function PostEditor({ mode, post }: PostEditorProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Cover & Tags</CardTitle>
+              <CardTitle>Media</CardTitle>
               <CardDescription>
-                Reuse the Cloudinary upload flow from the Media Library.
+                Cover image and screenshots upload through Cloudinary.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
@@ -531,16 +591,28 @@ export function PostEditor({ mode, post }: PostEditorProps) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="tags">Tags</Label>
-                <Input
-                  id="tags"
-                  placeholder="nextjs, ui, craft"
-                  disabled={isPending}
-                  {...register("tags")}
+                <Label>Screenshots</Label>
+                <Controller
+                  control={control}
+                  name="screenshots"
+                  render={({ field }) => (
+                    <ScreenshotsUpload
+                      value={field.value}
+                      disabled={isPending}
+                      onChange={(urls) => field.onChange(urls)}
+                    />
+                  )}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Separate tags with commas.
+                  {screenshots.length}{" "}
+                  {screenshots.length === 1 ? "screenshot" : "screenshots"}{" "}
+                  attached.
                 </p>
+                {errors.screenshots?.message && (
+                  <p className="text-sm text-destructive">
+                    {errors.screenshots.message}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
