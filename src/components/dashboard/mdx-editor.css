@@ -95,6 +95,29 @@
   background: color-mix(in oklch, var(--primary) 36%, transparent) !important;
 }
 
+.storylio-mdx-editor .mdxeditor-root-contenteditable {
+  padding-inline: 0.75rem;
+}
+
+.storylio-mdx-editor [contenteditable="true"] {
+  overflow-x: clip;
+}
+
+.storylio-mdx-editor [contenteditable="true"] ul,
+.storylio-mdx-editor [contenteditable="true"] ol {
+  padding-left: 1.75rem;
+}
+
+.storylio-mdx-editor [contenteditable="true"] li {
+  padding-left: 0.25rem;
+}
+
+.storylio-mdx-editor [contenteditable="true"] li input[type="checkbox"] {
+  margin-left: 0;
+  margin-right: 0.5rem;
+  transform: translateY(0.1rem);
+}
+
 .storylio-mdx-editor.dark-theme
   [class*="_toolbarCodeBlockLanguageSelectContent_"],
 .storylio-mdx-editor.dark-theme [class*="_toolbarButtonDropdownContainer_"],

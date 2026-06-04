@@ -66,7 +66,7 @@ export function DashboardMdxEditor({
         }}
         placeholder="Write the post in MDX..."
         className="storylio-mdx-editor dark-theme"
-        contentEditableClassName="min-h-[360px] prose prose-invert max-w-none px-4 py-3 text-sm outline-none"
+        contentEditableClassName="min-h-[360px] prose prose-invert max-w-none py-3 text-sm outline-none"
         plugins={[
           headingsPlugin({ allowedHeadingLevels: [1, 2, 3, 4] }),
           listsPlugin(),

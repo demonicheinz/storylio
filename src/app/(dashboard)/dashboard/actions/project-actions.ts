@@ -1,0 +1,324 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { ProjectStatus } from "@/generated/prisma";
+import type { ActionResult } from "@/lib/action-result";
+import { actionError, actionSuccess } from "@/lib/action-result";
+import { getActionSession } from "@/lib/auth-session";
+import { db } from "@/lib/db";
+import {
+  type ProjectActionInput,
+  type ProjectActionValues,
+  projectActionSchema,
+  projectReorderSchema,
+} from "@/lib/validations/project";
+
+type ProjectActionData = {
+  id: string;
+  slug: string;
+  status: "draft" | "published";
+};
+
+function flattenFieldErrors(
+  fieldErrors: Record<string, string[] | undefined>,
+): Record<string, string[]> {
+  return Object.fromEntries(
+    Object.entries(fieldErrors).filter((entry): entry is [string, string[]] =>
+      Array.isArray(entry[1]),
+    ),
+  );
+}
+
+function parseProjectInput(input: unknown) {
+  const parsed = projectActionSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return {
+      success: false as const,
+      result: actionError(
+        "Please fix the highlighted fields.",
+        flattenFieldErrors(parsed.error.flatten().fieldErrors),
+      ),
+    };
+  }
+
+  return {
+    success: true as const,
+    data: parsed.data,
+  };
+}
+
+function toProjectStatus(status: ProjectActionValues["status"]) {
+  return status === "published" ? ProjectStatus.PUBLISHED : ProjectStatus.DRAFT;
+}
+
+function revalidateProjectPaths(slug: string, oldSlug?: string) {
+  revalidatePath("/dashboard/projects");
+  revalidatePath("/dashboard");
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${slug}`);
+
+  if (oldSlug && oldSlug !== slug) {
+    revalidatePath(`/projects/${oldSlug}`);
+  }
+}
+
+async function ensureUniqueSlug(slug: string, projectId?: string) {
+  const existingProject = await db.project.findUnique({
+    where: { slug },
+    select: { id: true },
+  });
+
+  if (existingProject && existingProject.id !== projectId) {
+    return actionError("Slug is already used.", {
+      slug: ["This slug is already used by another project."],
+    });
+  }
+
+  return undefined;
+}
+
+async function getNextProjectOrder() {
+  const lastProject = await db.project.findFirst({
+    orderBy: { order: "desc" },
+    select: { order: true },
+  });
+
+  return (lastProject?.order ?? -1) + 1;
+}
+
+function getProjectData(values: ProjectActionValues) {
+  return {
+    title: values.title,
+    slug: values.slug,
+    description: values.description || null,
+    content: values.content || null,
+    coverImage: values.coverImage ?? null,
+    screenshots: values.screenshots,
+    techStack: values.techStack,
+    liveUrl: values.liveUrl ?? null,
+    githubUrl: values.githubUrl ?? null,
+    order: values.order,
+    status: toProjectStatus(values.status),
+  };
+}
+
+export async function actionCreateProject(
+  input: ProjectActionInput,
+): Promise<ActionResult<ProjectActionData>> {
+  let session: Awaited<ReturnType<typeof getActionSession>>;
+
+  try {
+    session = await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsed = parseProjectInput(input);
+  if (!parsed.success) {
+    return parsed.result;
+  }
+
+  try {
+    const duplicateSlug = await ensureUniqueSlug(parsed.data.slug);
+    if (duplicateSlug) {
+      return duplicateSlug;
+    }
+
+    const project = await db.project.create({
+      data: {
+        ...getProjectData(parsed.data),
+        order: parsed.data.order || (await getNextProjectOrder()),
+        authorId: session.user.id,
+      },
+      select: {
+        id: true,
+        slug: true,
+        status: true,
+      },
+    });
+
+    revalidateProjectPaths(project.slug);
+
+    return actionSuccess(
+      {
+        id: project.id,
+        slug: project.slug,
+        status:
+          project.status === ProjectStatus.PUBLISHED ? "published" : "draft",
+      },
+      project.status === ProjectStatus.PUBLISHED
+        ? "Project published."
+        : "Draft saved.",
+    );
+  } catch (error) {
+    console.error("Create project failed:", error);
+    return actionError("Failed to create project.");
+  }
+}
+
+export async function actionUpdateProject(
+  projectId: string,
+  input: ProjectActionInput,
+): Promise<ActionResult<ProjectActionData>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsed = parseProjectInput(input);
+  if (!parsed.success) {
+    return parsed.result;
+  }
+
+  try {
+    const existingProject = await db.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        slug: true,
+      },
+    });
+
+    if (!existingProject) {
+      return actionError("Project not found.");
+    }
+
+    const duplicateSlug = await ensureUniqueSlug(parsed.data.slug, projectId);
+    if (duplicateSlug) {
+      return duplicateSlug;
+    }
+
+    const project = await db.project.update({
+      where: { id: projectId },
+      data: getProjectData(parsed.data),
+      select: {
+        id: true,
+        slug: true,
+        status: true,
+      },
+    });
+
+    revalidateProjectPaths(project.slug, existingProject.slug);
+
+    return actionSuccess(
+      {
+        id: project.id,
+        slug: project.slug,
+        status:
+          project.status === ProjectStatus.PUBLISHED ? "published" : "draft",
+      },
+      project.status === ProjectStatus.PUBLISHED
+        ? "Project published."
+        : "Draft saved.",
+    );
+  } catch (error) {
+    console.error("Update project failed:", error);
+    return actionError("Failed to update project.");
+  }
+}
+
+export async function actionDeleteProject(
+  projectId: string,
+): Promise<ActionResult> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  try {
+    const project = await db.project.findUnique({
+      where: { id: projectId },
+      select: { slug: true },
+    });
+
+    if (!project) {
+      return actionError("Project not found.");
+    }
+
+    await db.project.delete({
+      where: { id: projectId },
+    });
+
+    revalidateProjectPaths(project.slug);
+
+    return actionSuccess(undefined, "Project deleted.");
+  } catch (error) {
+    console.error("Delete project failed:", error);
+    return actionError("Failed to delete project.");
+  }
+}
+
+export async function actionPublishProject(
+  input: ProjectActionInput,
+  projectId?: string,
+): Promise<ActionResult<ProjectActionData>> {
+  const values = {
+    ...input,
+    status: "published",
+  } satisfies ProjectActionInput;
+
+  if (projectId) {
+    return actionUpdateProject(projectId, values);
+  }
+
+  return actionCreateProject(values);
+}
+
+export async function actionSaveProjectDraft(
+  input: ProjectActionInput,
+  projectId?: string,
+): Promise<ActionResult<ProjectActionData>> {
+  const values = {
+    ...input,
+    status: "draft",
+  } satisfies ProjectActionInput;
+
+  if (projectId) {
+    return actionUpdateProject(projectId, values);
+  }
+
+  return actionCreateProject(values);
+}
+
+export async function actionReorderProjects(
+  input: unknown,
+): Promise<ActionResult> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsed = projectReorderSchema.safeParse(input);
+  if (!parsed.success) {
+    return actionError("Invalid project order.");
+  }
+
+  try {
+    const projects = await db.$transaction(
+      parsed.data.map((item) =>
+        db.project.update({
+          where: { id: item.id },
+          data: { order: item.order },
+          select: { slug: true },
+        }),
+      ),
+    );
+
+    revalidatePath("/dashboard/projects");
+    revalidatePath("/dashboard");
+    revalidatePath("/projects");
+
+    for (const project of projects) {
+      revalidatePath(`/projects/${project.slug}`);
+    }
+
+    return actionSuccess(undefined, "Project order updated.");
+  } catch (error) {
+    console.error("Reorder projects failed:", error);
+    return actionError("Failed to reorder projects.");
+  }
+}

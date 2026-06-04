@@ -43,9 +43,7 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const result = await uploadToCloudinary(buffer, {
-      folder: "storylio",
-    });
+    const result = await uploadToCloudinary(buffer);
 
     // Save media record to DB
     const media = await db.media.create({
