@@ -44,13 +44,16 @@ function getStoredLabels(pathname: string): BreadcrumbLabelMap {
   const labels: BreadcrumbLabelMap = {};
 
   for (let index = 0; index < segments.length; index += 1) {
-    if (segments[index - 1] !== "posts") {
+    const parentSegment = segments[index - 1];
+
+    if (parentSegment !== "posts" && parentSegment !== "projects") {
       continue;
     }
 
-    const postId = segments[index];
+    const contentType = parentSegment === "posts" ? "post" : "project";
+    const contentId = segments[index];
     const item = window.localStorage.getItem(
-      `dashboard-breadcrumb:post:${postId}`,
+      `dashboard-breadcrumb:${contentType}:${contentId}`,
     );
 
     if (!item) {
@@ -60,10 +63,12 @@ function getStoredLabels(pathname: string): BreadcrumbLabelMap {
     try {
       const parsed = JSON.parse(item) as BreadcrumbItemData;
       if (parsed.label && parsed.href) {
-        labels[postId] = parsed;
+        labels[contentId] = parsed;
       }
     } catch {
-      window.localStorage.removeItem(`dashboard-breadcrumb:post:${postId}`);
+      window.localStorage.removeItem(
+        `dashboard-breadcrumb:${contentType}:${contentId}`,
+      );
     }
   }
 

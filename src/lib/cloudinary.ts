@@ -6,9 +6,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+function getCloudinaryFolder() {
+  return process.env.CLOUDINARY_FOLDER?.trim() || "storylio";
+}
+
 /**
- * Upload a file buffer to Cloudinary using signed upload.
- * Runs server-side only — never expose api_secret to the client.
+ * Uploads a file buffer to Cloudinary from the server.
+ * Keep CLOUDINARY_API_SECRET server-only and never expose it to the client.
  */
 export async function uploadToCloudinary(
   buffer: Buffer,
@@ -27,7 +31,7 @@ export async function uploadToCloudinary(
     cloudinary.uploader
       .upload_stream(
         {
-          folder: options?.folder ?? "storylio",
+          folder: options?.folder ?? getCloudinaryFolder(),
           public_id: options?.publicId,
           resource_type: "image",
         },
@@ -53,6 +57,9 @@ export async function uploadToCloudinary(
  * Delete an asset from Cloudinary by its public_id.
  */
 export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
-  const result = await cloudinary.uploader.destroy(publicId);
+  const result = await cloudinary.uploader.destroy(publicId, {
+    resource_type: "image",
+  });
+
   return result.result === "ok";
 }
