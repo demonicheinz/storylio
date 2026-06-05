@@ -13,6 +13,8 @@ type FeaturedProjectProps = {
 };
 
 export function FeaturedProject({ project }: FeaturedProjectProps) {
+  const cardImage = project.thumbnailImageUrl ?? project.coverImage;
+
   return (
     <section className="group/project relative overflow-hidden rounded-[2rem] border border-brand-soft/25 bg-[linear-gradient(135deg,rgba(22,18,36,0.86),rgba(10,10,20,0.94)_48%,rgba(37,28,62,0.86))] p-3 shadow-[0_0_96px_rgba(139,92,246,0.16)] backdrop-blur-xl md:p-4">
       <div className="pointer-events-none absolute -top-32 right-10 size-72 rounded-full bg-brand-soft/20 blur-3xl" />
@@ -28,7 +30,7 @@ export function FeaturedProject({ project }: FeaturedProjectProps) {
           className="block h-full"
         >
           <ProjectCover
-            src={project.coverImage}
+            src={cardImage}
             alt={project.title}
             fetchPriority="high"
             className="aspect-[16/11] h-full rounded-[1.55rem] border-brand-soft/20 shadow-[0_0_80px_rgba(139,92,246,0.18)] lg:aspect-auto"

@@ -103,11 +103,16 @@ async function getHomeData() {
           slug: true,
           description: true,
           coverImage: true,
+          thumbnailImageUrl: true,
+          isFeatured: true,
           techStack: true,
           order: true,
           createdAt: true,
         },
         orderBy: [
+          {
+            isFeatured: "desc",
+          },
           {
             order: "asc",
           },

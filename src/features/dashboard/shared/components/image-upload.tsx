@@ -28,7 +28,14 @@ import { cn } from "@/lib/utils";
 
 type ImageUploadProps = {
   value?: string;
-  onChange: (url: string) => void;
+  onChange: (
+    url: string,
+    metadata?: {
+      width?: number | null;
+      height?: number | null;
+      aspectRatio?: number | null;
+    },
+  ) => void;
   onRemove?: () => void;
   disabled?: boolean;
   className?: string;
@@ -160,7 +167,11 @@ export function ImageUpload({
         }
 
         const data = await response.json();
-        onChange(data.url);
+        onChange(data.url, {
+          width: data.width ?? null,
+          height: data.height ?? null,
+          aspectRatio: data.aspectRatio ?? null,
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
       } finally {

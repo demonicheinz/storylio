@@ -127,7 +127,18 @@ export async function actionCreateGalleryItem(
         data: {
           imageUrl: parsed.data.imageUrl,
           caption: parsed.data.caption || null,
+          description: parsed.data.description || null,
+          altText: parsed.data.altText || null,
           category: parsed.data.category,
+          width: parsed.data.width ?? null,
+          height: parsed.data.height ?? null,
+          aspectRatio:
+            parsed.data.aspectRatio ??
+            (parsed.data.width && parsed.data.height
+              ? parsed.data.width / parsed.data.height
+              : null),
+          blurDataUrl: parsed.data.blurDataUrl ?? null,
+          isVisible: parsed.data.isVisible,
           order: await prepareGalleryCreateOrder(parsed.data.order),
         },
         select: { id: true },
@@ -175,7 +186,18 @@ export async function actionUpdateGalleryItem(
       data: {
         imageUrl: parsed.data.imageUrl,
         caption: parsed.data.caption || null,
+        description: parsed.data.description || null,
+        altText: parsed.data.altText || null,
         category: parsed.data.category,
+        width: parsed.data.width ?? null,
+        height: parsed.data.height ?? null,
+        aspectRatio:
+          parsed.data.aspectRatio ??
+          (parsed.data.width && parsed.data.height
+            ? parsed.data.width / parsed.data.height
+            : null),
+        blurDataUrl: parsed.data.blurDataUrl ?? null,
+        isVisible: parsed.data.isVisible,
         order: parsed.data.order,
       },
       select: { id: true },

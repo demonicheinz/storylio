@@ -12,6 +12,18 @@ export const galleryItemActionSchema = z.object({
     .max(180, "Caption must be 180 characters or fewer")
     .optional()
     .transform((value) => value || ""),
+  description: z
+    .string()
+    .trim()
+    .max(500, "Description must be 500 characters or fewer")
+    .optional()
+    .transform((value) => value || ""),
+  altText: z
+    .string()
+    .trim()
+    .max(180, "Alt text must be 180 characters or fewer")
+    .optional()
+    .transform((value) => value || ""),
   category: z
     .string()
     .trim()
@@ -23,6 +35,15 @@ export const galleryItemActionSchema = z.object({
     .min(0, "Display order cannot be negative")
     .optional()
     .transform((value) => value ?? 0),
+  width: z.coerce.number().int().positive().optional(),
+  height: z.coerce.number().int().positive().optional(),
+  aspectRatio: z.coerce.number().positive().optional(),
+  blurDataUrl: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined),
+  isVisible: z.boolean().optional().default(true),
 });
 
 export const galleryReorderSchema = z.array(

@@ -22,6 +22,7 @@ import {
   DotsSixVerticalIcon,
   PencilSimpleIcon,
 } from "@phosphor-icons/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
@@ -38,6 +39,9 @@ export type SortableProject = {
   title: string;
   slug: string;
   description: string | null;
+  coverImage: string | null;
+  thumbnailImageUrl: string | null;
+  isFeatured: boolean;
   status: ProjectStatus;
   techStack: string[];
   order: number;
@@ -155,6 +159,7 @@ function SortableProjectRow({
     transition,
   };
   const isPublished = project.status === ProjectStatus.PUBLISHED;
+  const cardImage = project.thumbnailImageUrl ?? project.coverImage;
 
   return (
     <div
@@ -181,35 +186,52 @@ function SortableProjectRow({
         <DotsSixVerticalIcon />
       </Button>
 
-      <div className="min-w-0 p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="truncate font-heading text-lg font-semibold">
-            {project.title}
-          </h2>
-          <Badge variant={isPublished ? "default" : "secondary"}>
-            {isPublished ? "published" : "draft"}
-          </Badge>
-          <Badge variant="outline">order {project.order}</Badge>
-        </div>
-        <p className="mt-1 truncate text-sm text-muted-foreground">
-          /projects/{project.slug}
-        </p>
-        {project.description && (
-          <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-            {project.description}
-          </p>
-        )}
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <span>Updated {formatDate(project.updatedAt)}</span>
-          <span>Created {formatDate(project.createdAt)}</span>
-          {project.techStack.slice(0, 4).map((tech) => (
-            <Badge key={tech} variant="outline" className="text-[11px]">
-              {tech}
-            </Badge>
-          ))}
-          {project.techStack.length > 4 && (
-            <span>+{project.techStack.length - 4} more</span>
+      <div className="grid min-w-0 gap-4 p-4 sm:grid-cols-[112px_minmax(0,1fr)]">
+        <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-border/50 bg-muted/35">
+          {cardImage ? (
+            <Image
+              src={cardImage}
+              alt={project.title}
+              fill
+              sizes="112px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="h-full bg-[radial-gradient(circle_at_25%_20%,rgba(139,92,246,0.28),transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(10,10,20,0.96))]" />
           )}
+        </div>
+
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="truncate font-heading text-lg font-semibold">
+              {project.title}
+            </h2>
+            {project.isFeatured && <Badge>featured</Badge>}
+            <Badge variant={isPublished ? "default" : "secondary"}>
+              {isPublished ? "published" : "draft"}
+            </Badge>
+            <Badge variant="outline">order {project.order}</Badge>
+          </div>
+          <p className="mt-1 truncate text-sm text-muted-foreground">
+            /projects/{project.slug}
+          </p>
+          {project.description && (
+            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+              {project.description}
+            </p>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <span>Updated {formatDate(project.updatedAt)}</span>
+            <span>Created {formatDate(project.createdAt)}</span>
+            {project.techStack.slice(0, 4).map((tech) => (
+              <Badge key={tech} variant="outline" className="text-[11px]">
+                {tech}
+              </Badge>
+            ))}
+            {project.techStack.length > 4 && (
+              <span>+{project.techStack.length - 4} more</span>
+            )}
+          </div>
         </div>
       </div>
 

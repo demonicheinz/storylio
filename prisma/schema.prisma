@@ -96,6 +96,8 @@ model Project {
   description  String?
   content      String?       @db.Text
   coverImage   String?
+  thumbnailImageUrl String?
+  isFeatured   Boolean       @default(false)
   screenshots  String[]
   techStack    String[]
   liveUrl      String?
@@ -111,12 +113,19 @@ model Project {
 }
 
 model GalleryItem {
-  id        String   @id @default(cuid())
-  imageUrl  String
-  caption   String?
-  category  String?
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  imageUrl    String
+  caption     String?
+  category    String?
+  description String?
+  altText     String?
+  width       Int?
+  height      Int?
+  aspectRatio Float?
+  blurDataUrl String?
+  isVisible   Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
 }
 
 model Tag {

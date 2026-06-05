@@ -50,11 +50,21 @@ async function getGalleryData() {
   cacheLife("hours");
 
   const items = await db.galleryItem.findMany({
+    where: {
+      isVisible: true,
+    },
     select: {
       id: true,
       imageUrl: true,
       caption: true,
       category: true,
+      description: true,
+      altText: true,
+      width: true,
+      height: true,
+      aspectRatio: true,
+      blurDataUrl: true,
+      isVisible: true,
       order: true,
       createdAt: true,
     },
@@ -70,13 +80,17 @@ async function getGalleryData() {
 
   const photos: GalleryPhoto[] = items.map((item, index) => {
     const ratio = aspectRatios[index % aspectRatios.length];
+    const width = item.width ?? ratio.width;
+    const height =
+      item.height ??
+      (item.aspectRatio ? Math.round(width / item.aspectRatio) : ratio.height);
 
     return {
       ...item,
       src: item.imageUrl,
-      alt: item.caption ?? `Gallery image ${index + 1}`,
-      width: ratio.width,
-      height: ratio.height,
+      alt: item.altText ?? item.caption ?? `Gallery image ${index + 1}`,
+      width,
+      height,
     };
   });
   const categories = Array.from(

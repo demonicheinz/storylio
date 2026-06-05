@@ -143,12 +143,14 @@ function getProjectData(values: ProjectActionValues) {
     description: values.description || null,
     content: values.content || null,
     coverImage: values.coverImage ?? null,
+    thumbnailImageUrl: values.thumbnailImageUrl ?? null,
     screenshots: values.screenshots,
     techStack: values.techStack,
     liveUrl: values.liveUrl ?? null,
     githubUrl: values.githubUrl ?? null,
     order: values.order,
     status: toProjectStatus(values.status),
+    isFeatured: values.isFeatured,
   };
 }
 

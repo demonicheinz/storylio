@@ -80,12 +80,17 @@ async function getProjectsData(selectedTech?: string) {
         slug: true,
         description: true,
         coverImage: true,
+        thumbnailImageUrl: true,
+        isFeatured: true,
         techStack: true,
         liveUrl: true,
         githubUrl: true,
         order: true,
       },
       orderBy: [
+        {
+          isFeatured: "desc",
+        },
         {
           order: "asc",
         },
@@ -102,9 +107,7 @@ async function getProjectsData(selectedTech?: string) {
         id: true,
         techStack: true,
       },
-      orderBy: {
-        order: "asc",
-      },
+      orderBy: [{ isFeatured: "desc" }, { order: "asc" }],
     }),
   ]);
 

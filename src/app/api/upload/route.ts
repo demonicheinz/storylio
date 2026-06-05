@@ -63,6 +63,12 @@ export async function POST(request: Request) {
       filename: media.filename,
       format: media.format,
       size: media.size,
+      width: result.width,
+      height: result.height,
+      aspectRatio:
+        result.width > 0 && result.height > 0
+          ? result.width / result.height
+          : null,
     });
   } catch (error) {
     console.error("Upload failed:", error);
