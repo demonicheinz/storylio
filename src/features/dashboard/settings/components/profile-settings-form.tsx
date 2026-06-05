@@ -5,6 +5,7 @@ import {
   EnvelopeSimpleIcon,
   EyeIcon,
   EyeSlashIcon,
+  FingerprintIcon,
   FloppyDiskIcon,
   GithubLogoIcon,
   KeyIcon,
@@ -14,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +25,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -711,6 +722,235 @@ function ConnectedProviders({
   );
 }
 
+function PasskeySettings() {
+  const { data: passkeys, isPending: isLoading } = authClient.useListPasskeys();
+  const [isAdding, setIsAdding] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <SpinnerIcon className="animate-spin" />
+          Loading passkeys...
+        </div>
+      ) : passkeys && passkeys.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {passkeys.map((passkey) => (
+            <div
+              key={passkey.id}
+              className="flex items-center gap-3 rounded-lg border p-3"
+            >
+              <KeyIcon className="size-5 text-muted-foreground" />
+              <div className="flex flex-1 flex-col">
+                <span className="text-sm font-medium">
+                  {passkey.name || "Unnamed Passkey"}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Added on{" "}
+                  {new Date(passkey.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <EditPasskeyDialog passkey={passkey} />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  disabled={isDeleting === passkey.id || isAdding}
+                  onClick={async () => {
+                    setIsDeleting(passkey.id);
+                    try {
+                      await authClient.passkey.deletePasskey({
+                        id: passkey.id,
+                      });
+                      toast.success("Passkey deleted successfully.");
+                    } catch {
+                      toast.error("Failed to delete passkey.");
+                    } finally {
+                      setIsDeleting(null);
+                    }
+                  }}
+                >
+                  {isDeleting === passkey.id ? (
+                    <SpinnerIcon className="animate-spin" />
+                  ) : (
+                    "Delete"
+                  )}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          No passkeys registered yet.
+        </p>
+      )}
+
+      <AddPasskeyDialog isAdding={isAdding} setIsAdding={setIsAdding} />
+    </div>
+  );
+}
+
+function AddPasskeyDialog({
+  isAdding,
+  setIsAdding,
+}: {
+  isAdding: boolean;
+  setIsAdding: (val: boolean) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAdding(true);
+    try {
+      await authClient.passkey.addPasskey({
+        name: name.trim() || `Passkey ${new Date().toLocaleDateString()}`,
+      });
+      toast.success("Passkey added successfully.");
+      setOpen(false);
+      setName("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add passkey.");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="mt-2 w-fit" disabled={isAdding}>
+          {isAdding ? (
+            <SpinnerIcon data-icon="inline-start" className="animate-spin" />
+          ) : (
+            <KeyIcon data-icon="inline-start" className="size-4" />
+          )}
+          Add Passkey
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <form onSubmit={handleAdd}>
+          <DialogHeader>
+            <DialogTitle>Add New Passkey</DialogTitle>
+            <DialogDescription>
+              Give this passkey a name to help you identify it later (e.g.
+              "YubiKey").
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="passkeyName">Passkey Name</Label>
+            <Input
+              id="passkeyName"
+              placeholder="e.g. YubiKey"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-2"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isAdding}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isAdding}>
+              {isAdding && <SpinnerIcon className="mr-2 animate-spin" />}
+              Save Passkey
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditPasskeyDialog({ passkey }: { passkey: any }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(passkey.name || "");
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    setIsUpdating(true);
+    try {
+      await authClient.passkey.updatePasskey({
+        id: passkey.id,
+        name: name.trim(),
+      });
+      toast.success("Passkey renamed successfully.");
+      setOpen(false);
+    } catch {
+      toast.error("Failed to rename passkey.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8"
+          onClick={() => setName(passkey.name || "")}
+        >
+          Edit
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <form onSubmit={handleUpdate}>
+          <DialogHeader>
+            <DialogTitle>Rename Passkey</DialogTitle>
+            <DialogDescription>
+              Change the name of your passkey to easily identify it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="editPasskeyName">Passkey Name</Label>
+            <Input
+              id="editPasskeyName"
+              placeholder="e.g. Work Laptop"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-2"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isUpdating}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isUpdating || !name.trim()}>
+              {isUpdating && <SpinnerIcon className="mr-2 animate-spin" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function SettingsManager({
   profile,
   linkedAccounts,
@@ -761,6 +1001,18 @@ export function SettingsManager({
           </CardHeader>
           <CardContent>
             <ConnectedProviders linkedAccounts={linkedAccounts} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Passkeys</CardTitle>
+            <CardDescription>
+              Use biometric or security keys for faster, secure sign-ins.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PasskeySettings />
           </CardContent>
         </Card>
       </TabsContent>

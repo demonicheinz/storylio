@@ -8,27 +8,28 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String?
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String   @unique
+  emailVerified Boolean  @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  tagline       String?
-  bio           String?
-  github        String?
-  instagram     String?
-  twitter       String?
+  tagline   String?
+  bio       String?
+  github    String?
+  instagram String?
+  twitter   String?
 
-  websiteUrl    String?
-  publicEmail   String?
+  websiteUrl  String?
+  publicEmail String?
 
-  sessions      Session[]
-  accounts      Account[]
-  posts         Post[]
-  projects      Project[]
+  sessions Session[]
+  accounts Account[]
+  passkeys Passkey[]
+  posts    Post[]
+  projects Project[]
 }
 
 model Session {
@@ -40,16 +41,16 @@ model Session {
   ipAddress String?
   userAgent String?
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {
-  id                    String    @id @default(cuid())
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String @id @default(cuid())
+  accountId  String
+  providerId String
+  userId     String
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   accessToken           String?
   refreshToken          String?
@@ -59,8 +60,8 @@ model Account {
   scope                 String?
   password              String?
 
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Verification {
@@ -83,37 +84,37 @@ model Post {
   publishedAt DateTime?
   viewCount   Int        @default(0)
 
-  authorId    String
-  author      User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  tags        Tag[]
+  tags Tag[]
 
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Project {
-  id           String        @id @default(cuid())
-  title        String
-  slug         String        @unique
-  description  String?
-  content      String?       @db.Text
-  coverImage   String?
+  id                String        @id @default(cuid())
+  title             String
+  slug              String        @unique
+  description       String?
+  content           String?       @db.Text
+  coverImage        String?
   thumbnailImageUrl String?
-  isFeatured   Boolean       @default(false)
-  screenshots  String[]
-  techStack    String[]
-  liveUrl      String?
-  githubUrl    String?
-  order        Int           @default(0)
-  status       ProjectStatus @default(DRAFT)
-  viewCount    Int           @default(0)
+  isFeatured        Boolean       @default(false)
+  screenshots       String[]
+  techStack         String[]
+  liveUrl           String?
+  githubUrl         String?
+  order             Int           @default(0)
+  status            ProjectStatus @default(DRAFT)
+  viewCount         Int           @default(0)
 
-  authorId     String
-  author       User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ViewEvent {
@@ -269,4 +270,19 @@ enum PostStatus {
 enum ProjectStatus {
   DRAFT
   PUBLISHED
+}
+
+model Passkey {
+  id             String    @id
+  name           String?
+  publicKey      String
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID   String
+  counter        Int
+  deviceType     String
+  backedUp       Boolean
+  transports     String?
+  aaguid         String?
+  createdAt      DateTime?
 }
