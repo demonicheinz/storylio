@@ -17,6 +17,16 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Owner-only guard: only configured owner email(s) can access dashboard
+  const ownerEmails = process.env.OWNER_EMAIL
+    ? process.env.OWNER_EMAIL.split(",").map((e) => e.trim().toLowerCase())
+    : null;
+
+  if (!ownerEmails) {
+    // Env tidak dikonfigurasi — tolak semua akses
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
+  }
+
   return NextResponse.next();
 }
 

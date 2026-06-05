@@ -5,6 +5,8 @@ import { headers } from "next/headers";
 import {
   type AccountPasswordActionInput,
   accountPasswordActionSchema,
+  type ChangeEmailActionInput,
+  changeEmailActionSchema,
   type ProfileSettingsActionInput,
   profileSettingsActionSchema,
 } from "@/features/dashboard/settings/validations";
@@ -68,6 +70,8 @@ export async function actionUpdateProfileSettings(
         github: parsed.data.github ?? null,
         instagram: parsed.data.instagram ?? null,
         twitter: parsed.data.twitter ?? null,
+        websiteUrl: parsed.data.websiteUrl ?? null,
+        publicEmail: parsed.data.publicEmail ?? null,
       },
       select: {
         id: true,
@@ -127,5 +131,51 @@ export async function actionChangePassword(
     return actionError(
       "Failed to change password. Check the current password.",
     );
+  }
+}
+
+export async function actionChangeEmail(
+  input: ChangeEmailActionInput,
+): Promise<ActionResult> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsed = changeEmailActionSchema.safeParse(input);
+  if (!parsed.success) {
+    return actionError(
+      "Please fix the highlighted fields.",
+      flattenFieldErrors(parsed.error.flatten().fieldErrors),
+    );
+  }
+
+  try {
+    await auth.api.changeEmail({
+      body: {
+        newEmail: parsed.data.newEmail,
+        callbackURL: "/dashboard/settings",
+      },
+      headers: await headers(),
+    });
+
+    revalidateSettingsPaths();
+
+    return actionSuccess(
+      undefined,
+      "A confirmation email has been sent to your new email address. Click the link to confirm the change.",
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to change email.";
+    console.error("Change email failed:", message);
+
+    // Provide user-friendly messages for common errors
+    if (message.includes("same")) {
+      return actionError("The new email is the same as your current email.");
+    }
+
+    return actionError("Failed to change email. Please try again.");
   }
 }

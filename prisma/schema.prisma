@@ -22,6 +22,9 @@ model User {
   instagram     String?
   twitter       String?
 
+  websiteUrl    String?
+  publicEmail   String?
+
   sessions      Session[]
   accounts      Account[]
   posts         Post[]

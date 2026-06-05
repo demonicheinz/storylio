@@ -44,6 +44,7 @@ type ImageUploadProps = {
   cropShape?: "rect" | "round";
   cropLabel?: string;
   previewClassName?: string;
+  priority?: boolean;
 };
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -117,6 +118,7 @@ export function ImageUpload({
   cropShape = "rect",
   cropLabel = "Crop image",
   previewClassName,
+  priority = false,
 }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -305,6 +307,7 @@ export function ImageUpload({
             src={value}
             alt="Uploaded image"
             fill
+            priority={priority}
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
           />
