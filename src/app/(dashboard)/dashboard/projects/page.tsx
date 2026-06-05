@@ -1,12 +1,6 @@
-import {
-  ArrowSquareOutIcon,
-  BriefcaseIcon,
-  PencilSimpleIcon,
-  PlusIcon,
-} from "@phosphor-icons/react/dist/ssr";
+import { BriefcaseIcon, PlusIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { connection } from "next/server";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,11 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ProjectDeleteButton } from "@/features/dashboard/projects/components/project-delete-button";
-import { ProjectReorderButton } from "@/features/dashboard/projects/components/project-reorder-button";
-import { ProjectStatus } from "@/generated/prisma";
+import { ProjectSortableList } from "@/features/dashboard/projects/components/project-sortable-list";
 import { db } from "@/lib/db";
-import { formatDate } from "@/lib/utils";
 
 async function getProjects() {
   return db.project.findMany({
@@ -88,115 +79,7 @@ export default async function ProjectsPage() {
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
-              {projects.map((project, index) => {
-                const isPublished = project.status === ProjectStatus.PUBLISHED;
-                const previousProject = projects[index - 1];
-                const nextProject = projects[index + 1];
-
-                return (
-                  <div
-                    key={project.id}
-                    className="grid gap-4 rounded-2xl border bg-background/40 p-4 md:grid-cols-[minmax(0,1fr)_auto]"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="truncate font-heading text-lg font-semibold">
-                          {project.title}
-                        </h2>
-                        <Badge variant={isPublished ? "default" : "secondary"}>
-                          {isPublished ? "published" : "draft"}
-                        </Badge>
-                        <Badge variant="outline">order {project.order}</Badge>
-                      </div>
-                      <p className="mt-1 truncate text-sm text-muted-foreground">
-                        /projects/{project.slug}
-                      </p>
-                      {project.description && (
-                        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                          {project.description}
-                        </p>
-                      )}
-                      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                        <span>Updated {formatDate(project.updatedAt)}</span>
-                        <span>Created {formatDate(project.createdAt)}</span>
-                        {project.techStack.slice(0, 4).map((tech) => (
-                          <Badge
-                            key={tech}
-                            variant="outline"
-                            className="text-[11px]"
-                          >
-                            {tech}
-                          </Badge>
-                        ))}
-                        {project.techStack.length > 4 && (
-                          <span>+{project.techStack.length - 4} more</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                      <div className="flex items-center gap-1">
-                        <ProjectReorderButton
-                          direction="up"
-                          disabled={!previousProject}
-                          updates={
-                            previousProject
-                              ? [
-                                  {
-                                    id: project.id,
-                                    order: previousProject.order,
-                                  },
-                                  {
-                                    id: previousProject.id,
-                                    order: project.order,
-                                  },
-                                ]
-                              : []
-                          }
-                        />
-                        <ProjectReorderButton
-                          direction="down"
-                          disabled={!nextProject}
-                          updates={
-                            nextProject
-                              ? [
-                                  {
-                                    id: project.id,
-                                    order: nextProject.order,
-                                  },
-                                  {
-                                    id: nextProject.id,
-                                    order: project.order,
-                                  },
-                                ]
-                              : []
-                          }
-                        />
-                      </div>
-                      <Button asChild size="sm" variant="outline">
-                        <Link
-                          href={`/projects/${project.slug}`}
-                          target="_blank"
-                        >
-                          <ArrowSquareOutIcon data-icon="inline-start" />
-                          Preview
-                        </Link>
-                      </Button>
-                      <Button asChild size="sm" variant="secondary">
-                        <Link href={`/dashboard/projects/${project.id}/edit`}>
-                          <PencilSimpleIcon data-icon="inline-start" />
-                          Edit
-                        </Link>
-                      </Button>
-                      <ProjectDeleteButton
-                        projectId={project.id}
-                        title={project.title}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <ProjectSortableList projects={projects} />
           )}
         </CardContent>
       </Card>

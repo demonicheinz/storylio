@@ -224,8 +224,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <ArticleHeader post={post} />
 
         <div className="mt-14 grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_280px]">
-          <section className="rounded-3xl border border-border/40 bg-surface/65 p-6 shadow-[0_0_64px_rgba(139,92,246,0.1)] backdrop-blur-xl md:p-8">
-            <div className="prose-invert flex max-w-none flex-col gap-5">
+          <section className="min-w-0 rounded-3xl border border-border/40 bg-surface/65 p-6 shadow-[0_0_64px_rgba(139,92,246,0.1)] backdrop-blur-xl md:p-8">
+            <div className="prose-invert flex max-w-full min-w-0 flex-col gap-5 overflow-hidden">
               {mdxContent}
             </div>
 

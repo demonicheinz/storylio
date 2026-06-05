@@ -156,7 +156,7 @@ export function DateTimePicker({
   const panel = (
     <div
       id="storylio-date-time-picker-panel"
-      className="fixed z-100 grid gap-4 rounded-3xl border bg-popover p-4 text-popover-foreground shadow-2xl ring-1 ring-foreground/10"
+      className="fixed z-100 grid max-h-[min(560px,calc(100vh-2rem))] gap-4 overflow-y-auto rounded-3xl border border-border/70 bg-popover p-4 text-popover-foreground shadow-[0_24px_80px_rgba(0,0,0,0.48)] ring-1 ring-foreground/10"
       style={{
         left: panelPosition.left,
         top: panelPosition.top,
@@ -224,7 +224,7 @@ export function DateTimePicker({
           </div>
         </div>
 
-        <div className="grid gap-2 border-t pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-3">
+        <div className="grid gap-2 border-t border-border/60 pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-3">
           <p className="text-center text-xs font-medium text-muted-foreground">
             Time
           </p>
@@ -265,7 +265,7 @@ export function DateTimePicker({
         </div>
       </div>
 
-      <div className="flex justify-between border-t pt-3">
+      <div className="flex justify-between border-t border-border/60 pt-3">
         <Button
           type="button"
           variant="ghost"

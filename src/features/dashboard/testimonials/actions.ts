@@ -59,6 +59,54 @@ async function getNextTestimonialOrder() {
   return (lastItem?.order ?? -1) + 1;
 }
 
+async function prepareTestimonialCreateOrder(order: number) {
+  if (order <= 0) {
+    return getNextTestimonialOrder();
+  }
+
+  await db.testimonial.updateMany({
+    where: { order: { gte: order } },
+    data: { order: { increment: 1 } },
+  });
+
+  return order;
+}
+
+async function moveTestimonialOrder(
+  testimonialId: string,
+  fromOrder: number,
+  toOrder: number,
+) {
+  if (fromOrder === toOrder) {
+    return;
+  }
+
+  if (toOrder < fromOrder) {
+    await db.testimonial.updateMany({
+      where: {
+        id: { not: testimonialId },
+        order: {
+          gte: toOrder,
+          lt: fromOrder,
+        },
+      },
+      data: { order: { increment: 1 } },
+    });
+    return;
+  }
+
+  await db.testimonial.updateMany({
+    where: {
+      id: { not: testimonialId },
+      order: {
+        gt: fromOrder,
+        lte: toOrder,
+      },
+    },
+    data: { order: { decrement: 1 } },
+  });
+}
+
 export async function actionCreateTestimonial(
   input: TestimonialActionInput,
 ): Promise<ActionResult<TestimonialActionData>> {
@@ -81,7 +129,7 @@ export async function actionCreateTestimonial(
         company: parsed.data.company || null,
         avatar: parsed.data.avatar ?? null,
         content: parsed.data.content,
-        order: parsed.data.order || (await getNextTestimonialOrder()),
+        order: await prepareTestimonialCreateOrder(parsed.data.order),
       },
       select: { id: true },
     });
@@ -113,12 +161,18 @@ export async function actionUpdateTestimonial(
   try {
     const existingTestimonial = await db.testimonial.findUnique({
       where: { id: testimonialId },
-      select: { id: true },
+      select: { id: true, order: true },
     });
 
     if (!existingTestimonial) {
       return actionError("Testimonial not found.");
     }
+
+    await moveTestimonialOrder(
+      testimonialId,
+      existingTestimonial.order,
+      parsed.data.order,
+    );
 
     const testimonial = await db.testimonial.update({
       where: { id: testimonialId },

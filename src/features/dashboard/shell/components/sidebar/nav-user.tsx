@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -35,6 +36,29 @@ type User = {
 export function NavUser({ user }: { user: User }) {
   const router = useRouter();
   const { isMobile } = useSidebar();
+  const [currentUser, setCurrentUser] = useState(user);
+
+  useEffect(() => {
+    setCurrentUser(user);
+  }, [user]);
+
+  useEffect(() => {
+    const handleUserUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<Partial<User>>).detail;
+
+      setCurrentUser((current) => ({
+        name: detail.name ?? current.name,
+        email: detail.email ?? current.email,
+        avatar: detail.avatar ?? current.avatar,
+      }));
+    };
+
+    window.addEventListener("dashboard-user-updated", handleUserUpdate);
+
+    return () => {
+      window.removeEventListener("dashboard-user-updated", handleUserUpdate);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -52,20 +76,22 @@ export function NavUser({ user }: { user: User }) {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="rounded-xl">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-xl">HZ</AvatarFallback>
+                <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                <AvatarFallback className="rounded-xl">
+                  {currentUser.name?.slice(0, 2).toUpperCase() || "US"}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{currentUser.name}</span>
                 <span className="truncate text-xs text-sidebar-foreground/70">
-                  {user.email}
+                  {currentUser.email}
                 </span>
               </div>
               <CaretUpDownIcon className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="min-w-56 rounded-lg"
+            className="min-w-56 rounded-lg [&_[role='menuitem']]:cursor-pointer"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
@@ -73,13 +99,20 @@ export function NavUser({ user }: { user: User }) {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="rounded-xl">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-xl">HZ</AvatarFallback>
+                  <AvatarImage
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                  />
+                  <AvatarFallback className="rounded-xl">
+                    {currentUser.name?.slice(0, 2).toUpperCase() || "US"}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">
+                    {currentUser.name}
+                  </span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {user.email}
+                    {currentUser.email}
                   </span>
                 </div>
               </div>
@@ -89,7 +122,7 @@ export function NavUser({ user }: { user: User }) {
               <DropdownMenuItem asChild>
                 <Link href="/" target="_blank">
                   <ArrowSquareOutIcon />
-                  Lihat Site
+                  View Site
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
@@ -102,7 +135,7 @@ export function NavUser({ user }: { user: User }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogout} variant="destructive">
               <SignOutIcon />
-              Logout
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

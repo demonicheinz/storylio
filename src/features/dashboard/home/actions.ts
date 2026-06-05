@@ -66,6 +66,90 @@ async function getNextHomeSectionOrder(type: HomeSectionActionValues["type"]) {
   return (lastSection?.order ?? -1) + 1;
 }
 
+async function prepareHomeSectionCreateOrder(
+  type: HomeSectionActionValues["type"],
+  order: number,
+) {
+  if (order <= 0) {
+    return getNextHomeSectionOrder(type);
+  }
+
+  await db.homeSection.updateMany({
+    where: {
+      type: toHomeSectionType(type),
+      order: { gte: order },
+    },
+    data: { order: { increment: 1 } },
+  });
+
+  return order;
+}
+
+async function moveHomeSectionOrder({
+  fromOrder,
+  fromType,
+  sectionId,
+  toOrder,
+  toType,
+}: {
+  sectionId: string;
+  fromType: HomeSectionType;
+  toType: HomeSectionType;
+  fromOrder: number;
+  toOrder: number;
+}) {
+  if (fromType !== toType) {
+    await db.homeSection.updateMany({
+      where: {
+        type: fromType,
+        id: { not: sectionId },
+        order: { gt: fromOrder },
+      },
+      data: { order: { decrement: 1 } },
+    });
+    await db.homeSection.updateMany({
+      where: {
+        type: toType,
+        id: { not: sectionId },
+        order: { gte: toOrder },
+      },
+      data: { order: { increment: 1 } },
+    });
+    return;
+  }
+
+  if (fromOrder === toOrder) {
+    return;
+  }
+
+  if (toOrder < fromOrder) {
+    await db.homeSection.updateMany({
+      where: {
+        type: toType,
+        id: { not: sectionId },
+        order: {
+          gte: toOrder,
+          lt: fromOrder,
+        },
+      },
+      data: { order: { increment: 1 } },
+    });
+    return;
+  }
+
+  await db.homeSection.updateMany({
+    where: {
+      type: toType,
+      id: { not: sectionId },
+      order: {
+        gt: fromOrder,
+        lte: toOrder,
+      },
+    },
+    data: { order: { decrement: 1 } },
+  });
+}
+
 function getHomeSectionData(values: HomeSectionActionValues) {
   return {
     type: toHomeSectionType(values.type),
@@ -94,9 +178,10 @@ export async function actionCreateHomeSection(
     const section = await db.homeSection.create({
       data: {
         ...getHomeSectionData(parsed.data),
-        order:
-          parsed.data.order ||
-          (await getNextHomeSectionOrder(parsed.data.type)),
+        order: await prepareHomeSectionCreateOrder(
+          parsed.data.type,
+          parsed.data.order,
+        ),
       },
       select: { id: true },
     });
@@ -128,12 +213,20 @@ export async function actionUpdateHomeSection(
   try {
     const existingSection = await db.homeSection.findUnique({
       where: { id: sectionId },
-      select: { id: true },
+      select: { id: true, order: true, type: true },
     });
 
     if (!existingSection) {
       return actionError("Home section not found.");
     }
+
+    await moveHomeSectionOrder({
+      sectionId,
+      fromType: existingSection.type,
+      toType: toHomeSectionType(parsed.data.type),
+      fromOrder: existingSection.order,
+      toOrder: parsed.data.order,
+    });
 
     const section = await db.homeSection.update({
       where: { id: sectionId },

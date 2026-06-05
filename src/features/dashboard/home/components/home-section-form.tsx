@@ -2,8 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
   ImageIcon,
   PencilSimpleIcon,
   PlusIcon,
@@ -63,6 +61,11 @@ import {
   homeSectionActionSchema,
 } from "@/features/dashboard/home/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
+import {
+  DashboardSortableList,
+  rectSortingStrategy,
+  verticalListSortingStrategy,
+} from "@/features/dashboard/shared/components/sortable-list";
 
 export type DashboardHomeSection = {
   id: string;
@@ -365,49 +368,6 @@ function HomeSectionDeleteButton({
   );
 }
 
-function HomeSectionReorderButton({
-  direction,
-  disabled,
-  updates,
-}: {
-  direction: "up" | "down";
-  disabled?: boolean;
-  updates: Array<{ id: string; order: number }>;
-}) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const Icon = direction === "up" ? ArrowUpIcon : ArrowDownIcon;
-
-  const handleClick = () => {
-    startTransition(async () => {
-      const result = await actionReorderHomeSections(updates);
-
-      if (result.success) {
-        toast.success(result.message ?? "Home content order updated.");
-        router.refresh();
-      } else {
-        toast.error(result.error);
-      }
-    });
-  };
-
-  return (
-    <Button
-      type="button"
-      size="icon"
-      variant="outline"
-      className="size-8"
-      onClick={handleClick}
-      disabled={disabled || isPending}
-      aria-label={
-        direction === "up" ? "Move home content up" : "Move home content down"
-      }
-    >
-      <Icon />
-    </Button>
-  );
-}
-
 function HomeContentList({
   emptyLabel,
   emptyDescription,
@@ -419,6 +379,27 @@ function HomeContentList({
   items: DashboardHomeSection[];
   type: HomeSectionTypeValue;
 }) {
+  const router = useRouter();
+  const [isReordering, startReorderTransition] = useTransition();
+
+  const handleReorder = (nextItems: DashboardHomeSection[]) => {
+    startReorderTransition(async () => {
+      const result = await actionReorderHomeSections(
+        nextItems.map((item, index) => ({
+          id: item.id,
+          order: index,
+        })),
+      );
+
+      if (result.success) {
+        toast.success(result.message ?? "Home content order updated.");
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
+    });
+  };
+
   if (items.length === 0) {
     return (
       <div className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed text-center">
@@ -447,90 +428,69 @@ function HomeContentList({
   }
 
   return (
-    <div
+    <DashboardSortableList
+      items={items}
+      disabled={isReordering}
       className={
         type === "LOGO" ? "grid gap-4 md:grid-cols-2" : "flex flex-col gap-3"
       }
-    >
-      {items.map((item, index) => {
-        const previousItem = items[index - 1];
-        const nextItem = items[index + 1];
-
-        return (
-          <div
-            key={item.id}
-            className="grid gap-4 rounded-2xl border bg-background/40 p-4 md:grid-cols-[minmax(0,1fr)_auto]"
-          >
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="truncate font-heading text-lg font-semibold">
-                  {item.label}
-                </h2>
-                <Badge variant="outline">order {item.order}</Badge>
-              </div>
-              {type === "LOGO" ? (
-                <div className="mt-4 flex h-20 w-40 items-center justify-center rounded-2xl border bg-muted/30 p-4">
-                  {item.imageUrl ? (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.label}
-                      width={140}
-                      height={48}
-                      className="max-h-12 w-auto object-contain"
-                    />
-                  ) : (
-                    <ImageIcon className="size-8 text-muted-foreground" />
-                  )}
-                </div>
-              ) : (
-                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                  {item.content || "No description yet."}
-                </p>
-              )}
+      strategy={
+        type === "LOGO" ? rectSortingStrategy : verticalListSortingStrategy
+      }
+      onReorder={handleReorder}
+      renderItem={({ item, handle, isDragging }) => (
+        <div
+          className={[
+            "grid overflow-hidden rounded-2xl border bg-background/40 transition-[border-color,box-shadow,opacity] md:grid-cols-[44px_minmax(0,1fr)_auto]",
+            isDragging
+              ? "border-brand-soft/60 shadow-[0_0_52px_rgba(139,92,246,0.18)]"
+              : "hover:border-brand-soft/35",
+          ].join(" ")}
+        >
+          {handle}
+          <div className="min-w-0 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="truncate font-heading text-lg font-semibold">
+                {item.label}
+              </h2>
+              <Badge variant="outline">order {item.order}</Badge>
             </div>
-            <div className="flex flex-wrap items-center gap-2 md:justify-end">
-              <div className="flex items-center gap-1">
-                <HomeSectionReorderButton
-                  direction="up"
-                  disabled={!previousItem}
-                  updates={
-                    previousItem
-                      ? [
-                          { id: item.id, order: previousItem.order },
-                          { id: previousItem.id, order: item.order },
-                        ]
-                      : []
-                  }
-                />
-                <HomeSectionReorderButton
-                  direction="down"
-                  disabled={!nextItem}
-                  updates={
-                    nextItem
-                      ? [
-                          { id: item.id, order: nextItem.order },
-                          { id: nextItem.id, order: item.order },
-                        ]
-                      : []
-                  }
-                />
+            {type === "LOGO" ? (
+              <div className="mt-4 flex h-20 w-40 items-center justify-center rounded-2xl border bg-muted/30 p-4">
+                {item.imageUrl ? (
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.label}
+                    width={140}
+                    height={48}
+                    className="max-h-12 w-auto object-contain"
+                  />
+                ) : (
+                  <ImageIcon className="size-8 text-muted-foreground" />
+                )}
               </div>
-              <HomeSectionDialog
-                section={item}
-                type={type}
-                trigger={
-                  <Button type="button" size="sm" variant="secondary">
-                    <PencilSimpleIcon data-icon="inline-start" />
-                    Edit
-                  </Button>
-                }
-              />
-              <HomeSectionDeleteButton section={item} />
-            </div>
+            ) : (
+              <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                {item.content || "No description yet."}
+              </p>
+            )}
           </div>
-        );
-      })}
-    </div>
+          <div className="flex flex-wrap items-center gap-2 p-4 md:justify-end">
+            <HomeSectionDialog
+              section={item}
+              type={type}
+              trigger={
+                <Button type="button" size="sm" variant="secondary">
+                  <PencilSimpleIcon data-icon="inline-start" />
+                  Edit
+                </Button>
+              }
+            />
+            <HomeSectionDeleteButton section={item} />
+          </div>
+        </div>
+      )}
+    />
   );
 }
 

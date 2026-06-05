@@ -16,6 +16,9 @@ import { db } from "@/lib/db";
 
 type ProfileSettingsActionData = {
   id: string;
+  name: string;
+  email: string;
+  image: string | null;
 };
 
 function flattenFieldErrors(
@@ -66,12 +69,25 @@ export async function actionUpdateProfileSettings(
         instagram: parsed.data.instagram ?? null,
         twitter: parsed.data.twitter ?? null,
       },
-      select: { id: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+      },
     });
 
     revalidateSettingsPaths();
 
-    return actionSuccess({ id: user.id }, "Profile settings updated.");
+    return actionSuccess(
+      {
+        id: user.id,
+        name: user.name ?? "User",
+        email: user.email,
+        image: user.image,
+      },
+      "Profile settings updated.",
+    );
   } catch (error) {
     console.error("Update profile settings failed:", error);
     return actionError("Failed to update profile settings.");

@@ -59,6 +59,54 @@ async function getNextGalleryOrder() {
   return (lastItem?.order ?? -1) + 1;
 }
 
+async function prepareGalleryCreateOrder(order: number) {
+  if (order <= 0) {
+    return getNextGalleryOrder();
+  }
+
+  await db.galleryItem.updateMany({
+    where: { order: { gte: order } },
+    data: { order: { increment: 1 } },
+  });
+
+  return order;
+}
+
+async function moveGalleryOrder(
+  itemId: string,
+  fromOrder: number,
+  toOrder: number,
+) {
+  if (fromOrder === toOrder) {
+    return;
+  }
+
+  if (toOrder < fromOrder) {
+    await db.galleryItem.updateMany({
+      where: {
+        id: { not: itemId },
+        order: {
+          gte: toOrder,
+          lt: fromOrder,
+        },
+      },
+      data: { order: { increment: 1 } },
+    });
+    return;
+  }
+
+  await db.galleryItem.updateMany({
+    where: {
+      id: { not: itemId },
+      order: {
+        gt: fromOrder,
+        lte: toOrder,
+      },
+    },
+    data: { order: { decrement: 1 } },
+  });
+}
+
 export async function actionCreateGalleryItem(
   input: GalleryItemActionInput,
 ): Promise<ActionResult<GalleryActionData>> {
@@ -74,15 +122,17 @@ export async function actionCreateGalleryItem(
   }
 
   try {
-    const item = await db.galleryItem.create({
-      data: {
-        imageUrl: parsed.data.imageUrl,
-        caption: parsed.data.caption || null,
-        category: parsed.data.category,
-        order: parsed.data.order || (await getNextGalleryOrder()),
-      },
-      select: { id: true },
-    });
+    const item = await db.$transaction(async () =>
+      db.galleryItem.create({
+        data: {
+          imageUrl: parsed.data.imageUrl,
+          caption: parsed.data.caption || null,
+          category: parsed.data.category,
+          order: await prepareGalleryCreateOrder(parsed.data.order),
+        },
+        select: { id: true },
+      }),
+    );
 
     revalidateGalleryPaths();
 
@@ -111,12 +161,14 @@ export async function actionUpdateGalleryItem(
   try {
     const existingItem = await db.galleryItem.findUnique({
       where: { id: itemId },
-      select: { id: true },
+      select: { id: true, order: true },
     });
 
     if (!existingItem) {
       return actionError("Gallery item not found.");
     }
+
+    await moveGalleryOrder(itemId, existingItem.order, parsed.data.order);
 
     const item = await db.galleryItem.update({
       where: { id: itemId },

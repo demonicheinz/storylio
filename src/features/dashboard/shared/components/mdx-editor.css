@@ -45,6 +45,15 @@
   color: var(--foreground) !important;
 }
 
+.storylio-mdx-editor.dark-theme [class*="_toolbarNodeKindSelectTrigger_"] span,
+.storylio-mdx-editor.dark-theme [class*="_toolbarButtonSelectTrigger_"] span,
+.storylio-mdx-editor.dark-theme [class*="_selectTrigger_"] span,
+.storylio-mdx-editor.dark-theme
+  [class*="_toolbarCodeBlockLanguageSelectTrigger_"]
+  span {
+  color: var(--foreground) !important;
+}
+
 .storylio-mdx-editor.dark-theme [class*="_toolbarButton_"]:hover,
 .storylio-mdx-editor.dark-theme [class*="_toolbarToggleItem_"]:hover,
 .storylio-mdx-editor.dark-theme [class*="_toolbarNodeKindSelectTrigger_"]:hover,
@@ -79,6 +88,10 @@
 .storylio-mdx-editor.dark-theme .cm-gutters {
   border-color: var(--border) !important;
   color: var(--muted-foreground) !important;
+}
+
+.storylio-mdx-editor.dark-theme .cm-line {
+  color: var(--foreground) !important;
 }
 
 .storylio-mdx-editor.dark-theme .cm-activeLine,
@@ -144,6 +157,12 @@
 [class*="_linkDialogEditForm_"],
 [class*="_linkDialogInputWrapper_"] {
   background: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+}
+
+[class*="_linkDialogPopoverContent_"] label,
+[class*="_linkDialogPopoverContent_"] button,
+[class*="_popoverContent_"] button {
   color: var(--popover-foreground) !important;
 }
 

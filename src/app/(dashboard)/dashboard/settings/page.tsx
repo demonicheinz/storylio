@@ -8,6 +8,7 @@ async function getProfile(userId: string) {
     where: { id: userId },
     select: {
       id: true,
+      email: true,
       name: true,
       image: true,
       tagline: true,
@@ -38,6 +39,7 @@ export default async function SettingsPage() {
         profile={
           profile ?? {
             id: session.user.id,
+            email: session.user.email,
             name: session.user.name,
             image: session.user.image ?? null,
             tagline: null,
