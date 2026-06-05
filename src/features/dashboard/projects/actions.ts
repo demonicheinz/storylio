@@ -56,6 +56,7 @@ function revalidateProjectPaths(slug: string, oldSlug?: string) {
   revalidatePath("/dashboard/projects");
   revalidatePath("/dashboard");
   revalidatePath("/projects");
+  revalidatePath("/");
   revalidatePath(`/projects/${slug}`);
 
   if (oldSlug && oldSlug !== slug) {
@@ -85,6 +86,54 @@ async function getNextProjectOrder() {
   });
 
   return (lastProject?.order ?? -1) + 1;
+}
+
+async function prepareProjectCreateOrder(order: number) {
+  if (order <= 0) {
+    return getNextProjectOrder();
+  }
+
+  await db.project.updateMany({
+    where: { order: { gte: order } },
+    data: { order: { increment: 1 } },
+  });
+
+  return order;
+}
+
+async function moveProjectOrder(
+  projectId: string,
+  fromOrder: number,
+  toOrder: number,
+) {
+  if (fromOrder === toOrder) {
+    return;
+  }
+
+  if (toOrder < fromOrder) {
+    await db.project.updateMany({
+      where: {
+        id: { not: projectId },
+        order: {
+          gte: toOrder,
+          lt: fromOrder,
+        },
+      },
+      data: { order: { increment: 1 } },
+    });
+    return;
+  }
+
+  await db.project.updateMany({
+    where: {
+      id: { not: projectId },
+      order: {
+        gt: fromOrder,
+        lte: toOrder,
+      },
+    },
+    data: { order: { decrement: 1 } },
+  });
 }
 
 function getProjectData(values: ProjectActionValues) {
@@ -128,7 +177,7 @@ export async function actionCreateProject(
     const project = await db.project.create({
       data: {
         ...getProjectData(parsed.data),
-        order: parsed.data.order || (await getNextProjectOrder()),
+        order: await prepareProjectCreateOrder(parsed.data.order),
         authorId: session.user.id,
       },
       select: {
@@ -178,6 +227,7 @@ export async function actionUpdateProject(
       select: {
         id: true,
         slug: true,
+        order: true,
       },
     });
 
@@ -189,6 +239,8 @@ export async function actionUpdateProject(
     if (duplicateSlug) {
       return duplicateSlug;
     }
+
+    await moveProjectOrder(projectId, existingProject.order, parsed.data.order);
 
     const project = await db.project.update({
       where: { id: projectId },
@@ -311,6 +363,7 @@ export async function actionReorderProjects(
     revalidatePath("/dashboard/projects");
     revalidatePath("/dashboard");
     revalidatePath("/projects");
+    revalidatePath("/");
 
     for (const project of projects) {
       revalidatePath(`/projects/${project.slug}`);

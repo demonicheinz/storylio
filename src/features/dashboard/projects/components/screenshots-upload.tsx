@@ -15,12 +15,21 @@ import {
   useState,
 } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  DashboardSortableList,
+  rectSortingStrategy,
+} from "@/features/dashboard/shared/components/sortable-list";
 import { cn } from "@/lib/utils";
 
 type ScreenshotsUploadProps = {
   value?: string[];
   onChange: (urls: string[]) => void;
   disabled?: boolean;
+};
+
+type SortableScreenshot = {
+  id: string;
+  url: string;
 };
 
 const MAX_SIZE = 10 * 1024 * 1024;
@@ -117,35 +126,61 @@ export function ScreenshotsUpload({
     onChange(value.filter((item) => item !== url));
   };
 
+  const screenshots = value.map(
+    (url): SortableScreenshot => ({ id: url, url }),
+  );
+
   return (
     <div className="flex flex-col gap-3">
       {value.length > 0 && (
-        <div className="grid grid-cols-2 gap-3">
-          {value.map((url) => (
+        <DashboardSortableList
+          items={screenshots}
+          disabled={disabled || isUploading}
+          className="grid grid-cols-2 gap-3"
+          strategy={rectSortingStrategy}
+          onReorder={(nextScreenshots) =>
+            onChange(nextScreenshots.map((screenshot) => screenshot.url))
+          }
+          renderItem={({ item, index, handle, isDragging }) => (
             <div
-              key={url}
-              className="group relative aspect-video overflow-hidden rounded-lg border border-border"
+              className={cn(
+                "group grid overflow-hidden rounded-lg border border-border bg-background/40 transition-[border-color,box-shadow,opacity]",
+                isDragging
+                  ? "border-brand-soft/60 shadow-[0_0_36px_rgba(139,92,246,0.16)]"
+                  : "hover:border-brand-soft/35",
+              )}
             >
-              <Image
-                src={url}
-                alt="Project screenshot"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 50vw, 180px"
-              />
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2 size-7 rounded-full opacity-0 transition-opacity group-hover:opacity-100"
-                onClick={() => removeUrl(url)}
-                disabled={disabled || isUploading}
-              >
-                <XIcon />
-              </Button>
+              <div className="grid grid-cols-[44px_minmax(0,1fr)]">
+                {handle}
+                <div className="relative aspect-video overflow-hidden">
+                  <Image
+                    src={item.url}
+                    alt="Project screenshot"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 180px"
+                  />
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="size-7 rounded-full"
+                      onClick={() => removeUrl(item.url)}
+                      disabled={disabled || isUploading}
+                      aria-label="Remove screenshot"
+                    >
+                      <XIcon />
+                    </Button>
+                  </div>
+                  <div className="absolute bottom-2 left-2 rounded-full border border-border/60 bg-background/75 px-2 py-1 text-xs text-muted-foreground backdrop-blur">
+                    {index + 1}
+                  </div>
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
+          )}
+        />
       )}
 
       <div

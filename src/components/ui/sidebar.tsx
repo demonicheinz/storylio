@@ -533,6 +533,7 @@ function SidebarMenuButton({
         side="right"
         align="center"
         hidden={state !== "collapsed" || isMobile}
+        className="border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-[0_0_32px_rgba(139,92,246,0.14)] ring-1 ring-foreground/10 [&_svg]:bg-sidebar [&_svg]:fill-sidebar"
         {...tooltip}
       />
     </Tooltip>

@@ -12,7 +12,7 @@ import {
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -99,6 +99,8 @@ const emptyDefaults: PostFormValues = {
   content: "",
 };
 
+type AutosaveStatus = "idle" | "saving" | "saved" | "failed";
+
 function getDefaults(post?: PostEditorPost): PostFormValues {
   if (!post) {
     return emptyDefaults;
@@ -139,14 +141,19 @@ export function PostEditor({ mode, post }: PostEditorProps) {
   const [pendingAction, setPendingAction] = useState<
     "draft" | "publish" | null
   >(null);
+  const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
   const [slugEdited, setSlugEdited] = useState(mode === "edit");
+  const manualSaveVersion = useRef(0);
+  const autosaveInFlight = useRef(false);
   const defaults = useMemo(() => getDefaults(post), [post]);
 
   const {
     control,
-    formState: { errors },
+    formState: { errors, isDirty },
+    getValues,
     handleSubmit,
     register,
+    reset,
     setError,
     setValue,
     watch,
@@ -203,9 +210,71 @@ export function PostEditor({ mode, post }: PostEditorProps) {
     }
   };
 
+  const autosaveDraft = useCallback(async () => {
+    if (
+      mode !== "edit" ||
+      !post?.id ||
+      !isDirty ||
+      pendingAction !== null ||
+      autosaveInFlight.current
+    ) {
+      return;
+    }
+
+    const parsed = postFormSchema.safeParse({
+      ...getValues(),
+      status: "draft",
+    });
+
+    if (!parsed.success) {
+      setAutosaveStatus("failed");
+      return;
+    }
+
+    const versionAtStart = manualSaveVersion.current;
+    autosaveInFlight.current = true;
+    setAutosaveStatus("saving");
+
+    const result = await actionSavePostDraft(parsed.data, post.id);
+
+    autosaveInFlight.current = false;
+
+    if (versionAtStart !== manualSaveVersion.current) {
+      return;
+    }
+
+    if (result.success) {
+      const nextValues = {
+        ...parsed.data,
+        status: result.data?.status ?? "draft",
+      } satisfies PostFormValues;
+
+      reset(nextValues);
+      setAutosaveStatus("saved");
+      router.refresh();
+      return;
+    }
+
+    setAutosaveStatus("failed");
+  }, [getValues, isDirty, mode, pendingAction, post?.id, reset, router]);
+
+  useEffect(() => {
+    if (mode !== "edit") {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      autosaveDraft();
+    }, 30_000);
+
+    return () => window.clearInterval(interval);
+  }, [autosaveDraft, mode]);
+
   const submitWithStatus = (nextStatus: "draft" | "published") =>
     handleSubmit(async (values) => {
+      manualSaveVersion.current += 1;
       setPendingAction(nextStatus === "published" ? "publish" : "draft");
+      setAutosaveStatus("idle");
 
       const payload = {
         ...values,
@@ -230,6 +299,10 @@ export function PostEditor({ mode, post }: PostEditorProps) {
           if (mode === "create") {
             router.replace(`/dashboard/posts/${result.data.id}/edit`);
           } else {
+            reset({
+              ...values,
+              status: result.data.status,
+            });
             router.refresh();
           }
         }
@@ -271,6 +344,21 @@ export function PostEditor({ mode, post }: PostEditorProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {mode === "edit" && autosaveStatus !== "idle" && (
+            <span
+              className={cn(
+                "rounded-full border border-border/50 bg-surface/60 px-3 py-1 text-xs text-muted-foreground",
+                autosaveStatus === "saving" && "text-brand-soft",
+                autosaveStatus === "failed" && "text-destructive",
+              )}
+            >
+              {autosaveStatus === "saving"
+                ? "Autosaving..."
+                : autosaveStatus === "saved"
+                  ? "Autosaved"
+                  : "Autosave failed"}
+            </span>
+          )}
           <Badge variant={status === "published" ? "default" : "secondary"}>
             {status}
           </Badge>
@@ -510,6 +598,8 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                 <ImageUpload
                   value={coverImage}
                   disabled={isPending}
+                  cropAspect={16 / 9}
+                  cropLabel="Crop blog cover image"
                   onChange={(url) =>
                     setValue("coverImage", url, {
                       shouldDirty: true,

@@ -85,6 +85,7 @@ function revalidatePostPaths(slug: string, oldSlug?: string) {
   revalidatePath("/dashboard/posts");
   revalidatePath("/dashboard");
   revalidatePath("/blog");
+  revalidatePath("/");
   revalidatePath(`/blog/${slug}`);
 
   if (oldSlug && oldSlug !== slug) {

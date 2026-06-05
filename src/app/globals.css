@@ -394,4 +394,81 @@
     background: var(--accent);
     color: var(--accent-foreground);
   }
+
+  .reactEasyCrop_Container {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    touch-action: none;
+    cursor: move;
+    user-select: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .reactEasyCrop_Image,
+  .reactEasyCrop_Video {
+    will-change: transform;
+  }
+
+  .reactEasyCrop_Contain {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .reactEasyCrop_Cover_Horizontal {
+    width: 100%;
+    height: auto;
+  }
+
+  .reactEasyCrop_Cover_Vertical {
+    width: auto;
+    height: 100%;
+  }
+
+  .reactEasyCrop_CropArea {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    box-sizing: border-box;
+    overflow: hidden;
+    border: 1px solid color-mix(in oklch, var(--primary) 72%, white);
+    color: color-mix(in oklch, var(--background) 58%, transparent);
+    box-shadow: 0 0 0 9999em;
+    transform: translate(-50%, -50%);
+  }
+
+  .reactEasyCrop_CropAreaRound {
+    border-radius: 50%;
+  }
+
+  .reactEasyCrop_CropAreaGrid::before,
+  .reactEasyCrop_CropAreaGrid::after {
+    position: absolute;
+    box-sizing: border-box;
+    border-color: color-mix(in oklch, var(--primary) 45%, white);
+    content: "";
+  }
+
+  .reactEasyCrop_CropAreaGrid::before {
+    top: 0;
+    right: 33.33%;
+    bottom: 0;
+    left: 33.33%;
+    border-right-width: 1px;
+    border-left-width: 1px;
+  }
+
+  .reactEasyCrop_CropAreaGrid::after {
+    top: 33.33%;
+    right: 0;
+    bottom: 33.33%;
+    left: 0;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+  }
 }

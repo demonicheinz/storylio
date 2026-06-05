@@ -2,8 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
   ImageIcon,
   PencilSimpleIcon,
   PlusIcon,
@@ -60,6 +58,10 @@ import {
   galleryItemActionSchema,
 } from "@/features/dashboard/gallery/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
+import {
+  DashboardSortableList,
+  rectSortingStrategy,
+} from "@/features/dashboard/shared/components/sortable-list";
 import { formatDate } from "@/lib/utils";
 
 export type DashboardGalleryItem = {
@@ -357,22 +359,18 @@ function GalleryDeleteButton({ item }: { item: DashboardGalleryItem }) {
   );
 }
 
-function GalleryReorderButton({
-  direction,
-  disabled,
-  updates,
-}: {
-  direction: "up" | "down";
-  disabled?: boolean;
-  updates: Array<{ id: string; order: number }>;
-}) {
+export function GalleryManager({ items }: GalleryManagerProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const Icon = direction === "up" ? ArrowUpIcon : ArrowDownIcon;
+  const [isReordering, startReorderTransition] = useTransition();
 
-  const handleClick = () => {
-    startTransition(async () => {
-      const result = await actionReorderGalleryItems(updates);
+  const handleReorder = (nextItems: DashboardGalleryItem[]) => {
+    startReorderTransition(async () => {
+      const result = await actionReorderGalleryItems(
+        nextItems.map((item, index) => ({
+          id: item.id,
+          order: index,
+        })),
+      );
 
       if (result.success) {
         toast.success(result.message ?? "Gallery order updated.");
@@ -383,24 +381,6 @@ function GalleryReorderButton({
     });
   };
 
-  return (
-    <Button
-      type="button"
-      size="icon"
-      variant="outline"
-      className="size-8"
-      onClick={handleClick}
-      disabled={disabled || isPending}
-      aria-label={
-        direction === "up" ? "Move gallery item up" : "Move gallery item down"
-      }
-    >
-      <Icon />
-    </Button>
-  );
-}
-
-export function GalleryManager({ items }: GalleryManagerProps) {
   return (
     <Card>
       <CardHeader>
@@ -442,16 +422,23 @@ export function GalleryManager({ items }: GalleryManagerProps) {
             />
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((item, index) => {
-              const previousItem = items[index - 1];
-              const nextItem = items[index + 1];
-
-              return (
-                <div
-                  key={item.id}
-                  className="flex min-h-[430px] flex-col overflow-hidden rounded-2xl border bg-background/40"
-                >
+          <DashboardSortableList
+            items={items}
+            disabled={isReordering}
+            className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+            strategy={rectSortingStrategy}
+            onReorder={handleReorder}
+            renderItem={({ item, handle, isDragging }) => (
+              <div
+                className={[
+                  "grid min-h-[430px] grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-2xl border bg-background/40 transition-[border-color,box-shadow,opacity]",
+                  isDragging
+                    ? "border-brand-soft/60 shadow-[0_0_52px_rgba(139,92,246,0.18)]"
+                    : "hover:border-brand-soft/35",
+                ].join(" ")}
+              >
+                {handle}
+                <div className="grid min-w-0">
                   <div className="relative aspect-[4/3] bg-muted/40">
                     <GalleryThumbnail
                       imageUrl={item.imageUrl}
@@ -474,32 +461,6 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <GalleryReorderButton
-                          direction="up"
-                          disabled={!previousItem}
-                          updates={
-                            previousItem
-                              ? [
-                                  { id: item.id, order: previousItem.order },
-                                  { id: previousItem.id, order: item.order },
-                                ]
-                              : []
-                          }
-                        />
-                        <GalleryReorderButton
-                          direction="down"
-                          disabled={!nextItem}
-                          updates={
-                            nextItem
-                              ? [
-                                  { id: item.id, order: nextItem.order },
-                                  { id: nextItem.id, order: item.order },
-                                ]
-                              : []
-                          }
-                        />
-                      </div>
                       <GalleryItemDialog
                         item={item}
                         trigger={
@@ -513,9 +474,9 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            )}
+          />
         )}
       </CardContent>
     </Card>

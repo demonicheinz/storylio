@@ -570,6 +570,8 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 <ImageUpload
                   value={coverImage}
                   disabled={isPending}
+                  cropAspect={16 / 9}
+                  cropLabel="Crop project cover image"
                   onChange={(url) =>
                     setValue("coverImage", url, {
                       shouldDirty: true,

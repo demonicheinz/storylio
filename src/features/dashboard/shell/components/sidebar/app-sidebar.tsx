@@ -10,7 +10,6 @@ import {
   HouseIcon,
   ImageIcon,
   ImagesIcon,
-  // SparkleIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NavMain } from "@/features/dashboard/shell/components/sidebar/nav-main";
 import { NavUser } from "@/features/dashboard/shell/components/sidebar/nav-user";
+import { authClient } from "@/lib/auth-client";
 
 const navItems = [
   { title: "Overview", url: "/dashboard", icon: HouseIcon },
@@ -45,13 +45,16 @@ const navItems = [
   { title: "Settings", url: "/dashboard/settings", icon: GearIcon },
 ];
 
-const owner = {
-  name: "Heinz",
-  email: "Owner",
-  avatar: "",
-};
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
+  const owner = {
+    name: user?.name || "User",
+    email: user?.email || "",
+    avatar: user?.image || "",
+  };
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -60,7 +63,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton asChild size="lg" tooltip="Storylio">
               <Link href="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-xl">
-                  {/* <SparkleIcon /> */}
                   <Image
                     src="/images/logo.png"
                     alt="Logo"

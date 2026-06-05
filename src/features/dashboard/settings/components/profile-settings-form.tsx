@@ -40,6 +40,7 @@ import { ImageUpload } from "@/features/dashboard/shared/components/image-upload
 type SettingsManagerProps = {
   profile: {
     id: string;
+    email: string;
     name: string | null;
     image: string | null;
     tagline: string | null;
@@ -116,6 +117,15 @@ function ProfileSettingsForm({ profile }: SettingsManagerProps) {
 
       if (result.success) {
         toast.success(result.message ?? "Profile settings updated.");
+        window.dispatchEvent(
+          new CustomEvent("dashboard-user-updated", {
+            detail: {
+              name: result.data?.name ?? values.name,
+              email: result.data?.email ?? profile.email,
+              avatar: result.data?.image ?? values.image ?? "",
+            },
+          }),
+        );
         router.refresh();
       } else {
         applyFieldErrors(result.fieldErrors);
@@ -184,6 +194,10 @@ function ProfileSettingsForm({ profile }: SettingsManagerProps) {
             <ImageUpload
               value={image}
               disabled={isPending}
+              cropAspect={1}
+              cropShape="round"
+              cropLabel="Crop profile avatar"
+              previewClassName="mx-auto max-w-52 rounded-full"
               onChange={(url) =>
                 setValue("image", url, {
                   shouldDirty: true,

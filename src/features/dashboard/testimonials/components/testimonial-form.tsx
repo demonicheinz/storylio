@@ -2,8 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
   ChatCircleTextIcon,
   PencilSimpleIcon,
   PlusIcon,
@@ -49,6 +47,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
+import { DashboardSortableList } from "@/features/dashboard/shared/components/sortable-list";
 import {
   actionCreateTestimonial,
   actionDeleteTestimonial,
@@ -289,6 +288,10 @@ function TestimonialDialog({ testimonial, trigger }: TestimonialDialogProps) {
             <ImageUpload
               value={avatar}
               disabled={isPending}
+              cropAspect={1}
+              cropShape="round"
+              cropLabel="Crop testimonial avatar"
+              previewClassName="mx-auto max-w-44 rounded-full"
               onChange={(url) =>
                 setValue("avatar", url, {
                   shouldDirty: true,
@@ -406,22 +409,20 @@ function TestimonialDeleteButton({
   );
 }
 
-function TestimonialReorderButton({
-  direction,
-  disabled,
-  updates,
-}: {
-  direction: "up" | "down";
-  disabled?: boolean;
-  updates: Array<{ id: string; order: number }>;
-}) {
+export function TestimonialsManager({
+  testimonials,
+}: TestimonialsManagerProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const Icon = direction === "up" ? ArrowUpIcon : ArrowDownIcon;
+  const [isReordering, startReorderTransition] = useTransition();
 
-  const handleClick = () => {
-    startTransition(async () => {
-      const result = await actionReorderTestimonials(updates);
+  const handleReorder = (nextTestimonials: DashboardTestimonial[]) => {
+    startReorderTransition(async () => {
+      const result = await actionReorderTestimonials(
+        nextTestimonials.map((testimonial, index) => ({
+          id: testimonial.id,
+          order: index,
+        })),
+      );
 
       if (result.success) {
         toast.success(result.message ?? "Testimonial order updated.");
@@ -432,26 +433,6 @@ function TestimonialReorderButton({
     });
   };
 
-  return (
-    <Button
-      type="button"
-      size="icon"
-      variant="outline"
-      className="size-8"
-      onClick={handleClick}
-      disabled={disabled || isPending}
-      aria-label={
-        direction === "up" ? "Move testimonial up" : "Move testimonial down"
-      }
-    >
-      <Icon />
-    </Button>
-  );
-}
-
-export function TestimonialsManager({
-  testimonials,
-}: TestimonialsManagerProps) {
   return (
     <Card>
       <CardHeader>
@@ -494,18 +475,25 @@ export function TestimonialsManager({
             />
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {testimonials.map((testimonial, index) => {
-              const previousTestimonial = testimonials[index - 1];
-              const nextTestimonial = testimonials[index + 1];
+          <DashboardSortableList
+            items={testimonials}
+            disabled={isReordering}
+            className="flex flex-col gap-3"
+            onReorder={handleReorder}
+            renderItem={({ item: testimonial, handle, isDragging }) => {
               const title = getTitle(testimonial);
 
               return (
                 <div
-                  key={testimonial.id}
-                  className="grid gap-4 rounded-2xl border bg-background/40 p-4 md:grid-cols-[minmax(0,1fr)_auto]"
+                  className={[
+                    "grid overflow-hidden rounded-2xl border bg-background/40 transition-[border-color,box-shadow,opacity] md:grid-cols-[44px_minmax(0,1fr)_auto]",
+                    isDragging
+                      ? "border-brand-soft/60 shadow-[0_0_52px_rgba(139,92,246,0.18)]"
+                      : "hover:border-brand-soft/35",
+                  ].join(" ")}
                 >
-                  <div className="flex min-w-0 gap-4">
+                  {handle}
+                  <div className="flex min-w-0 gap-4 p-4">
                     <Avatar className="size-12">
                       {testimonial.avatar && (
                         <AvatarImage
@@ -536,45 +524,7 @@ export function TestimonialsManager({
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                    <div className="flex items-center gap-1">
-                      <TestimonialReorderButton
-                        direction="up"
-                        disabled={!previousTestimonial}
-                        updates={
-                          previousTestimonial
-                            ? [
-                                {
-                                  id: testimonial.id,
-                                  order: previousTestimonial.order,
-                                },
-                                {
-                                  id: previousTestimonial.id,
-                                  order: testimonial.order,
-                                },
-                              ]
-                            : []
-                        }
-                      />
-                      <TestimonialReorderButton
-                        direction="down"
-                        disabled={!nextTestimonial}
-                        updates={
-                          nextTestimonial
-                            ? [
-                                {
-                                  id: testimonial.id,
-                                  order: nextTestimonial.order,
-                                },
-                                {
-                                  id: nextTestimonial.id,
-                                  order: testimonial.order,
-                                },
-                              ]
-                            : []
-                        }
-                      />
-                    </div>
+                  <div className="flex flex-wrap items-center gap-2 p-4 md:justify-end">
                     <TestimonialDialog
                       testimonial={testimonial}
                       trigger={
@@ -588,8 +538,8 @@ export function TestimonialsManager({
                   </div>
                 </div>
               );
-            })}
-          </div>
+            }}
+          />
         )}
       </CardContent>
     </Card>
