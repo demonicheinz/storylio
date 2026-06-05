@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/breadcrumb";
 
 const segmentLabels: Record<string, string> = {
+  about: "About",
   analytics: "Analytics",
   edit: "Edit",
   gallery: "Gallery",

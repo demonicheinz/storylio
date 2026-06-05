@@ -18,12 +18,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { actionUpdateAboutContent } from "@/features/dashboard/settings/actions";
+import { actionUpdateAboutContent } from "@/features/dashboard/about/actions";
 import {
   type AboutContentActionInput,
   type AboutContentActionValues,
   aboutContentActionSchema,
-} from "@/features/dashboard/settings/validations";
+} from "@/features/dashboard/about/validations";
 
 const MdxEditor = dynamic(
   () =>

@@ -182,6 +182,66 @@ model AboutContent {
   updatedAt       DateTime @updatedAt
 }
 
+model WorkExperience {
+  id            String   @id @default(cuid())
+  title         String
+  company       String?
+  location      String?
+  type          String?
+  startDate     String?
+  endDate       String?
+  isCurrent     Boolean  @default(false)
+  descriptionEn String?
+  descriptionId String?
+  highlightsEn  String[]
+  highlightsId  String[]
+  order         Int      @default(0)
+  isVisible     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Education {
+  id            String   @id @default(cuid())
+  institution   String
+  degree        String?
+  field         String?
+  location      String?
+  startYear     String?
+  endYear       String?
+  descriptionEn String?
+  descriptionId String?
+  order         Int      @default(0)
+  isVisible     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SkillCategory {
+  id            String   @id @default(cuid())
+  name          String
+  descriptionEn String?
+  descriptionId String?
+  order         Int      @default(0)
+  isVisible     Boolean  @default(true)
+  skills        Skill[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Skill {
+  id         String        @id @default(cuid())
+  categoryId String
+  category   SkillCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String
+  level      String?
+  icon       String?
+  order      Int           @default(0)
+  isVisible  Boolean       @default(true)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
 enum HomeSectionType {
   PHASE
   LOGO
