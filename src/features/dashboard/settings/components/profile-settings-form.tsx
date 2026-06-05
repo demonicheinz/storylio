@@ -29,6 +29,10 @@ import {
   actionUpdateProfileSettings,
 } from "@/features/dashboard/settings/actions";
 import {
+  AboutContentForm,
+  type DashboardAboutContent,
+} from "@/features/dashboard/settings/components/about-content-form";
+import {
   type AccountPasswordActionInput,
   accountPasswordActionSchema,
   type ProfileSettingsActionInput,
@@ -49,6 +53,7 @@ type SettingsManagerProps = {
     instagram: string | null;
     twitter: string | null;
   };
+  aboutContent?: DashboardAboutContent;
 };
 
 const emptyProfileDefaults: ProfileSettingsActionValues = {
@@ -184,6 +189,10 @@ function ProfileSettingsForm({ profile }: SettingsManagerProps) {
               className="min-h-32"
               {...register("bio")}
             />
+            <p className="text-xs text-muted-foreground">
+              Short bio is used on the Home Hero. About intro is managed in the
+              About tab.
+            </p>
             {errors.bio?.message && (
               <p className="text-sm text-destructive">{errors.bio.message}</p>
             )}
@@ -471,11 +480,15 @@ function AccountSettingsForm() {
   );
 }
 
-export function SettingsManager({ profile }: SettingsManagerProps) {
+export function SettingsManager({
+  profile,
+  aboutContent,
+}: SettingsManagerProps) {
   return (
     <Tabs defaultValue="profile">
       <TabsList>
         <TabsTrigger value="profile">Profile</TabsTrigger>
+        <TabsTrigger value="about">About</TabsTrigger>
         <TabsTrigger value="account">Account</TabsTrigger>
       </TabsList>
 
@@ -485,6 +498,10 @@ export function SettingsManager({ profile }: SettingsManagerProps) {
 
       <TabsContent value="account" className="mt-4">
         <AccountSettingsForm />
+      </TabsContent>
+
+      <TabsContent value="about" className="mt-4">
+        <AboutContentForm content={aboutContent} />
       </TabsContent>
     </Tabs>
   );

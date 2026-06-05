@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { getAboutContent } from "@/features/about/data";
 import { SettingsManager } from "@/features/dashboard/settings/components/profile-settings-form";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
@@ -24,7 +25,10 @@ export default async function SettingsPage() {
   await connection();
 
   const session = await getActionSession();
-  const profile = await getProfile(session.user.id);
+  const [profile, aboutContent] = await Promise.all([
+    getProfile(session.user.id),
+    getAboutContent(),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -36,6 +40,7 @@ export default async function SettingsPage() {
       </div>
 
       <SettingsManager
+        aboutContent={aboutContent ?? undefined}
         profile={
           profile ?? {
             id: session.user.id,

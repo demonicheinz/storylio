@@ -6,7 +6,10 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { person, socialLinks } from "@/components/public/sections/about/data";
-import { LanguageIntro } from "@/components/public/sections/about/language-intro";
+import {
+  type AboutLanguage,
+  LanguageIntro,
+} from "@/components/public/sections/about/language-intro";
 import { Button } from "@/components/ui/button";
 
 const icons = {
@@ -26,7 +29,15 @@ type ProfileBio = {
   twitter?: string | null;
 };
 
-export function BioSection({ profile }: { profile?: ProfileBio }) {
+export function BioSection({
+  intro,
+  language,
+  profile,
+}: {
+  intro: string;
+  language: AboutLanguage;
+  profile?: ProfileBio;
+}) {
   const name = profile?.name ?? person.name;
   const role = profile?.tagline ?? person.role;
   const links = socialLinks.map((item) => {
@@ -48,13 +59,6 @@ export function BioSection({ profile }: { profile?: ProfileBio }) {
 
     return item;
   });
-  const introOverride = profile?.bio
-    ? {
-        en: profile.bio,
-        id: profile.bio,
-      }
-    : undefined;
-
   return (
     <div className="flex flex-col gap-8 md:py-2">
       <div className="flex flex-col items-center md:items-start">
@@ -90,7 +94,7 @@ export function BioSection({ profile }: { profile?: ProfileBio }) {
         </div>
       </div>
 
-      <LanguageIntro introCopyOverride={introOverride} />
+      <LanguageIntro intro={intro} language={language} />
     </div>
   );
 }

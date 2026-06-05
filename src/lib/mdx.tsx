@@ -42,7 +42,7 @@ const components: MDXComponents = {
       href={href}
       className="font-medium [overflow-wrap:anywhere] break-words text-brand-soft underline-offset-4 hover:underline"
       target={href?.startsWith("http") ? "_blank" : undefined}
-      rel={href?.startsWith("http") ? "noreferrer" : undefined}
+      rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
     >
       {children}
     </a>
