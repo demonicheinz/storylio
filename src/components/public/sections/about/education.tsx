@@ -3,7 +3,25 @@ import { educationItems } from "@/components/public/sections/about/data";
 import { aboutInteractiveGlowCardClassName } from "@/components/public/sections/about/styles";
 import { cn } from "@/lib/utils";
 
-export function EducationSection() {
+type PublicEducation = {
+  id: string;
+  institution: string;
+  detail: string;
+  description: string | null;
+};
+export function EducationSection({
+  education,
+}: {
+  education?: PublicEducation[];
+}) {
+  const items = education?.length
+    ? education
+    : educationItems.map((item) => ({
+        id: item.name,
+        institution: item.name,
+        detail: item.description,
+        description: null,
+      }));
   return (
     <div>
       <Heading
@@ -14,17 +32,22 @@ export function EducationSection() {
         highlight="History"
       />
       <div className="grid gap-4">
-        {educationItems.map((institution) => (
+        {items.map((institution) => (
           <article
-            key={institution.name}
+            key={institution.id}
             className={cn(aboutInteractiveGlowCardClassName, "rounded-3xl p-5")}
           >
             <h3 className="font-heading text-xl font-semibold text-foreground">
-              {institution.name}
+              {institution.institution}
             </h3>
             <p className="mt-2 text-sm leading-7 text-muted-foreground">
-              {institution.description}
+              {institution.detail}
             </p>
+            {institution.description && (
+              <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                {institution.description}
+              </p>
+            )}
           </article>
         ))}
       </div>

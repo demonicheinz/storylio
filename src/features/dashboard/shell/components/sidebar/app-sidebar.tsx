@@ -8,6 +8,7 @@ import {
   FolderOpenIcon,
   GearIcon,
   HouseIcon,
+  IdentificationCardIcon,
   ImageIcon,
   ImagesIcon,
 } from "@phosphor-icons/react";
@@ -32,6 +33,7 @@ import { authClient } from "@/lib/auth-client";
 const navItems = [
   { title: "Overview", url: "/dashboard", icon: HouseIcon },
   { title: "Home", url: "/dashboard/home", icon: CouchIcon },
+  { title: "About", url: "/dashboard/about", icon: IdentificationCardIcon },
   { title: "Posts", url: "/dashboard/posts", icon: ArticleIcon },
   { title: "Projects", url: "/dashboard/projects", icon: FolderOpenIcon },
   {

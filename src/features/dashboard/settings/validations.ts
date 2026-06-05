@@ -50,44 +50,6 @@ export const accountPasswordActionSchema = z
     }
   });
 
-export const aboutLanguageSchema = z.enum(["en", "id"]);
-
-export const aboutContentActionSchema = z.object({
-  introEn: z
-    .string()
-    .trim()
-    .max(1200, "English intro must be 1200 characters or fewer")
-    .optional()
-    .transform((value) => value || ""),
-  introId: z
-    .string()
-    .trim()
-    .max(1200, "Indonesia intro must be 1200 characters or fewer")
-    .optional()
-    .transform((value) => value || ""),
-  howIWorkEn: z
-    .string()
-    .max(20_000, "English How I Work content is too long")
-    .optional()
-    .transform((value) => value || ""),
-  howIWorkId: z
-    .string()
-    .max(20_000, "Indonesia How I Work content is too long")
-    .optional()
-    .transform((value) => value || ""),
-  whatIValueEn: z
-    .string()
-    .max(20_000, "English What I Value content is too long")
-    .optional()
-    .transform((value) => value || ""),
-  whatIValueId: z
-    .string()
-    .max(20_000, "Indonesia What I Value content is too long")
-    .optional()
-    .transform((value) => value || ""),
-  defaultLanguage: aboutLanguageSchema.optional().default("en"),
-});
-
 export type ProfileSettingsActionInput = z.input<
   typeof profileSettingsActionSchema
 >;
@@ -96,8 +58,4 @@ export type ProfileSettingsActionValues = z.output<
 >;
 export type AccountPasswordActionInput = z.input<
   typeof accountPasswordActionSchema
->;
-export type AboutContentActionInput = z.input<typeof aboutContentActionSchema>;
-export type AboutContentActionValues = z.output<
-  typeof aboutContentActionSchema
 >;

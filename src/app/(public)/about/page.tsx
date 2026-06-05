@@ -103,6 +103,18 @@ function getLocalizedContent(
   return selected?.trim() || other?.trim() || fallback;
 }
 
+function localizedOptional(
+  language: AboutLanguage,
+  english: string | null,
+  indonesia: string | null,
+) {
+  return (
+    (language === "id" ? indonesia : english)?.trim() ||
+    (language === "id" ? english : indonesia)?.trim() ||
+    null
+  );
+}
+
 async function renderAboutMdx(source: string, fallback: string) {
   try {
     return await renderMDX(source);
@@ -119,10 +131,29 @@ type AboutPageProps = {
 };
 
 export default async function AboutPage({ searchParams }: AboutPageProps) {
-  const [profile, aboutContent] = await Promise.all([
-    getAboutProfile(),
-    getAboutContent(),
-  ]);
+  const [profile, aboutContent, experiences, education, categories] =
+    await Promise.all([
+      getAboutProfile(),
+      getAboutContent(),
+      db.workExperience.findMany({
+        where: { isVisible: true },
+        orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+      }),
+      db.education.findMany({
+        where: { isVisible: true },
+        orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+      }),
+      db.skillCategory.findMany({
+        where: { isVisible: true, skills: { some: { isVisible: true } } },
+        orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+        include: {
+          skills: {
+            where: { isVisible: true },
+            orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+          },
+        },
+      }),
+    ]);
   const language = getLanguage(
     (await searchParams).lang,
     aboutContent?.defaultLanguage,
@@ -217,15 +248,73 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
               {[
                 {
                   id: "work-experience",
-                  component: <ExperienceSection />,
+                  component: (
+                    <ExperienceSection
+                      experiences={experiences.map((item) => ({
+                        ...item,
+                        description: localizedOptional(
+                          language,
+                          item.descriptionEn,
+                          item.descriptionId,
+                        ),
+                        highlights:
+                          language === "id"
+                            ? item.highlightsId.length
+                              ? item.highlightsId
+                              : item.highlightsEn
+                            : item.highlightsEn.length
+                              ? item.highlightsEn
+                              : item.highlightsId,
+                      }))}
+                    />
+                  ),
                 },
                 {
                   id: "education-history",
-                  component: <EducationSection />,
+                  component: (
+                    <EducationSection
+                      education={education.map((item) => ({
+                        id: item.id,
+                        institution: item.institution,
+                        detail: [
+                          item.degree,
+                          item.field,
+                          item.location,
+                          [item.startYear, item.endYear]
+                            .filter(Boolean)
+                            .join(" - "),
+                        ]
+                          .filter(Boolean)
+                          .join(" · "),
+                        description: localizedOptional(
+                          language,
+                          item.descriptionEn,
+                          item.descriptionId,
+                        ),
+                      }))}
+                    />
+                  ),
                 },
                 {
                   id: "technical-skills",
-                  component: <SkillsSection />,
+                  component: (
+                    <SkillsSection
+                      categories={categories.map((item) => ({
+                        id: item.id,
+                        name: item.name,
+                        description: localizedOptional(
+                          language,
+                          item.descriptionEn,
+                          item.descriptionId,
+                        ),
+                        skills: item.skills.map((skill) => ({
+                          id: skill.id,
+                          name: skill.name,
+                          level: skill.level,
+                        })),
+                      }))}
+                    />
+                  ),
                 },
               ].map((section) => (
                 <section
