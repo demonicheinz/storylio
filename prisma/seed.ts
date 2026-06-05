@@ -70,6 +70,8 @@ async function main() {
       github: "https://github.com/demonicheinz",
       instagram: "https://instagram.com/heinzdev",
       twitter: "https://x.com/chrysantastix",
+      websiteUrl: "https://heinz.id",
+      publicEmail: "hello@heinz.id",
     },
   });
 

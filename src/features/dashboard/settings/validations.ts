@@ -7,6 +7,13 @@ const optionalUrlSchema = z
   .transform((value) => value || undefined)
   .pipe(z.string().url("Use a valid URL").optional());
 
+const optionalEmailSchema = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => value || undefined)
+  .pipe(z.string().email("Use a valid email").optional());
+
 export const profileSettingsActionSchema = z.object({
   name: z
     .string()
@@ -29,6 +36,8 @@ export const profileSettingsActionSchema = z.object({
   github: optionalUrlSchema,
   instagram: optionalUrlSchema,
   twitter: optionalUrlSchema,
+  websiteUrl: optionalUrlSchema,
+  publicEmail: optionalEmailSchema,
 });
 
 export const accountPasswordActionSchema = z
@@ -50,6 +59,14 @@ export const accountPasswordActionSchema = z
     }
   });
 
+export const changeEmailActionSchema = z.object({
+  newEmail: z
+    .string()
+    .trim()
+    .min(1, "New email is required")
+    .email("Enter a valid email address"),
+});
+
 export type ProfileSettingsActionInput = z.input<
   typeof profileSettingsActionSchema
 >;
@@ -59,3 +76,4 @@ export type ProfileSettingsActionValues = z.output<
 export type AccountPasswordActionInput = z.input<
   typeof accountPasswordActionSchema
 >;
+export type ChangeEmailActionInput = z.input<typeof changeEmailActionSchema>;

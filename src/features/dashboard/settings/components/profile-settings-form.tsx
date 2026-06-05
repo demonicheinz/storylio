@@ -2,9 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  EnvelopeSimpleIcon,
   EyeIcon,
   EyeSlashIcon,
   FloppyDiskIcon,
+  GithubLogoIcon,
   KeyIcon,
   SpinnerIcon,
 } from "@phosphor-icons/react";
@@ -12,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,20 +25,31 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  actionChangeEmail,
   actionChangePassword,
   actionUpdateProfileSettings,
 } from "@/features/dashboard/settings/actions";
 import {
   type AccountPasswordActionInput,
   accountPasswordActionSchema,
+  type ChangeEmailActionInput,
+  changeEmailActionSchema,
   type ProfileSettingsActionInput,
   type ProfileSettingsActionValues,
   profileSettingsActionSchema,
 } from "@/features/dashboard/settings/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
+import { authClient } from "@/lib/auth-client";
+
+type LinkedAccount = {
+  providerId: string;
+  accountId: string;
+  createdAt: Date;
+};
 
 type SettingsManagerProps = {
   profile: {
@@ -48,7 +62,10 @@ type SettingsManagerProps = {
     github: string | null;
     instagram: string | null;
     twitter: string | null;
+    websiteUrl: string | null;
+    publicEmail: string | null;
   };
+  linkedAccounts: LinkedAccount[];
 };
 
 const emptyProfileDefaults: ProfileSettingsActionValues = {
@@ -59,6 +76,8 @@ const emptyProfileDefaults: ProfileSettingsActionValues = {
   github: undefined,
   instagram: undefined,
   twitter: undefined,
+  websiteUrl: undefined,
+  publicEmail: undefined,
 };
 
 function getProfileDefaults(
@@ -72,6 +91,8 @@ function getProfileDefaults(
     github: profile.github ?? undefined,
     instagram: profile.instagram ?? undefined,
     twitter: profile.twitter ?? undefined,
+    websiteUrl: profile.websiteUrl ?? undefined,
+    publicEmail: profile.publicEmail ?? undefined,
   };
 }
 
@@ -204,6 +225,7 @@ function ProfileSettingsForm({
               cropShape="round"
               cropLabel="Crop profile avatar"
               previewClassName="mx-auto max-w-52 rounded-full"
+              priority={true}
               onChange={(url) =>
                 setValue("image", url, {
                   shouldDirty: true,
@@ -275,6 +297,46 @@ function ProfileSettingsForm({
             </div>
           </div>
 
+          <Separator />
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="websiteUrl">Website URL</Label>
+            <Input
+              id="websiteUrl"
+              type="url"
+              placeholder="https://heinz.id"
+              aria-invalid={!!errors.websiteUrl}
+              disabled={isPending}
+              {...register("websiteUrl")}
+            />
+            {errors.websiteUrl?.message && (
+              <p className="text-sm text-destructive">
+                {errors.websiteUrl.message}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="publicEmail">Public contact email</Label>
+            <Input
+              id="publicEmail"
+              type="email"
+              placeholder="hello@heinz.id"
+              aria-invalid={!!errors.publicEmail}
+              disabled={isPending}
+              {...register("publicEmail")}
+            />
+            <p className="text-xs text-muted-foreground">
+              Public contact email is shown publicly if used by the site. This
+              is separate from your login email.
+            </p>
+            {errors.publicEmail?.message && (
+              <p className="text-sm text-destructive">
+                {errors.publicEmail.message}
+              </p>
+            )}
+          </div>
+
           <Button type="submit" className="w-fit" disabled={isPending}>
             {isPending ? (
               <SpinnerIcon data-icon="inline-start" className="animate-spin" />
@@ -286,6 +348,84 @@ function ProfileSettingsForm({
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+function ChangeEmailForm({ currentEmail }: { currentEmail: string }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const {
+    formState: { errors },
+    handleSubmit,
+    register,
+    reset,
+    setError,
+  } = useForm<ChangeEmailActionInput>({
+    resolver: zodResolver(changeEmailActionSchema),
+    defaultValues: { newEmail: "" },
+  });
+
+  const onSubmit = handleSubmit((values) => {
+    startTransition(async () => {
+      const result = await actionChangeEmail(values);
+
+      if (result.success) {
+        toast.success(
+          result.message ?? "Check your new email for confirmation.",
+        );
+        reset();
+        router.refresh();
+      } else {
+        if (result.fieldErrors?.newEmail?.[0]) {
+          setError("newEmail", {
+            message: result.fieldErrors.newEmail[0],
+            type: "server",
+          });
+        }
+        toast.error(result.error);
+      }
+    });
+  });
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <Label className="text-muted-foreground">Current login email</Label>
+        <p className="text-sm font-medium">{currentEmail}</p>
+      </div>
+
+      <form className="flex max-w-xl flex-col gap-4" onSubmit={onSubmit}>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="newEmail">New email address</Label>
+          <Input
+            id="newEmail"
+            type="email"
+            placeholder="new@example.com"
+            aria-invalid={!!errors.newEmail}
+            disabled={isPending}
+            {...register("newEmail")}
+          />
+          <p className="text-xs text-muted-foreground">
+            Changing your login email requires verification. A confirmation link
+            will be sent to the new email address.
+          </p>
+          {errors.newEmail?.message && (
+            <p className="text-sm text-destructive">
+              {errors.newEmail.message}
+            </p>
+          )}
+        </div>
+
+        <Button type="submit" className="w-fit" disabled={isPending}>
+          {isPending ? (
+            <SpinnerIcon data-icon="inline-start" className="animate-spin" />
+          ) : (
+            <EnvelopeSimpleIcon data-icon="inline-start" />
+          )}
+          {isPending ? "Sending..." : "Change Email"}
+        </Button>
+      </form>
+    </div>
   );
 }
 
@@ -349,135 +489,232 @@ function AccountSettingsForm() {
     visibleFields[field] ? "text" : "password";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Account</CardTitle>
-        <CardDescription>
-          Change the dashboard password using the existing BetterAuth session.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form className="flex max-w-xl flex-col gap-5" onSubmit={onSubmit}>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="currentPassword">Current password</Label>
-            <div className="relative">
-              <Input
-                id="currentPassword"
-                type={getPasswordType("currentPassword")}
-                autoComplete="current-password"
-                aria-invalid={!!errors.currentPassword}
-                disabled={isPending}
-                className="pr-11"
-                {...register("currentPassword")}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
-                onClick={() => toggleVisibility("currentPassword")}
-                disabled={isPending}
-                aria-label={
-                  visibleFields.currentPassword
-                    ? "Hide current password"
-                    : "Show current password"
-                }
-              >
-                {visibleFields.currentPassword ? <EyeSlashIcon /> : <EyeIcon />}
-              </Button>
-            </div>
-            {errors.currentPassword?.message && (
-              <p className="text-sm text-destructive">
-                {errors.currentPassword.message}
-              </p>
-            )}
+    <div className="flex flex-col gap-4">
+      <form className="flex max-w-xl flex-col gap-5" onSubmit={onSubmit}>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="currentPassword">Current password</Label>
+          <div className="relative">
+            <Input
+              id="currentPassword"
+              type={getPasswordType("currentPassword")}
+              autoComplete="current-password"
+              aria-invalid={!!errors.currentPassword}
+              disabled={isPending}
+              className="pr-11"
+              {...register("currentPassword")}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
+              onClick={() => toggleVisibility("currentPassword")}
+              disabled={isPending}
+              aria-label={
+                visibleFields.currentPassword
+                  ? "Hide current password"
+                  : "Show current password"
+              }
+            >
+              {visibleFields.currentPassword ? <EyeSlashIcon /> : <EyeIcon />}
+            </Button>
           </div>
+          {errors.currentPassword?.message && (
+            <p className="text-sm text-destructive">
+              {errors.currentPassword.message}
+            </p>
+          )}
+        </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="newPassword">New password</Label>
-            <div className="relative">
-              <Input
-                id="newPassword"
-                type={getPasswordType("newPassword")}
-                autoComplete="new-password"
-                aria-invalid={!!errors.newPassword}
-                disabled={isPending}
-                className="pr-11"
-                {...register("newPassword")}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
-                onClick={() => toggleVisibility("newPassword")}
-                disabled={isPending}
-                aria-label={
-                  visibleFields.newPassword
-                    ? "Hide new password"
-                    : "Show new password"
-                }
-              >
-                {visibleFields.newPassword ? <EyeSlashIcon /> : <EyeIcon />}
-              </Button>
-            </div>
-            {errors.newPassword?.message && (
-              <p className="text-sm text-destructive">
-                {errors.newPassword.message}
-              </p>
-            )}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="newPassword">New password</Label>
+          <div className="relative">
+            <Input
+              id="newPassword"
+              type={getPasswordType("newPassword")}
+              autoComplete="new-password"
+              aria-invalid={!!errors.newPassword}
+              disabled={isPending}
+              className="pr-11"
+              {...register("newPassword")}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
+              onClick={() => toggleVisibility("newPassword")}
+              disabled={isPending}
+              aria-label={
+                visibleFields.newPassword
+                  ? "Hide new password"
+                  : "Show new password"
+              }
+            >
+              {visibleFields.newPassword ? <EyeSlashIcon /> : <EyeIcon />}
+            </Button>
           </div>
+          {errors.newPassword?.message && (
+            <p className="text-sm text-destructive">
+              {errors.newPassword.message}
+            </p>
+          )}
+        </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="confirmPassword">Confirm new password</Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                type={getPasswordType("confirmPassword")}
-                autoComplete="new-password"
-                aria-invalid={!!errors.confirmPassword}
-                disabled={isPending}
-                className="pr-11"
-                {...register("confirmPassword")}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
-                onClick={() => toggleVisibility("confirmPassword")}
-                disabled={isPending}
-                aria-label={
-                  visibleFields.confirmPassword
-                    ? "Hide confirm password"
-                    : "Show confirm password"
-                }
-              >
-                {visibleFields.confirmPassword ? <EyeSlashIcon /> : <EyeIcon />}
-              </Button>
-            </div>
-            {errors.confirmPassword?.message && (
-              <p className="text-sm text-destructive">
-                {errors.confirmPassword.message}
-              </p>
-            )}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="confirmPassword">Confirm new password</Label>
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              type={getPasswordType("confirmPassword")}
+              autoComplete="new-password"
+              aria-invalid={!!errors.confirmPassword}
+              disabled={isPending}
+              className="pr-11"
+              {...register("confirmPassword")}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
+              onClick={() => toggleVisibility("confirmPassword")}
+              disabled={isPending}
+              aria-label={
+                visibleFields.confirmPassword
+                  ? "Hide confirm password"
+                  : "Show confirm password"
+              }
+            >
+              {visibleFields.confirmPassword ? <EyeSlashIcon /> : <EyeIcon />}
+            </Button>
           </div>
+          {errors.confirmPassword?.message && (
+            <p className="text-sm text-destructive">
+              {errors.confirmPassword.message}
+            </p>
+          )}
+        </div>
 
-          <Button type="submit" className="w-fit" disabled={isPending}>
-            {isPending ? (
-              <SpinnerIcon data-icon="inline-start" className="animate-spin" />
-            ) : (
-              <KeyIcon data-icon="inline-start" />
-            )}
-            {isPending ? "Changing..." : "Change Password"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        <Button type="submit" className="w-fit" disabled={isPending}>
+          {isPending ? (
+            <SpinnerIcon data-icon="inline-start" className="animate-spin" />
+          ) : (
+            <KeyIcon data-icon="inline-start" />
+          )}
+          {isPending ? "Changing..." : "Change Password"}
+        </Button>
+      </form>
+    </div>
   );
 }
 
-export function SettingsManager({ profile }: SettingsManagerProps) {
+function ConnectedProviders({
+  linkedAccounts,
+}: {
+  linkedAccounts: LinkedAccount[];
+}) {
+  const [isPending, startTransition] = useTransition();
+  const providers = linkedAccounts.filter((a) => a.providerId !== "credential");
+  const hasGithub = providers.some((a) => a.providerId === "github");
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div>
+        <Label className="text-base">Connected providers</Label>
+        <p className="text-xs text-muted-foreground">
+          External login providers linked to your account.
+        </p>
+      </div>
+
+      {providers.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No external providers connected.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {providers.map((account) => (
+            <div
+              key={`${account.providerId}-${account.accountId}`}
+              className="flex items-center gap-3 rounded-lg border p-3"
+            >
+              {account.providerId === "github" && (
+                <GithubLogoIcon className="size-5" weight="duotone" />
+              )}
+              <div className="flex flex-1 flex-col">
+                <span className="text-sm font-medium capitalize">
+                  {account.providerId}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Connected{" "}
+                  {new Date(account.createdAt).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                disabled={isPending}
+                onClick={() => {
+                  startTransition(async () => {
+                    try {
+                      await authClient.unlinkAccount({
+                        providerId: account.providerId,
+                      });
+                      toast.success(
+                        `${account.providerId} unlinked successfully. Please refresh the page.`,
+                      );
+                    } catch {
+                      toast.error(`Failed to unlink ${account.providerId}.`);
+                    }
+                  });
+                }}
+              >
+                Unlink
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!hasGithub && (
+        <Button
+          variant="outline"
+          className="mt-2 w-fit"
+          disabled={isPending}
+          onClick={() => {
+            startTransition(async () => {
+              try {
+                await authClient.linkSocial({
+                  provider: "github",
+                  callbackURL: "/dashboard/settings",
+                });
+              } catch {
+                toast.error("Failed to initiate GitHub linking.");
+              }
+            });
+          }}
+        >
+          {isPending ? (
+            <SpinnerIcon data-icon="inline-start" className="animate-spin" />
+          ) : (
+            <GithubLogoIcon data-icon="inline-start" />
+          )}
+          Link GitHub Account
+        </Button>
+      )}
+    </div>
+  );
+}
+
+export function SettingsManager({
+  profile,
+  linkedAccounts,
+}: SettingsManagerProps) {
   return (
     <Tabs defaultValue="profile">
       <TabsList>
@@ -489,8 +726,43 @@ export function SettingsManager({ profile }: SettingsManagerProps) {
         <ProfileSettingsForm profile={profile} />
       </TabsContent>
 
-      <TabsContent value="account" className="mt-4">
-        <AccountSettingsForm />
+      <TabsContent value="account" className="mt-4 flex flex-col gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Email</CardTitle>
+            <CardDescription>
+              Your login email is used for authentication. Changing it requires
+              verification via the new address.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChangeEmailForm currentEmail={profile.email} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Password</CardTitle>
+            <CardDescription>
+              Change the dashboard password using the existing session.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AccountSettingsForm />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Connections</CardTitle>
+            <CardDescription>
+              External login providers linked to your owner account.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ConnectedProviders linkedAccounts={linkedAccounts} />
+          </CardContent>
+        </Card>
       </TabsContent>
     </Tabs>
   );

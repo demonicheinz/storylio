@@ -16,6 +16,19 @@ async function getProfile(userId: string) {
       github: true,
       instagram: true,
       twitter: true,
+      websiteUrl: true,
+      publicEmail: true,
+    },
+  });
+}
+
+async function getLinkedAccounts(userId: string) {
+  return db.account.findMany({
+    where: { userId },
+    select: {
+      providerId: true,
+      accountId: true,
+      createdAt: true,
     },
   });
 }
@@ -24,7 +37,10 @@ export default async function SettingsPage() {
   await connection();
 
   const session = await getActionSession();
-  const profile = await getProfile(session.user.id);
+  const [profile, linkedAccounts] = await Promise.all([
+    getProfile(session.user.id),
+    getLinkedAccounts(session.user.id),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,8 +63,11 @@ export default async function SettingsPage() {
             github: null,
             instagram: null,
             twitter: null,
+            websiteUrl: null,
+            publicEmail: null,
           }
         }
+        linkedAccounts={linkedAccounts}
       />
     </div>
   );
