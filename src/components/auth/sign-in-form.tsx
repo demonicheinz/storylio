@@ -5,10 +5,11 @@ import {
   CircleNotchIcon,
   EyeIcon,
   EyeSlashIcon,
+  FingerprintIcon,
   GithubLogoIcon,
 } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -25,8 +26,8 @@ import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
 
 const signInSchema = z.object({
-  email: z.string().email("Email tidak valid"),
-  password: z.string().min(1, "Password tidak boleh kosong"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
 });
 
 type SignInFormData = z.infer<typeof signInSchema>;
@@ -41,6 +42,7 @@ export function SignInForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGitHubLoading, setIsGitHubLoading] = useState(false);
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -52,9 +54,25 @@ export function SignInForm({
   });
 
   const getRedirectUrl = () => {
-    const callbackUrl = searchParams.get("callbackUrl");
-    return callbackUrl?.startsWith("/dashboard") ? callbackUrl : "/dashboard";
+    return searchParams.get("callbackUrl") || "/dashboard";
   };
+
+  useEffect(() => {
+    const initConditionalUI = async () => {
+      try {
+        const { data, error } = await authClient.signIn.passkey({
+          autoFill: true,
+        });
+        if (!error) {
+          router.push(getRedirectUrl());
+          router.refresh();
+        }
+      } catch {
+        // AutoFill failed or was aborted, silently ignore
+      }
+    };
+    initConditionalUI();
+  }, [router, searchParams]);
 
   const onSubmit = async (data: SignInFormData) => {
     setIsLoading(true);
@@ -69,7 +87,7 @@ export function SignInForm({
     });
 
     if (error) {
-      setError("Email atau password salah");
+      setError("Invalid email or password");
       setIsLoading(false);
       return;
     }
@@ -81,16 +99,42 @@ export function SignInForm({
   const handleGitHubSignIn = async () => {
     setIsGitHubLoading(true);
     setError(null);
-
     const redirectTo = getRedirectUrl();
 
-    await authClient.signIn.social({
-      provider: "github",
-      callbackURL: redirectTo,
-    });
+    try {
+      await authClient.signIn.social({
+        provider: "github",
+        callbackURL: redirectTo,
+      });
+    } catch (err: any) {
+      setError(err.message || "GitHub sign-in failed");
+      setIsGitHubLoading(false);
+    }
   };
 
-  const anyLoading = isLoading || isGitHubLoading;
+  const handlePasskeySignIn = async () => {
+    setIsPasskeyLoading(true);
+    setError(null);
+    const redirectTo = getRedirectUrl();
+
+    try {
+      const { error } = await authClient.signIn.passkey();
+
+      if (error) {
+        setError(error.message || "Failed to sign in with passkey");
+        return;
+      }
+
+      router.push(redirectTo);
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || "Passkey sign-in cancelled or failed");
+    } finally {
+      setIsPasskeyLoading(false);
+    }
+  };
+
+  const anyLoading = isLoading || isGitHubLoading || isPasskeyLoading;
 
   return (
     <Card className="w-full max-w-md border bg-card">
@@ -117,6 +161,7 @@ export function SignInForm({
               {...register("email")}
               className={errors.email ? "border-destructive" : ""}
               disabled={anyLoading}
+              autoComplete="username webauthn"
             />
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email.message}</p>
@@ -192,6 +237,30 @@ export function SignInForm({
             </Button>
           </>
         )}
+
+        <div className={githubEnabled ? "mt-3" : "mt-4 flex flex-col"}>
+          {!githubEnabled && (
+            <div className="my-4 flex items-center gap-3">
+              <Separator className="flex-1" />
+              <span className="text-xs text-muted-foreground">or</span>
+              <Separator className="flex-1" />
+            </div>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={anyLoading}
+            onClick={handlePasskeySignIn}
+          >
+            {isPasskeyLoading ? (
+              <CircleNotchIcon className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FingerprintIcon className="mr-2 h-4 w-4" />
+            )}
+            Sign in with Passkey
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
