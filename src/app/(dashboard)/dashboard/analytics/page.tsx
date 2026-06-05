@@ -18,6 +18,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  ContentRankingChart,
+  ViewsTimelineChart,
+} from "@/features/dashboard/analytics/components/analytics-charts";
 import { PostStatus, ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
 import { formatDate } from "@/lib/utils";
@@ -29,10 +33,49 @@ type AnalyticsStatCardProps = {
   icon: ReactNode;
 };
 
+type RankedContent = {
+  id: string;
+  title: string;
+  slug: string;
+  status: PostStatus | ProjectStatus;
+  viewCount: number;
+};
+
 const umamiShareUrl = process.env.NEXT_PUBLIC_UMAMI_SHARE_URL?.trim();
-const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID?.trim();
+const umamiWebsiteId =
+  process.env.UMAMI_WEBSITE_ID?.trim() ??
+  process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID?.trim();
+
+function startOfUtcDay(date: Date) {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
+}
+
+function getViewTimeline(events: { createdAt: Date }[]) {
+  const today = startOfUtcDay(new Date());
+  const counts = new Map<string, number>();
+
+  for (const event of events) {
+    const key = startOfUtcDay(event.createdAt).toISOString();
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  return Array.from({ length: 30 }, (_, index) => {
+    const date = new Date(today);
+    date.setUTCDate(today.getUTCDate() - (29 - index));
+
+    return {
+      date,
+      views: counts.get(date.toISOString()) ?? 0,
+    };
+  });
+}
 
 async function getAnalyticsData() {
+  const timelineStart = startOfUtcDay(new Date());
+  timelineStart.setUTCDate(timelineStart.getUTCDate() - 29);
+
   const [
     totalPosts,
     publishedPosts,
@@ -42,8 +85,12 @@ async function getAnalyticsData() {
     galleryItems,
     testimonials,
     postViews,
+    projectViews,
+    totalViewEvents,
     topPosts,
-    recentProjects,
+    topProjects,
+    timelineEvents,
+    recentViews,
   ] = await Promise.all([
     db.post.count(),
     db.post.count({ where: { status: PostStatus.PUBLISHED } }),
@@ -52,11 +99,9 @@ async function getAnalyticsData() {
     db.project.count({ where: { status: ProjectStatus.PUBLISHED } }),
     db.galleryItem.count(),
     db.testimonial.count(),
-    db.post.aggregate({
-      _sum: {
-        viewCount: true,
-      },
-    }),
+    db.post.aggregate({ _sum: { viewCount: true } }),
+    db.project.aggregate({ _sum: { viewCount: true } }),
+    db.viewEvent.count(),
     db.post.findMany({
       orderBy: [{ viewCount: "desc" }, { createdAt: "desc" }],
       take: 5,
@@ -66,34 +111,50 @@ async function getAnalyticsData() {
         slug: true,
         status: true,
         viewCount: true,
-        publishedAt: true,
       },
     }),
     db.project.findMany({
-      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+      orderBy: [{ viewCount: "desc" }, { createdAt: "desc" }],
       take: 5,
       select: {
         id: true,
         title: true,
         slug: true,
         status: true,
+        viewCount: true,
+      },
+    }),
+    db.viewEvent.findMany({
+      where: { createdAt: { gte: timelineStart } },
+      select: { createdAt: true },
+    }),
+    db.viewEvent.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: {
+        id: true,
+        type: true,
+        slug: true,
         createdAt: true,
-        updatedAt: true,
       },
     }),
   ]);
 
   return {
+    draftPosts,
     galleryItems,
     postViews: postViews._sum.viewCount ?? 0,
+    projectViews: projectViews._sum.viewCount ?? 0,
     publishedPosts,
     publishedProjects,
-    recentProjects,
+    recentViews,
     testimonials,
+    timeline: getViewTimeline(timelineEvents),
     topPosts,
+    topProjects,
     totalPosts,
     totalProjects,
-    draftPosts,
+    totalViewEvents,
   };
 }
 
@@ -123,6 +184,195 @@ function AnalyticsStatCard({
   );
 }
 
+function ViewsTimeline({
+  timeline,
+}: {
+  timeline: { date: Date; views: number }[];
+}) {
+  const hasViews = timeline.some((point) => point.views > 0);
+  const chartData = timeline.map((point) => ({
+    date: point.date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }),
+    label: point.date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    }),
+    views: point.views,
+  }));
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Views Over Time</CardTitle>
+        <CardDescription>
+          Locally tracked post and project views from the last 30 days.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!hasViews ? (
+          <EmptyState
+            icon={<ChartLineIcon />}
+            title="No recent views"
+            description="New public content views will appear here."
+          />
+        ) : (
+          <div className="rounded-2xl border bg-background/40 p-4">
+            <ViewsTimelineChart data={chartData} />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function RankingChart({
+  items,
+  title,
+}: {
+  items: RankedContent[];
+  title: string;
+}) {
+  function shortenTitle(value: string) {
+    return value.length > 20 ? `${value.slice(0, 19).trimEnd()}...` : value;
+  }
+
+  const chartData = items.map((item) => ({
+    name: item.title,
+    shortName: shortenTitle(item.title),
+    views: item.viewCount,
+  }));
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>Top five items by local view count.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {items.length === 0 ? (
+          <EmptyState
+            icon={<ChartLineIcon />}
+            title="No content yet"
+            description="Content will appear here after it is created."
+          />
+        ) : (
+          <div className="rounded-2xl border bg-background/40 p-4">
+            <ContentRankingChart data={chartData} />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function EmptyState({
+  description,
+  icon,
+  title,
+}: {
+  description: string;
+  icon: ReactNode;
+  title: string;
+}) {
+  return (
+    <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed text-center">
+      <div className="text-4xl text-muted-foreground/50">{icon}</div>
+      <div>
+        <p className="font-medium">{title}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function TopContentList({
+  editPath,
+  items,
+  publicPath,
+  title,
+}: {
+  editPath: "posts" | "projects";
+  items: RankedContent[];
+  publicPath: "blog" | "projects";
+  title: string;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>
+          Top 5 items ordered by local view count.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {items.length === 0 ? (
+          <EmptyState
+            icon={<ChartLineIcon />}
+            title="No content yet"
+            description="Create and publish content to populate this list."
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            {items.map((item) => {
+              const isPublished = item.status === "PUBLISHED";
+
+              return (
+                <div
+                  key={item.id}
+                  className="grid gap-4 rounded-2xl border bg-background/40 p-4 md:grid-cols-[minmax(0,1fr)_auto]"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-start gap-2">
+                      <h2
+                        className="line-clamp-2 min-w-0 font-heading text-base font-semibold"
+                        title={item.title}
+                      >
+                        {item.title}
+                      </h2>
+                      <Badge
+                        className="mt-0.5 shrink-0"
+                        variant={isPublished ? "default" : "secondary"}
+                      >
+                        {isPublished ? "published" : "draft"}
+                      </Badge>
+                    </div>
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
+                      /{publicPath}/{item.slug}
+                    </p>
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      {item.viewCount.toLocaleString("en-US")} views
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                    {isPublished && (
+                      <Button asChild size="sm" variant="outline">
+                        <Link
+                          href={`/${publicPath}/${item.slug}`}
+                          target="_blank"
+                        >
+                          View
+                        </Link>
+                      </Button>
+                    )}
+                    <Button asChild size="sm" variant="secondary">
+                      <Link href={`/dashboard/${editPath}/${item.id}/edit`}>
+                        Edit
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function UmamiPanel() {
   if (umamiShareUrl) {
     return (
@@ -147,43 +397,25 @@ function UmamiPanel() {
     );
   }
 
-  if (umamiWebsiteId) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Traffic Analytics</CardTitle>
-          <CardDescription>
-            Umami website ID is configured, but an embeddable share URL is
-            needed for the dashboard iframe.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-2xl border border-dashed bg-background/40 p-6">
-            <p className="font-medium">Content analytics from local database</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Add `NEXT_PUBLIC_UMAMI_SHARE_URL` to enable the embedded traffic
-              analytics dashboard. Until then, this page shows database-backed
-              content performance.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Traffic Analytics</CardTitle>
-        <CardDescription>Umami embed is not configured yet.</CardDescription>
+        <CardDescription>
+          Umami API and embed are optional. Local analytics remain available.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="rounded-2xl border border-dashed bg-background/40 p-6">
-          <p className="font-medium">Content analytics from local database</p>
+          <p className="font-medium">
+            {umamiWebsiteId
+              ? "Umami website configured without a share URL"
+              : "Umami is not configured"}
+          </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Configure `NEXT_PUBLIC_UMAMI_SHARE_URL` for traffic analytics, or
-            `NEXT_PUBLIC_UMAMI_WEBSITE_ID` plus a share URL when the Umami
-            dashboard is ready.
+            Configure `NEXT_PUBLIC_UMAMI_SHARE_URL` to embed traffic analytics.
+            Server-side Umami API integration remains deferred until its API
+            version and response contract are confirmed.
           </p>
         </div>
       </CardContent>
@@ -193,7 +425,6 @@ function UmamiPanel() {
 
 export default async function AnalyticsPage() {
   await connection();
-
   const data = await getAnalyticsData();
 
   const stats = [
@@ -212,8 +443,14 @@ export default async function AnalyticsPage() {
     {
       label: "Draft posts",
       value: data.draftPosts,
-      description: "Posts still hidden from public readers.",
+      description: "Posts hidden from public readers.",
       icon: <ArticleIcon />,
+    },
+    {
+      label: "Total post views",
+      value: data.postViews,
+      description: "Total views counted from local Post.viewCount.",
+      icon: <EyeIcon />,
     },
     {
       label: "Total projects",
@@ -224,8 +461,20 @@ export default async function AnalyticsPage() {
     {
       label: "Published projects",
       value: data.publishedProjects,
-      description: "Projects currently visible on the public portfolio.",
+      description: "Projects visible on the public portfolio.",
       icon: <FolderIcon />,
+    },
+    {
+      label: "Total project views",
+      value: data.projectViews,
+      description: "Total views counted from local Project.viewCount.",
+      icon: <EyeIcon />,
+    },
+    {
+      label: "Tracked view events",
+      value: data.totalViewEvents,
+      description: "Privacy-friendly local events used for trend charts.",
+      icon: <ChartLineIcon />,
     },
     {
       label: "Gallery items",
@@ -239,12 +488,6 @@ export default async function AnalyticsPage() {
       description: "Client quotes available for the Home page.",
       icon: <QuotesIcon />,
     },
-    {
-      label: "Post views",
-      value: data.postViews,
-      description: "Total views counted from local Post.viewCount.",
-      icon: <EyeIcon />,
-    },
   ];
 
   return (
@@ -252,169 +495,91 @@ export default async function AnalyticsPage() {
       <div>
         <h1 className="font-heading text-3xl font-bold">Analytics</h1>
         <p className="mt-2 text-muted-foreground">
-          Summarize content performance from the local database and connect
-          traffic insights through Umami when configured.
+          Measure local content performance and optionally connect broader
+          traffic insights through Umami.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <AnalyticsStatCard key={stat.label} {...stat} />
-        ))}
-      </div>
+      <section className="flex flex-col gap-4">
+        <div>
+          <h2 className="font-heading text-xl font-semibold">
+            Local Content Analytics
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Database-backed metrics that work without external analytics.
+          </p>
+        </div>
 
-      <UmamiPanel />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          {stats.map((stat) => (
+            <AnalyticsStatCard key={stat.label} {...stat} />
+          ))}
+        </div>
+      </section>
+
+      <ViewsTimeline timeline={data.timeline} />
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Posts by Views</CardTitle>
-            <CardDescription>
-              Top 5 blog posts ordered by local `Post.viewCount`.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {data.topPosts.length === 0 ? (
-              <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed text-center">
-                <ChartLineIcon className="size-10 text-muted-foreground/50" />
-                <div>
-                  <p className="font-medium">No posts yet</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Publish posts and collect views to populate this table.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {data.topPosts.map((post) => {
-                  const isPublished = post.status === PostStatus.PUBLISHED;
-
-                  return (
-                    <div
-                      key={post.id}
-                      className="grid gap-4 rounded-2xl border bg-background/40 p-4 md:grid-cols-[minmax(0,1fr)_auto]"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="truncate font-heading text-base font-semibold">
-                            {post.title}
-                          </h2>
-                          <Badge
-                            variant={isPublished ? "default" : "secondary"}
-                          >
-                            {isPublished ? "published" : "draft"}
-                          </Badge>
-                        </div>
-                        <p className="mt-1 truncate text-sm text-muted-foreground">
-                          /blog/{post.slug}
-                        </p>
-                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                          <span>
-                            {post.viewCount.toLocaleString("en-US")} views
-                          </span>
-                          {post.publishedAt && (
-                            <span>
-                              Published {formatDate(post.publishedAt)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                        {isPublished && (
-                          <Button asChild size="sm" variant="outline">
-                            <Link href={`/blog/${post.slug}`} target="_blank">
-                              View
-                            </Link>
-                          </Button>
-                        )}
-                        <Button asChild size="sm" variant="secondary">
-                          <Link href={`/dashboard/posts/${post.id}/edit`}>
-                            Edit
-                          </Link>
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Projects</CardTitle>
-            <CardDescription>
-              Project view tracking is not in the schema, so this shows the
-              latest 5 updated projects.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {data.recentProjects.length === 0 ? (
-              <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed text-center">
-                <FolderIcon className="size-10 text-muted-foreground/50" />
-                <div>
-                  <p className="font-medium">No projects yet</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Add portfolio projects to see recent project activity.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {data.recentProjects.map((project) => {
-                  const isPublished =
-                    project.status === ProjectStatus.PUBLISHED;
-
-                  return (
-                    <div
-                      key={project.id}
-                      className="grid gap-4 rounded-2xl border bg-background/40 p-4 md:grid-cols-[minmax(0,1fr)_auto]"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="truncate font-heading text-base font-semibold">
-                            {project.title}
-                          </h2>
-                          <Badge
-                            variant={isPublished ? "default" : "secondary"}
-                          >
-                            {isPublished ? "published" : "draft"}
-                          </Badge>
-                        </div>
-                        <p className="mt-1 truncate text-sm text-muted-foreground">
-                          /projects/{project.slug}
-                        </p>
-                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                          <span>Updated {formatDate(project.updatedAt)}</span>
-                          <span>Created {formatDate(project.createdAt)}</span>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                        {isPublished && (
-                          <Button asChild size="sm" variant="outline">
-                            <Link
-                              href={`/projects/${project.slug}`}
-                              target="_blank"
-                            >
-                              View
-                            </Link>
-                          </Button>
-                        )}
-                        <Button asChild size="sm" variant="secondary">
-                          <Link href={`/dashboard/projects/${project.id}/edit`}>
-                            Edit
-                          </Link>
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <RankingChart items={data.topPosts} title="Top Posts Chart" />
+        <RankingChart items={data.topProjects} title="Top Projects Chart" />
       </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <TopContentList
+          editPath="posts"
+          items={data.topPosts}
+          publicPath="blog"
+          title="Top Posts"
+        />
+        <TopContentList
+          editPath="projects"
+          items={data.topProjects}
+          publicPath="projects"
+          title="Top Projects"
+        />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Views</CardTitle>
+          <CardDescription>
+            Latest privacy-friendly local content view events.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {data.recentViews.length === 0 ? (
+            <EmptyState
+              icon={<EyeIcon />}
+              title="No view events yet"
+              description="Events appear after published posts or projects are viewed."
+            />
+          ) : (
+            <div className="divide-y rounded-2xl border bg-background/40">
+              {data.recentViews.map((event) => (
+                <div
+                  key={event.id}
+                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">
+                      /{event.type === "post" ? "blog" : "projects"}/
+                      {event.slug}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {event.type} view
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {formatDate(event.createdAt)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <UmamiPanel />
     </div>
   );
 }

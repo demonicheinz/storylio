@@ -104,12 +104,23 @@ model Project {
   githubUrl    String?
   order        Int           @default(0)
   status       ProjectStatus @default(DRAFT)
+  viewCount    Int           @default(0)
 
   authorId     String
   author       User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+}
+
+model ViewEvent {
+  id        String   @id @default(cuid())
+  type      String
+  slug      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type, slug, createdAt])
 }
 
 model GalleryItem {
