@@ -13,6 +13,10 @@ async function getMedia() {
       filename: true,
       size: true,
       format: true,
+      width: true,
+      height: true,
+      aspectRatio: true,
+      blurDataUrl: true,
       createdAt: true,
     },
   });

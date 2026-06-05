@@ -135,13 +135,17 @@ model Tag {
 }
 
 model Media {
-  id        String   @id @default(cuid())
-  url       String
-  publicId  String
-  filename  String
-  size      Int
-  format    String
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  url         String
+  publicId    String
+  filename    String
+  size        Int
+  format      String
+  width       Int?
+  height      Int?
+  aspectRatio Float?
+  blurDataUrl String?
+  createdAt   DateTime @default(now())
 }
 
 model Testimonial {

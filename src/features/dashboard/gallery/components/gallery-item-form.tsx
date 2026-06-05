@@ -253,6 +253,10 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
                   shouldDirty: true,
                   shouldValidate: true,
                 });
+                setValue("blurDataUrl", metadata?.blurDataUrl ?? undefined, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
               }}
               onRemove={() =>
                 setValue("imageUrl", "", {

@@ -34,6 +34,7 @@ type ImageUploadProps = {
       width?: number | null;
       height?: number | null;
       aspectRatio?: number | null;
+      blurDataUrl?: string | null;
     },
   ) => void;
   onRemove?: () => void;
@@ -171,6 +172,7 @@ export function ImageUpload({
           width: data.width ?? null,
           height: data.height ?? null,
           aspectRatio: data.aspectRatio ?? null,
+          blurDataUrl: data.blurDataUrl ?? null,
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
