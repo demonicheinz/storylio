@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import {
+  ABOUT_CONTENT_SINGLETON_ID,
+  aboutContentOrderBy,
+} from "@/features/about/data";
+import {
+  type AboutContentActionInput,
   type AccountPasswordActionInput,
+  aboutContentActionSchema,
   accountPasswordActionSchema,
   type ProfileSettingsActionInput,
   profileSettingsActionSchema,
@@ -91,6 +97,72 @@ export async function actionUpdateProfileSettings(
   } catch (error) {
     console.error("Update profile settings failed:", error);
     return actionError("Failed to update profile settings.");
+  }
+}
+
+export async function actionUpdateAboutContent(
+  input: AboutContentActionInput,
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsed = aboutContentActionSchema.safeParse(input);
+  if (!parsed.success) {
+    return actionError(
+      "Please fix the highlighted fields.",
+      flattenFieldErrors(parsed.error.flatten().fieldErrors),
+    );
+  }
+
+  try {
+    const data = {
+      introEn: parsed.data.introEn || null,
+      introId: parsed.data.introId || null,
+      howIWorkEn: parsed.data.howIWorkEn || null,
+      howIWorkId: parsed.data.howIWorkId || null,
+      whatIValueEn: parsed.data.whatIValueEn || null,
+      whatIValueId: parsed.data.whatIValueId || null,
+      defaultLanguage: parsed.data.defaultLanguage,
+    };
+    const aboutContent = await db.$transaction(async (tx) => {
+      const existing = await tx.aboutContent.findMany({
+        orderBy: aboutContentOrderBy,
+        select: { id: true },
+      });
+      const primary = existing[0];
+      const saved = primary
+        ? await tx.aboutContent.update({
+            where: { id: primary.id },
+            data,
+            select: { id: true },
+          })
+        : await tx.aboutContent.create({
+            data: {
+              id: ABOUT_CONTENT_SINGLETON_ID,
+              ...data,
+            },
+            select: { id: true },
+          });
+
+      if (existing.length > 1) {
+        await tx.aboutContent.deleteMany({
+          where: { id: { in: existing.slice(1).map(({ id }) => id) } },
+        });
+      }
+
+      return saved;
+    });
+
+    revalidatePath("/dashboard/settings");
+    revalidatePath("/about");
+
+    return actionSuccess({ id: aboutContent.id }, "About content updated.");
+  } catch (error) {
+    console.error("Update About content failed:", error);
+    return actionError("Failed to update About content.");
   }
 }
 

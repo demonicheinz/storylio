@@ -165,6 +165,19 @@ model HomeSection {
   createdAt DateTime        @default(now())
 }
 
+model AboutContent {
+  id              String   @id @default(cuid())
+  introEn         String?
+  introId         String?
+  howIWorkEn      String?  @db.Text
+  howIWorkId      String?  @db.Text
+  whatIValueEn    String?  @db.Text
+  whatIValueId    String?  @db.Text
+  defaultLanguage String   @default("en")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 enum HomeSectionType {
   PHASE
   LOGO

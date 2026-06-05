@@ -34,6 +34,16 @@ export const introCopy = {
   id: "Saya Heinz, full-stack developer sekaligus mahasiswa informatika yang senang membangun aplikasi web modern dan scalable. Saya banyak bekerja dengan React, Next.js, TypeScript, serta backend tools seperti Prisma dan PostgreSQL. Saya menikmati proses merapikan kode, mengeksplorasi teknologi baru, dan membuat pengalaman digital yang nyaman digunakan.",
 };
 
+export const aboutStoryFallback = {
+  howIWork: `I like building from the middle of design and engineering: enough structure to keep a product maintainable, enough visual care to make it feel memorable. My best work usually starts with a clear problem, a small set of constraints, and a willingness to polish the details people actually touch.
+
+The stack I reach for most often is Next.js, TypeScript, Tailwind CSS, Prisma, PostgreSQL, and small interface systems that make repeated work easier. I care about fast pages, useful content models, and interfaces that still feel calm after the hundredth visit.`,
+  whatIValue: `- Clear communication before clever implementation
+- Responsive interfaces that feel intentional on every screen
+- Server-first architecture with client components only where interaction needs them
+- Content workflows that let projects grow without constant code edits`,
+};
+
 export const workExperiences = [
   {
     company: "Independent Projects",
