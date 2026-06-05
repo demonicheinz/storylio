@@ -38,6 +38,10 @@ type MediaItem = {
   filename: string;
   size: number;
   format: string;
+  width: number | null;
+  height: number | null;
+  aspectRatio: number | null;
+  blurDataUrl: string | null;
   createdAt: Date;
 };
 
@@ -97,6 +101,10 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
           filename: data.filename,
           size: data.size,
           format: data.format,
+          width: data.width ?? null,
+          height: data.height ?? null,
+          aspectRatio: data.aspectRatio ?? null,
+          blurDataUrl: data.blurDataUrl ?? null,
           createdAt: new Date(),
         },
         ...prev,
@@ -296,6 +304,15 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
                   <span className="text-[10px] text-muted-foreground">
                     {formatBytes(item.size)}
                   </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span>
+                    {item.width && item.height
+                      ? `${item.width} × ${item.height}`
+                      : "Dimensions unavailable"}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span>{item.blurDataUrl ? "Blur ready" : "No blur"}</span>
                 </div>
               </div>
             </div>

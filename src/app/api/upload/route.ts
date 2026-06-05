@@ -1,7 +1,9 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { db } from "@/lib/db";
+import { generateBlurDataUrl } from "@/lib/image-metadata";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -43,7 +45,14 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const result = await uploadToCloudinary(buffer);
+    const [result, blurDataUrl] = await Promise.all([
+      uploadToCloudinary(buffer),
+      generateBlurDataUrl(buffer),
+    ]);
+    const aspectRatio =
+      result.width > 0 && result.height > 0
+        ? result.width / result.height
+        : null;
 
     // Save media record to DB
     const media = await db.media.create({
@@ -53,8 +62,14 @@ export async function POST(request: Request) {
         filename: file.name,
         size: result.bytes,
         format: result.format,
+        width: result.width || null,
+        height: result.height || null,
+        aspectRatio,
+        blurDataUrl,
       },
     });
+
+    revalidatePath("/dashboard/media");
 
     return NextResponse.json({
       id: media.id,
@@ -65,10 +80,8 @@ export async function POST(request: Request) {
       size: media.size,
       width: result.width,
       height: result.height,
-      aspectRatio:
-        result.width > 0 && result.height > 0
-          ? result.width / result.height
-          : null,
+      aspectRatio,
+      blurDataUrl: media.blurDataUrl,
     });
   } catch (error) {
     console.error("Upload failed:", error);
