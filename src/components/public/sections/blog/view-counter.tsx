@@ -3,15 +3,20 @@
 import { useEffect, useState } from "react";
 
 type ViewCounterProps = {
+  type?: "post" | "project";
   slug: string;
-  initialViews: number;
+  initialViews?: number;
 };
 
-export function ViewCounter({ slug, initialViews }: ViewCounterProps) {
+export function ViewCounter({
+  type = "post",
+  slug,
+  initialViews,
+}: ViewCounterProps) {
   const [views, setViews] = useState(initialViews);
 
   useEffect(() => {
-    const storageKey = `storylio:viewed:${slug}`;
+    const storageKey = `storylio:viewed:${type}:${slug}`;
 
     if (window.localStorage.getItem(storageKey)) {
       return;
@@ -21,6 +26,10 @@ export function ViewCounter({ slug, initialViews }: ViewCounterProps) {
 
     fetch(`/api/views/${slug}`, {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ type }),
     })
       .then((response) => {
         if (!response.ok) {
@@ -38,7 +47,9 @@ export function ViewCounter({ slug, initialViews }: ViewCounterProps) {
       .catch(() => {
         window.localStorage.removeItem(storageKey);
       });
-  }, [slug]);
+  }, [slug, type]);
 
-  return <span>{views} views</span>;
+  return typeof initialViews === "number" && typeof views === "number" ? (
+    <span>{views} views</span>
+  ) : null;
 }
