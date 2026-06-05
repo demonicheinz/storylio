@@ -53,6 +53,7 @@ export function GalleryExperience({
         alt: photo.alt,
         width: photo.width,
         height: photo.height,
+        description: photo.description,
       })),
     [filteredPhotos],
   );
@@ -173,6 +174,11 @@ export function GalleryExperience({
                       {activePhoto.caption}
                     </p>
                   )}
+                  {activePhoto.description && (
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
+                      {activePhoto.description}
+                    </p>
+                  )}
                 </div>
               </div>
             ) : null,
@@ -219,6 +225,8 @@ function GalleryPhotoCard({
           loading={priority ? "eager" : "lazy"}
           className="object-cover transition-transform duration-500 group-hover/photo:scale-105"
           unoptimized
+          placeholder={photo.blurDataUrl ? "blur" : "empty"}
+          blurDataURL={photo.blurDataUrl ?? undefined}
           onError={() => setHasImageError(true)}
         />
       )}
@@ -232,6 +240,11 @@ function GalleryPhotoCard({
         {photo.caption && (
           <p className="max-w-sm text-sm leading-6 font-medium text-foreground">
             {photo.caption}
+          </p>
+        )}
+        {photo.description && (
+          <p className="line-clamp-2 max-w-sm text-xs leading-5 text-muted-foreground">
+            {photo.description}
           </p>
         )}
       </div>

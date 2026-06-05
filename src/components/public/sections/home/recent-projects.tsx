@@ -9,6 +9,8 @@ export type HomeRecentProject = {
   slug: string;
   description: string | null;
   coverImage: string | null;
+  thumbnailImageUrl: string | null;
+  isFeatured: boolean;
   techStack: string[];
 };
 
@@ -42,7 +44,7 @@ export function RecentProjectsSection({
               className="group/project flex h-full flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-brand-soft/45 hover:shadow-[0_0_64px_rgba(139,92,246,0.14)]"
             >
               <ProjectCover
-                src={project.coverImage}
+                src={project.thumbnailImageUrl ?? project.coverImage}
                 alt={project.title}
                 className="aspect-[16/10]"
               />
@@ -51,6 +53,11 @@ export function RecentProjectsSection({
                 <h3 className="font-heading text-2xl leading-tight font-semibold text-foreground transition-colors group-hover/project:text-brand-soft">
                   {project.title}
                 </h3>
+                {project.isFeatured && (
+                  <Badge className="mt-3 w-fit rounded-full bg-brand-soft text-primary-foreground">
+                    Featured
+                  </Badge>
+                )}
                 <p className="mt-3 line-clamp-2 text-sm leading-7 text-muted-foreground">
                   {project.description ??
                     "A selected project from Heinz's archive."}

@@ -20,11 +20,13 @@ async function getProject(id: string) {
       description: true,
       content: true,
       coverImage: true,
+      thumbnailImageUrl: true,
       screenshots: true,
       techStack: true,
       liveUrl: true,
       githubUrl: true,
       order: true,
+      isFeatured: true,
       status: true,
     },
   });
@@ -52,11 +54,13 @@ export default async function EditProjectPage({
         description: project.description,
         content: project.content,
         coverImage: project.coverImage,
+        thumbnailImageUrl: project.thumbnailImageUrl,
         screenshots: project.screenshots,
         techStack: project.techStack,
         liveUrl: project.liveUrl,
         githubUrl: project.githubUrl,
         order: project.order,
+        isFeatured: project.isFeatured,
         status:
           project.status === ProjectStatus.PUBLISHED ? "published" : "draft",
       }}

@@ -4,6 +4,8 @@ export type ProjectListItem = {
   slug: string;
   description: string | null;
   coverImage: string | null;
+  thumbnailImageUrl: string | null;
+  isFeatured: boolean;
   techStack: string[];
   liveUrl: string | null;
   githubUrl: string | null;

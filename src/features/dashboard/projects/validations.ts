@@ -57,6 +57,7 @@ const projectBaseSchema = z.object({
     .optional()
     .transform((value) => value ?? ""),
   coverImage: optionalUrlSchema,
+  thumbnailImageUrl: optionalUrlSchema,
   liveUrl: optionalUrlSchema,
   githubUrl: optionalUrlSchema,
   order: z.coerce
@@ -66,6 +67,7 @@ const projectBaseSchema = z.object({
     .optional()
     .transform((value) => value ?? 0),
   status: projectStatusSchema,
+  isFeatured: z.boolean().optional().default(false),
 });
 
 export const projectFormSchema = projectBaseSchema

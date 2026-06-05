@@ -25,6 +25,8 @@ export async function uploadToCloudinary(
   publicId: string;
   format: string;
   bytes: number;
+  width: number;
+  height: number;
   originalFilename: string;
 }> {
   return new Promise((resolve, reject) => {
@@ -45,6 +47,8 @@ export async function uploadToCloudinary(
             publicId: result.public_id,
             format: result.format,
             bytes: result.bytes,
+            width: result.width,
+            height: result.height,
             originalFilename: result.original_filename,
           });
         },

@@ -12,7 +12,7 @@ import {
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   actionPublishProject,
@@ -73,11 +74,13 @@ type ProjectEditorProject = {
   description: string | null;
   content: string | null;
   coverImage: string | null;
+  thumbnailImageUrl: string | null;
   screenshots: string[];
   techStack: string[];
   liveUrl: string | null;
   githubUrl: string | null;
   order: number;
+  isFeatured: boolean;
   status: "draft" | "published";
 };
 
@@ -97,13 +100,17 @@ const emptyDefaults: ProjectFormValues = {
   description: "",
   content: "",
   coverImage: undefined,
+  thumbnailImageUrl: undefined,
   screenshots: [],
   techStack: "",
   liveUrl: undefined,
   githubUrl: undefined,
   order: 0,
+  isFeatured: false,
   status: "draft",
 };
+
+type AutosaveStatus = "idle" | "saving" | "saved" | "failed";
 
 function getDefaults(project?: ProjectEditorProject): ProjectFormValues {
   if (!project) {
@@ -116,11 +123,13 @@ function getDefaults(project?: ProjectEditorProject): ProjectFormValues {
     description: project.description ?? "",
     content: project.content ?? "",
     coverImage: project.coverImage ?? undefined,
+    thumbnailImageUrl: project.thumbnailImageUrl ?? undefined,
     screenshots: project.screenshots,
     techStack: project.techStack.join(", "),
     liveUrl: project.liveUrl ?? undefined,
     githubUrl: project.githubUrl ?? undefined,
     order: project.order,
+    isFeatured: project.isFeatured,
     status: project.status,
   };
 }
@@ -148,14 +157,19 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
   const [pendingAction, setPendingAction] = useState<
     "draft" | "publish" | null
   >(null);
+  const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
   const [slugEdited, setSlugEdited] = useState(mode === "edit");
+  const manualSaveVersion = useRef(0);
+  const autosaveInFlight = useRef(false);
   const defaults = useMemo(() => getDefaults(project), [project]);
 
   const {
     control,
-    formState: { errors },
+    formState: { errors, isDirty },
+    getValues,
     handleSubmit,
     register,
+    reset,
     setError,
     setValue,
     watch,
@@ -167,6 +181,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
   const title = watch("title");
   const slug = watch("slug");
   const coverImage = watch("coverImage");
+  const thumbnailImageUrl = watch("thumbnailImageUrl");
   const status = watch("status");
   const screenshots = watch("screenshots") ?? [];
   const slugRegistration = register("slug");
@@ -213,9 +228,71 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
     }
   };
 
+  const autosaveDraft = useCallback(async () => {
+    if (
+      mode !== "edit" ||
+      !project?.id ||
+      !isDirty ||
+      pendingAction !== null ||
+      autosaveInFlight.current
+    ) {
+      return;
+    }
+
+    const parsed = projectFormSchema.safeParse({
+      ...getValues(),
+      status: "draft",
+    });
+
+    if (!parsed.success) {
+      setAutosaveStatus("failed");
+      return;
+    }
+
+    const versionAtStart = manualSaveVersion.current;
+    autosaveInFlight.current = true;
+    setAutosaveStatus("saving");
+
+    const result = await actionSaveProjectDraft(parsed.data, project.id);
+
+    autosaveInFlight.current = false;
+
+    if (versionAtStart !== manualSaveVersion.current) {
+      return;
+    }
+
+    if (result.success) {
+      const nextValues = {
+        ...parsed.data,
+        status: result.data?.status ?? "draft",
+      } satisfies ProjectFormValues;
+
+      reset(nextValues);
+      setAutosaveStatus("saved");
+      router.refresh();
+      return;
+    }
+
+    setAutosaveStatus("failed");
+  }, [getValues, isDirty, mode, pendingAction, project?.id, reset, router]);
+
+  useEffect(() => {
+    if (mode !== "edit") {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      autosaveDraft();
+    }, 30_000);
+
+    return () => window.clearInterval(interval);
+  }, [autosaveDraft, mode]);
+
   const submitWithStatus = (nextStatus: "draft" | "published") =>
     handleSubmit(async (values) => {
+      manualSaveVersion.current += 1;
       setPendingAction(nextStatus === "published" ? "publish" : "draft");
+      setAutosaveStatus("idle");
 
       const payload = {
         ...values,
@@ -240,6 +317,10 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
           if (mode === "create") {
             router.replace(`/dashboard/projects/${result.data.id}/edit`);
           } else {
+            reset({
+              ...values,
+              status: result.data.status,
+            });
             router.refresh();
           }
         }
@@ -281,6 +362,21 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {mode === "edit" && autosaveStatus !== "idle" && (
+            <span
+              className={cn(
+                "rounded-full border border-border/50 bg-surface/60 px-3 py-1 text-xs text-muted-foreground",
+                autosaveStatus === "saving" && "text-brand-soft",
+                autosaveStatus === "failed" && "text-destructive",
+              )}
+            >
+              {autosaveStatus === "saving"
+                ? "Autosaving..."
+                : autosaveStatus === "saved"
+                  ? "Autosaved"
+                  : "Autosave failed"}
+            </span>
+          )}
           <Badge variant={status === "published" ? "default" : "secondary"}>
             {status}
           </Badge>
@@ -497,6 +593,28 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                   )}
                 />
               </div>
+
+              <Controller
+                control={control}
+                name="isFeatured"
+                render={({ field }) => (
+                  <div className="flex items-start justify-between gap-4 rounded-2xl border border-border/60 bg-background/35 p-4">
+                    <div>
+                      <Label htmlFor="isFeatured">Featured project</Label>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        Featured projects are prioritized on Home and Projects
+                        pages.
+                      </p>
+                    </div>
+                    <Switch
+                      id="isFeatured"
+                      checked={field.value}
+                      disabled={isPending}
+                      onCheckedChange={field.onChange}
+                    />
+                  </div>
+                )}
+              />
             </CardContent>
           </Card>
 
@@ -588,6 +706,37 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 {errors.coverImage?.message && (
                   <p className="text-sm text-destructive">
                     {errors.coverImage.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label>Thumbnail / card image</Label>
+                <ImageUpload
+                  value={thumbnailImageUrl}
+                  disabled={isPending}
+                  cropAspect={16 / 10}
+                  cropLabel="Crop project card image"
+                  onChange={(url) =>
+                    setValue("thumbnailImageUrl", url, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                  onRemove={() =>
+                    setValue("thumbnailImageUrl", undefined, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Optional. Project cards use this first, then fall back to the
+                  cover image.
+                </p>
+                {errors.thumbnailImageUrl?.message && (
+                  <p className="text-sm text-destructive">
+                    {errors.thumbnailImageUrl.message}
                   </p>
                 )}
               </div>

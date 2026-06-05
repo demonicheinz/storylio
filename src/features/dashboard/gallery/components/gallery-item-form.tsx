@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   actionCreateGalleryItem,
@@ -69,6 +70,13 @@ export type DashboardGalleryItem = {
   imageUrl: string;
   caption: string | null;
   category: string | null;
+  description: string | null;
+  altText: string | null;
+  width: number | null;
+  height: number | null;
+  aspectRatio: number | null;
+  blurDataUrl: string | null;
+  isVisible: boolean;
   order: number;
   createdAt: string;
 };
@@ -85,7 +93,14 @@ type GalleryItemDialogProps = {
 const emptyDefaults: GalleryItemActionValues = {
   imageUrl: "",
   caption: "",
+  description: "",
+  altText: "",
   category: "",
+  width: undefined,
+  height: undefined,
+  aspectRatio: undefined,
+  blurDataUrl: undefined,
+  isVisible: true,
   order: 0,
 };
 
@@ -97,7 +112,14 @@ function getDefaults(item?: DashboardGalleryItem): GalleryItemActionValues {
   return {
     imageUrl: item.imageUrl,
     caption: item.caption ?? "",
+    description: item.description ?? "",
+    altText: item.altText ?? "",
     category: item.category ?? "",
+    width: item.width ?? undefined,
+    height: item.height ?? undefined,
+    aspectRatio: item.aspectRatio ?? undefined,
+    blurDataUrl: item.blurDataUrl ?? undefined,
+    isVisible: item.isVisible,
     order: item.order,
   };
 }
@@ -214,12 +236,24 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
             <ImageUpload
               value={imageUrl}
               disabled={isPending}
-              onChange={(url) =>
+              onChange={(url, metadata) => {
                 setValue("imageUrl", url, {
                   shouldDirty: true,
                   shouldValidate: true,
-                })
-              }
+                });
+                setValue("width", metadata?.width ?? undefined, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+                setValue("height", metadata?.height ?? undefined, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+                setValue("aspectRatio", metadata?.aspectRatio ?? undefined, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+              }}
               onRemove={() =>
                 setValue("imageUrl", "", {
                   shouldDirty: true,
@@ -232,6 +266,44 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
                 {errors.imageUrl.message}
               </p>
             )}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="altText">Alt text</Label>
+              <Input
+                id="altText"
+                placeholder="Interface detail with dark cards"
+                aria-invalid={!!errors.altText}
+                disabled={isPending}
+                {...register("altText")}
+              />
+              {errors.altText?.message && (
+                <p className="text-sm text-destructive">
+                  {errors.altText.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/35 p-4">
+              <div>
+                <Label htmlFor="isVisible">Visible publicly</Label>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Hidden items stay editable in the dashboard.
+                </p>
+              </div>
+              <Switch
+                id="isVisible"
+                checked={watch("isVisible")}
+                disabled={isPending}
+                onCheckedChange={(checked) =>
+                  setValue("isVisible", checked, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              />
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -282,6 +354,23 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
             {errors.caption?.message && (
               <p className="text-sm text-destructive">
                 {errors.caption.message}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Optional detail shown on public gallery overlays."
+              aria-invalid={!!errors.description}
+              disabled={isPending}
+              className="min-h-24"
+              {...register("description")}
+            />
+            {errors.description?.message && (
+              <p className="text-sm text-destructive">
+                {errors.description.message}
               </p>
             )}
           </div>
@@ -448,14 +537,27 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   <div className="flex flex-1 flex-col gap-4 p-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={item.isVisible ? "default" : "outline"}>
+                          {item.isVisible ? "visible" : "hidden"}
+                        </Badge>
                         {item.category && (
                           <Badge variant="secondary">{item.category}</Badge>
                         )}
                         <Badge variant="outline">order {item.order}</Badge>
+                        {item.width && item.height && (
+                          <Badge variant="outline">
+                            {item.width}x{item.height}
+                          </Badge>
+                        )}
                       </div>
                       <h2 className="mt-3 line-clamp-2 font-heading text-lg font-semibold">
                         {item.caption || "Untitled image"}
                       </h2>
+                      {(item.altText || item.description) && (
+                        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                          {item.altText || item.description}
+                        </p>
+                      )}
                       <p className="mt-2 text-xs text-muted-foreground">
                         Created {formatDate(item.createdAt)}
                       </p>

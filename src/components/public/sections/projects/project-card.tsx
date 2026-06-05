@@ -13,11 +13,13 @@ type ProjectCardProps = {
 };
 
 export function ProjectCard({ project }: ProjectCardProps) {
+  const cardImage = project.thumbnailImageUrl ?? project.coverImage;
+
   return (
     <article className="group/project flex h-full flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-1 hover:border-brand-soft/45 hover:shadow-[0_0_72px_rgba(139,92,246,0.15)]">
       <Link href={`/projects/${project.slug}`} aria-label={project.title}>
         <ProjectCover
-          src={project.coverImage}
+          src={cardImage}
           alt={project.title}
           className="aspect-[16/10]"
         />
@@ -41,6 +43,11 @@ export function ProjectCard({ project }: ProjectCardProps) {
             {project.title}
           </h2>
         </Link>
+        {project.isFeatured && (
+          <Badge className="mt-3 w-fit rounded-full bg-brand-soft text-primary-foreground">
+            Featured
+          </Badge>
+        )}
         <p className="mt-3 line-clamp-3 text-sm leading-7 text-muted-foreground">
           {project.description ?? "A selected project from Heinz's archive."}
         </p>
