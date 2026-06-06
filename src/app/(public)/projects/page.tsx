@@ -82,6 +82,7 @@ async function getProjectsData(selectedTech?: string) {
         coverImage: true,
         thumbnailImageUrl: true,
         isFeatured: true,
+        isClosedSource: true,
         techStack: true,
         liveUrl: true,
         githubUrl: true,

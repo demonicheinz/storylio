@@ -105,6 +105,7 @@ async function getHomeData() {
           coverImage: true,
           thumbnailImageUrl: true,
           isFeatured: true,
+          isClosedSource: true,
           techStack: true,
           order: true,
           createdAt: true,

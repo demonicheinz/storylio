@@ -101,8 +101,9 @@ model Project {
   content           String?       @db.Text
   coverImage        String?
   thumbnailImageUrl String?
+  ogImageUrl        String?
   isFeatured        Boolean       @default(false)
-  screenshots       String[]
+  isClosedSource    Boolean       @default(false)
   techStack         String[]
   liveUrl           String?
   githubUrl         String?
@@ -113,8 +114,28 @@ model Project {
   authorId String
   author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
+  structuredScreenshots ProjectScreenshot[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ProjectScreenshot {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  imageUrl    String
+  caption     String?
+  altText     String?
+  width       Int?
+  height      Int?
+  aspectRatio Float?
+  blurDataUrl String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([projectId])
 }
 
 model ViewEvent {

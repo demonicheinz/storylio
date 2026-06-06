@@ -45,6 +45,7 @@ import {
   type ProjectFormInput,
   type ProjectFormValues,
   projectFormSchema,
+  type ScreenshotItemInput,
 } from "@/features/dashboard/projects/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { createSlug } from "@/lib/slug";
@@ -75,12 +76,14 @@ type ProjectEditorProject = {
   content: string | null;
   coverImage: string | null;
   thumbnailImageUrl: string | null;
-  screenshots: string[];
+  ogImageUrl: string | null;
+  structuredScreenshots: ScreenshotItemInput[];
   techStack: string[];
   liveUrl: string | null;
   githubUrl: string | null;
   order: number;
   isFeatured: boolean;
+  isClosedSource: boolean;
   status: "draft" | "published";
 };
 
@@ -101,12 +104,14 @@ const emptyDefaults: ProjectFormValues = {
   content: "",
   coverImage: undefined,
   thumbnailImageUrl: undefined,
-  screenshots: [],
+  ogImageUrl: undefined,
+  structuredScreenshots: [],
   techStack: "",
   liveUrl: undefined,
   githubUrl: undefined,
   order: 0,
   isFeatured: false,
+  isClosedSource: false,
   status: "draft",
 };
 
@@ -124,12 +129,24 @@ function getDefaults(project?: ProjectEditorProject): ProjectFormValues {
     content: project.content ?? "",
     coverImage: project.coverImage ?? undefined,
     thumbnailImageUrl: project.thumbnailImageUrl ?? undefined,
-    screenshots: project.screenshots,
+    ogImageUrl: project.ogImageUrl ?? undefined,
+    structuredScreenshots: project.structuredScreenshots.map((s, i) => ({
+      imageUrl: s.imageUrl,
+      caption: s.caption ?? undefined,
+      altText: s.altText ?? undefined,
+      order: s.order ?? i,
+      id: s.id,
+      width: s.width,
+      height: s.height,
+      aspectRatio: s.aspectRatio,
+      blurDataUrl: s.blurDataUrl,
+    })),
     techStack: project.techStack.join(", "),
     liveUrl: project.liveUrl ?? undefined,
     githubUrl: project.githubUrl ?? undefined,
     order: project.order,
     isFeatured: project.isFeatured,
+    isClosedSource: project.isClosedSource,
     status: project.status,
   };
 }
@@ -182,8 +199,9 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
   const slug = watch("slug");
   const coverImage = watch("coverImage");
   const thumbnailImageUrl = watch("thumbnailImageUrl");
+  const ogImageUrl = watch("ogImageUrl");
   const status = watch("status");
-  const screenshots = watch("screenshots") ?? [];
+  const structuredScreenshots = watch("structuredScreenshots") ?? [];
   const slugRegistration = register("slug");
   const isPending = pendingAction !== null;
   const submitLabels = getSubmitLabels(status);
@@ -672,6 +690,28 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                   </p>
                 )}
               </div>
+
+              <Controller
+                control={control}
+                name="isClosedSource"
+                render={({ field }) => (
+                  <div className="flex items-start justify-between gap-4 rounded-2xl border border-border/60 bg-background/35 p-4">
+                    <div>
+                      <Label htmlFor="isClosedSource">Closed source</Label>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                        Hide GitHub button even if repository URL is empty or
+                        unavailable.
+                      </p>
+                    </div>
+                    <Switch
+                      id="isClosedSource"
+                      checked={field.value}
+                      disabled={isPending}
+                      onCheckedChange={field.onChange}
+                    />
+                  </div>
+                )}
+              />
             </CardContent>
           </Card>
 
@@ -679,7 +719,8 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
             <CardHeader>
               <CardTitle>Media</CardTitle>
               <CardDescription>
-                Cover image and screenshots upload through Cloudinary.
+                Cover image, OG image, and screenshots upload through
+                Cloudinary.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
@@ -742,26 +783,59 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
               </div>
 
               <div className="flex flex-col gap-2">
+                <Label>OG image</Label>
+                <ImageUpload
+                  value={ogImageUrl}
+                  disabled={isPending}
+                  cropAspect={1200 / 630}
+                  cropLabel="Crop project OG image"
+                  onChange={(url) =>
+                    setValue("ogImageUrl", url, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                  onRemove={() =>
+                    setValue("ogImageUrl", undefined, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Used when this project is shared on social platforms.
+                  Recommended ratio: 1200×630.
+                </p>
+                {errors.ogImageUrl?.message && (
+                  <p className="text-sm text-destructive">
+                    {errors.ogImageUrl.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
                 <Label>Screenshots</Label>
                 <Controller
                   control={control}
-                  name="screenshots"
+                  name="structuredScreenshots"
                   render={({ field }) => (
                     <ScreenshotsUpload
                       value={field.value}
                       disabled={isPending}
-                      onChange={(urls) => field.onChange(urls)}
+                      onChange={(items) => field.onChange(items)}
                     />
                   )}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {screenshots.length}{" "}
-                  {screenshots.length === 1 ? "screenshot" : "screenshots"}{" "}
+                  {structuredScreenshots.length}{" "}
+                  {structuredScreenshots.length === 1
+                    ? "screenshot"
+                    : "screenshots"}{" "}
                   attached.
                 </p>
-                {errors.screenshots?.message && (
+                {errors.structuredScreenshots?.message && (
                   <p className="text-sm text-destructive">
-                    {errors.screenshots.message}
+                    {errors.structuredScreenshots.message}
                   </p>
                 )}
               </div>

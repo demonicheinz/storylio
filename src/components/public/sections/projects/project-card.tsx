@@ -78,7 +78,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             </Button>
           )}
 
-          {project.githubUrl && (
+          {!project.isClosedSource && project.githubUrl && (
             <Button
               asChild
               size="icon"

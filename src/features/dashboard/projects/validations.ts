@@ -36,6 +36,29 @@ const normalizedUrlArraySchema = normalizedStringArraySchema.pipe(
   z.array(z.string().url("Use valid screenshot URLs")),
 );
 
+export const screenshotItemSchema = z.object({
+  id: z.string().optional(),
+  imageUrl: z.string().url("Screenshot URL is required"),
+  caption: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined),
+  altText: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => value || undefined),
+  width: z.number().int().positive().optional().nullable(),
+  height: z.number().int().positive().optional().nullable(),
+  aspectRatio: z.number().positive().optional().nullable(),
+  blurDataUrl: z.string().optional().nullable(),
+  order: z.number().int().min(0).default(0),
+});
+
+export type ScreenshotItemInput = z.input<typeof screenshotItemSchema>;
+export type ScreenshotItemValues = z.output<typeof screenshotItemSchema>;
+
 const projectBaseSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
   slug: z
@@ -58,6 +81,7 @@ const projectBaseSchema = z.object({
     .transform((value) => value ?? ""),
   coverImage: optionalUrlSchema,
   thumbnailImageUrl: optionalUrlSchema,
+  ogImageUrl: optionalUrlSchema,
   liveUrl: optionalUrlSchema,
   githubUrl: optionalUrlSchema,
   order: z.coerce
@@ -68,11 +92,12 @@ const projectBaseSchema = z.object({
     .transform((value) => value ?? 0),
   status: projectStatusSchema,
   isFeatured: z.boolean().optional().default(false),
+  isClosedSource: z.boolean().optional().default(false),
 });
 
 export const projectFormSchema = projectBaseSchema
   .extend({
-    screenshots: z.array(z.string().url()).optional().default([]),
+    structuredScreenshots: z.array(screenshotItemSchema).optional().default([]),
     techStack: z
       .string()
       .optional()
@@ -90,7 +115,7 @@ export const projectFormSchema = projectBaseSchema
 
 export const projectActionSchema = projectBaseSchema
   .extend({
-    screenshots: normalizedUrlArraySchema,
+    structuredScreenshots: z.array(screenshotItemSchema).optional().default([]),
     techStack: normalizedStringArraySchema,
   })
   .superRefine((value, ctx) => {

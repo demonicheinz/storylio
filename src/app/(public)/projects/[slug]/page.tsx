@@ -43,12 +43,29 @@ async function getProjectBySlug(slug: string) {
       description: true,
       content: true,
       coverImage: true,
-      screenshots: true,
+      thumbnailImageUrl: true,
+      ogImageUrl: true,
       techStack: true,
       liveUrl: true,
       githubUrl: true,
       order: true,
+      isFeatured: true,
+      isClosedSource: true,
       updatedAt: true,
+      structuredScreenshots: {
+        orderBy: { order: "asc" },
+        select: {
+          id: true,
+          imageUrl: true,
+          caption: true,
+          altText: true,
+          width: true,
+          height: true,
+          aspectRatio: true,
+          blurDataUrl: true,
+          order: true,
+        },
+      },
     },
   });
 }
@@ -112,6 +129,7 @@ export async function generateMetadata({
     project.description ??
     `Read the project details for ${project.title} by Heinz on Storylio.`;
   const image =
+    project.ogImageUrl ??
     project.coverImage ??
     `/og?title=${encodeURIComponent(project.title)}&type=project`;
 
@@ -238,7 +256,7 @@ export default async function ProjectDetailPage({
                 </Button>
               )}
 
-              {project.githubUrl && (
+              {!project.isClosedSource && project.githubUrl && (
                 <Button
                   asChild
                   variant="outline"
@@ -267,7 +285,7 @@ export default async function ProjectDetailPage({
         )}
 
         <ProjectScreenshots
-          screenshots={project.screenshots}
+          structuredScreenshots={project.structuredScreenshots}
           title={project.title}
         />
 
