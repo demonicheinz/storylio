@@ -24,6 +24,7 @@ import {
 } from "@/features/dashboard/analytics/components/analytics-charts";
 import { PostStatus, ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { getUmamiAnalytics, type UmamiAnalytics } from "@/lib/umami";
 import { formatDate } from "@/lib/utils";
 
 type AnalyticsStatCardProps = {
@@ -42,10 +43,6 @@ type RankedContent = {
 };
 
 const umamiShareUrl = process.env.NEXT_PUBLIC_UMAMI_SHARE_URL?.trim();
-const umamiWebsiteId =
-  process.env.UMAMI_WEBSITE_ID?.trim() ??
-  process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID?.trim();
-
 function startOfUtcDay(date: Date) {
   return new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
@@ -373,25 +370,94 @@ function TopContentList({
   );
 }
 
-function UmamiPanel() {
-  if (umamiShareUrl) {
+function UmamiMetricList({
+  emptyDescription,
+  items,
+  title,
+}: {
+  emptyDescription: string;
+  items: UmamiAnalytics["topPages"];
+  title: string;
+}) {
+  return (
+    <div className="rounded-2xl border bg-background/40 p-4">
+      <h3 className="font-heading font-semibold">{title}</h3>
+      {items.length > 0 ? (
+        <div className="mt-3 divide-y">
+          {items.map((item) => (
+            <div
+              key={item.name}
+              className="flex items-center justify-between gap-4 py-2 text-sm"
+            >
+              <span className="truncate text-muted-foreground">
+                {item.name}
+              </span>
+              <span className="shrink-0 font-medium">
+                {item.value.toLocaleString("en-US")}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-muted-foreground">{emptyDescription}</p>
+      )}
+    </div>
+  );
+}
+
+function UmamiPanel({ analytics }: { analytics: UmamiAnalytics }) {
+  if (analytics.status === "available") {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Traffic Analytics</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <CardTitle>Umami Traffic Analytics</CardTitle>
+            <Badge>Connected</Badge>
+          </div>
           <CardDescription>
-            Embedded Umami traffic dashboard from the configured share URL.
+            Optional Umami traffic metrics from the last 30 days. Local
+            analytics above remain the primary source.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-hidden rounded-2xl border bg-background/40">
-            <iframe
-              src={umamiShareUrl}
-              title="Umami traffic analytics"
-              className="h-[640px] w-full bg-background"
-              loading="lazy"
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              ["Pageviews", analytics.pageviews],
+              ["Visitors", analytics.visitors],
+              ["Visits", analytics.visits],
+            ].map(([label, value]) => (
+              <div
+                key={String(label)}
+                className="rounded-2xl border bg-background/40 p-4"
+              >
+                <p className="text-sm text-muted-foreground">{label}</p>
+                <p className="mt-2 font-heading text-2xl font-semibold">
+                  {typeof value === "number"
+                    ? value.toLocaleString("en-US")
+                    : "Unavailable"}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <UmamiMetricList
+              title="Top Pages"
+              items={analytics.topPages}
+              emptyDescription="No page metrics were returned by Umami."
+            />
+            <UmamiMetricList
+              title="Top Referrers"
+              items={analytics.referrers}
+              emptyDescription="No referrer metrics were returned by Umami."
             />
           </div>
+          {umamiShareUrl && (
+            <Button asChild className="w-fit" variant="outline">
+              <Link href={umamiShareUrl} target="_blank">
+                Open shared Umami dashboard
+              </Link>
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -408,14 +474,14 @@ function UmamiPanel() {
       <CardContent>
         <div className="rounded-2xl border border-dashed bg-background/40 p-6">
           <p className="font-medium">
-            {umamiWebsiteId
-              ? "Umami website configured without a share URL"
-              : "Umami is not configured"}
+            {analytics.status === "error"
+              ? "Umami metrics are temporarily unavailable"
+              : "Umami API is not configured"}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Configure `NEXT_PUBLIC_UMAMI_SHARE_URL` to embed traffic analytics.
-            Server-side Umami API integration remains deferred until its API
-            version and response contract are confirmed.
+            {analytics.status === "error"
+              ? `${analytics.error ?? "The API request failed."} Local analytics remain available.`
+              : "Configure UMAMI_API_URL, UMAMI_API_KEY, and UMAMI_WEBSITE_ID to load optional traffic metrics. Local analytics remain available."}
           </p>
         </div>
       </CardContent>
@@ -425,7 +491,10 @@ function UmamiPanel() {
 
 export default async function AnalyticsPage() {
   await connection();
-  const data = await getAnalyticsData();
+  const [data, umamiAnalytics] = await Promise.all([
+    getAnalyticsData(),
+    getUmamiAnalytics(),
+  ]);
 
   const stats = [
     {
@@ -579,7 +648,7 @@ export default async function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      <UmamiPanel />
+      <UmamiPanel analytics={umamiAnalytics} />
     </div>
   );
 }
