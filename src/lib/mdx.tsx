@@ -5,7 +5,34 @@ import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import { BlogHeadingLink } from "@/components/public/sections/blog/heading-link";
+import { rejectExecutableMdx } from "@/lib/mdx-safety";
 import { cn } from "@/lib/utils";
+
+function getSafeHref(href?: string) {
+  if (!href) return undefined;
+  if (href.startsWith("/") || href.startsWith("#")) return href;
+
+  try {
+    const url = new URL(href);
+    return ["http:", "https:", "mailto:"].includes(url.protocol)
+      ? href
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function getSafeImageSrc(src?: string) {
+  if (!src) return null;
+  if (src.startsWith("/")) return src;
+
+  try {
+    const url = new URL(src);
+    return url.protocol === "https:" ? src : null;
+  } catch {
+    return null;
+  }
+}
 
 const components: MDXComponents = {
   h2: ({ children, className, id }) => (
@@ -37,16 +64,21 @@ const components: MDXComponents = {
       {children}
     </p>
   ),
-  a: ({ children, href }) => (
-    <a
-      href={href}
-      className="font-medium [overflow-wrap:anywhere] break-words text-brand-soft underline-offset-4 hover:underline"
-      target={href?.startsWith("http") ? "_blank" : undefined}
-      rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
-    >
-      {children}
-    </a>
-  ),
+  a: ({ children, href }) => {
+    const safeHref = getSafeHref(href);
+    const isExternal = safeHref?.startsWith("http");
+
+    return (
+      <a
+        href={safeHref}
+        className="font-medium [overflow-wrap:anywhere] break-words text-brand-soft underline-offset-4 hover:underline"
+        target={isExternal ? "_blank" : undefined}
+        rel={isExternal ? "noopener noreferrer" : undefined}
+      >
+        {children}
+      </a>
+    );
+  },
   ul: ({ children }) => (
     <ul className="ml-5 flex list-disc flex-col gap-2 marker:text-brand-soft">
       {children}
@@ -68,14 +100,15 @@ const components: MDXComponents = {
     </blockquote>
   ),
   img: ({ alt, src }) => {
-    if (!src || typeof src !== "string") {
+    const safeSrc = typeof src === "string" ? getSafeImageSrc(src) : null;
+    if (!safeSrc) {
       return null;
     }
 
     return (
       <span className="relative my-8 block aspect-video w-full overflow-hidden rounded-2xl border border-border/40 bg-surface/60">
         <Image
-          src={src}
+          src={safeSrc}
           alt={alt ?? ""}
           fill
           sizes="(min-width: 1280px) 760px, calc(100vw - 3rem)"
@@ -119,9 +152,10 @@ export async function renderMDX(source: string) {
     source,
     components,
     options: {
+      disableExports: true,
       disableImports: true,
       mdxOptions: {
-        remarkPlugins: [remarkGfm],
+        remarkPlugins: [rejectExecutableMdx, remarkGfm],
         rehypePlugins: [
           rehypeSlug,
           [

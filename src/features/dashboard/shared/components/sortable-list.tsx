@@ -56,6 +56,7 @@ export function DashboardSortableList<TItem extends SortableItemBase>({
   onReorder,
   renderItem,
 }: DashboardSortableListProps<TItem>) {
+  const [isMounted, setIsMounted] = useState(false);
   const [orderedItems, setOrderedItems] = useState(items);
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -71,6 +72,10 @@ export function DashboardSortableList<TItem extends SortableItemBase>({
     () => orderedItems.map((item) => item.id),
     [orderedItems],
   );
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     setOrderedItems(items);
@@ -95,6 +100,10 @@ export function DashboardSortableList<TItem extends SortableItemBase>({
     setOrderedItems(nextItems);
     onReorder(nextItems);
   };
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <DndContext

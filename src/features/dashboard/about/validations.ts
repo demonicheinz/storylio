@@ -56,7 +56,12 @@ const common = {
 };
 
 export const workExperienceSchema = z.object({
-  title: z.string().trim().min(1, "Title is required").max(160),
+  title: z
+    .string()
+    .trim()
+    .min(1, "Title is required")
+    .max(160)
+    .regex(/^[^<>]*$/, "Title cannot contain HTML tags"),
   company: optionalText(160),
   location: optionalText(160),
   type: optionalText(80),

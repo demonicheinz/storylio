@@ -13,6 +13,7 @@ import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { getMdxSafetyError } from "@/lib/mdx-safety";
 
 function flattenFieldErrors(
   fieldErrors: Record<string, string[] | undefined>,
@@ -39,6 +40,23 @@ export async function actionUpdateAboutContent(
       "Please fix the highlighted fields.",
       flattenFieldErrors(parsed.error.flatten().fieldErrors),
     );
+  }
+
+  const mdxFields = [
+    "howIWorkEn",
+    "howIWorkId",
+    "whatIValueEn",
+    "whatIValueId",
+  ] as const;
+  const mdxFieldErrors: Record<string, string[]> = {};
+  await Promise.all(
+    mdxFields.map(async (field) => {
+      const error = await getMdxSafetyError(parsed.data[field]);
+      if (error) mdxFieldErrors[field] = [error];
+    }),
+  );
+  if (Object.keys(mdxFieldErrors).length > 0) {
+    return actionError("Please fix the highlighted fields.", mdxFieldErrors);
   }
 
   try {

@@ -60,7 +60,12 @@ export type ScreenshotItemInput = z.input<typeof screenshotItemSchema>;
 export type ScreenshotItemValues = z.output<typeof screenshotItemSchema>;
 
 const projectBaseSchema = z.object({
-  title: z.string().trim().min(1, "Title is required"),
+  title: z
+    .string()
+    .trim()
+    .min(1, "Title is required")
+    .max(200, "Title must be 200 characters or fewer")
+    .regex(/^[^<>]*$/, "Title cannot contain HTML tags"),
   slug: z
     .string()
     .trim()
