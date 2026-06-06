@@ -147,19 +147,35 @@ const projects = [
 
 export async function seedProjects({ db, ownerId }: SeedProjectsOptions) {
   for (const project of projects) {
-    await db.project.upsert({
+    const { screenshots, ...projectData } = project;
+    const seededProject = await db.project.upsert({
       where: {
         slug: project.slug,
       },
       update: {
-        ...project,
+        ...projectData,
         authorId: ownerId,
       },
       create: {
-        ...project,
+        ...projectData,
         authorId: ownerId,
       },
+      select: { id: true },
     });
+
+    const screenshotCount = await db.projectScreenshot.count({
+      where: { projectId: seededProject.id },
+    });
+    if (screenshotCount === 0 && screenshots.length > 0) {
+      await db.projectScreenshot.createMany({
+        data: screenshots.map((imageUrl, index) => ({
+          projectId: seededProject.id,
+          imageUrl,
+          altText: `${project.title} screenshot ${index + 1}`,
+          order: index,
+        })),
+      });
+    }
   }
 
   console.log(`Seeded ${projects.length} sample projects`);
