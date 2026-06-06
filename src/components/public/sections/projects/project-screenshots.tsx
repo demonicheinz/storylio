@@ -1,29 +1,45 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import { ProjectCover } from "@/components/public/sections/projects/project-cover";
 
+type StructuredScreenshot = {
+  imageUrl: string;
+  caption?: string | null;
+  altText?: string | null;
+  width?: number | null;
+  height?: number | null;
+  blurDataUrl?: string | null;
+  order: number;
+};
+
 type ProjectScreenshotsProps = {
-  screenshots: string[];
+  structuredScreenshots?: StructuredScreenshot[];
   title: string;
 };
 
 export function ProjectScreenshots({
-  screenshots,
+  structuredScreenshots,
   title,
 }: ProjectScreenshotsProps) {
   const [activeIndex, setActiveIndex] = useState(-1);
 
-  if (screenshots.length === 0) {
+  const items: StructuredScreenshot[] =
+    structuredScreenshots && structuredScreenshots.length > 0
+      ? [...structuredScreenshots].sort((a, b) => a.order - b.order)
+      : [];
+
+  if (items.length === 0) {
     return null;
   }
 
-  const slides = screenshots.map((screenshot, index) => ({
-    src: screenshot,
-    alt: `${title} screenshot ${index + 1}`,
-    description: `Screenshot ${index + 1} of ${screenshots.length}`,
+  const slides = items.map((item, index) => ({
+    src: item.imageUrl,
+    alt: item.altText || item.caption || `${title} screenshot ${index + 1}`,
+    description: item.caption || `Screenshot ${index + 1} of ${items.length}`,
   }));
   const activeSlide = activeIndex >= 0 ? slides[activeIndex] : null;
 
@@ -39,19 +55,53 @@ export function ProjectScreenshots({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {screenshots.map((screenshot, index) => (
-          <button
-            key={screenshot}
-            type="button"
-            className="group/project rounded-3xl text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
-            onClick={() => setActiveIndex(index)}
-          >
-            <ProjectCover
-              src={screenshot}
-              alt={`${title} screenshot ${index + 1}`}
-              className="aspect-[16/10] rounded-3xl shadow-[0_0_48px_rgba(139,92,246,0.08)]"
-            />
-          </button>
+        {items.map((item, index) => (
+          <div key={item.imageUrl} className="flex flex-col gap-3">
+            <button
+              type="button"
+              className="group/project flex flex-col gap-2 rounded-3xl text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+              onClick={() => setActiveIndex(index)}
+            >
+              {item.width && item.height ? (
+                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl border border-border/40 bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.28),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(49,46,129,0.28),rgba(10,10,20,0.96))] shadow-[0_0_48px_rgba(139,92,246,0.08)]">
+                  <Image
+                    src={item.imageUrl}
+                    alt={
+                      item.altText ||
+                      item.caption ||
+                      `${title} screenshot ${index + 1}`
+                    }
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover/project:scale-105"
+                    sizes="(min-width: 768px) 50vw, 100vw"
+                    {...(item.blurDataUrl
+                      ? {
+                          placeholder: "blur" as const,
+                          blurDataURL: item.blurDataUrl,
+                        }
+                      : {})}
+                    unoptimized
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/30 via-transparent to-white/5" />
+                </div>
+              ) : (
+                <ProjectCover
+                  src={item.imageUrl}
+                  alt={
+                    item.altText ||
+                    item.caption ||
+                    `${title} screenshot ${index + 1}`
+                  }
+                  className="aspect-[16/10] rounded-3xl shadow-[0_0_48px_rgba(139,92,246,0.08)]"
+                />
+              )}
+            </button>
+            {item.caption && (
+              <p className="px-2 text-sm leading-5 text-foreground/90">
+                — {item.caption}
+              </p>
+            )}
+          </div>
         ))}
       </div>
 

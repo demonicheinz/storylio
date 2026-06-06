@@ -114,7 +114,7 @@ export function FeaturedProject({ project }: FeaturedProjectProps) {
                 </Button>
               )}
 
-              {project.githubUrl && (
+              {!project.isClosedSource && project.githubUrl && (
                 <Button
                   asChild
                   size="icon"

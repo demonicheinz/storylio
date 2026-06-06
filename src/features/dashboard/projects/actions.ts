@@ -6,6 +6,7 @@ import {
   type ProjectActionValues,
   projectActionSchema,
   projectReorderSchema,
+  type ScreenshotItemValues,
 } from "@/features/dashboard/projects/validations";
 import { ProjectStatus } from "@/generated/prisma";
 import type { ActionResult } from "@/lib/action-result";
@@ -144,13 +145,27 @@ function getProjectData(values: ProjectActionValues) {
     content: values.content || null,
     coverImage: values.coverImage ?? null,
     thumbnailImageUrl: values.thumbnailImageUrl ?? null,
-    screenshots: values.screenshots,
+    ogImageUrl: values.ogImageUrl ?? null,
     techStack: values.techStack,
     liveUrl: values.liveUrl ?? null,
     githubUrl: values.githubUrl ?? null,
     order: values.order,
     status: toProjectStatus(values.status),
     isFeatured: values.isFeatured,
+    isClosedSource: values.isClosedSource,
+  };
+}
+
+function getScreenshotData(screenshot: ScreenshotItemValues) {
+  return {
+    imageUrl: screenshot.imageUrl,
+    caption: screenshot.caption ?? null,
+    altText: screenshot.altText ?? null,
+    width: screenshot.width ?? null,
+    height: screenshot.height ?? null,
+    aspectRatio: screenshot.aspectRatio ?? null,
+    blurDataUrl: screenshot.blurDataUrl ?? null,
+    order: screenshot.order,
   };
 }
 
@@ -176,11 +191,20 @@ export async function actionCreateProject(
       return duplicateSlug;
     }
 
+    const finalOrder = await prepareProjectCreateOrder(parsed.data.order);
+    const screenshots = parsed.data.structuredScreenshots ?? [];
+
     const project = await db.project.create({
       data: {
         ...getProjectData(parsed.data),
-        order: await prepareProjectCreateOrder(parsed.data.order),
+        order: finalOrder,
         authorId: session.user.id,
+        structuredScreenshots: {
+          create: screenshots.map((s, i) => ({
+            ...getScreenshotData(s),
+            order: s.order ?? i,
+          })),
+        },
       },
       select: {
         id: true,
@@ -244,14 +268,35 @@ export async function actionUpdateProject(
 
     await moveProjectOrder(projectId, existingProject.order, parsed.data.order);
 
-    const project = await db.project.update({
-      where: { id: projectId },
-      data: getProjectData(parsed.data),
-      select: {
-        id: true,
-        slug: true,
-        status: true,
-      },
+    const screenshots = parsed.data.structuredScreenshots ?? [];
+
+    const project = await db.$transaction(async (tx) => {
+      // Delete all existing screenshots, then recreate
+      await tx.projectScreenshot.deleteMany({
+        where: { projectId },
+      });
+
+      // Create new screenshots
+      if (screenshots.length > 0) {
+        await tx.projectScreenshot.createMany({
+          data: screenshots.map((s, i) => ({
+            ...getScreenshotData(s),
+            projectId,
+            order: s.order ?? i,
+          })),
+        });
+      }
+
+      // Update the project itself
+      return tx.project.update({
+        where: { id: projectId },
+        data: getProjectData(parsed.data),
+        select: {
+          id: true,
+          slug: true,
+          status: true,
+        },
+      });
     });
 
     revalidateProjectPaths(project.slug, existingProject.slug);

@@ -21,13 +21,28 @@ async function getProject(id: string) {
       content: true,
       coverImage: true,
       thumbnailImageUrl: true,
-      screenshots: true,
+      ogImageUrl: true,
       techStack: true,
       liveUrl: true,
       githubUrl: true,
       order: true,
       isFeatured: true,
+      isClosedSource: true,
       status: true,
+      structuredScreenshots: {
+        orderBy: { order: "asc" },
+        select: {
+          id: true,
+          imageUrl: true,
+          caption: true,
+          altText: true,
+          width: true,
+          height: true,
+          aspectRatio: true,
+          blurDataUrl: true,
+          order: true,
+        },
+      },
     },
   });
 }
@@ -44,6 +59,19 @@ export default async function EditProjectPage({
     notFound();
   }
 
+  // Map structured screenshots to ScreenshotItemInput format
+  const structuredScreenshots = project.structuredScreenshots.map((s) => ({
+    id: s.id,
+    imageUrl: s.imageUrl,
+    caption: s.caption ?? undefined,
+    altText: s.altText ?? undefined,
+    width: s.width ?? undefined,
+    height: s.height ?? undefined,
+    aspectRatio: s.aspectRatio ?? undefined,
+    blurDataUrl: s.blurDataUrl ?? undefined,
+    order: s.order,
+  }));
+
   return (
     <ProjectEditor
       mode="edit"
@@ -55,12 +83,14 @@ export default async function EditProjectPage({
         content: project.content,
         coverImage: project.coverImage,
         thumbnailImageUrl: project.thumbnailImageUrl,
-        screenshots: project.screenshots,
+        ogImageUrl: project.ogImageUrl,
+        structuredScreenshots,
         techStack: project.techStack,
         liveUrl: project.liveUrl,
         githubUrl: project.githubUrl,
         order: project.order,
         isFeatured: project.isFeatured,
+        isClosedSource: project.isClosedSource,
         status:
           project.status === ProjectStatus.PUBLISHED ? "published" : "draft",
       }}
