@@ -33,7 +33,8 @@ export default async function GalleryPage() {
       <div>
         <h1 className="font-heading text-3xl font-bold">Gallery</h1>
         <p className="mt-2 text-muted-foreground">
-          Manage gallery images, categories, captions, and manual display order.
+          Manage gallery images, visibility, categories, and display order.
+          Hidden items remain editable but are not shown publicly.
         </p>
       </div>
 

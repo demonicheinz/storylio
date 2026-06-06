@@ -191,6 +191,7 @@ model Testimonial {
   company   String?
   avatar    String?
   content   String   @db.Text
+  isVisible Boolean  @default(true)
   order     Int      @default(0)
   createdAt DateTime @default(now())
 }

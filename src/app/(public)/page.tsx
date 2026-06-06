@@ -80,6 +80,9 @@ async function getHomeData() {
         },
       }),
       db.testimonial.findMany({
+        where: {
+          isVisible: true,
+        },
         select: {
           id: true,
           name: true,

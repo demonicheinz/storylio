@@ -293,7 +293,8 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
               <div>
                 <Label htmlFor="isVisible">Visible publicly</Label>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Hidden items stay editable in the dashboard.
+                  Hidden items stay editable here but are not shown on the
+                  public Gallery.
                 </p>
               </div>
               <Switch
@@ -482,7 +483,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
             <CardTitle>Gallery Items</CardTitle>
             <CardDescription>
               {items.length} {items.length === 1 ? "item" : "items"} in the
-              visual archive.
+              visual archive. Hidden items are not shown publicly.
             </CardDescription>
           </div>
           <GalleryItemDialog
@@ -527,7 +528,9 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   "grid min-h-[430px] grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-2xl border bg-background/40 transition-[border-color,box-shadow,opacity]",
                   isDragging
                     ? "border-brand-soft/60 shadow-[0_0_52px_rgba(139,92,246,0.18)]"
-                    : "hover:border-brand-soft/35",
+                    : item.isVisible
+                      ? "hover:border-brand-soft/35"
+                      : "border-dashed opacity-65 hover:border-brand-soft/35 hover:opacity-100",
                 ].join(" ")}
               >
                 {handle}
@@ -542,7 +545,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge variant={item.isVisible ? "default" : "outline"}>
-                          {item.isVisible ? "visible" : "hidden"}
+                          {item.isVisible ? "Visible" : "Hidden"}
                         </Badge>
                         {item.category && (
                           <Badge variant="secondary">{item.category}</Badge>
