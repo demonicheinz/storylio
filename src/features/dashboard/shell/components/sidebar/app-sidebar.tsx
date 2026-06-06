@@ -15,6 +15,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import type * as React from "react";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -49,7 +50,13 @@ const navItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = authClient.useSession();
-  const user = session?.user;
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const user = isMounted ? session?.user : undefined;
 
   const owner = {
     name: user?.name || "User",
