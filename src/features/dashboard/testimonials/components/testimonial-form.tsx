@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { DashboardSortableList } from "@/features/dashboard/shared/components/sortable-list";
@@ -67,6 +68,7 @@ export type DashboardTestimonial = {
   company: string | null;
   avatar: string | null;
   content: string;
+  isVisible: boolean;
   order: number;
   createdAt: string;
 };
@@ -86,6 +88,7 @@ const emptyDefaults: TestimonialActionValues = {
   company: "",
   avatar: undefined,
   content: "",
+  isVisible: true,
   order: 0,
 };
 
@@ -102,6 +105,7 @@ function getDefaults(
     company: testimonial.company ?? "",
     avatar: testimonial.avatar ?? undefined,
     content: testimonial.content,
+    isVisible: testimonial.isVisible,
     order: testimonial.order,
   };
 }
@@ -193,7 +197,8 @@ function TestimonialDialog({ testimonial, trigger }: TestimonialDialogProps) {
               {isEdit ? "Edit Testimonial" : "Add Testimonial"}
             </DialogTitle>
             <DialogDescription>
-              Manage the quote, author details, avatar, and display order.
+              Manage the quote, author details, public visibility, avatar, and
+              display order.
             </DialogDescription>
           </DialogHeader>
 
@@ -281,6 +286,27 @@ function TestimonialDialog({ testimonial, trigger }: TestimonialDialogProps) {
                 {errors.content.message}
               </p>
             )}
+          </div>
+
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/35 p-4">
+            <div>
+              <Label htmlFor="isVisible">Visible publicly</Label>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Hidden testimonials stay editable here but are not shown on the
+                Home page.
+              </p>
+            </div>
+            <Switch
+              id="isVisible"
+              checked={watch("isVisible")}
+              disabled={isPending}
+              onCheckedChange={(checked) =>
+                setValue("isVisible", checked, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+            />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -442,7 +468,7 @@ export function TestimonialsManager({
             <CardDescription>
               {testimonials.length}{" "}
               {testimonials.length === 1 ? "testimonial" : "testimonials"} for
-              the Home page.
+              in the CMS. Hidden testimonials are not shown on the Home page.
             </CardDescription>
           </div>
           <TestimonialDialog
@@ -489,7 +515,9 @@ export function TestimonialsManager({
                     "grid overflow-hidden rounded-2xl border bg-background/40 transition-[border-color,box-shadow,opacity] md:grid-cols-[44px_minmax(0,1fr)_auto]",
                     isDragging
                       ? "border-brand-soft/60 shadow-[0_0_52px_rgba(139,92,246,0.18)]"
-                      : "hover:border-brand-soft/35",
+                      : testimonial.isVisible
+                        ? "hover:border-brand-soft/35"
+                        : "border-dashed opacity-65 hover:border-brand-soft/35 hover:opacity-100",
                   ].join(" ")}
                 >
                   {handle}
@@ -512,6 +540,13 @@ export function TestimonialsManager({
                         </h2>
                         <Badge variant="outline">
                           order {testimonial.order}
+                        </Badge>
+                        <Badge
+                          variant={
+                            testimonial.isVisible ? "default" : "outline"
+                          }
+                        >
+                          {testimonial.isVisible ? "Visible" : "Hidden"}
                         </Badge>
                       </div>
                       {title && (

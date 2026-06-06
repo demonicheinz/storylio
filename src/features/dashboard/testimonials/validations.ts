@@ -31,6 +31,7 @@ export const testimonialActionSchema = z.object({
     .trim()
     .min(1, "Quote is required")
     .max(800, "Quote must be 800 characters or fewer"),
+  isVisible: z.boolean().optional().default(true),
   order: z.coerce
     .number()
     .int("Display order must be a whole number")

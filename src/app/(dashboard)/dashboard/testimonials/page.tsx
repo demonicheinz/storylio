@@ -12,6 +12,7 @@ async function getTestimonials() {
       company: true,
       avatar: true,
       content: true,
+      isVisible: true,
       order: true,
       createdAt: true,
     },
@@ -28,8 +29,8 @@ export default async function TestimonialsPage() {
       <div>
         <h1 className="font-heading text-3xl font-bold">Testimonials</h1>
         <p className="mt-2 text-muted-foreground">
-          Manage Home page client quotes, avatars, attribution, and display
-          order.
+          Manage Home page client quotes, public visibility, avatars,
+          attribution, and display order.
         </p>
       </div>
 
