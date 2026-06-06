@@ -25,7 +25,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,7 @@ type ProjectSortableListProps = {
 
 export function ProjectSortableList({ projects }: ProjectSortableListProps) {
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
   const [items, setItems] = useState(projects);
   const [isPending, startTransition] = useTransition();
   const sensors = useSensors(
@@ -68,6 +69,10 @@ export function ProjectSortableList({ projects }: ProjectSortableListProps) {
     }),
   );
   const itemIds = useMemo(() => items.map((item) => item.id), [items]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const persistOrder = (nextItems: SortableProject[]) => {
     startTransition(async () => {
@@ -113,6 +118,10 @@ export function ProjectSortableList({ projects }: ProjectSortableListProps) {
     setItems(nextItems);
     persistOrder(nextItems);
   };
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <DndContext

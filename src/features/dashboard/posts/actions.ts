@@ -11,6 +11,7 @@ import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { getMdxSafetyError } from "@/lib/mdx-safety";
 
 type PostActionData = {
   id: string;
@@ -131,6 +132,13 @@ export async function actionCreatePost(
     return parsed.result;
   }
 
+  const mdxError = await getMdxSafetyError(parsed.data.content);
+  if (mdxError) {
+    return actionError("Please fix the highlighted fields.", {
+      content: [mdxError],
+    });
+  }
+
   try {
     const duplicateSlug = await ensureUniqueSlug(parsed.data.slug);
     if (duplicateSlug) {
@@ -187,6 +195,13 @@ export async function actionUpdatePost(
   const parsed = parsePostInput(input);
   if (!parsed.success) {
     return parsed.result;
+  }
+
+  const mdxError = await getMdxSafetyError(parsed.data.content);
+  if (mdxError) {
+    return actionError("Please fix the highlighted fields.", {
+      content: [mdxError],
+    });
   }
 
   try {
