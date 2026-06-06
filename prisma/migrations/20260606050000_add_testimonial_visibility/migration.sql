@@ -1,1 +1,0 @@
-ALTER TABLE "Testimonial" ADD COLUMN "isVisible" BOOLEAN NOT NULL DEFAULT true;
