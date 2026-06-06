@@ -78,6 +78,34 @@ async function getAboutProfile() {
   });
 }
 
+async function getStructuredAboutData() {
+  "use cache";
+  cacheLife("hours");
+
+  const [experiences, education, categories] = await Promise.all([
+    db.workExperience.findMany({
+      where: { isVisible: true },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    }),
+    db.education.findMany({
+      where: { isVisible: true },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    }),
+    db.skillCategory.findMany({
+      where: { isVisible: true, skills: { some: { isVisible: true } } },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+      include: {
+        skills: {
+          where: { isVisible: true },
+          orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+        },
+      },
+    }),
+  ]);
+
+  return { categories, education, experiences };
+}
+
 function getLanguage(
   value: string | string[] | undefined,
   defaultLanguage?: string,
@@ -131,29 +159,12 @@ type AboutPageProps = {
 };
 
 export default async function AboutPage({ searchParams }: AboutPageProps) {
-  const [profile, aboutContent, experiences, education, categories] =
-    await Promise.all([
-      getAboutProfile(),
-      getAboutContent(),
-      db.workExperience.findMany({
-        where: { isVisible: true },
-        orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-      }),
-      db.education.findMany({
-        where: { isVisible: true },
-        orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-      }),
-      db.skillCategory.findMany({
-        where: { isVisible: true, skills: { some: { isVisible: true } } },
-        orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-        include: {
-          skills: {
-            where: { isVisible: true },
-            orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-          },
-        },
-      }),
-    ]);
+  const [profile, aboutContent, structuredData] = await Promise.all([
+    getAboutProfile(),
+    getAboutContent(),
+    getStructuredAboutData(),
+  ]);
+  const { categories, education, experiences } = structuredData;
   const language = getLanguage(
     (await searchParams).lang,
     aboutContent?.defaultLanguage,
