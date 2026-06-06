@@ -309,7 +309,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
                   <span>
                     {item.width && item.height
                       ? `${item.width} × ${item.height}`
-                      : "Dimensions unavailable"}
+                      : "Unknown dimensions"}
                   </span>
                   <span aria-hidden="true">·</span>
                   <span>{item.blurDataUrl ? "Blur ready" : "No blur"}</span>

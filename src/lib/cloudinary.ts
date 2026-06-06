@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
+import { computeAspectRatio } from "@/lib/image-metadata";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -66,4 +67,47 @@ export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
   });
 
   return result.result === "ok";
+}
+
+export function extractCloudinaryPublicId(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== "res.cloudinary.com") return null;
+
+    const uploadIndex = parsed.pathname.split("/").indexOf("upload");
+    if (uploadIndex === -1) return null;
+
+    const assetParts = parsed.pathname
+      .split("/")
+      .slice(uploadIndex + 1)
+      .filter(Boolean);
+    const versionIndex = assetParts.findIndex((part) => /^v\d+$/.test(part));
+    const publicIdParts =
+      versionIndex >= 0 ? assetParts.slice(versionIndex + 1) : assetParts;
+    if (publicIdParts.length === 0) return null;
+
+    const lastIndex = publicIdParts.length - 1;
+    publicIdParts[lastIndex] = publicIdParts[lastIndex].replace(/\.[^.]+$/, "");
+    return decodeURIComponent(publicIdParts.join("/"));
+  } catch {
+    return null;
+  }
+}
+
+export async function getCloudinaryImageMetadata(publicId: string): Promise<{
+  width: number | null;
+  height: number | null;
+  aspectRatio: number | null;
+}> {
+  const resource = await cloudinary.api.resource(publicId, {
+    resource_type: "image",
+  });
+  const width = typeof resource.width === "number" ? resource.width : null;
+  const height = typeof resource.height === "number" ? resource.height : null;
+
+  return {
+    width,
+    height,
+    aspectRatio: computeAspectRatio(width, height),
+  };
 }
