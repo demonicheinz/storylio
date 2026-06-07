@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { createHash } from "node:crypto";
+import { type NextRequest, NextResponse } from "next/server";
 import { PostStatus, ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
 
@@ -9,12 +10,39 @@ type ViewRouteContext = {
 };
 
 type ContentType = "post" | "project";
+const VIEW_COOKIE_MAX_AGE = 60 * 60 * 24;
 
 function isContentType(value: unknown): value is ContentType {
   return value === "post" || value === "project";
 }
 
-export async function POST(request: Request, { params }: ViewRouteContext) {
+function getViewCookieName(type: ContentType, slug: string) {
+  const key = createHash("sha256").update(`${type}:${slug}`).digest("hex");
+  return `storylio_view_${key.slice(0, 24)}`;
+}
+
+function viewResponse(
+  request: NextRequest,
+  cookieName: string,
+  views: number,
+  deduplicated: boolean,
+) {
+  const response = NextResponse.json({ views, deduplicated });
+
+  if (!deduplicated) {
+    response.cookies.set(cookieName, "1", {
+      httpOnly: true,
+      maxAge: VIEW_COOKIE_MAX_AGE,
+      path: "/",
+      sameSite: "lax",
+      secure: request.nextUrl.protocol === "https:",
+    });
+  }
+
+  return response;
+}
+
+export async function POST(request: NextRequest, { params }: ViewRouteContext) {
   const { slug } = await params;
   const body: unknown = await request.json().catch(() => null);
   const type =
@@ -36,11 +64,17 @@ export async function POST(request: Request, { params }: ViewRouteContext) {
       },
       select: {
         id: true,
+        viewCount: true,
       },
     });
 
     if (!post) {
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
+    }
+
+    const cookieName = getViewCookieName(type, slug);
+    if (request.cookies.has(cookieName)) {
+      return viewResponse(request, cookieName, post.viewCount, true);
     }
 
     const [updatedPost] = await db.$transaction([
@@ -54,7 +88,7 @@ export async function POST(request: Request, { params }: ViewRouteContext) {
       }),
     ]);
 
-    return NextResponse.json({ views: updatedPost.viewCount });
+    return viewResponse(request, cookieName, updatedPost.viewCount, false);
   }
 
   const project = await db.project.findFirst({
@@ -64,11 +98,17 @@ export async function POST(request: Request, { params }: ViewRouteContext) {
     },
     select: {
       id: true,
+      viewCount: true,
     },
   });
 
   if (!project) {
     return NextResponse.json({ message: "Project not found" }, { status: 404 });
+  }
+
+  const cookieName = getViewCookieName(type, slug);
+  if (request.cookies.has(cookieName)) {
+    return viewResponse(request, cookieName, project.viewCount, true);
   }
 
   const [updatedProject] = await db.$transaction([
@@ -82,5 +122,5 @@ export async function POST(request: Request, { params }: ViewRouteContext) {
     }),
   ]);
 
-  return NextResponse.json({ views: updatedProject.viewCount });
+  return viewResponse(request, cookieName, updatedProject.viewCount, false);
 }
