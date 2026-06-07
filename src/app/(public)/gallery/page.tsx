@@ -25,11 +25,11 @@ const aspectRatios = [
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Gallery",
+    title: "Gallery — Storylio",
     description:
       "A visual gallery of interface details, work-in-progress fragments, places, and moments from Heinz.",
     openGraph: {
-      title: "Gallery",
+      title: "Gallery — Storylio",
       description:
         "Browse visual notes, interface details, and moments from the Storylio archive.",
       type: "website",
@@ -37,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: "Gallery",
+      title: "Gallery — Storylio",
       description:
         "A visual gallery of interface details, work-in-progress fragments, places, and moments from Heinz.",
       images: ["/og?title=Gallery&type=page"],

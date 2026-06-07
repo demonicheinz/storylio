@@ -22,11 +22,11 @@ type ProjectsPageProps = {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Projects",
+    title: "Projects — Storylio",
     description:
       "Selected web projects, full-stack builds, and interface experiments by Ahmad Haizul Amany.",
     openGraph: {
-      title: "Projects",
+      title: "Projects — Storylio",
       description:
         "Browse selected works from Heinz: polished interfaces, full-stack systems, and web experiments.",
       type: "website",
@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: "Projects",
+      title: "Projects — Storylio",
       description:
         "Selected web projects, full-stack builds, and interface experiments by Ahmad Haizul Amany.",
       images: ["/og?title=Projects&type=page"],

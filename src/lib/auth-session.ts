@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { isOwnerEmail } from "@/lib/owner-guard";
 
 /**
  * Get the authenticated session for a Server Action.
@@ -10,7 +11,7 @@ export async function getActionSession() {
     headers: await headers(),
   });
 
-  if (!session?.user) {
+  if (!session?.user || !isOwnerEmail(session.user.email)) {
     throw new Error("Unauthorized");
   }
 

@@ -22,11 +22,11 @@ type BlogPageProps = {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Writing",
+    title: "Writing — Storylio",
     description:
       "Notes on web development, interface craft, systems thinking, and product building by Ahmad Haizul Amany.",
     openGraph: {
-      title: "Writing",
+      title: "Writing — Storylio",
       description:
         "Read notes on web development, interface craft, and product building by Heinz.",
       type: "website",
@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: "Writing",
+      title: "Writing — Storylio",
       description:
         "Notes on web development, interface craft, systems thinking, and product building by Ahmad Haizul Amany.",
       images: ["/og?title=Writing&type=page"],

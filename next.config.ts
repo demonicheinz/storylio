@@ -2,14 +2,35 @@ import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
+function getOrigin(value: string | undefined) {
+  try {
+    return value ? new URL(value).origin : null;
+  } catch {
+    return null;
+  }
+}
+
+const umamiScriptOrigin =
+  getOrigin(process.env.UMAMI_SCRIPT_URL) ?? "https://cloud.umami.is";
+const umamiApiOrigin = getOrigin(process.env.UMAMI_API_URL);
+const umamiConnectOrigins = [
+  "https://cloud.umami.is",
+  "https://api.umami.is",
+  "https://gateway.umami.is",
+  umamiScriptOrigin,
+  umamiApiOrigin,
+]
+  .filter((origin): origin is string => Boolean(origin))
+  .filter((origin, index, origins) => origins.indexOf(origin) === index)
+  .join(" ");
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://cloud.umami.is`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${umamiScriptOrigin}`,
   "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https://res.cloudinary.com",
   "font-src 'self' data:",
-  `connect-src 'self' https://cloud.umami.is https://api.umami.is https://gateway.umami.is${isDev ? " ws: wss:" : ""}`,
+  `connect-src 'self' ${umamiConnectOrigins}${isDev ? " ws: wss:" : ""}`,
   "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",

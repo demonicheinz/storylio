@@ -15,6 +15,7 @@ import { actionError, actionSuccess } from "@/lib/action-result";
 import { auth } from "@/lib/auth";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { isOwnerEmail } from "@/lib/owner-guard";
 
 type ProfileSettingsActionData = {
   id: string;
@@ -148,6 +149,15 @@ export async function actionChangeEmail(
     return actionError(
       "Please fix the highlighted fields.",
       flattenFieldErrors(parsed.error.flatten().fieldErrors),
+    );
+  }
+
+  if (!isOwnerEmail(parsed.data.newEmail)) {
+    return actionError(
+      "Add the new email to OWNER_EMAIL before starting the email change.",
+      {
+        newEmail: ["This email is not included in OWNER_EMAIL."],
+      },
     );
   }
 
