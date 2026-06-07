@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
@@ -56,7 +57,19 @@ export function ProjectScreenshots({
 
       <div className="grid gap-4 md:grid-cols-2">
         {items.map((item, index) => (
-          <div key={item.imageUrl} className="flex flex-col gap-3">
+          <motion.div
+            key={item.imageUrl}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -4 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{
+              duration: 0.45,
+              delay: Math.min(index * 0.08, 0.24),
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            className="flex flex-col gap-3"
+          >
             <button
               type="button"
               className="group/project flex flex-col gap-2 rounded-3xl text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
@@ -101,7 +114,7 @@ export function ProjectScreenshots({
                 — {item.caption}
               </p>
             )}
-          </div>
+          </motion.div>
         ))}
       </div>
 

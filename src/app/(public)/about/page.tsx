@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
-import { PublicBackground } from "@/components/common";
+import { MotionReveal, PublicBackground } from "@/components/common";
 import {
   aboutGlowCardClassName,
   BioSection,
@@ -223,38 +223,44 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
             </div>
 
             <div className="relative flex w-full max-w-full flex-col md:max-w-[calc(100%-280px)] md:pl-8 lg:max-w-[calc(100%-320px)] lg:pl-10 xl:max-w-[42rem]">
-              <section id="introduction" className="scroll-mt-28">
-                <BioSection
-                  profile={publicProfile}
-                  intro={intro}
-                  language={language}
-                />
-              </section>
+              <MotionReveal>
+                <section id="introduction" className="scroll-mt-28">
+                  <BioSection
+                    profile={publicProfile}
+                    intro={intro}
+                    language={language}
+                  />
+                </section>
+              </MotionReveal>
 
-              <section id="story" className={sectionSpacing}>
-                <div
-                  className={cn(
-                    aboutGlowCardClassName,
-                    "flex flex-col gap-6 rounded-3xl p-6 md:p-8",
-                  )}
-                >
-                  <div className="flex min-w-0 flex-col gap-4">
-                    <h2 className="font-heading text-3xl font-semibold text-foreground">
-                      {storyTitles.howIWork}
-                    </h2>
-                    <div className={aboutMdxClassName}>{howIWorkContent}</div>
+              <MotionReveal className={sectionSpacing}>
+                <section id="story" className="scroll-mt-28">
+                  <div
+                    className={cn(
+                      aboutGlowCardClassName,
+                      "flex flex-col gap-6 rounded-3xl p-6 md:p-8",
+                    )}
+                  >
+                    <div className="flex min-w-0 flex-col gap-4">
+                      <h2 className="font-heading text-3xl font-semibold text-foreground">
+                        {storyTitles.howIWork}
+                      </h2>
+                      <div className={aboutMdxClassName}>{howIWorkContent}</div>
+                    </div>
+
+                    <div className="h-px bg-border/40" />
+
+                    <div className="flex min-w-0 flex-col gap-4">
+                      <h2 className="font-heading text-3xl font-semibold text-foreground">
+                        {storyTitles.whatIValue}
+                      </h2>
+                      <div className={aboutMdxClassName}>
+                        {whatIValueContent}
+                      </div>
+                    </div>
                   </div>
-
-                  <div className="h-px bg-border/40" />
-
-                  <div className="flex min-w-0 flex-col gap-4">
-                    <h2 className="font-heading text-3xl font-semibold text-foreground">
-                      {storyTitles.whatIValue}
-                    </h2>
-                    <div className={aboutMdxClassName}>{whatIValueContent}</div>
-                  </div>
-                </div>
-              </section>
+                </section>
+              </MotionReveal>
 
               {[
                 {
@@ -328,13 +334,14 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
                   ),
                 },
               ].map((section) => (
-                <section
+                <MotionReveal
                   key={section.id}
-                  id={section.id}
                   className={cn(sectionSpacing, "last:mb-16")}
                 >
-                  {section.component}
-                </section>
+                  <section id={section.id} className="scroll-mt-28">
+                    {section.component}
+                  </section>
+                </MotionReveal>
               ))}
             </div>
           </div>

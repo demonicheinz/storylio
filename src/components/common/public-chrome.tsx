@@ -12,6 +12,7 @@ import {
   FloatingNav,
   type FloatingNavItem,
   Footer,
+  RouteMotion,
   ScrollToTop,
 } from "@/components/common";
 
@@ -50,7 +51,9 @@ export function PublicChrome({ children }: { children: ReactNode }) {
       <Suspense fallback={null}>
         <FloatingNav navItems={navItems} />
       </Suspense>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <RouteMotion>{children}</RouteMotion>
+      </main>
       <Footer />
     </div>
   );

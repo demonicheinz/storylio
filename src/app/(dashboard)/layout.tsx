@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
+import { RouteMotion } from "@/components/common";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -31,7 +32,9 @@ export default function DashboardLayout({
             <DashboardBreadcrumb />
           </Suspense>
         </header>
-        <div className="container mx-auto max-w-7xl p-4 md:p-6">{children}</div>
+        <RouteMotion className="container mx-auto max-w-7xl p-4 md:p-6">
+          {children}
+        </RouteMotion>
       </SidebarInset>
     </SidebarProvider>
   );

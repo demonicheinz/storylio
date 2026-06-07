@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
-import { PublicBackground } from "@/components/common";
+import { MotionReveal, PublicBackground } from "@/components/common";
 import {
   ApproachSection,
   ClientsSection,
@@ -196,10 +196,18 @@ export default async function HomePage() {
 
         <div className="relative z-10 mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-10">
-            <RecentProjectsSection projects={recentProjects} />
-            <ApproachSection phases={phases} />
-            <RecentPostsSection posts={recentPosts} />
-            <ClientsSection logos={logos} testimonials={testimonials} />
+            <MotionReveal>
+              <RecentProjectsSection projects={recentProjects} />
+            </MotionReveal>
+            <MotionReveal>
+              <ApproachSection phases={phases} />
+            </MotionReveal>
+            <MotionReveal>
+              <RecentPostsSection posts={recentPosts} />
+            </MotionReveal>
+            <MotionReveal>
+              <ClientsSection logos={logos} testimonials={testimonials} />
+            </MotionReveal>
           </div>
         </div>
 

@@ -4,6 +4,7 @@ export * from "@/components/common/footer";
 export * from "@/components/common/heading";
 export * from "@/components/common/infinite-cards";
 export * from "@/components/common/magic-button";
+export * from "@/components/common/motion";
 export * from "@/components/common/public-background";
 export * from "@/components/common/public-chrome";
 export * from "@/components/common/scroll-to-top";
