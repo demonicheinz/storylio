@@ -32,7 +32,8 @@
     "db:push:preview": "dotenvx run -f .env.preview -- prisma db push",
     "db:seed:preview": "dotenvx run -f .env.preview -- prisma db seed",
     "db:studio:preview": "dotenvx run -f .env.preview -- prisma studio",
-    "lint-staged": "lint-staged"
+    "lint-staged": "lint-staged",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@better-auth/kysely-adapter": "^1.6.13",
