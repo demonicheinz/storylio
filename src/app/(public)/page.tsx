@@ -13,11 +13,11 @@ import { db } from "@/lib/db";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Heinz - Full Stack Developer",
+    title: "Heinz — Full Stack Developer | Storylio",
     description:
       "Personal portfolio of Ahmad Haizul Amany, a full stack developer crafting dynamic web experiences with Next.js.",
     openGraph: {
-      title: "Heinz - Full Stack Developer",
+      title: "Heinz — Full Stack Developer | Storylio",
       description:
         "Dark-space portfolio for web projects, writing, and visual craft by Ahmad Haizul Amany.",
       type: "website",
@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: "Heinz - Full Stack Developer",
+      title: "Heinz — Full Stack Developer | Storylio",
       description:
         "Personal portfolio of Ahmad Haizul Amany, a full stack developer crafting dynamic web experiences with Next.js.",
       images: ["/og?title=Heinz&type=page"],

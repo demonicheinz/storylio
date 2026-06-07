@@ -42,7 +42,7 @@ type RankedContent = {
   viewCount: number;
 };
 
-const umamiShareUrl = process.env.NEXT_PUBLIC_UMAMI_SHARE_URL?.trim();
+const umamiShareUrl = process.env.UMAMI_SHARE_URL?.trim();
 function startOfUtcDay(date: Date) {
   return new Date(
     Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),

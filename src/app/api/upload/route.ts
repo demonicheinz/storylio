@@ -4,17 +4,17 @@ import { auth } from "@/lib/auth";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { db } from "@/lib/db";
 import { generateBlurDataUrl } from "@/lib/image-metadata";
+import { isOwnerEmail } from "@/lib/owner-guard";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export async function POST(request: Request) {
-  // Auth check
   const session = await auth.api.getSession({
     headers: request.headers,
   });
 
-  if (!session?.user) {
+  if (!session?.user || !isOwnerEmail(session.user.email)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
