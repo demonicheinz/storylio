@@ -1,5 +1,6 @@
 "use client";
 
+import { MotionConfig } from "motion/react";
 import { type ReactNode, useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,9 +14,11 @@ export function Providers({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <TooltipProvider>
-      {children}
-      <Toaster />
-    </TooltipProvider>
+    <MotionConfig reducedMotion="user">
+      <TooltipProvider>
+        {children}
+        <Toaster />
+      </TooltipProvider>
+    </MotionConfig>
   );
 }

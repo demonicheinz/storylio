@@ -1,6 +1,7 @@
 "use client";
 
 import { ImageIcon } from "@phosphor-icons/react";
+import { motion } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
 import { InfiniteCards } from "@/components/common";
@@ -86,7 +87,12 @@ function LogoCard({ logo }: { logo: HomeLogo }) {
   const shouldShowImage = Boolean(logo.imageUrl) && !hasImageError;
 
   return (
-    <div className="flex min-h-14 min-w-32 items-center justify-center rounded-2xl border border-border/40 bg-surface/90 px-5 py-3 text-sm font-semibold text-blue-100 shadow-[0_0_32px_rgba(139,92,246,0.08)] backdrop-blur-md transition-colors hover:border-brand-soft/40 hover:text-white">
+    <motion.div
+      whileHover={{ y: -4, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.2 }}
+      className="flex min-h-14 min-w-32 items-center justify-center rounded-2xl border border-border/40 bg-surface/90 px-5 py-3 text-sm font-semibold text-blue-100 shadow-[0_0_32px_rgba(139,92,246,0.08)] backdrop-blur-md transition-colors hover:border-brand-soft/40 hover:text-white"
+    >
       {shouldShowImage && logo.imageUrl ? (
         <Image
           src={logo.imageUrl}
@@ -106,6 +112,6 @@ function LogoCard({ logo }: { logo: HomeLogo }) {
           {logo.label}
         </span>
       )}
-    </div>
+    </motion.div>
   );
 }
