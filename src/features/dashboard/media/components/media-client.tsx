@@ -331,11 +331,13 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete media?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete{" "}
+              If this image is not used by CMS content, this will permanently
+              delete{" "}
               <span className="font-medium text-foreground">
                 {deleteTarget?.filename}
               </span>{" "}
-              from Cloudinary and the database. This action cannot be undone.
+              from Cloudinary and the database. Images still in use cannot be
+              deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
