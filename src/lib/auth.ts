@@ -5,6 +5,13 @@ import { APIError } from "better-auth/api";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 
+const productionAuthUrl =
+  process.env.BETTER_AUTH_URL ??
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  "http://localhost:3000";
+
+const productionAuthHost = new URL(productionAuthUrl).host;
+
 const socialProviders =
   process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
     ? {
@@ -16,6 +23,12 @@ const socialProviders =
     : {};
 
 export const auth = betterAuth({
+  baseURL: {
+    allowedHosts: [productionAuthHost, "localhost:*", "*.vercel.app"],
+    fallback: productionAuthUrl,
+    protocol: process.env.NODE_ENV === "development" ? "auto" : "https",
+  },
+  secret: process.env.BETTER_AUTH_SECRET,
   database: prismaAdapter(db, { provider: "postgresql" }),
 
   // Blokir semua pembuatan user baru via auth flow.
