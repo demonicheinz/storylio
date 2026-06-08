@@ -1,13 +1,11 @@
 "use client";
 
+import { ImageIcon } from "@phosphor-icons/react";
 import Image from "next/image";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { MasonryPhotoAlbum } from "react-photo-album";
-import "react-photo-album/masonry.css";
-import { ImageIcon } from "@phosphor-icons/react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Lightbox from "yet-another-react-lightbox";
-import "yet-another-react-lightbox/styles.css";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { GalleryPhoto } from "./types";
@@ -79,7 +77,7 @@ export function GalleryExperience({
   return (
     <section className="pb-28">
       <div className="sticky top-20 z-20 -mx-4 border-y border-border/30 bg-background/80 px-4 py-4 backdrop-blur-xl sm:mx-0 sm:rounded-3xl sm:border sm:bg-surface/55">
-        <div className="flex [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+        <div className="flex scrollbar-none gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
           {["All", ...categories].map((category) => {
             const isSelected = category === activeCategory;
 
@@ -230,7 +228,7 @@ function GalleryPhotoCard({
           onError={() => setHasImageError(true)}
         />
       )}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/85 via-background/8 to-transparent opacity-80 transition-opacity duration-300 group-hover/photo:opacity-95" />
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/85 via-background/8 to-transparent opacity-80 transition-opacity duration-300 group-hover/photo:opacity-95" />
       <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-4 text-left">
         {photo.category && (
           <Badge className="w-fit rounded-full bg-brand-soft/90 text-primary-foreground">
