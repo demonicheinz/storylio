@@ -4,6 +4,8 @@ import type { NextConfig } from "next";
 const isDev = process.env.NODE_ENV === "development";
 const isVercelPreview = process.env.VERCEL_ENV === "preview";
 const vercelLiveOrigin = "https://vercel.live";
+const vercelPreviewConnectOrigins =
+  "https://vercel.live wss://ws-us3.pusher.com";
 function getOrigin(value: string | undefined) {
   try {
     return value ? new URL(value).origin : null;
@@ -29,10 +31,10 @@ const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${umamiScriptOrigin}${isVercelPreview ? ` ${vercelLiveOrigin}` : ""}`,
   "script-src-attr 'none'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' blob: data: https://res.cloudinary.com",
-  "font-src 'self' data:",
-  `connect-src 'self' ${umamiConnectOrigins}${isDev ? " ws: wss:" : ""}${isVercelPreview ? ` ${vercelLiveOrigin}` : ""}`,
+  `style-src 'self' 'unsafe-inline'${isVercelPreview ? ` ${vercelLiveOrigin}` : ""}`,
+  `img-src 'self' blob: data: https://res.cloudinary.com${isVercelPreview ? " https://vercel.live https://vercel.com" : ""}`,
+  `font-src 'self' data:${isVercelPreview ? " https://vercel.live https://assets.vercel.com" : ""}`,
+  `connect-src 'self' ${umamiConnectOrigins}${isDev ? " ws: wss:" : ""}${isVercelPreview ? ` ${vercelPreviewConnectOrigins}` : ""}`,
   `frame-src ${isVercelPreview ? vercelLiveOrigin : "'none'"}`,
   "object-src 'none'",
   "base-uri 'self'",
