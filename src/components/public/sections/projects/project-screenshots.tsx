@@ -4,7 +4,6 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
-import "yet-another-react-lightbox/styles.css";
 import { ProjectCover } from "@/components/public/sections/projects/project-cover";
 
 type StructuredScreenshot = {
@@ -76,7 +75,7 @@ export function ProjectScreenshots({
               onClick={() => setActiveIndex(index)}
             >
               {item.width && item.height ? (
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl border border-border/40 bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.28),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(49,46,129,0.28),rgba(10,10,20,0.96))] shadow-[0_0_48px_rgba(139,92,246,0.08)]">
+                <div className="relative aspect-16/10 w-full overflow-hidden rounded-3xl border border-border/40 bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.28),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(49,46,129,0.28),rgba(10,10,20,0.96))] shadow-[0_0_48px_rgba(139,92,246,0.08)]">
                   <Image
                     src={item.imageUrl}
                     alt={
@@ -95,7 +94,7 @@ export function ProjectScreenshots({
                       : {})}
                     unoptimized
                   />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/30 via-transparent to-white/5" />
+                  <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/30 via-transparent to-white/5" />
                 </div>
               ) : (
                 <ProjectCover
@@ -105,7 +104,7 @@ export function ProjectScreenshots({
                     item.caption ||
                     `${title} screenshot ${index + 1}`
                   }
-                  className="aspect-[16/10] rounded-3xl shadow-[0_0_48px_rgba(139,92,246,0.08)]"
+                  className="aspect-16/10 rounded-3xl shadow-[0_0_48px_rgba(139,92,246,0.08)]"
                 />
               )}
             </button>

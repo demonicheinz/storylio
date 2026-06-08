@@ -1,5 +1,7 @@
 import Script from "next/script";
+import { Suspense } from "react";
 import { PublicChrome } from "@/components/common";
+import { Providers } from "@/providers";
 
 function UmamiTrackingScript() {
   const websiteId =
@@ -33,7 +35,11 @@ export default function PublicLayout({
   return (
     <>
       <UmamiTrackingScript />
-      <PublicChrome>{children}</PublicChrome>
+      <Suspense fallback={null}>
+        <Providers>
+          <PublicChrome>{children}</PublicChrome>
+        </Providers>
+      </Suspense>
     </>
   );
 }

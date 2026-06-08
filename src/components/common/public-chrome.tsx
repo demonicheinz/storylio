@@ -52,7 +52,9 @@ export function PublicChrome({ children }: { children: ReactNode }) {
         <FloatingNav navItems={navItems} />
       </Suspense>
       <main className="flex-1">
-        <RouteMotion>{children}</RouteMotion>
+        <Suspense fallback={null}>
+          <RouteMotion>{children}</RouteMotion>
+        </Suspense>
       </main>
       <Footer />
     </div>

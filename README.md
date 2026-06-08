@@ -29,7 +29,9 @@ Required:
 - `DATABASE_URL`: pooled application database connection.
 - `DIRECT_URL`: direct database connection used by Prisma migrations.
 - `BETTER_AUTH_SECRET`: strong Better Auth signing secret.
-- `BETTER_AUTH_URL`: canonical auth origin, such as `http://localhost:3000`.
+- `BETTER_AUTH_URL`: canonical production auth origin and fallback, such as
+  `https://example.com`. Better Auth derives allowed Vercel Preview origins
+  from each request.
 - `NEXT_PUBLIC_SITE_URL`: canonical public site origin used by metadata.
 - `OWNER_EMAIL`: comma-separated owner allowlist used by the proxy, upload API,
   and every CMS Server Action.
@@ -74,6 +76,20 @@ to `OWNER_EMAIL` and redeploy/restart. GitHub sign-in appears only when both
 GitHub OAuth credentials are configured; set `OWNER_GITHUB_ID` for the
 strictest provider guard.
 
+Better Auth accepts the canonical production host, localhost, and Vercel
+Preview hosts (`*.vercel.app`). The browser client uses its current origin, so
+Preview sign-in requests stay on the Preview deployment. Keep
+`BETTER_AUTH_URL` set to the production HTTPS origin in both Production and
+Preview environments, and use the same strong `BETTER_AUTH_SECRET` anywhere
+sessions must remain compatible.
+
+GitHub OAuth Apps support a fixed callback URL. For Preview GitHub sign-in,
+create a separate OAuth App and use a stable branch Preview URL as its callback:
+
+```text
+https://<preview-domain>.vercel.app/api/auth/callback/github
+```
+
 ### Umami
 
 Local post and project views work without Umami. To add public tracking, set
@@ -111,6 +127,10 @@ bun run db:studio
 - Set every required environment variable in the deployment platform.
 - Set `NEXT_PUBLIC_SITE_URL` and `BETTER_AUTH_URL` to the production HTTPS
   origin before building.
+- In Vercel Preview, keep the canonical URL variables pointed at production;
+  Better Auth safely derives the active `*.vercel.app` origin per request.
+- Use a separate Neon branch and, when needed, a separate GitHub OAuth App for
+  Preview deployments.
 - Configure the GitHub OAuth callback for the Better Auth callback route.
 - Confirm Cloudinary and Resend credentials before enabling CMS uploads or
   owner email changes.
