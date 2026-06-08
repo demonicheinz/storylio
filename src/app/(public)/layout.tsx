@@ -1,6 +1,7 @@
 import Script from "next/script";
 import { Suspense } from "react";
-import { PublicChrome } from "@/components/common";
+import { Footer } from "@/components/common/footer";
+import { PublicChrome } from "@/components/common/public-chrome";
 import { Providers } from "@/providers";
 
 function UmamiTrackingScript() {
@@ -37,7 +38,7 @@ export default function PublicLayout({
       <UmamiTrackingScript />
       <Suspense fallback={null}>
         <Providers>
-          <PublicChrome>{children}</PublicChrome>
+          <PublicChrome footer={<Footer />}>{children}</PublicChrome>
         </Providers>
       </Suspense>
     </>
