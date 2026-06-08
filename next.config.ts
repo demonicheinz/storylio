@@ -2,6 +2,8 @@ import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
+const isVercelPreview = process.env.VERCEL_ENV === "preview";
+const vercelLiveOrigin = "https://vercel.live";
 function getOrigin(value: string | undefined) {
   try {
     return value ? new URL(value).origin : null;
@@ -25,13 +27,13 @@ const umamiConnectOrigins = [
   .join(" ");
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${umamiScriptOrigin}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${umamiScriptOrigin}${isVercelPreview ? ` ${vercelLiveOrigin}` : ""}`,
   "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https://res.cloudinary.com",
   "font-src 'self' data:",
-  `connect-src 'self' ${umamiConnectOrigins}${isDev ? " ws: wss:" : ""}`,
-  "frame-src 'none'",
+  `connect-src 'self' ${umamiConnectOrigins}${isDev ? " ws: wss:" : ""}${isVercelPreview ? ` ${vercelLiveOrigin}` : ""}`,
+  `frame-src ${isVercelPreview ? vercelLiveOrigin : "'none'"}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
