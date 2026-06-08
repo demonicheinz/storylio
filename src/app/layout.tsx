@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { fontVariables } from "@/lib/font";
 import "@/app/globals.css";
 import { cn } from "@/lib/utils";
-import { Providers } from "@/providers/index";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -24,11 +22,7 @@ export default function RootLayout({
       className={cn("dark h-full antialiased", fontVariables)}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col font-sans">
-        <Suspense fallback={null}>
-          <Providers>{children}</Providers>
-        </Suspense>
-      </body>
+      <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>
   );
 }
