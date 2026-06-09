@@ -20,27 +20,30 @@ type ProjectsPageProps = {
   }>;
 };
 
-export async function generateMetadata(): Promise<Metadata> {
-  return {
+export const unstable_instant = {
+  prefetch: "runtime",
+  samples: [{ searchParams: { tech: null } }],
+};
+
+export const metadata: Metadata = {
+  title: "Projects — Storylio",
+  description:
+    "Selected web projects, full-stack builds, and interface experiments by Ahmad Haizul Amany.",
+  openGraph: {
+    title: "Projects — Storylio",
+    description:
+      "Browse selected works from Heinz: polished interfaces, full-stack systems, and web experiments.",
+    type: "website",
+    images: ["/og?title=Projects&type=page"],
+  },
+  twitter: {
+    card: "summary_large_image",
     title: "Projects — Storylio",
     description:
       "Selected web projects, full-stack builds, and interface experiments by Ahmad Haizul Amany.",
-    openGraph: {
-      title: "Projects — Storylio",
-      description:
-        "Browse selected works from Heinz: polished interfaces, full-stack systems, and web experiments.",
-      type: "website",
-      images: ["/og?title=Projects&type=page"],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: "Projects — Storylio",
-      description:
-        "Selected web projects, full-stack builds, and interface experiments by Ahmad Haizul Amany.",
-      images: ["/og?title=Projects&type=page"],
-    },
-  };
-}
+    images: ["/og?title=Projects&type=page"],
+  },
+};
 
 function getSelectedTech(value: string | string[] | undefined) {
   const tech = Array.isArray(value) ? value[0] : value;

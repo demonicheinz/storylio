@@ -26,6 +26,11 @@ const aboutMdxClassName =
 const metadataFallback =
   "Background, experience, education, and technical skills of Ahmad Haizul Amany.";
 
+export const unstable_instant = {
+  prefetch: "runtime",
+  samples: [{ searchParams: { lang: null } }],
+};
+
 function getMetadataDescription(value?: string | null) {
   const description = value?.replace(/\s+/g, " ").trim() || metadataFallback;
 
@@ -144,6 +149,9 @@ function localizedOptional(
 }
 
 async function renderAboutMdx(source: string, fallback: string) {
+  "use cache";
+  cacheLife("hours");
+
   try {
     return await renderMDX(source);
   } catch (error) {
