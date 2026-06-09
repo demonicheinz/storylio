@@ -23,27 +23,30 @@ const aspectRatios = [
   { width: 1200, height: 1000 },
 ] as const;
 
-export async function generateMetadata(): Promise<Metadata> {
-  return {
+export const unstable_instant = {
+  prefetch: "runtime",
+  samples: [{ searchParams: { category: null } }],
+};
+
+export const metadata: Metadata = {
+  title: "Gallery — Storylio",
+  description:
+    "A visual gallery of interface details, work-in-progress fragments, places, and moments from Heinz.",
+  openGraph: {
+    title: "Gallery — Storylio",
+    description:
+      "Browse visual notes, interface details, and moments from the Storylio archive.",
+    type: "website",
+    images: ["/og?title=Gallery&type=page"],
+  },
+  twitter: {
+    card: "summary_large_image",
     title: "Gallery — Storylio",
     description:
       "A visual gallery of interface details, work-in-progress fragments, places, and moments from Heinz.",
-    openGraph: {
-      title: "Gallery — Storylio",
-      description:
-        "Browse visual notes, interface details, and moments from the Storylio archive.",
-      type: "website",
-      images: ["/og?title=Gallery&type=page"],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: "Gallery — Storylio",
-      description:
-        "A visual gallery of interface details, work-in-progress fragments, places, and moments from Heinz.",
-      images: ["/og?title=Gallery&type=page"],
-    },
-  };
-}
+    images: ["/og?title=Gallery&type=page"],
+  },
+};
 
 async function getGalleryData() {
   "use cache";

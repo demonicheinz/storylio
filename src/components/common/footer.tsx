@@ -1,10 +1,10 @@
-"use client";
-
 import {
   GithubLogoIcon,
   InstagramLogoIcon,
   XLogoIcon,
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
+import { cacheLife, cacheTag } from "next/cache";
+import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 
 export interface FooterProps {
@@ -14,30 +14,59 @@ export interface FooterProps {
   className?: string;
 }
 
-export function Footer({
+async function getSocialProfile() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("public-profile");
+
+  return db.user.findFirst({
+    select: {
+      github: true,
+      instagram: true,
+      twitter: true,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+}
+
+async function getCurrentYear() {
+  "use cache";
+  cacheLife({ stale: 300, revalidate: 3600, expire: 7200 });
+
+  return new Date().getFullYear();
+}
+
+export async function Footer({
   copyrightName = "Heinz",
   copyrightYear,
   showSocialMedia = true,
   className = "",
 }: FooterProps) {
-  const year = copyrightYear || 2026;
+  const [year, profile] = await Promise.all([
+    copyrightYear ?? getCurrentYear(),
+    showSocialMedia ? getSocialProfile() : null,
+  ]);
   const socialLinks = [
     {
-      href: "https://github.com/demonicheinz/",
+      href: profile?.github,
       icon: GithubLogoIcon,
       label: "GitHub",
     },
     {
-      href: "https://instagram.com/im.heinzzz/",
+      href: profile?.instagram,
       icon: InstagramLogoIcon,
       label: "Instagram",
     },
     {
-      href: "https://x.com/chrysantastixxx/",
+      href: profile?.twitter,
       icon: XLogoIcon,
       label: "X",
     },
-  ];
+  ].filter((item): item is typeof item & { href: string } =>
+    Boolean(item.href),
+  );
 
   return (
     <footer
@@ -54,7 +83,7 @@ export function Footer({
             </p>
           </div>
 
-          {showSocialMedia && (
+          {showSocialMedia && socialLinks.length > 0 && (
             <div className="flex h-full items-center justify-center gap-3 md:justify-end">
               {socialLinks.map((item) => (
                 <a

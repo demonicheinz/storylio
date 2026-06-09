@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { headers } from "next/headers";
 import {
   type AccountPasswordActionInput,
@@ -35,6 +35,7 @@ function flattenFieldErrors(
 }
 
 function revalidateSettingsPaths() {
+  updateTag("public-profile");
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
   revalidatePath("/");

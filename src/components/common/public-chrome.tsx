@@ -11,10 +11,9 @@ import { type ReactNode, Suspense } from "react";
 import {
   FloatingNav,
   type FloatingNavItem,
-  Footer,
-  RouteMotion,
-  ScrollToTop,
-} from "@/components/common";
+} from "@/components/common/floating-nav";
+import { RouteMotion } from "@/components/common/motion";
+import { ScrollToTop } from "@/components/common/scroll-to-top";
 
 const navItems: FloatingNavItem[] = [
   {
@@ -44,7 +43,13 @@ const navItems: FloatingNavItem[] = [
   },
 ];
 
-export function PublicChrome({ children }: { children: ReactNode }) {
+export function PublicChrome({
+  children,
+  footer,
+}: {
+  children: ReactNode;
+  footer: ReactNode;
+}) {
   return (
     <div className="flex min-h-screen flex-col">
       <ScrollToTop />
@@ -56,7 +61,7 @@ export function PublicChrome({ children }: { children: ReactNode }) {
           <RouteMotion>{children}</RouteMotion>
         </Suspense>
       </main>
-      <Footer />
+      {footer}
     </div>
   );
 }

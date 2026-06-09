@@ -11,27 +11,25 @@ import {
 import { PostStatus, ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
 
-export async function generateMetadata(): Promise<Metadata> {
-  return {
+export const metadata: Metadata = {
+  title: "Heinz — Full Stack Developer | Storylio",
+  description:
+    "Personal portfolio of Ahmad Haizul Amany, a full stack developer crafting dynamic web experiences with Next.js.",
+  openGraph: {
+    title: "Heinz — Full Stack Developer | Storylio",
+    description:
+      "Dark-space portfolio for web projects, writing, and visual craft by Ahmad Haizul Amany.",
+    type: "website",
+    images: ["/og?title=Heinz&type=page"],
+  },
+  twitter: {
+    card: "summary_large_image",
     title: "Heinz — Full Stack Developer | Storylio",
     description:
       "Personal portfolio of Ahmad Haizul Amany, a full stack developer crafting dynamic web experiences with Next.js.",
-    openGraph: {
-      title: "Heinz — Full Stack Developer | Storylio",
-      description:
-        "Dark-space portfolio for web projects, writing, and visual craft by Ahmad Haizul Amany.",
-      type: "website",
-      images: ["/og?title=Heinz&type=page"],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: "Heinz — Full Stack Developer | Storylio",
-      description:
-        "Personal portfolio of Ahmad Haizul Amany, a full stack developer crafting dynamic web experiences with Next.js.",
-      images: ["/og?title=Heinz&type=page"],
-    },
-  };
-}
+    images: ["/og?title=Heinz&type=page"],
+  },
+};
 
 async function getHomeData() {
   "use cache";

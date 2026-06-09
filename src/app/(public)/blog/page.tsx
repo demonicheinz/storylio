@@ -20,27 +20,30 @@ type BlogPageProps = {
   }>;
 };
 
-export async function generateMetadata(): Promise<Metadata> {
-  return {
+export const unstable_instant = {
+  prefetch: "runtime",
+  samples: [{ searchParams: { tag: null } }],
+};
+
+export const metadata: Metadata = {
+  title: "Writing — Storylio",
+  description:
+    "Notes on web development, interface craft, systems thinking, and product building by Ahmad Haizul Amany.",
+  openGraph: {
+    title: "Writing — Storylio",
+    description:
+      "Read notes on web development, interface craft, and product building by Heinz.",
+    type: "website",
+    images: ["/og?title=Writing&type=page"],
+  },
+  twitter: {
+    card: "summary_large_image",
     title: "Writing — Storylio",
     description:
       "Notes on web development, interface craft, systems thinking, and product building by Ahmad Haizul Amany.",
-    openGraph: {
-      title: "Writing — Storylio",
-      description:
-        "Read notes on web development, interface craft, and product building by Heinz.",
-      type: "website",
-      images: ["/og?title=Writing&type=page"],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: "Writing — Storylio",
-      description:
-        "Notes on web development, interface craft, systems thinking, and product building by Ahmad Haizul Amany.",
-      images: ["/og?title=Writing&type=page"],
-    },
-  };
-}
+    images: ["/og?title=Writing&type=page"],
+  },
+};
 
 function getSelectedTag(value: string | string[] | undefined) {
   const tag = Array.isArray(value) ? value[0] : value;
