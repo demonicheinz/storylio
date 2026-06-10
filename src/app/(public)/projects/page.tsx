@@ -138,7 +138,7 @@ export default async function ProjectsPage({
     <main className="min-h-screen overflow-x-hidden">
       <PublicBackground variant="projects" />
 
-      <div className="relative mx-auto flex w-full max-w-[1180px] flex-col px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex w-full max-w-295 flex-col px-4 sm:px-6 lg:px-8">
         <ProjectsHero
           totalProjects={totalProjects}
           totalTech={technologies.length}

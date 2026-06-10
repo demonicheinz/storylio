@@ -60,7 +60,7 @@ export function Heading({
         <span
           className={
             variant === "section"
-              ? "relative inline-block border-b-2 border-brand-soft pb-1 after:absolute after:bottom-[-2px] after:left-0 after:h-[2px] after:w-full after:bg-gradient-to-r after:from-border after:via-brand-soft after:to-border"
+              ? "relative inline-block border-b-2 border-brand-soft pb-1 after:absolute after:-bottom-0.5 after:left-0 after:h-0.5 after:w-full after:bg-linear-to-r after:from-border after:via-brand-soft after:to-border"
               : ""
           }
         >

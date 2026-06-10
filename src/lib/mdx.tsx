@@ -60,7 +60,7 @@ const components: MDXComponents = {
     </BlogHeadingLink>
   ),
   p: ({ children }) => (
-    <p className="max-w-full text-base leading-8 break-words text-muted-foreground">
+    <p className="max-w-full text-base leading-8 wrap-break-word text-muted-foreground">
       {children}
     </p>
   ),
@@ -71,7 +71,7 @@ const components: MDXComponents = {
     return (
       <a
         href={safeHref}
-        className="font-medium [overflow-wrap:anywhere] break-words text-brand-soft underline-offset-4 hover:underline"
+        className="font-medium wrap-anywhere text-brand-soft underline-offset-4 hover:underline"
         target={isExternal ? "_blank" : undefined}
         rel={isExternal ? "noopener noreferrer" : undefined}
       >
@@ -90,7 +90,7 @@ const components: MDXComponents = {
     </ol>
   ),
   li: ({ children }) => (
-    <li className="text-base leading-7 break-words text-muted-foreground">
+    <li className="text-base leading-7 wrap-break-word text-muted-foreground">
       {children}
     </li>
   ),
@@ -119,12 +119,12 @@ const components: MDXComponents = {
     );
   },
   pre: ({ children }) => (
-    <pre className="max-w-full [scrollbar-width:thin] overflow-x-auto rounded-2xl border border-border/40 bg-background/80 p-4 text-sm leading-7 whitespace-pre [&_[data-highlighted-chars]]:bg-transparent [&_[data-highlighted-line]]:bg-transparent [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit [&_mark]:bg-transparent">
+    <pre className="max-w-full scrollbar-thin overflow-x-auto rounded-2xl border border-border/40 bg-background/80 p-4 text-sm leading-7 whitespace-pre **:data-highlighted-chars:bg-transparent **:data-highlighted-line:bg-transparent [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit [&_mark]:bg-transparent">
       {children}
     </pre>
   ),
   code: ({ children }) => (
-    <code className="rounded-md bg-brand-soft/10 px-1.5 py-0.5 font-mono text-sm [overflow-wrap:anywhere] break-words text-brand-soft">
+    <code className="rounded-md bg-brand-soft/10 px-1.5 py-0.5 font-mono text-sm wrap-anywhere text-brand-soft">
       {children}
     </code>
   ),

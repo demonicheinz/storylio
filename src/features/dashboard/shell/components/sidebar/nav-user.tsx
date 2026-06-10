@@ -91,7 +91,7 @@ export function NavUser({ user }: { user: User }) {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="min-w-56 rounded-lg [&_[role='menuitem']]:cursor-pointer"
+            className="min-w-56 rounded-lg **:[[role='menuitem']]:cursor-pointer"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}

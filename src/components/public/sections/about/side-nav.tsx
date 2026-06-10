@@ -73,7 +73,7 @@ export function SideNavigation() {
             >
               <div
                 className={cn(
-                  "h-[1px] w-4 transition-all group-hover:w-6 group-hover:bg-foreground",
+                  "h-px w-4 transition-all group-hover:w-6 group-hover:bg-foreground",
                   activeId === item.href
                     ? "w-6 bg-primary"
                     : "bg-muted-foreground",

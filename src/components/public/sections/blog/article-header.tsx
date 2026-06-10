@@ -54,7 +54,7 @@ export function ArticleHeader({ post }: ArticleHeaderProps) {
         alt={post.title}
         fetchPriority="high"
         loading="eager"
-        className="aspect-[16/9] shadow-[0_0_80px_rgba(139,92,246,0.14)]"
+        className="aspect-video shadow-[0_0_80px_rgba(139,92,246,0.14)]"
       />
     </header>
   );

@@ -46,7 +46,7 @@ export function RecentProjectsSection({
               <ProjectCover
                 src={project.thumbnailImageUrl ?? project.coverImage}
                 alt={project.title}
-                className="aspect-[16/10]"
+                className="aspect-16/10"
               />
 
               <div className="flex flex-1 flex-col p-4">

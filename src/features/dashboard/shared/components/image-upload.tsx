@@ -405,7 +405,7 @@ export function ImageUpload({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="relative h-[360px] overflow-hidden rounded-3xl border border-border bg-background">
+          <div className="relative h-90 overflow-hidden rounded-3xl border border-border bg-background">
             {cropSource && (
               <Cropper
                 image={cropSource}
