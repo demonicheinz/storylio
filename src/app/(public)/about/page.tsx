@@ -69,7 +69,7 @@ async function getAboutProfile() {
   return db.user.findFirst({
     select: {
       name: true,
-      email: true,
+      publicEmail: true,
       image: true,
       tagline: true,
       bio: true,
