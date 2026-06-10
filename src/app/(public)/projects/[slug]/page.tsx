@@ -172,7 +172,7 @@ export default async function ProjectDetailPage({
       <ViewCounter type="project" slug={project.slug} />
       <PublicBackground variant="projects" />
 
-      <article className="relative mx-auto flex w-full max-w-[1280px] flex-col px-4 pt-32 pb-24 sm:px-6 lg:px-8 lg:pt-40">
+      <article className="relative mx-auto flex w-full max-w-7xl flex-col px-4 pt-32 pb-24 sm:px-6 lg:px-8 lg:pt-40">
         <Button
           asChild
           variant="outline"
@@ -189,7 +189,7 @@ export default async function ProjectDetailPage({
             <ProjectCover
               src={project.coverImage}
               alt={project.title}
-              className="aspect-[16/11] shadow-[0_0_80px_rgba(139,92,246,0.14)]"
+              className="aspect-16/11 shadow-[0_0_80px_rgba(139,92,246,0.14)]"
               fetchPriority="high"
               loading="eager"
             />

@@ -106,7 +106,7 @@ export function InfiniteCards({
     <div
       ref={containerRef}
       className={cn(
-        "scroller relative z-20 w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_5%,white_95%,transparent)]",
+        "scroller relative z-20 w-full overflow-hidden mask-[linear-gradient(to_right,transparent,white_5%,white_95%,transparent)]",
         className,
       )}
     >
@@ -157,9 +157,9 @@ function MarqueeGroup({
 
 function TestimonialCard({ item }: { item: Testimonial }) {
   return (
-    <article className="relative flex h-[17rem] w-[min(86vw,22rem)] flex-shrink-0 rounded-3xl border border-border/40 bg-surface/90 px-6 py-6 shadow-md backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:border-brand-soft/60 hover:bg-surface-hover hover:shadow-xl sm:h-[16rem] sm:w-[380px] sm:px-8 md:h-[15rem] md:w-[450px]">
+    <article className="relative flex h-68 w-[min(86vw,22rem)] shrink-0 rounded-3xl border border-border/40 bg-surface/90 px-6 py-6 shadow-md backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:border-brand-soft/60 hover:bg-surface-hover hover:shadow-xl sm:h-64 sm:w-95 sm:px-8 md:h-60 md:w-112.5">
       <blockquote className="flex h-full min-w-0 flex-col">
-        <p className="relative z-20 min-w-0 text-base leading-[1.8] font-normal tracking-wide text-wrap break-words text-[#E4ECFF] italic">
+        <p className="relative z-20 min-w-0 text-base leading-[1.8] font-normal tracking-wide text-wrap wrap-break-word text-[#E4ECFF] italic">
           &ldquo;{item.quote}&rdquo;
         </p>
         <div className="relative z-20 mt-auto flex flex-row items-center gap-3 pt-6">

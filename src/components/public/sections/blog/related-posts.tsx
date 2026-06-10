@@ -40,7 +40,7 @@ export function RelatedPosts({ posts }: RelatedPostsProps) {
               <BlogCover
                 src={post.coverImage}
                 alt={post.title}
-                className="aspect-[16/10] rounded-2xl"
+                className="aspect-16/10 rounded-2xl"
               />
 
               <div className="flex flex-1 flex-col p-2 pt-4">

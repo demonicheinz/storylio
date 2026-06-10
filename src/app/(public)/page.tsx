@@ -192,7 +192,7 @@ export default async function HomePage() {
           />
         </section>
 
-        <div className="relative z-10 mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 mx-auto w-full max-w-350 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-10">
             <MotionReveal>
               <RecentProjectsSection projects={recentProjects} />

@@ -85,13 +85,13 @@ export const FloatingNav = ({
                   )}
                 >
                   {navItem.icon && (
-                    <span className="flex size-[18px] items-center justify-center sm:mr-1.5 [&>svg]:size-[18px]">
+                    <span className="flex size-4.5 items-center justify-center sm:mr-1.5 [&>svg]:size-4.5">
                       {navItem.icon}
                     </span>
                   )}
                   <span className="hidden sm:block">{navItem.name}</span>
                   {isActive && (
-                    <span className="absolute inset-x-0 -bottom-px mx-auto h-px w-1/2 bg-gradient-to-r from-transparent via-brand-soft to-transparent" />
+                    <span className="absolute inset-x-0 -bottom-px mx-auto h-px w-1/2 bg-linear-to-r from-transparent via-brand-soft to-transparent" />
                   )}
                 </Link>
               );

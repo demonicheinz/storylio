@@ -52,7 +52,7 @@ export function ClientsSection({
 
       <div className="flex flex-col items-center max-lg:mt-10">
         {testimonialItems.length > 0 ? (
-          <div className="relative flex h-[50vh] w-screen flex-col items-center justify-center overflow-hidden bg-transparent antialiased md:h-[30rem]">
+          <div className="relative flex h-[50vh] w-screen flex-col items-center justify-center overflow-hidden bg-transparent antialiased md:h-120">
             <InfiniteCards
               clientItems={testimonialItems}
               direction="left"
