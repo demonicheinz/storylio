@@ -21,7 +21,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         <ProjectCover
           src={cardImage}
           alt={project.title}
-          className="aspect-[16/10]"
+          className="aspect-16/10"
         />
       </Link>
 

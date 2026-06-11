@@ -59,7 +59,7 @@ export function ProjectCover({
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/30 via-transparent to-white/5" />
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/30 via-transparent to-white/5" />
     </div>
   );
 }

@@ -38,7 +38,10 @@ export default function PublicLayout({
       <UmamiTrackingScript />
       <Suspense fallback={null}>
         <Providers>
-          <PublicChrome footer={<Footer />}>{children}</PublicChrome>
+          <PublicChrome>
+            {children}
+            <Footer />
+          </PublicChrome>
         </Providers>
       </Suspense>
     </>
