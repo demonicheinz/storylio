@@ -21,7 +21,7 @@ const icons = {
 
 type ProfileBio = {
   name?: string | null;
-  email?: string | null;
+  publicEmail?: string | null;
   tagline?: string | null;
   bio?: string | null;
   github?: string | null;
@@ -53,8 +53,8 @@ export function BioSection({
       return { ...item, link: profile?.twitter ?? item.link };
     }
 
-    if (item.icon === "email" && profile?.email) {
-      return { ...item, link: `mailto:${profile.email}` };
+    if (item.icon === "email" && profile?.publicEmail) {
+      return { ...item, link: `mailto:${profile.publicEmail}` };
     }
 
     return item;
