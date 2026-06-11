@@ -43,13 +43,7 @@ const navItems: FloatingNavItem[] = [
   },
 ];
 
-export function PublicChrome({
-  children,
-  footer,
-}: {
-  children: ReactNode;
-  footer: ReactNode;
-}) {
+export function PublicChrome({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <ScrollToTop />
@@ -61,7 +55,6 @@ export function PublicChrome({
           <RouteMotion>{children}</RouteMotion>
         </Suspense>
       </main>
-      {footer}
     </div>
   );
 }

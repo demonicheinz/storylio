@@ -205,7 +205,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <ArticleProgress />
       <PublicBackground variant="blog" />
 
-      <article className="relative mx-auto flex w-full max-w-[1280px] flex-col px-4 pt-32 pb-24 sm:px-6 lg:px-8 lg:pt-40">
+      <article className="relative mx-auto flex w-full max-w-7xl flex-col px-4 pt-32 pb-24 sm:px-6 lg:px-8 lg:pt-40">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
           <Button
             asChild

@@ -47,7 +47,7 @@ export function ProjectFilters({
 
       <div
         className={cn(
-          "flex [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden",
+          "flex scrollbar-none gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden",
           isPending && "opacity-70",
         )}
       >

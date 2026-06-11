@@ -58,7 +58,7 @@ export const Card = ({ title, icon, children, des }: CardProps) => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
-        className="flex aspect-[3/4] h-full w-full cursor-pointer items-center justify-center overflow-hidden rounded-3xl border border-gray-200 bg-white p-4 shadow-sm dark:border-border/40 dark:bg-card"
+        className="flex aspect-3/4 h-full w-full cursor-pointer items-center justify-center overflow-hidden rounded-3xl border border-gray-200 bg-white p-4 shadow-sm dark:border-border/40 dark:bg-card"
       >
         <AnimatePresence>
           {active && (

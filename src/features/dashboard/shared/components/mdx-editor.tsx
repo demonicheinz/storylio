@@ -44,7 +44,7 @@ export function DashboardMdxEditor({
       <Textarea
         value={value}
         readOnly
-        className="min-h-[420px] font-mono text-sm"
+        className="min-h-105 font-mono text-sm"
         aria-invalid={!!error}
       />
     );

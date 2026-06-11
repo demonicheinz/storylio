@@ -44,10 +44,10 @@ export function ArticleProgress() {
   return (
     <div
       aria-hidden="true"
-      className="fixed inset-x-0 top-0 z-[60] h-px bg-border/30"
+      className="fixed inset-x-0 top-0 z-60 h-px bg-border/30"
     >
       <div
-        className="h-full bg-gradient-to-r from-brand-soft via-violet-300 to-sky-300 shadow-[0_0_18px_rgba(139,92,246,0.65)]"
+        className="h-full bg-linear-to-r from-brand-soft via-violet-300 to-sky-300 shadow-[0_0_18px_rgba(139,92,246,0.65)]"
         style={{ width: `${progress}%` }}
       />
     </div>

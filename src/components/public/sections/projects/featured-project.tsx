@@ -23,7 +23,7 @@ export function FeaturedProject({ project }: FeaturedProjectProps) {
         01
       </span>
 
-      <div className="relative grid gap-6 lg:min-h-[560px] lg:grid-cols-[1.18fr_0.82fr] lg:gap-8">
+      <div className="relative grid gap-6 lg:min-h-140 lg:grid-cols-[1.18fr_0.82fr] lg:gap-8">
         <Link
           href={`/projects/${project.slug}`}
           aria-label={project.title}
@@ -33,7 +33,7 @@ export function FeaturedProject({ project }: FeaturedProjectProps) {
             src={cardImage}
             alt={project.title}
             fetchPriority="high"
-            className="aspect-[16/11] h-full rounded-[1.55rem] border-brand-soft/20 shadow-[0_0_80px_rgba(139,92,246,0.18)] lg:aspect-auto"
+            className="aspect-16/11 h-full rounded-[1.55rem] border-brand-soft/20 shadow-[0_0_80px_rgba(139,92,246,0.18)] lg:aspect-auto"
             loading="eager"
           />
         </Link>

@@ -36,7 +36,7 @@ export function BlogHeadingLink({
 
   return (
     <Component id={id} className={cn("group/heading", className)}>
-      <span className="inline break-words">{children}</span>
+      <span className="inline wrap-break-word">{children}</span>
       {id && (
         <Button
           type="button"

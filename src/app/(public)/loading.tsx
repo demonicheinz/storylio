@@ -5,7 +5,7 @@ export default function PublicRouteLoading() {
       aria-label="Loading page"
       className="min-h-screen px-4 pt-32 sm:px-6 lg:px-8"
     >
-      <div className="mx-auto flex w-full max-w-[1180px] animate-pulse flex-col gap-6">
+      <div className="mx-auto flex w-full max-w-295 animate-pulse flex-col gap-6">
         <div className="h-4 w-28 rounded-full bg-brand-soft/20" />
         <div className="h-12 w-full max-w-xl rounded-2xl bg-surface/70" />
         <div className="h-5 w-full max-w-2xl rounded-full bg-surface/50" />

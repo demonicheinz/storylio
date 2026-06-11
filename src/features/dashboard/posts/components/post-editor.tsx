@@ -59,7 +59,7 @@ const MdxEditor = dynamic(
     loading: () => (
       <Textarea
         readOnly
-        className="min-h-[420px] font-mono text-sm"
+        className="min-h-105 font-mono text-sm"
         value="Loading editor..."
       />
     ),

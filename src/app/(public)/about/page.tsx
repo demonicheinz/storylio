@@ -69,7 +69,7 @@ async function getAboutProfile() {
   return db.user.findFirst({
     select: {
       name: true,
-      email: true,
+      publicEmail: true,
       image: true,
       tagline: true,
       bio: true,
@@ -220,17 +220,17 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
           <SideNavigation />
         </div>
 
-        <div className="relative mx-auto flex w-full max-w-[1056px] min-w-0 flex-col justify-center px-4 pt-32 sm:px-6 lg:px-8">
+        <div className="relative mx-auto flex w-full max-w-264 min-w-0 flex-col justify-center px-4 pt-32 sm:px-6 lg:px-8">
           <div className="flex w-full flex-col md:flex-row">
             <div className="flex w-full flex-col items-center gap-4 pb-8 md:hidden">
               <ProfileSection isMobile profile={publicProfile} />
             </div>
 
-            <div className="z-10 hidden shrink-0 md:sticky md:top-28 md:flex md:w-[280px] md:self-start lg:w-[320px]">
+            <div className="z-10 hidden shrink-0 md:sticky md:top-28 md:flex md:w-70 md:self-start lg:w-[320px]">
               <ProfileSection profile={publicProfile} />
             </div>
 
-            <div className="relative flex w-full max-w-full flex-col md:max-w-[calc(100%-280px)] md:pl-8 lg:max-w-[calc(100%-320px)] lg:pl-10 xl:max-w-[42rem]">
+            <div className="relative flex w-full max-w-full flex-col md:max-w-[calc(100%-280px)] md:pl-8 lg:max-w-[calc(100%-320px)] lg:pl-10 xl:max-w-2xl">
               <MotionReveal>
                 <section id="introduction" className="scroll-mt-28">
                   <BioSection

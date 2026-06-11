@@ -525,7 +525,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
             renderItem={({ item, handle, isDragging }) => (
               <div
                 className={[
-                  "grid min-h-[430px] grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-2xl border bg-background/40 transition-[border-color,box-shadow,opacity]",
+                  "grid min-h-107.5 grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-2xl border bg-background/40 transition-[border-color,box-shadow,opacity]",
                   isDragging
                     ? "border-brand-soft/60 shadow-[0_0_52px_rgba(139,92,246,0.18)]"
                     : item.isVisible
@@ -535,7 +535,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
               >
                 {handle}
                 <div className="grid min-w-0">
-                  <div className="relative aspect-[4/3] bg-muted/40">
+                  <div className="relative aspect-4/3 bg-muted/40">
                     <GalleryThumbnail
                       imageUrl={item.imageUrl}
                       caption={item.caption}

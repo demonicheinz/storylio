@@ -46,7 +46,7 @@ export function BlogCover({
         <div className="flex h-full min-h-52 flex-col justify-between p-6">
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-brand-soft" />
-            <div className="h-px flex-1 bg-gradient-to-r from-brand-soft/60 to-transparent" />
+            <div className="h-px flex-1 bg-linear-to-r from-brand-soft/60 to-transparent" />
           </div>
           <div className="space-y-3">
             <div className="h-4 w-4/5 rounded-full bg-foreground/30" />
@@ -61,7 +61,7 @@ export function BlogCover({
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/45 via-transparent to-white/5" />
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/45 via-transparent to-white/5" />
     </div>
   );
 }
