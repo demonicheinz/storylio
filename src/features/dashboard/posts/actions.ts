@@ -6,6 +6,7 @@ import {
   type PostActionValues,
   postActionSchema,
 } from "@/features/dashboard/posts/validations";
+import { flattenFieldErrors } from "@/features/dashboard/shared/utils/flatten-field-errors";
 import { PostStatus } from "@/generated/prisma";
 import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
@@ -18,16 +19,6 @@ type PostActionData = {
   slug: string;
   status: "draft" | "published";
 };
-
-function flattenFieldErrors(
-  fieldErrors: Record<string, string[] | undefined>,
-): Record<string, string[]> {
-  return Object.fromEntries(
-    Object.entries(fieldErrors).filter((entry): entry is [string, string[]] =>
-      Array.isArray(entry[1]),
-    ),
-  );
-}
 
 function parsePostInput(input: unknown) {
   const parsed = postActionSchema.safeParse(input);

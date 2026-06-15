@@ -10,6 +10,7 @@ import {
   type ProfileSettingsActionInput,
   profileSettingsActionSchema,
 } from "@/features/dashboard/settings/validations";
+import { flattenFieldErrors } from "@/features/dashboard/shared/utils/flatten-field-errors";
 import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
 import { auth } from "@/lib/auth";
@@ -23,16 +24,6 @@ type ProfileSettingsActionData = {
   email: string;
   image: string | null;
 };
-
-function flattenFieldErrors(
-  fieldErrors: Record<string, string[] | undefined>,
-): Record<string, string[]> {
-  return Object.fromEntries(
-    Object.entries(fieldErrors).filter((entry): entry is [string, string[]] =>
-      Array.isArray(entry[1]),
-    ),
-  );
-}
 
 function revalidateSettingsPaths() {
   updateTag("public-profile");

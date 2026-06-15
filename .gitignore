@@ -12,10 +12,10 @@
 
 # testing
 /coverage
-test-results/
-playwright-report/
 .playwright/
 .playwright-cli/
+playwright-report/
+test-results/
 
 # next.js
 /.next/
@@ -47,11 +47,10 @@ next-env.d.ts
 
 # docs
 /.docs/
+/.claude/
+/.agents/
+/graphify-out/
 CLAUDE.md
-.claude/
 
 # prisma generated client
 src/generated/
-
-# editor
-.vscode/
