@@ -21,6 +21,7 @@ import {
   DashboardSortableList,
   rectSortingStrategy,
 } from "@/features/dashboard/shared/components/sortable-list";
+import { uploadFile } from "@/features/dashboard/shared/utils/upload";
 import { cn } from "@/lib/utils";
 
 type SortableScreenshot = ScreenshotItemInput & {
@@ -74,20 +75,7 @@ export function ScreenshotsUpload({
         const newItems: ScreenshotItemInput[] = [];
 
         for (const file of nextFiles) {
-          const formData = new FormData();
-          formData.append("file", file);
-
-          const response = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-          });
-
-          if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || "Upload failed");
-          }
-
-          const data = await response.json();
+          const data = await uploadFile(file);
           newItems.push({
             imageUrl: data.url,
             caption: undefined,

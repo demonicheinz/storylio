@@ -1,7 +1,5 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FROM = process.env.RESEND_FROM ?? "Storylio <noreply@heinz.id>";
 
 /**
@@ -17,6 +15,13 @@ export async function sendEmail({
   subject: string;
   html: string;
 }) {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is required to send email");
+  }
+
+  const resend = new Resend(apiKey);
   const { error } = await resend.emails.send({
     from: FROM,
     to,

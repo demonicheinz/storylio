@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { flattenFieldErrors } from "@/features/dashboard/shared/utils/flatten-field-errors";
 import {
   type TestimonialActionInput,
   testimonialActionSchema,
@@ -14,16 +15,6 @@ import { db } from "@/lib/db";
 type TestimonialActionData = {
   id: string;
 };
-
-function flattenFieldErrors(
-  fieldErrors: Record<string, string[] | undefined>,
-): Record<string, string[]> {
-  return Object.fromEntries(
-    Object.entries(fieldErrors).filter((entry): entry is [string, string[]] =>
-      Array.isArray(entry[1]),
-    ),
-  );
-}
 
 function parseTestimonialInput(input: unknown) {
   const parsed = testimonialActionSchema.safeParse(input);

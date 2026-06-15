@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { uploadFile as uploadImageFile } from "@/features/dashboard/shared/utils/upload";
 import { cn } from "@/lib/utils";
 
 type ImageUploadProps = {
@@ -156,20 +157,7 @@ export function ImageUpload({
 
       setIsUploading(true);
       try {
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || "Upload failed");
-        }
-
-        const data = await response.json();
+        const data = await uploadImageFile(file);
         onChange(data.url, {
           width: data.width ?? null,
           height: data.height ?? null,

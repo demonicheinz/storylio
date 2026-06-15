@@ -6,6 +6,7 @@ import {
   galleryItemActionSchema,
   galleryReorderSchema,
 } from "@/features/dashboard/gallery/validations";
+import { flattenFieldErrors } from "@/features/dashboard/shared/utils/flatten-field-errors";
 import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
@@ -14,16 +15,6 @@ import { db } from "@/lib/db";
 type GalleryActionData = {
   id: string;
 };
-
-function flattenFieldErrors(
-  fieldErrors: Record<string, string[] | undefined>,
-): Record<string, string[]> {
-  return Object.fromEntries(
-    Object.entries(fieldErrors).filter((entry): entry is [string, string[]] =>
-      Array.isArray(entry[1]),
-    ),
-  );
-}
 
 function parseGalleryInput(input: unknown) {
   const parsed = galleryItemActionSchema.safeParse(input);
