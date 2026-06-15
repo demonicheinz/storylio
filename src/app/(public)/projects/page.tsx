@@ -82,6 +82,7 @@ async function getProjectsData(selectedTech?: string) {
         title: true,
         slug: true,
         description: true,
+        contribution: true,
         coverImage: true,
         thumbnailImageUrl: true,
         isFeatured: true,
@@ -156,7 +157,7 @@ export default async function ProjectsPage({
           />
         </Suspense>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-muted-foreground">
           <p>{formatProjectsSummary(projects.length, selectedTech)}</p>
           {selectedTech && (
             <Link
@@ -169,7 +170,7 @@ export default async function ProjectsPage({
           )}
         </div>
 
-        <div className="flex flex-col gap-8 py-10 md:py-12">
+        <div className="flex flex-col gap-7 pt-8 pb-12 md:gap-8 md:pt-10 md:pb-14">
           {featuredProject ? (
             <>
               <ProjectReveal>

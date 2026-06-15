@@ -134,6 +134,7 @@ function getProjectData(values: ProjectActionValues) {
     title: values.title,
     slug: values.slug,
     description: values.description || null,
+    contribution: values.contribution || null,
     content: values.content || null,
     coverImage: values.coverImage ?? null,
     thumbnailImageUrl: values.thumbnailImageUrl ?? null,

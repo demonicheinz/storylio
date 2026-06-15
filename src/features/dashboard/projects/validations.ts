@@ -80,6 +80,12 @@ const projectBaseSchema = z.object({
     .max(320, "Description must be 320 characters or fewer")
     .optional()
     .transform((value) => value || ""),
+  contribution: z
+    .string()
+    .trim()
+    .max(160, "Contribution must be 160 characters or fewer")
+    .optional()
+    .transform((value) => value || ""),
   content: z
     .string()
     .optional()
