@@ -36,7 +36,7 @@ export function ProjectsHero({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:flex sm:min-w-72">
+        <div className="grid grid-cols-2 gap-3 sm:w-72">
           <div className="rounded-3xl border border-border/40 bg-surface/65 p-4 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl">
             <p className="text-3xl font-bold text-foreground">
               {totalProjects}

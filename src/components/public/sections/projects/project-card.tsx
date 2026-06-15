@@ -14,20 +14,27 @@ type ProjectCardProps = {
 
 export function ProjectCard({ project }: ProjectCardProps) {
   const cardImage = project.thumbnailImageUrl ?? project.coverImage;
+  const visibleTech = project.techStack.slice(0, 3);
+  const remainingTech = project.techStack.length - visibleTech.length;
 
   return (
     <article className="group/project flex h-full flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-1 hover:border-brand-soft/45 hover:shadow-[0_0_72px_rgba(139,92,246,0.15)]">
-      <Link href={`/projects/${project.slug}`} aria-label={project.title}>
+      <Link
+        href={`/projects/${project.slug}`}
+        aria-label={project.title}
+        className="rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+      >
         <ProjectCover
           src={cardImage}
           alt={project.title}
-          className="aspect-16/10"
+          className="aspect-video"
+          sizes="(min-width: 1280px) 536px, (min-width: 768px) calc(50vw - 2.5rem), calc(100vw - 2rem)"
         />
       </Link>
 
-      <div className="flex flex-1 flex-col p-3 pt-5">
-        <div className="mb-4 flex flex-wrap gap-2">
-          {project.techStack.slice(0, 4).map((tech) => (
+      <div className="flex flex-1 flex-col px-3 pt-4 pb-3">
+        <div className="mb-3.5 flex max-w-full items-center gap-1.5 overflow-hidden">
+          {visibleTech.map((tech) => (
             <Badge
               key={`${project.id}-${tech}`}
               variant="outline"
@@ -36,23 +43,35 @@ export function ProjectCard({ project }: ProjectCardProps) {
               {tech}
             </Badge>
           ))}
+          {remainingTech > 0 && (
+            <Badge
+              variant="outline"
+              className="shrink-0 rounded-full border-border/90 bg-background/35 text-foreground/85"
+              aria-label={`${remainingTech} more technologies`}
+            >
+              +{remainingTech}
+            </Badge>
+          )}
         </div>
 
-        <Link href={`/projects/${project.slug}`} className="w-fit">
-          <h2 className="font-heading text-2xl font-semibold text-foreground transition-colors group-hover/project:text-brand-soft">
+        <Link
+          href={`/projects/${project.slug}`}
+          className="w-fit rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+        >
+          <h2 className="font-heading text-2xl leading-tight font-semibold text-foreground transition-colors group-hover/project:text-brand-soft">
             {project.title}
           </h2>
         </Link>
         {project.isFeatured && (
-          <Badge className="mt-3 w-fit rounded-full bg-brand-soft text-primary-foreground">
+          <Badge className="mt-2.5 w-fit rounded-full bg-brand-soft text-primary-foreground">
             Featured
           </Badge>
         )}
-        <p className="mt-3 line-clamp-3 text-sm leading-7 text-muted-foreground">
+        <p className="mt-3 line-clamp-3 text-sm leading-6.5 text-muted-foreground">
           {project.description ?? "A selected project from Heinz's archive."}
         </p>
 
-        <div className="mt-auto flex flex-wrap items-center gap-2 pt-6">
+        <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
           <Button asChild size="sm" className="rounded-full">
             <Link href={`/projects/${project.slug}`}>
               View case
