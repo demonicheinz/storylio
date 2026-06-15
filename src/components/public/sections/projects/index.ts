@@ -6,6 +6,7 @@ export * from "@/components/public/sections/projects/project-filters";
 export * from "@/components/public/sections/projects/project-navigation";
 export * from "@/components/public/sections/projects/project-reveal";
 export * from "@/components/public/sections/projects/project-screenshots";
+export * from "@/components/public/sections/projects/project-toc";
 export * from "@/components/public/sections/projects/projects-grid";
 export * from "@/components/public/sections/projects/projects-hero";
 export * from "@/components/public/sections/projects/types";
