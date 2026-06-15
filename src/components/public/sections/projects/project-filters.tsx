@@ -39,7 +39,7 @@ export function ProjectFilters({
   };
 
   return (
-    <div className="sticky top-20 z-20 -mx-4 border-y border-border/30 bg-background/80 px-4 py-3.5 backdrop-blur-xl sm:mx-0 sm:rounded-3xl sm:border sm:bg-surface/55 sm:px-5">
+    <div className="-mx-4 border-y border-border/30 bg-background/65 px-4 py-3.5 backdrop-blur-xl sm:mx-0 sm:rounded-3xl sm:border sm:bg-surface/55 sm:px-5">
       <div className="mb-2.5 flex items-center gap-2 text-xs font-semibold tracking-[0.24em] text-muted-foreground uppercase">
         <FunnelSimpleIcon className="text-brand-soft" size={16} />
         Filter by stack
