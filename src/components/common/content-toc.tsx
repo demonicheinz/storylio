@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useActiveSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
 
@@ -28,13 +28,9 @@ export function ContentToc({
   const sectionIds = useMemo(() => items.map((item) => item.id), [items]);
   const activeId = useActiveSection(sectionIds);
   const [displayActiveId, setDisplayActiveId] = useState(activeId);
-  const isClickScrolling = useRef(false);
-  const clickScrollTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined,
-  );
 
   useEffect(() => {
-    if (activeId && !isClickScrolling.current) {
+    if (activeId) {
       setDisplayActiveId(activeId);
     }
   }, [activeId]);
@@ -45,8 +41,6 @@ export function ContentToc({
     const element = document.getElementById(id);
     if (!element) return;
 
-    isClickScrolling.current = true;
-    clearTimeout(clickScrollTimeout.current);
     setDisplayActiveId(`#${id}`);
 
     const offsetPosition =
@@ -54,10 +48,6 @@ export function ContentToc({
 
     window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     window.history.pushState(null, "", `#${id}`);
-
-    clickScrollTimeout.current = setTimeout(() => {
-      isClickScrolling.current = false;
-    }, 800);
   };
 
   return (
@@ -97,7 +87,7 @@ export function ContentToc({
                   {indicator === "line" ? (
                     <span
                       className={cn(
-                        "mt-3 h-px w-3 shrink-0 bg-muted-foreground transition-all group-focus-within:w-5 group-focus-within:bg-brand-soft group-hover:w-5 group-hover:bg-brand-soft",
+                        "mt-3 h-px w-3 shrink-0 bg-muted-foreground transition-all",
                         isActive && "w-5 bg-brand-soft",
                       )}
                     />
