@@ -236,6 +236,8 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
             <ImageUpload
               value={imageUrl}
               disabled={isPending}
+              previewClassName="bg-muted/40"
+              previewImageClassName="object-contain"
               onChange={(url, metadata) => {
                 setValue("imageUrl", url, {
                   shouldDirty: true,
@@ -353,7 +355,8 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
               placeholder="A short note about this image."
               aria-invalid={!!errors.caption}
               disabled={isPending}
-              className="min-h-24"
+              wrap="soft"
+              className="field-sizing-fixed min-h-24 max-w-full scrollbar-none wrap-anywhere"
               {...register("caption")}
             />
             {errors.caption?.message && (
@@ -370,7 +373,8 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
               placeholder="Optional detail shown on public gallery overlays."
               aria-invalid={!!errors.description}
               disabled={isPending}
-              className="min-h-24"
+              wrap="soft"
+              className="field-sizing-fixed min-h-24 max-w-full scrollbar-none wrap-anywhere"
               {...register("description")}
             />
             {errors.description?.message && (
@@ -519,13 +523,13 @@ export function GalleryManager({ items }: GalleryManagerProps) {
           <DashboardSortableList
             items={items}
             disabled={isReordering}
-            className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+            className="grid auto-rows-fr gap-4 md:grid-cols-2 xl:grid-cols-3"
             strategy={rectSortingStrategy}
             onReorder={handleReorder}
             renderItem={({ item, handle, isDragging }) => (
               <div
                 className={[
-                  "grid min-h-107.5 grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-2xl border bg-background/40 transition-[border-color,box-shadow,opacity]",
+                  "grid h-122 grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-2xl border bg-background/40 transition-[border-color,box-shadow,opacity]",
                   isDragging
                     ? "border-brand-soft/60 shadow-[0_0_52px_rgba(139,92,246,0.18)]"
                     : item.isVisible
@@ -534,53 +538,56 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                 ].join(" ")}
               >
                 {handle}
-                <div className="grid min-w-0">
+                <div className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)_auto]">
                   <div className="relative aspect-4/3 bg-muted/40">
                     <GalleryThumbnail
                       imageUrl={item.imageUrl}
                       caption={item.caption}
                     />
                   </div>
-                  <div className="flex flex-1 flex-col gap-4 p-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={item.isVisible ? "default" : "outline"}>
-                          {item.isVisible ? "Visible" : "Hidden"}
+                  <div className="min-h-0 overflow-hidden px-4 pt-4">
+                    <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+                      <Badge
+                        variant={item.isVisible ? "default" : "outline"}
+                        className="shrink-0"
+                      >
+                        {item.isVisible ? "Visible" : "Hidden"}
+                      </Badge>
+                      {item.category && (
+                        <Badge
+                          variant="secondary"
+                          className="max-w-28 min-w-0 truncate"
+                        >
+                          {item.category}
                         </Badge>
-                        {item.category && (
-                          <Badge variant="secondary">{item.category}</Badge>
-                        )}
-                        <Badge variant="outline">order {item.order}</Badge>
-                        {item.width && item.height && (
-                          <Badge variant="outline">
-                            {item.width}x{item.height}
-                          </Badge>
-                        )}
-                      </div>
-                      <h2 className="mt-3 line-clamp-2 font-heading text-lg font-semibold">
-                        {item.caption || "Untitled image"}
-                      </h2>
-                      {(item.altText || item.description) && (
-                        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                          {item.altText || item.description}
-                        </p>
                       )}
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Created {formatDate(item.createdAt)}
+                      <Badge variant="outline" className="shrink-0">
+                        order {item.order}
+                      </Badge>
+                    </div>
+                    <h2 className="mt-3 line-clamp-2 font-heading text-lg leading-snug font-semibold wrap-break-word">
+                      {item.caption || "Untitled image"}
+                    </h2>
+                    {(item.altText || item.description) && (
+                      <p className="mt-2 line-clamp-2 text-sm leading-5 wrap-break-word text-muted-foreground">
+                        {item.altText || item.description}
                       </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <GalleryItemDialog
-                        item={item}
-                        trigger={
-                          <Button type="button" size="sm" variant="secondary">
-                            <PencilSimpleIcon data-icon="inline-start" />
-                            Edit
-                          </Button>
-                        }
-                      />
-                      <GalleryDeleteButton item={item} />
-                    </div>
+                    )}
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Created {formatDate(item.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2 px-4 pt-3 pb-4">
+                    <GalleryItemDialog
+                      item={item}
+                      trigger={
+                        <Button type="button" size="sm" variant="secondary">
+                          <PencilSimpleIcon data-icon="inline-start" />
+                          Edit
+                        </Button>
+                      }
+                    />
+                    <GalleryDeleteButton item={item} />
                   </div>
                 </div>
               </div>

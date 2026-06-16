@@ -18,10 +18,30 @@ async function getHomeSections() {
   });
 }
 
+async function getTestimonials() {
+  return db.testimonial.findMany({
+    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      company: true,
+      avatar: true,
+      content: true,
+      isVisible: true,
+      order: true,
+      createdAt: true,
+    },
+  });
+}
+
 export default async function HomeManagePage() {
   await connection();
 
-  const sections = await getHomeSections();
+  const [sections, testimonials] = await Promise.all([
+    getHomeSections(),
+    getTestimonials(),
+  ]);
   const phases = sections.filter(
     (section) => section.type === HomeSectionType.PHASE,
   );
@@ -34,7 +54,8 @@ export default async function HomeManagePage() {
       <div>
         <h1 className="font-heading text-3xl font-bold">Manage Home</h1>
         <p className="mt-2 text-muted-foreground">
-          Manage Home page approach phases and client or technology logos.
+          Manage Home page approach phases, client or technology logos, and
+          testimonials.
         </p>
       </div>
 
@@ -43,6 +64,10 @@ export default async function HomeManagePage() {
           ...section,
           type: "PHASE",
           createdAt: section.createdAt.toISOString(),
+        }))}
+        testimonials={testimonials.map((testimonial) => ({
+          ...testimonial,
+          createdAt: testimonial.createdAt.toISOString(),
         }))}
         logos={logos.map((section) => ({
           ...section,

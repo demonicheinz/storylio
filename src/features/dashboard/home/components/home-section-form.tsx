@@ -66,6 +66,10 @@ import {
   rectSortingStrategy,
   verticalListSortingStrategy,
 } from "@/features/dashboard/shared/components/sortable-list";
+import {
+  type DashboardTestimonial,
+  TestimonialsManager,
+} from "@/features/dashboard/testimonials/components/testimonial-form";
 
 export type DashboardHomeSection = {
   id: string;
@@ -79,6 +83,7 @@ export type DashboardHomeSection = {
 
 type HomeContentManagerProps = {
   phases: DashboardHomeSection[];
+  testimonials: DashboardTestimonial[];
   logos: DashboardHomeSection[];
 };
 
@@ -494,15 +499,20 @@ function HomeContentList({
   );
 }
 
-export function HomeContentManager({ logos, phases }: HomeContentManagerProps) {
+export function HomeContentManager({
+  logos,
+  phases,
+  testimonials,
+}: HomeContentManagerProps) {
   return (
-    <Tabs defaultValue="phases">
+    <Tabs defaultValue="approach">
       <TabsList>
-        <TabsTrigger value="phases">My Approach / Phases</TabsTrigger>
-        <TabsTrigger value="logos">Client or Tech Logos</TabsTrigger>
+        <TabsTrigger value="approach">Approach</TabsTrigger>
+        <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
+        <TabsTrigger value="logos">Tech / Client</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="phases" className="mt-4">
+      <TabsContent value="approach" className="mt-4">
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -534,12 +544,16 @@ export function HomeContentManager({ logos, phases }: HomeContentManagerProps) {
         </Card>
       </TabsContent>
 
+      <TabsContent value="testimonials" className="mt-4">
+        <TestimonialsManager testimonials={testimonials} />
+      </TabsContent>
+
       <TabsContent value="logos" className="mt-4">
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <CardTitle>Client or Tech Logos</CardTitle>
+                <CardTitle>Tech / Client Logos</CardTitle>
                 <CardDescription>
                   Manage logos shown near testimonials on the Home page.
                 </CardDescription>
