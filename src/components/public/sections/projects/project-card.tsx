@@ -22,7 +22,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <Link
         href={`/projects/${project.slug}`}
         aria-label={project.title}
-        className="rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+        className="relative rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
       >
         <ProjectCover
           src={cardImage}
@@ -30,6 +30,11 @@ export function ProjectCard({ project }: ProjectCardProps) {
           className="aspect-video"
           sizes="(min-width: 1280px) 536px, (min-width: 768px) calc(50vw - 2.5rem), calc(100vw - 2rem)"
         />
+        {project.isFeatured && (
+          <Badge className="pointer-events-none absolute top-3 left-3 rounded-full bg-brand-soft/90 px-3 text-primary-foreground shadow-[0_8px_24px_rgba(10,10,20,0.35)] backdrop-blur">
+            Featured
+          </Badge>
+        )}
       </Link>
 
       <div className="flex flex-1 flex-col px-3 pt-4 pb-3">
@@ -62,11 +67,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
             {project.title}
           </h2>
         </Link>
-        {project.isFeatured && (
-          <Badge className="mt-2.5 w-fit rounded-full bg-brand-soft text-primary-foreground">
-            Featured
-          </Badge>
-        )}
         <p className="mt-3 line-clamp-3 text-sm leading-6.5 text-muted-foreground">
           {project.description ?? "A selected project from Heinz's archive."}
         </p>

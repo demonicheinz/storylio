@@ -94,9 +94,6 @@ async function getProjectsData(selectedTech?: string) {
       },
       orderBy: [
         {
-          isFeatured: "desc",
-        },
-        {
           order: "asc",
         },
         {
@@ -112,7 +109,7 @@ async function getProjectsData(selectedTech?: string) {
         id: true,
         techStack: true,
       },
-      orderBy: [{ isFeatured: "desc" }, { order: "asc" }],
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     }),
   ]);
 
@@ -133,7 +130,10 @@ export default async function ProjectsPage({
   const selectedTech = getSelectedTech((await searchParams).tech);
   const { projects, technologies, totalProjects } =
     await getProjectsData(selectedTech);
-  const [featuredProject, ...remainingProjects] = projects;
+  const featuredProject = projects.find((project) => project.isFeatured);
+  const remainingProjects = featuredProject
+    ? projects.filter((project) => project.id !== featuredProject.id)
+    : projects;
 
   return (
     <main className="min-h-screen overflow-x-hidden">
@@ -171,11 +171,13 @@ export default async function ProjectsPage({
         </div>
 
         <div className="flex flex-col gap-7 pt-8 pb-12 md:gap-8 md:pt-10 md:pb-14">
-          {featuredProject ? (
+          {projects.length > 0 ? (
             <>
-              <ProjectReveal>
-                <FeaturedProject project={featuredProject} />
-              </ProjectReveal>
+              {featuredProject && (
+                <ProjectReveal>
+                  <FeaturedProject project={featuredProject} />
+                </ProjectReveal>
+              )}
 
               {remainingProjects.length > 0 && (
                 <ProjectsGrid projects={remainingProjects} />
