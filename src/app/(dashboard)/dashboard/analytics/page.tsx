@@ -8,7 +8,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { connection } from "next/server";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -585,12 +585,61 @@ function UmamiPanel({ analytics }: { analytics: UmamiAnalytics }) {
   );
 }
 
+function UmamiPanelSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Umami Traffic Analytics</CardTitle>
+        <CardDescription>
+          Loading optional self-hosted traffic metrics.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          {["Visitors", "Visits", "Views", "Bounce rate", "Visit duration"].map(
+            (label) => (
+              <div
+                key={label}
+                className="rounded-2xl border bg-background/40 p-4"
+              >
+                <p className="text-sm text-muted-foreground">{label}</p>
+                <div className="mt-3 h-8 w-20 animate-pulse rounded-xl bg-muted" />
+                <div className="mt-3 h-6 w-14 animate-pulse rounded-full bg-muted" />
+              </div>
+            ),
+          )}
+        </div>
+        <div className="grid gap-4 xl:grid-cols-2">
+          {["Top Pages", "Top Referrers", "Environment", "Location"].map(
+            (label) => (
+              <div
+                key={label}
+                className="rounded-2xl border bg-background/40 p-4"
+              >
+                <h3 className="font-heading font-semibold">{label}</h3>
+                <div className="mt-4 grid gap-3">
+                  <div className="h-4 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+                </div>
+              </div>
+            ),
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+async function UmamiPanelSection() {
+  const analytics = await getUmamiAnalytics();
+
+  return <UmamiPanel analytics={analytics} />;
+}
+
 export default async function AnalyticsPage() {
   await connection();
-  const [data, umamiAnalytics] = await Promise.all([
-    getAnalyticsData(),
-    getUmamiAnalytics(),
-  ]);
+  const data = await getAnalyticsData();
 
   const stats = [
     {
@@ -744,7 +793,9 @@ export default async function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      <UmamiPanel analytics={umamiAnalytics} />
+      <Suspense fallback={<UmamiPanelSkeleton />}>
+        <UmamiPanelSection />
+      </Suspense>
     </div>
   );
 }
