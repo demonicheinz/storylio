@@ -6,6 +6,7 @@ import {
   type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -41,6 +42,7 @@ type DashboardSortableListProps<TItem extends SortableItemBase> = {
   items: TItem[];
   disabled?: boolean;
   className?: string;
+  itemClassName?: string;
   strategy?: SortingStrategy;
   onReorder: (items: TItem[]) => void;
   renderItem: (args: SortableRenderArgs<TItem>) => ReactNode;
@@ -52,6 +54,7 @@ export function DashboardSortableList<TItem extends SortableItemBase>({
   items,
   disabled,
   className,
+  itemClassName,
   strategy = verticalListSortingStrategy,
   onReorder,
   renderItem,
@@ -62,6 +65,12 @@ export function DashboardSortableList<TItem extends SortableItemBase>({
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 180,
+        tolerance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -119,6 +128,7 @@ export function DashboardSortableList<TItem extends SortableItemBase>({
               item={item}
               index={index}
               disabled={disabled}
+              className={itemClassName}
               renderItem={renderItem}
             />
           ))}
@@ -132,11 +142,13 @@ function DashboardSortableRow<TItem extends SortableItemBase>({
   item,
   index,
   disabled,
+  className,
   renderItem,
 }: {
   item: TItem;
   index: number;
   disabled?: boolean;
+  className?: string;
   renderItem: (args: SortableRenderArgs<TItem>) => ReactNode;
 }) {
   const {
@@ -160,7 +172,7 @@ function DashboardSortableRow<TItem extends SortableItemBase>({
       ref={setActivatorNodeRef}
       type="button"
       variant="ghost"
-      className="h-full min-h-16 w-11 cursor-grab items-center justify-center rounded-none border-r border-border/50 p-0 text-muted-foreground active:cursor-grabbing"
+      className="h-full min-h-16 w-11 cursor-grab touch-none items-center justify-center rounded-none border-r border-border/50 p-0 text-muted-foreground active:cursor-grabbing"
       disabled={disabled}
       aria-label="Drag to reorder"
       {...attributes}
@@ -174,7 +186,7 @@ function DashboardSortableRow<TItem extends SortableItemBase>({
     <div
       ref={setNodeRef}
       style={style}
-      className={cn(isDragging && "relative z-10 opacity-80")}
+      className={cn(className, isDragging && "relative z-10 opacity-80")}
     >
       {renderItem({
         item,

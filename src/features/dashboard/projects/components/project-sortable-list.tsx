@@ -6,6 +6,7 @@ import {
   type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -62,6 +63,12 @@ export function ProjectSortableList({ projects }: ProjectSortableListProps) {
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 180,
+        tolerance: 8,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -186,7 +193,7 @@ function SortableProjectRow({
         type="button"
         variant="ghost"
         size="icon"
-        className="h-full min-h-28 w-full cursor-grab items-center justify-center rounded-none border-r border-border/50 p-0 text-muted-foreground active:cursor-grabbing"
+        className="h-full min-h-28 w-full cursor-grab touch-none items-center justify-center rounded-none border-r border-border/50 p-0 text-muted-foreground active:cursor-grabbing"
         disabled={disabled}
         aria-label={`Drag ${project.title} to reorder`}
         {...attributes}
