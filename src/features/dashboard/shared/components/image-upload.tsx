@@ -47,6 +47,8 @@ type ImageUploadProps = {
   previewClassName?: string;
   previewImageClassName?: string;
   priority?: boolean;
+  maxSizeBytes?: number;
+  maxSizeLabel?: string;
 };
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -122,6 +124,8 @@ export function ImageUpload({
   previewClassName,
   previewImageClassName,
   priority = false,
+  maxSizeBytes = MAX_SIZE,
+  maxSizeLabel = "10MB",
 }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -140,8 +144,8 @@ export function ImageUpload({
       return "Invalid file type. Use jpg, png, webp, or gif.";
     }
 
-    if (file.size > MAX_SIZE) {
-      return "File too large. Maximum 10MB.";
+    if (file.size > maxSizeBytes) {
+      return `File too large. Maximum ${maxSizeLabel}.`;
     }
 
     return null;
@@ -354,7 +358,7 @@ export function ImageUpload({
                 Drop an image here or click to upload
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                JPG, PNG, WebP, GIF — max 10MB
+                JPG, PNG, WebP, GIF — max {maxSizeLabel}
               </p>
               {cropAspect && (
                 <p className="mt-1 inline-flex items-center justify-center gap-1 text-xs text-brand-soft">

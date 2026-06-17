@@ -2,17 +2,26 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  ArrowCounterClockwiseIcon,
   EnvelopeSimpleIcon,
   EyeIcon,
   EyeSlashIcon,
   FingerprintIcon,
   FloppyDiskIcon,
   GithubLogoIcon,
+  InstagramLogoIcon,
   KeyIcon,
+  LinkSimpleIcon,
+  LockKeyIcon,
+  MonitorIcon,
   SpinnerIcon,
+  UploadSimpleIcon,
+  UserCircleIcon,
+  UserIcon,
+  XLogoIcon,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { type ComponentType, useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -42,7 +51,10 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   actionChangeEmail,
   actionChangePassword,
+  actionListDashboardSessions,
+  actionRevokeOtherDashboardSessions,
   actionUpdateProfileSettings,
+  type DashboardSessionItem,
 } from "@/features/dashboard/settings/actions";
 import {
   type AccountPasswordActionInput,
@@ -55,6 +67,7 @@ import {
 } from "@/features/dashboard/settings/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
 type LinkedAccount = {
   providerId: string;
@@ -107,6 +120,150 @@ function getProfileDefaults(
   };
 }
 
+function getInitials(name?: string | null) {
+  return (
+    name
+      ?.split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "AH"
+  );
+}
+
+function ProfileAvatarUpload({
+  image,
+  name,
+  disabled,
+  onChange,
+}: {
+  image?: string;
+  name?: string | null;
+  disabled?: boolean;
+  onChange: (url?: string) => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 text-center">
+      <div className="relative">
+        <Avatar className="size-30 border border-border/70 bg-background/60 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
+          <AvatarImage src={image} alt={name || "Profile avatar"} />
+          <AvatarFallback className="font-heading text-4xl">
+            {getInitials(name)}
+          </AvatarFallback>
+        </Avatar>
+        <span className="absolute right-1 bottom-1 z-10 flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-card">
+          <UploadSimpleIcon className="size-5" />
+        </span>
+        <ImageUpload
+          value={undefined}
+          disabled={disabled}
+          cropAspect={1}
+          cropShape="round"
+          cropLabel="Crop profile avatar"
+          className="absolute inset-0 z-20 opacity-0"
+          maxSizeBytes={2 * 1024 * 1024}
+          maxSizeLabel="2MB"
+          onChange={(url) => onChange(url)}
+        />
+      </div>
+      <p className="max-w-48 text-xs leading-5 text-muted-foreground">
+        JPG, PNG, WebP or GIF. Max size 2MB.
+      </p>
+    </div>
+  );
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) {
+    return null;
+  }
+
+  return <p className="text-sm text-destructive">{message}</p>;
+}
+
+function IconInput({
+  icon: Icon,
+  className,
+  ...props
+}: React.ComponentProps<typeof Input> & {
+  icon: ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="relative">
+      <Icon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input className={cn("pl-10", className)} {...props} />
+    </div>
+  );
+}
+
+function getPasswordStrength(password: string) {
+  const checks = [
+    password.length >= 8,
+    /[a-z]/.test(password),
+    /[A-Z]/.test(password),
+    /\d/.test(password),
+    /[^A-Za-z0-9]/.test(password),
+  ];
+  const score = checks.filter(Boolean).length;
+
+  if (!password) {
+    return {
+      label: "Weak",
+      score: 0,
+      className: "bg-muted",
+      textClassName: "text-muted-foreground",
+    };
+  }
+
+  if (score <= 2) {
+    return {
+      label: "Weak",
+      score,
+      className: "bg-destructive",
+      textClassName: "text-destructive",
+    };
+  }
+
+  if (score <= 4) {
+    return {
+      label: "Good",
+      score,
+      className: "bg-amber-400",
+      textClassName: "text-amber-300",
+    };
+  }
+
+  return {
+    label: "Strong",
+    score,
+    className: "bg-emerald-400",
+    textClassName: "text-emerald-300",
+  };
+}
+
+function PasswordStrengthMeter({ password }: { password: string }) {
+  const strength = getPasswordStrength(password);
+
+  return (
+    <div className="grid gap-2">
+      <div className="flex items-center gap-1.5">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <span
+            key={index}
+            className={cn(
+              "h-1.5 flex-1 rounded-full bg-muted transition-colors",
+              index < strength.score && strength.className,
+            )}
+          />
+        ))}
+      </div>
+      <p className={cn("text-xs font-medium", strength.textClassName)}>
+        {strength.label}
+      </p>
+    </div>
+  );
+}
+
 function ProfileSettingsForm({
   profile,
 }: Pick<SettingsManagerProps, "profile">) {
@@ -116,6 +273,7 @@ function ProfileSettingsForm({
     formState: { errors },
     handleSubmit,
     register,
+    reset,
     setError,
     setValue,
     watch,
@@ -129,6 +287,7 @@ function ProfileSettingsForm({
   );
 
   const image = watch("image");
+  const displayName = watch("name");
 
   const applyFieldErrors = (fieldErrors?: Record<string, string[]>) => {
     if (!fieldErrors) {
@@ -169,196 +328,184 @@ function ProfileSettingsForm({
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Profile</CardTitle>
-        <CardDescription>
-          Update the owner profile used by database-backed public sections.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form className="flex max-w-2xl flex-col gap-5" onSubmit={onSubmit}>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Display name</Label>
-            <Input
-              id="name"
-              placeholder="Ahmad Haizul Amany"
-              aria-invalid={!!errors.name}
+    <form className="flex flex-col gap-5" onSubmit={onSubmit}>
+      <Card className="overflow-hidden">
+        <CardHeader>
+          <CardTitle>Profile Information</CardTitle>
+          <CardDescription>
+            Update your public profile information shown across Storylio.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-8 lg:grid-cols-[190px_minmax(0,1fr)]">
+            <ProfileAvatarUpload
+              image={image}
+              name={displayName}
               disabled={isPending}
-              {...register("name")}
-            />
-            {errors.name?.message && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="tagline">Tagline</Label>
-            <Input
-              id="tagline"
-              placeholder="Full Stack Developer"
-              aria-invalid={!!errors.tagline}
-              disabled={isPending}
-              {...register("tagline")}
-            />
-            {errors.tagline?.message && (
-              <p className="text-sm text-destructive">
-                {errors.tagline.message}
-              </p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="bio">Short bio</Label>
-            <Textarea
-              id="bio"
-              placeholder="Short profile summary for public pages."
-              aria-invalid={!!errors.bio}
-              disabled={isPending}
-              className="min-h-32"
-              {...register("bio")}
-            />
-            <p className="text-xs text-muted-foreground">
-              Short bio is used on the Home Hero. About intro is managed from
-              the dedicated About dashboard page.
-            </p>
-            {errors.bio?.message && (
-              <p className="text-sm text-destructive">{errors.bio.message}</p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label>Profile photo</Label>
-            <ImageUpload
-              value={image}
-              disabled={isPending}
-              cropAspect={1}
-              cropShape="round"
-              cropLabel="Crop profile avatar"
-              previewClassName="mx-auto max-w-52 rounded-full"
-              priority={true}
               onChange={(url) =>
                 setValue("image", url, {
                   shouldDirty: true,
                   shouldValidate: true,
                 })
               }
-              onRemove={() =>
-                setValue("image", undefined, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                })
-              }
             />
-            {errors.image?.message && (
-              <p className="text-sm text-destructive">{errors.image.message}</p>
-            )}
-          </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid min-w-0 gap-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="name">Display Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="Ahmad Haizul Amany"
+                    aria-invalid={!!errors.name}
+                    disabled={isPending}
+                    {...register("name")}
+                  />
+                  <FieldError message={errors.name?.message} />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="tagline">Tagline</Label>
+                  <Input
+                    id="tagline"
+                    placeholder="Full Stack Developer"
+                    aria-invalid={!!errors.tagline}
+                    disabled={isPending}
+                    {...register("tagline")}
+                  />
+                  <FieldError message={errors.tagline?.message} />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="bio">Short Bio</Label>
+                <Textarea
+                  id="bio"
+                  placeholder="Short profile summary for public pages."
+                  aria-invalid={!!errors.bio}
+                  disabled={isPending}
+                  className="min-h-32"
+                  {...register("bio")}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This bio is used on the Home Hero and About dashboard page.
+                </p>
+                <FieldError message={errors.bio?.message} />
+              </div>
+
+              <FieldError message={errors.image?.message} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Links</CardTitle>
+          <CardDescription>
+            Add your social and professional links.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid gap-4 lg:grid-cols-3">
             <div className="flex flex-col gap-2">
               <Label htmlFor="github">GitHub</Label>
-              <Input
+              <IconInput
                 id="github"
+                icon={GithubLogoIcon}
                 type="url"
                 placeholder="https://github.com/..."
                 aria-invalid={!!errors.github}
                 disabled={isPending}
                 {...register("github")}
               />
-              {errors.github?.message && (
-                <p className="text-sm text-destructive">
-                  {errors.github.message}
-                </p>
-              )}
+              <FieldError message={errors.github?.message} />
             </div>
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="instagram">Instagram</Label>
-              <Input
+              <IconInput
                 id="instagram"
+                icon={InstagramLogoIcon}
                 type="url"
                 placeholder="https://instagram.com/..."
                 aria-invalid={!!errors.instagram}
                 disabled={isPending}
                 {...register("instagram")}
               />
-              {errors.instagram?.message && (
-                <p className="text-sm text-destructive">
-                  {errors.instagram.message}
-                </p>
-              )}
+              <FieldError message={errors.instagram?.message} />
             </div>
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="twitter">X/Twitter</Label>
-              <Input
+              <IconInput
                 id="twitter"
+                icon={XLogoIcon}
                 type="url"
                 placeholder="https://x.com/..."
                 aria-invalid={!!errors.twitter}
                 disabled={isPending}
                 {...register("twitter")}
               />
-              {errors.twitter?.message && (
-                <p className="text-sm text-destructive">
-                  {errors.twitter.message}
-                </p>
-              )}
+              <FieldError message={errors.twitter?.message} />
             </div>
           </div>
 
-          <Separator />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="websiteUrl">Website URL</Label>
+              <IconInput
+                id="websiteUrl"
+                icon={LinkSimpleIcon}
+                type="url"
+                placeholder="https://heinz.id"
+                aria-invalid={!!errors.websiteUrl}
+                disabled={isPending}
+                {...register("websiteUrl")}
+              />
+              <FieldError message={errors.websiteUrl?.message} />
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="websiteUrl">Website URL</Label>
-            <Input
-              id="websiteUrl"
-              type="url"
-              placeholder="https://heinz.id"
-              aria-invalid={!!errors.websiteUrl}
-              disabled={isPending}
-              {...register("websiteUrl")}
-            />
-            {errors.websiteUrl?.message && (
-              <p className="text-sm text-destructive">
-                {errors.websiteUrl.message}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="publicEmail">Public Contact Email</Label>
+              <IconInput
+                id="publicEmail"
+                icon={EnvelopeSimpleIcon}
+                type="email"
+                placeholder="hello@heinz.id"
+                aria-invalid={!!errors.publicEmail}
+                disabled={isPending}
+                {...register("publicEmail")}
+              />
+              <p className="text-xs text-muted-foreground">
+                This email will be visible publicly.
               </p>
-            )}
+              <FieldError message={errors.publicEmail?.message} />
+            </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="publicEmail">Public contact email</Label>
-            <Input
-              id="publicEmail"
-              type="email"
-              placeholder="hello@heinz.id"
-              aria-invalid={!!errors.publicEmail}
-              disabled={isPending}
-              {...register("publicEmail")}
-            />
-            <p className="text-xs text-muted-foreground">
-              Public contact email is shown publicly if used by the site. This
-              is separate from your login email.
-            </p>
-            {errors.publicEmail?.message && (
-              <p className="text-sm text-destructive">
-                {errors.publicEmail.message}
-              </p>
-            )}
-          </div>
-
-          <Button type="submit" className="w-fit" disabled={isPending}>
-            {isPending ? (
-              <SpinnerIcon data-icon="inline-start" className="animate-spin" />
-            ) : (
-              <FloppyDiskIcon data-icon="inline-start" />
-            )}
-            {isPending ? "Saving..." : "Save Profile"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="submit" disabled={isPending}>
+          {isPending ? (
+            <SpinnerIcon data-icon="inline-start" className="animate-spin" />
+          ) : (
+            <FloppyDiskIcon data-icon="inline-start" />
+          )}
+          {isPending ? "Saving..." : "Save Changes"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isPending}
+          onClick={() => reset(getProfileDefaults(profile))}
+        >
+          <ArrowCounterClockwiseIcon data-icon="inline-start" />
+          Reset
+        </Button>
+      </div>
+    </form>
   );
 }
 
@@ -405,7 +552,7 @@ function ChangeEmailForm({ currentEmail }: { currentEmail: string }) {
         <p className="text-sm font-medium">{currentEmail}</p>
       </div>
 
-      <form className="flex max-w-xl flex-col gap-4" onSubmit={onSubmit}>
+      <form className="flex flex-col gap-4" onSubmit={onSubmit}>
         <div className="flex flex-col gap-2">
           <Label htmlFor="newEmail">New email address</Label>
           <Input
@@ -451,6 +598,7 @@ function AccountSettingsForm() {
     register,
     reset,
     setError,
+    watch,
   } = useForm<AccountPasswordActionInput>({
     resolver: zodResolver(accountPasswordActionSchema),
     defaultValues: {
@@ -498,10 +646,21 @@ function AccountSettingsForm() {
 
   const getPasswordType = (field: keyof AccountPasswordActionInput) =>
     visibleFields[field] ? "text" : "password";
+  const currentPassword = watch("currentPassword");
+  const newPassword = watch("newPassword");
+  const confirmPassword = watch("confirmPassword");
+  const isSameAsCurrent =
+    currentPassword.length > 0 &&
+    newPassword.length > 0 &&
+    currentPassword === newPassword;
+  const hasConfirmMismatch =
+    confirmPassword.length > 0 &&
+    newPassword.length > 0 &&
+    confirmPassword !== newPassword;
 
   return (
     <div className="flex flex-col gap-4">
-      <form className="flex max-w-xl flex-col gap-5" onSubmit={onSubmit}>
+      <form className="flex flex-col gap-5" onSubmit={onSubmit}>
         <div className="flex flex-col gap-2">
           <Label htmlFor="currentPassword">Current password</Label>
           <div className="relative">
@@ -570,6 +729,12 @@ function AccountSettingsForm() {
               {errors.newPassword.message}
             </p>
           )}
+          {isSameAsCurrent && (
+            <p className="text-sm text-destructive">
+              New password must be different from current password.
+            </p>
+          )}
+          <PasswordStrengthMeter password={newPassword} />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -604,6 +769,9 @@ function AccountSettingsForm() {
             <p className="text-sm text-destructive">
               {errors.confirmPassword.message}
             </p>
+          )}
+          {hasConfirmMismatch && (
+            <p className="text-sm text-destructive">Passwords do not match.</p>
           )}
         </div>
 
@@ -797,6 +965,148 @@ function PasskeySettings() {
   );
 }
 
+function SessionSettings() {
+  const [sessions, setSessions] = useState<DashboardSessionItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRevoking, startRevokeTransition] = useTransition();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    actionListDashboardSessions().then((result) => {
+      if (!isMounted) {
+        return;
+      }
+
+      if (result.success) {
+        setSessions(result.data ?? []);
+      } else {
+        toast.error(result.error);
+      }
+
+      setIsLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const revokeAllSessions = () => {
+    startRevokeTransition(async () => {
+      const result = await actionRevokeOtherDashboardSessions();
+
+      if (result.success) {
+        toast.success(result.message ?? "Other sessions revoked.");
+        setSessions((current) =>
+          current.filter((session) => session.isCurrent),
+        );
+      } else {
+        toast.error(result.error);
+      }
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <Label className="text-base">Active sessions</Label>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Review every active dashboard session tied to this account.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
+          disabled={
+            isLoading ||
+            isRevoking ||
+            sessions.filter((session) => !session.isCurrent).length === 0
+          }
+          onClick={revokeAllSessions}
+        >
+          {isRevoking ? (
+            <SpinnerIcon data-icon="inline-start" className="animate-spin" />
+          ) : (
+            <LockKeyIcon data-icon="inline-start" />
+          )}
+          Revoke Other Sessions
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <SpinnerIcon className="animate-spin" />
+          Loading sessions...
+        </div>
+      ) : sessions.length > 0 ? (
+        <div className="grid gap-3">
+          {sessions.map((session) => (
+            <div
+              key={session.id}
+              className="flex items-start gap-3 rounded-2xl border border-border/70 bg-background/35 p-4"
+            >
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <MonitorIcon className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-medium">
+                    {session.isCurrent
+                      ? "Current session"
+                      : "Dashboard session"}
+                  </p>
+                  <Badge variant={session.isCurrent ? "default" : "secondary"}>
+                    {session.isCurrent ? "Current" : "Active"}
+                  </Badge>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {session.userAgent || "Unknown browser"}
+                </p>
+                <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                  <div>
+                    <span className="block text-foreground/80">
+                      Last active
+                    </span>
+                    {new Date(session.updatedAt).toLocaleString("en-US", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </div>
+                  <div>
+                    <span className="block text-foreground/80">Expires</span>
+                    {new Date(session.expiresAt).toLocaleString("en-US", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </div>
+                  <div>
+                    <span className="block text-foreground/80">Created</span>
+                    {new Date(session.createdAt).toLocaleString("en-US", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </div>
+                  <div>
+                    <span className="block text-foreground/80">IP address</span>
+                    {session.ipAddress || "Unknown"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          No active sessions are available.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function AddPasskeyDialog({
   isAdding,
   setIsAdding,
@@ -956,41 +1266,66 @@ export function SettingsManager({
   linkedAccounts,
 }: SettingsManagerProps) {
   return (
-    <Tabs defaultValue="profile">
-      <TabsList>
-        <TabsTrigger value="profile">Profile</TabsTrigger>
-        <TabsTrigger value="account">Account</TabsTrigger>
+    <Tabs
+      defaultValue="profile"
+      orientation="vertical"
+      className="grid gap-5 lg:grid-cols-[200px_minmax(0,1fr)] lg:items-start"
+    >
+      <TabsList className="grid w-full grid-cols-3 rounded-3xl border border-border/70 bg-card/45 p-2 shadow-[0_18px_80px_rgba(0,0,0,0.16)] lg:sticky lg:top-24 lg:flex lg:grid-cols-none">
+        <TabsTrigger
+          value="profile"
+          className="h-9 items-center justify-center! rounded-2xl px-2 text-xs sm:text-sm lg:h-11 lg:justify-start! lg:px-3 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+        >
+          <UserCircleIcon data-icon="inline-start" />
+          Profile
+        </TabsTrigger>
+        <TabsTrigger
+          value="account"
+          className="h-9 justify-center! rounded-2xl px-2 text-xs sm:text-sm lg:h-11 lg:justify-start! lg:px-3 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+        >
+          <UserIcon data-icon="inline-start" />
+          Account
+        </TabsTrigger>
+        <TabsTrigger
+          value="security"
+          className="h-9 justify-center! rounded-2xl px-2 text-xs sm:text-sm lg:h-11 lg:justify-start! lg:px-3 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+        >
+          <LockKeyIcon data-icon="inline-start" />
+          Security
+        </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="profile" className="mt-4">
+      <TabsContent value="profile" className="mt-0 min-w-0">
         <ProfileSettingsForm profile={profile} />
       </TabsContent>
 
-      <TabsContent value="account" className="mt-4 flex flex-col gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Email</CardTitle>
-            <CardDescription>
-              Your login email is used for authentication. Changing it requires
-              verification via the new address.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChangeEmailForm currentEmail={profile.email} />
-          </CardContent>
-        </Card>
+      <TabsContent value="account" className="mt-0 flex min-w-0 flex-col gap-5">
+        <div className="grid min-w-0 gap-5 xl:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Email</CardTitle>
+              <CardDescription>
+                Your login email is used for authentication. Changing it
+                requires verification via the new address.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChangeEmailForm currentEmail={profile.email} />
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Password</CardTitle>
-            <CardDescription>
-              Change the dashboard password using the existing session.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AccountSettingsForm />
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Password</CardTitle>
+              <CardDescription>
+                Change the dashboard password using the existing session.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AccountSettingsForm />
+            </CardContent>
+          </Card>
+        </div>
 
         <Card>
           <CardHeader>
@@ -1001,6 +1336,23 @@ export function SettingsManager({
           </CardHeader>
           <CardContent>
             <ConnectedProviders linkedAccounts={linkedAccounts} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent
+        value="security"
+        className="mt-0 flex min-w-0 flex-col gap-5"
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Session</CardTitle>
+            <CardDescription>
+              Review the active dashboard session for this browser.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SessionSettings />
           </CardContent>
         </Card>
 
