@@ -122,7 +122,7 @@ async function getArticleCompanions(currentPostId: string, tagNames: string[]) {
 }
 
 function getTocItems(content: string) {
-  const headings = content.matchAll(/^(##|###)\s+(.+)$/gm);
+  const headings = content.matchAll(/^(#|##|###)\s+(.+)$/gm);
   const seenIds = new Map<string, number>();
 
   return Array.from(headings).map((heading) => {
@@ -228,7 +228,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             aria-label="Article content"
             className="min-w-0 border-l border-border/30 pl-5 sm:pl-8 lg:pl-10"
           >
-            <div className="prose-invert flex max-w-4xl min-w-0 flex-col gap-6 overflow-hidden [&>h2]:mt-20 [&>h2]:pt-2 [&>h2:first-child]:mt-0 [&>h2:first-child]:pt-0 [&>h3]:mt-12">
+            <div className="storylio-article-content prose-invert flex max-w-4xl min-w-0 flex-col gap-6 overflow-hidden [&>h2]:mt-20 [&>h2]:pt-2 [&>h2:first-child]:mt-0 [&>h2:first-child]:pt-0 [&>h3]:mt-12">
               {mdxContent}
             </div>
           </section>

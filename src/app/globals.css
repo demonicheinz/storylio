@@ -269,6 +269,109 @@
     opacity: 1;
   }
 
+  .storylio-article-content li:has(input[type="checkbox"]) {
+    list-style: none;
+  }
+
+  .storylio-article-checkbox {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.6rem;
+    vertical-align: -0.14rem;
+    appearance: none;
+    border: 1px solid color-mix(in oklch, var(--primary) 72%, var(--border));
+    border-radius: 0.3rem;
+    background: color-mix(in oklch, var(--primary) 18%, var(--surface));
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 0.7rem 0.7rem;
+    pointer-events: none;
+  }
+
+  .storylio-article-checkbox:checked {
+    border-color: var(--primary);
+    background-color: var(--primary);
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 12 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 5.2 4.2 8.5 11 1' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+
+  .storylio-article-checkbox:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .storylio-admonition {
+    --admonition-accent: var(--brand-soft);
+    --admonition-bg: color-mix(in oklch, var(--brand-soft) 8%, transparent);
+    margin-block: 2rem;
+    border: 1px solid
+      color-mix(in oklch, var(--admonition-accent) 38%, var(--border));
+    border-left-width: 3px;
+    border-radius: 1.25rem;
+    background: var(--admonition-bg);
+    padding: 1rem 1.25rem;
+    color: var(--foreground);
+  }
+
+  .storylio-admonition::before {
+    display: block;
+    margin-bottom: 0.55rem;
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--admonition-accent);
+    content: attr(data-admonition);
+  }
+
+  .storylio-admonition > * + * {
+    margin-top: 0.75rem;
+  }
+
+  .storylio-admonition > p {
+    color: var(--foreground);
+  }
+
+  .storylio-admonition-note {
+    --admonition-accent: var(--brand-soft);
+    --admonition-bg: color-mix(in oklch, var(--brand-soft) 8%, transparent);
+  }
+
+  .storylio-admonition-tip {
+    --admonition-accent: #22c55e;
+    --admonition-bg: color-mix(in oklch, #22c55e 9%, transparent);
+  }
+
+  .storylio-admonition-info {
+    --admonition-accent: #38bdf8;
+    --admonition-bg: color-mix(in oklch, #38bdf8 9%, transparent);
+  }
+
+  .storylio-admonition-caution {
+    --admonition-accent: #f59e0b;
+    --admonition-bg: color-mix(in oklch, #f59e0b 10%, transparent);
+  }
+
+  .storylio-admonition-danger {
+    --admonition-accent: var(--destructive);
+    --admonition-bg: color-mix(in oklch, var(--destructive) 10%, transparent);
+  }
+
+  .storylio-article-content th[align="center"],
+  .storylio-article-content td[align="center"] {
+    text-align: center;
+  }
+
+  .storylio-article-content th[align="right"],
+  .storylio-article-content td[align="right"] {
+    text-align: right;
+  }
+
+  .storylio-article-content th[align="left"],
+  .storylio-article-content td[align="left"] {
+    text-align: left;
+  }
+
   .storylio-mdx-editor {
     --baseBase: var(--background);
     --baseBgSubtle: color-mix(in oklch, var(--surface) 72%, black);
@@ -294,6 +397,40 @@
     --accentSolidHover: color-mix(in oklch, var(--primary) 88%, white);
     --accentText: var(--brand-soft);
     --accentTextContrast: var(--foreground);
+    --admonitionTipBg: color-mix(in oklch, var(--primary) 10%, var(--surface));
+    --admonitionTipBorder: color-mix(
+      in oklch,
+      var(--primary) 60%,
+      var(--border)
+    );
+    --admonitionInfoBg: color-mix(
+      in oklch,
+      var(--brand-soft) 10%,
+      var(--surface)
+    );
+    --admonitionInfoBorder: color-mix(
+      in oklch,
+      var(--brand-soft) 60%,
+      var(--border)
+    );
+    --admonitionNoteBg: color-mix(in oklch, var(--surface) 86%, black);
+    --admonitionNoteBorder: color-mix(
+      in oklch,
+      var(--border) 80%,
+      var(--brand-soft)
+    );
+    --admonitionCautionBg: color-mix(in oklch, #f59e0b 12%, var(--surface));
+    --admonitionCautionBorder: color-mix(in oklch, #f59e0b 60%, var(--border));
+    --admonitionDangerBg: color-mix(
+      in oklch,
+      var(--destructive) 12%,
+      var(--surface)
+    );
+    --admonitionDangerBorder: color-mix(
+      in oklch,
+      var(--destructive) 62%,
+      var(--border)
+    );
     background: color-mix(in oklch, var(--surface) 78%, black);
     color: var(--foreground);
   }
