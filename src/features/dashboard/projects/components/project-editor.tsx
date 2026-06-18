@@ -15,7 +15,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -48,6 +47,7 @@ import {
   type ScreenshotItemInput,
 } from "@/features/dashboard/projects/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
+import { TagsInput } from "@/features/dashboard/shared/components/tag-input";
 import { createSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 
@@ -170,6 +170,65 @@ function getSubmitLabels(status: ProjectFormValues["status"]) {
     publish: "Publish",
     publishPending: "Publishing...",
   };
+}
+
+function ProjectStatusBadge({
+  status,
+  compact = false,
+}: {
+  status: ProjectFormValues["status"];
+  compact?: boolean;
+}) {
+  const isPublished = status === "published";
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        isPublished
+          ? "bg-emerald-500/12 text-emerald-300"
+          : "bg-amber-500/12 text-amber-300",
+        compact && "px-2 py-0.5",
+      )}
+    >
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          isPublished ? "bg-emerald-300" : "bg-amber-300",
+        )}
+      />
+      {isPublished ? "Published" : "Draft"}
+    </span>
+  );
+}
+
+function AutosaveStatusPill({ status }: { status: AutosaveStatus }) {
+  if (status === "idle") {
+    return null;
+  }
+
+  return (
+    <span
+      className={cn(
+        "inline-flex w-fit items-center rounded-full bg-surface/55 px-2.5 py-1 text-xs text-muted-foreground",
+        status === "saving" && "text-brand-soft",
+        status === "failed" && "text-destructive",
+      )}
+    >
+      {status === "saving"
+        ? "Autosaving..."
+        : status === "saved"
+          ? "Autosaved"
+          : "Autosave failed"}
+    </span>
+  );
+}
+
+function getTechStackArray(techStack: string) {
+  return techStack
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
 }
 
 export function ProjectEditor({ mode, project }: ProjectEditorProps) {
@@ -372,40 +431,31 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
               Projects
             </Link>
           </Button>
-          <div>
-            <h1 className="font-heading text-3xl font-bold">
+          <div className="min-w-0">
+            <h1 className="font-heading text-3xl font-bold wrap-break-word">
               {mode === "create" ? "New Project" : "Edit Project"}
             </h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-2 max-w-2xl wrap-break-word text-muted-foreground">
               Shape portfolio case studies, visuals, links, and publish state.
             </p>
+            {mode === "edit" && (
+              <div className="mt-3">
+                <AutosaveStatusPill status={autosaveStatus} />
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {mode === "edit" && autosaveStatus !== "idle" && (
-            <span
-              className={cn(
-                "rounded-full border border-border/50 bg-surface/60 px-3 py-1 text-xs text-muted-foreground",
-                autosaveStatus === "saving" && "text-brand-soft",
-                autosaveStatus === "failed" && "text-destructive",
-              )}
-            >
-              {autosaveStatus === "saving"
-                ? "Autosaving..."
-                : autosaveStatus === "saved"
-                  ? "Autosaved"
-                  : "Autosave failed"}
-            </span>
-          )}
-          <Badge variant={status === "published" ? "default" : "secondary"}>
-            {status}
-          </Badge>
+        <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:min-w-0 sm:flex-wrap sm:items-center sm:justify-end">
+          <div className="col-span-2 flex justify-start sm:col-span-1 sm:justify-center">
+            <ProjectStatusBadge status={status} />
+          </div>
           <Button
             type="button"
             variant="outline"
             onClick={handlePreview}
             disabled={!slug || isPending}
+            className="min-w-0"
           >
             <EyeIcon data-icon="inline-start" />
             Preview
@@ -415,6 +465,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
             variant="secondary"
             onClick={submitWithStatus("draft")}
             disabled={isPending}
+            className="min-w-0"
           >
             {pendingAction === "draft" ? (
               <SpinnerIcon data-icon="inline-start" className="animate-spin" />
@@ -429,6 +480,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
             type="button"
             onClick={submitWithStatus("published")}
             disabled={isPending}
+            className="col-span-2 min-w-0 sm:col-span-1"
           >
             {pendingAction === "publish" ? (
               <SpinnerIcon data-icon="inline-start" className="animate-spin" />
@@ -442,9 +494,9 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="flex flex-col gap-6">
-          <Card>
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Case Study</CardTitle>
               <CardDescription>
@@ -580,19 +632,17 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Publishing</CardTitle>
               <CardAction>
-                <Badge variant={status === "published" ? "default" : "outline"}>
-                  {status}
-                </Badge>
+                <ProjectStatusBadge status={status} compact />
               </CardAction>
               <CardDescription>
                 Keep projects as drafts until they are ready for the portfolio.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-5">
+            <CardContent className="flex min-w-0 flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="status">Status</Label>
                 <Controller
@@ -607,11 +657,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                           variant="outline"
                           className="h-9 w-full justify-between rounded-3xl bg-input/50 px-3 font-normal"
                         >
-                          <span>
-                            {field.value === "published"
-                              ? "Published"
-                              : "Draft"}
-                          </span>
+                          <ProjectStatusBadge status={field.value} compact />
                           <CaretDownIcon data-icon="inline-end" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -623,10 +669,10 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                           }
                         >
                           <DropdownMenuRadioItem value="draft">
-                            Draft
+                            <ProjectStatusBadge status="draft" compact />
                           </DropdownMenuRadioItem>
                           <DropdownMenuRadioItem value="published">
-                            Published
+                            <ProjectStatusBadge status="published" compact />
                           </DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
                       </DropdownMenuContent>
@@ -669,14 +715,23 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
             <CardContent className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="techStack">Tech stack</Label>
-                <Input
-                  id="techStack"
-                  placeholder="Next.js, Prisma, Cloudinary"
-                  disabled={isPending}
-                  {...register("techStack")}
+                <Controller
+                  control={control}
+                  name="techStack"
+                  render={({ field }) => (
+                    <TagsInput
+                      id="techStack"
+                      value={getTechStackArray(field.value ?? "")}
+                      onChange={(nextTechStack) =>
+                        field.onChange(nextTechStack.join(", "))
+                      }
+                      disabled={isPending}
+                      placeholder="nextjs, prisma, cloudinary"
+                    />
+                  )}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Separate technologies with commas.
+                  Type comma + space to create a tech stack tag.
                 </p>
               </div>
 

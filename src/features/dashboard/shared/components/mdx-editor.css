@@ -126,7 +126,7 @@
 .storylio-mdx-editor [contenteditable="true"] ol {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.15rem;
   padding-left: 1.35rem;
 }
 
@@ -139,7 +139,20 @@
 }
 
 .storylio-mdx-editor [contenteditable="true"] li {
+  margin-top: 0.05rem;
+  margin-bottom: 0.05rem;
   padding-left: 0.35rem;
+}
+
+.storylio-mdx-editor [contenteditable="true"] li > p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.storylio-mdx-editor [contenteditable="true"] li > ul,
+.storylio-mdx-editor [contenteditable="true"] li > ol {
+  margin-top: 0.2rem;
+  margin-bottom: 0.2rem;
 }
 
 .storylio-mdx-editor [contenteditable="true"] li::marker {
@@ -165,6 +178,7 @@
 .storylio-mdx-editor [contenteditable="true"] [class*="_listItemUnchecked_"] {
   position: relative !important;
   list-style: none !important;
+  margin-block: 0.05rem !important;
   margin-inline-start: 0 !important;
   padding-inline-start: 1.65rem !important;
   padding-inline-end: 0.5rem !important;

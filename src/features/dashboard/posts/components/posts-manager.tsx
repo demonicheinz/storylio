@@ -378,7 +378,7 @@ function PostActions({
       <DropdownMenuContent align={align} className="w-44">
         <DropdownMenuLabel>Post</DropdownMenuLabel>
         {isPublished(post) && (
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild className="cursor-pointer">
             <Link href={`/blog/${post.slug}`} target="_blank">
               <EyeIcon data-icon="inline-start" />
               Preview
