@@ -259,7 +259,10 @@ function GalleryItemActions({
         <GalleryItemDialog
           item={item}
           trigger={
-            <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onSelect={(event) => event.preventDefault()}
+            >
               <PencilSimpleIcon data-icon="inline-start" />
               Edit item
             </DropdownMenuItem>
@@ -270,6 +273,7 @@ function GalleryItemActions({
           item={item}
           trigger={
             <DropdownMenuItem
+              className="cursor-pointer"
               variant="destructive"
               onSelect={(event) => event.preventDefault()}
             >
@@ -1337,8 +1341,8 @@ export function GalleryManager({ items }: GalleryManagerProps) {
             </div>
           </div>
 
-          <div className="hidden gap-3 md:grid xl:grid-cols-[minmax(240px,1fr)_150px_180px_auto_150px]">
-            <div className="relative min-w-0">
+          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_150px_180px_150px_auto]">
+            <div className="relative min-w-0 md:col-span-2 xl:col-span-1">
               <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 ref={desktopSearchInputRef}
@@ -1384,30 +1388,6 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                 })),
               ]}
             />
-            <div className="grid grid-cols-2 rounded-2xl border border-border/60 bg-background/35 p-1">
-              <Button
-                type="button"
-                size="sm"
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                className="rounded-xl"
-                onClick={() => setViewMode("grid")}
-                aria-pressed={viewMode === "grid"}
-              >
-                <GridFourIcon data-icon="inline-start" />
-                Grid
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={viewMode === "list" ? "default" : "ghost"}
-                className="rounded-xl"
-                onClick={() => setViewMode("list")}
-                aria-pressed={viewMode === "list"}
-              >
-                <ListBulletsIcon data-icon="inline-start" />
-                List
-              </Button>
-            </div>
             <FilterDropdown
               label="Sort by"
               value={sortMode}
@@ -1428,6 +1408,30 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                 { value: "created-asc", label: "Oldest" },
               ]}
             />
+            <div className="grid grid-cols-2 rounded-2xl border border-border/60 bg-background/35 p-1 md:justify-self-start xl:justify-self-auto">
+              <Button
+                type="button"
+                size="icon"
+                variant={viewMode === "grid" ? "default" : "ghost"}
+                className="size-8 rounded-lg"
+                onClick={() => setViewMode("grid")}
+                aria-label="Grid view"
+                aria-pressed={viewMode === "grid"}
+              >
+                <GridFourIcon />
+              </Button>
+              <Button
+                type="button"
+                size="icon"
+                variant={viewMode === "list" ? "default" : "ghost"}
+                className="size-8 rounded-lg"
+                onClick={() => setViewMode("list")}
+                aria-label="List view"
+                aria-pressed={viewMode === "list"}
+              >
+                <ListBulletsIcon />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
