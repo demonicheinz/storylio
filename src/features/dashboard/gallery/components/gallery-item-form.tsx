@@ -88,6 +88,7 @@ import {
   DashboardSortableList,
   verticalListSortingStrategy,
 } from "@/features/dashboard/shared/components/sortable-list";
+import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
 import { cn, formatDate } from "@/lib/utils";
 
 export type DashboardGalleryItem = {
@@ -736,7 +737,9 @@ function GalleryGrid({
             <button
               type="button"
               className="absolute inset-0 block w-full text-left md:pointer-events-none"
-              onClick={() => onSelectItem(item)}
+              onClick={(event) =>
+                blurBeforeOpen(event, () => onSelectItem(item))
+              }
               aria-label={`Open details for ${getItemTitle(item)}`}
             >
               <GalleryThumbnail
@@ -801,7 +804,7 @@ function GalleryListRow({
       <button
         type="button"
         className="flex min-w-0 items-center gap-3 p-3 text-left"
-        onClick={() => onSelectItem(item)}
+        onClick={(event) => blurBeforeOpen(event, () => onSelectItem(item))}
       >
         <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-xl border border-border/50 bg-muted/35">
           <GalleryThumbnail

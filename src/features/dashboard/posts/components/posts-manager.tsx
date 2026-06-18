@@ -46,6 +46,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { PostDeleteButton } from "@/features/dashboard/posts/components/post-delete-button";
+import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
 import { cn, formatDate } from "@/lib/utils";
 
 export type DashboardPost = {
@@ -907,6 +908,15 @@ export function PostsManager({ posts }: PostsManagerProps) {
     setFiltersOpen(true);
   };
 
+  const handleFiltersOpenChange = (open: boolean) => {
+    if (open) {
+      openFilters();
+      return;
+    }
+
+    setFiltersOpen(false);
+  };
+
   const applyFilters = () => {
     setStatus(draftStatus);
     setSelectedTags(draftTags);
@@ -1041,7 +1051,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
                 type="button"
                 variant="outline"
                 className="h-10 shrink-0 rounded-2xl bg-input/35"
-                onClick={openFilters}
+                onClick={(event) => blurBeforeOpen(event, openFilters)}
               >
                 <FunnelSimpleIcon data-icon="inline-start" />
                 Filters
@@ -1164,7 +1174,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
 
       <Drawer
         open={filtersOpen}
-        onOpenChange={setFiltersOpen}
+        onOpenChange={handleFiltersOpenChange}
         direction="bottom"
       >
         <DrawerContent className="p-0 before:inset-x-0 before:top-2 before:bottom-0 before:rounded-t-4xl before:rounded-b-none">
