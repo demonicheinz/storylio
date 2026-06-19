@@ -66,7 +66,7 @@ export function useTagInput(
 
   const handleInputChange = useCallback(
     (value: string) => {
-      if (!/,\s/.test(value)) {
+      if (!/,\s+/.test(value)) {
         setInputValue(value);
         return;
       }

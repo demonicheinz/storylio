@@ -190,7 +190,6 @@ const components: MDXComponents = {
   th: ({ align, children, className, style, ...props }) => (
     <th
       {...props}
-      align={typeof align === "string" ? align : undefined}
       style={{ textAlign: getTableCellAlign(align), ...style }}
       className={cn(
         "border-r border-b border-border/60 bg-surface/70 px-4 py-3 font-semibold text-foreground last:border-r-0",
@@ -203,7 +202,6 @@ const components: MDXComponents = {
   td: ({ align, children, className, style, ...props }) => (
     <td
       {...props}
-      align={typeof align === "string" ? align : undefined}
       style={{ textAlign: getTableCellAlign(align), ...style }}
       className={cn(
         "border-r border-b border-border/40 px-4 py-3 text-muted-foreground last:border-r-0",
