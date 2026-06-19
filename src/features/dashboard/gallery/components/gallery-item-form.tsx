@@ -89,6 +89,11 @@ import {
   verticalListSortingStrategy,
 } from "@/features/dashboard/shared/components/sortable-list";
 import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
+import {
+  getDefaultItemsPerPage,
+  getItemsPerPageOptions,
+  paginateItems,
+} from "@/lib/pagination";
 import { cn, formatDate } from "@/lib/utils";
 
 export type DashboardGalleryItem = {
@@ -858,6 +863,7 @@ function GalleryPagination({
   page,
   pageCount,
   itemsPerPage,
+  itemsPerPageOptions,
   onPageChange,
   onItemsPerPageChange,
 }: {
@@ -867,6 +873,7 @@ function GalleryPagination({
   page: number;
   pageCount: number;
   itemsPerPage: number;
+  itemsPerPageOptions: readonly number[];
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (value: number) => void;
 }) {
@@ -927,6 +934,7 @@ function GalleryPagination({
         <div className="md:hidden">
           <ItemsPerPageDropdown
             value={itemsPerPage}
+            options={itemsPerPageOptions}
             onValueChange={onItemsPerPageChange}
           />
         </div>
@@ -935,6 +943,7 @@ function GalleryPagination({
       <div className="hidden justify-end md:flex">
         <ItemsPerPageDropdown
           value={itemsPerPage}
+          options={itemsPerPageOptions}
           onValueChange={onItemsPerPageChange}
           showLabel
         />
@@ -945,10 +954,12 @@ function GalleryPagination({
 
 function ItemsPerPageDropdown({
   value,
+  options,
   onValueChange,
   showLabel = false,
 }: {
   value: number;
+  options: readonly number[];
   onValueChange: (value: number) => void;
   showLabel?: boolean;
 }) {
@@ -974,8 +985,8 @@ function ItemsPerPageDropdown({
             value={String(value)}
             onValueChange={(nextValue) => onValueChange(Number(nextValue))}
           >
-            {["8", "12", "24"].map((option) => (
-              <DropdownMenuRadioItem key={option} value={option}>
+            {options.map((option) => (
+              <DropdownMenuRadioItem key={option} value={String(option)}>
                 {option}
               </DropdownMenuRadioItem>
             ))}
@@ -1081,7 +1092,9 @@ export function GalleryManager({ items }: GalleryManagerProps) {
   const [visibility, setVisibility] = useState<VisibilityFilter>("all");
   const [category, setCategory] = useState("all");
   const [sortMode, setSortMode] = useState<SortMode>("order-asc");
-  const [itemsPerPage, setItemsPerPage] = useState(12);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(
+    getDefaultItemsPerPage("grid"),
+  );
   const [page, setPage] = useState(1);
   const [selectedItem, setSelectedItem] = useState<DashboardGalleryItem | null>(
     null,
@@ -1161,12 +1174,14 @@ export function GalleryManager({ items }: GalleryManagerProps) {
       });
   }, [category, items, query, sortMode, visibility]);
 
-  const pageCount = Math.max(1, Math.ceil(filteredItems.length / itemsPerPage));
-  const currentPage = Math.min(page, pageCount);
-  const firstIndex =
-    filteredItems.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-  const lastIndex = Math.min(currentPage * itemsPerPage, filteredItems.length);
-  const paginatedItems = filteredItems.slice(firstIndex - 1, lastIndex);
+  const {
+    items: paginatedItems,
+    pageCount,
+    currentPage,
+    firstIndex,
+    lastIndex,
+  } = paginateItems(filteredItems, page, itemsPerPage);
+  const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
 
   useEffect(() => {
     setPage(1);
@@ -1195,6 +1210,11 @@ export function GalleryManager({ items }: GalleryManagerProps) {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  const handleViewModeChange = (nextViewMode: ViewMode) => {
+    setViewMode(nextViewMode);
+    setItemsPerPage(getDefaultItemsPerPage(nextViewMode));
+  };
 
   const handleReorder = (nextItems: DashboardGalleryItem[]) => {
     startReorderTransition(async () => {
@@ -1323,7 +1343,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   size="icon"
                   variant={viewMode === "grid" ? "default" : "ghost"}
                   className="size-8 rounded-lg"
-                  onClick={() => setViewMode("grid")}
+                  onClick={() => handleViewModeChange("grid")}
                   aria-label="Grid view"
                   aria-pressed={viewMode === "grid"}
                 >
@@ -1334,7 +1354,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   size="icon"
                   variant={viewMode === "list" ? "default" : "ghost"}
                   className="size-8 rounded-lg"
-                  onClick={() => setViewMode("list")}
+                  onClick={() => handleViewModeChange("list")}
                   aria-label="List view"
                   aria-pressed={viewMode === "list"}
                 >
@@ -1417,7 +1437,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                 size="icon"
                 variant={viewMode === "grid" ? "default" : "ghost"}
                 className="size-8 rounded-lg"
-                onClick={() => setViewMode("grid")}
+                onClick={() => handleViewModeChange("grid")}
                 aria-label="Grid view"
                 aria-pressed={viewMode === "grid"}
               >
@@ -1428,7 +1448,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                 size="icon"
                 variant={viewMode === "list" ? "default" : "ghost"}
                 className="size-8 rounded-lg"
-                onClick={() => setViewMode("list")}
+                onClick={() => handleViewModeChange("list")}
                 aria-label="List view"
                 aria-pressed={viewMode === "list"}
               >
@@ -1500,6 +1520,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
               page={currentPage}
               pageCount={pageCount}
               itemsPerPage={itemsPerPage}
+              itemsPerPageOptions={itemsPerPageOptions}
               onPageChange={setPage}
               onItemsPerPageChange={setItemsPerPage}
             />

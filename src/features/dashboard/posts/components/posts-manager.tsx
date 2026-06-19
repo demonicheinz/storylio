@@ -47,6 +47,11 @@ import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { PostDeleteButton } from "@/features/dashboard/posts/components/post-delete-button";
 import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
+import {
+  getDefaultItemsPerPage,
+  getItemsPerPageOptions,
+  paginateItems,
+} from "@/lib/pagination";
 import { cn, formatDate } from "@/lib/utils";
 
 export type DashboardPost = {
@@ -627,6 +632,7 @@ function PostsPagination({
   page,
   pageCount,
   itemsPerPage,
+  itemsPerPageOptions,
   onPageChange,
   onItemsPerPageChange,
 }: {
@@ -636,6 +642,7 @@ function PostsPagination({
   page: number;
   pageCount: number;
   itemsPerPage: number;
+  itemsPerPageOptions: readonly number[];
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (value: number) => void;
 }) {
@@ -696,6 +703,7 @@ function PostsPagination({
         <div className="md:hidden">
           <ItemsPerPageDropdown
             value={itemsPerPage}
+            options={itemsPerPageOptions}
             onValueChange={onItemsPerPageChange}
           />
         </div>
@@ -704,6 +712,7 @@ function PostsPagination({
       <div className="hidden justify-end md:flex">
         <ItemsPerPageDropdown
           value={itemsPerPage}
+          options={itemsPerPageOptions}
           onValueChange={onItemsPerPageChange}
           showLabel
         />
@@ -714,10 +723,12 @@ function PostsPagination({
 
 function ItemsPerPageDropdown({
   value,
+  options,
   onValueChange,
   showLabel = false,
 }: {
   value: number;
+  options: readonly number[];
   onValueChange: (value: number) => void;
   showLabel?: boolean;
 }) {
@@ -743,8 +754,8 @@ function ItemsPerPageDropdown({
             value={String(value)}
             onValueChange={(nextValue) => onValueChange(Number(nextValue))}
           >
-            {["10", "20", "40"].map((option) => (
-              <DropdownMenuRadioItem key={option} value={option}>
+            {options.map((option) => (
+              <DropdownMenuRadioItem key={option} value={String(option)}>
                 {option}
               </DropdownMenuRadioItem>
             ))}
@@ -761,7 +772,9 @@ export function PostsManager({ posts }: PostsManagerProps) {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(
+    getDefaultItemsPerPage("list"),
+  );
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -838,10 +851,13 @@ export function PostsManager({ posts }: PostsManagerProps) {
         }
 
         if (sortMode === "published") {
-          return (
-            new Date(b.publishedAt ?? 0).getTime() -
-            new Date(a.publishedAt ?? 0).getTime()
-          );
+          const aTime = a.publishedAt
+            ? new Date(a.publishedAt).getTime()
+            : Number.NEGATIVE_INFINITY;
+          const bTime = b.publishedAt
+            ? new Date(b.publishedAt).getTime()
+            : Number.NEGATIVE_INFINITY;
+          return bTime - aTime;
         }
 
         return (
@@ -850,12 +866,14 @@ export function PostsManager({ posts }: PostsManagerProps) {
       });
   }, [posts, query, selectedTags, sortMode, status]);
 
-  const pageCount = Math.max(1, Math.ceil(filteredPosts.length / itemsPerPage));
-  const currentPage = Math.min(page, pageCount);
-  const firstIndex =
-    filteredPosts.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-  const lastIndex = Math.min(currentPage * itemsPerPage, filteredPosts.length);
-  const paginatedPosts = filteredPosts.slice(firstIndex - 1, lastIndex);
+  const {
+    items: paginatedPosts,
+    pageCount,
+    currentPage,
+    firstIndex,
+    lastIndex,
+  } = paginateItems(filteredPosts, page, itemsPerPage);
+  const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
 
   useEffect(() => {
     setPage(1);
@@ -931,6 +949,11 @@ export function PostsManager({ posts }: PostsManagerProps) {
     setStatus("all");
     setSelectedTags([]);
     setSortMode("newest");
+  };
+
+  const handleViewModeChange = (nextViewMode: ViewMode) => {
+    setViewMode(nextViewMode);
+    setItemsPerPage(getDefaultItemsPerPage(nextViewMode));
   };
 
   const togglePostSelection = (id: string) => {
@@ -1095,7 +1118,10 @@ export function PostsManager({ posts }: PostsManagerProps) {
               onValueChange={setSortMode}
             />
             <div className="md:justify-self-start xl:justify-self-auto">
-              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              <ViewToggle
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
+              />
             </div>
           </div>
           {selectedTags.length > 0 && (
@@ -1166,6 +1192,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
             page={currentPage}
             pageCount={pageCount}
             itemsPerPage={itemsPerPage}
+            itemsPerPageOptions={itemsPerPageOptions}
             onPageChange={setPage}
             onItemsPerPageChange={setItemsPerPage}
           />
