@@ -24,6 +24,7 @@ import {
   CaretDownIcon,
   CaretLeftIcon,
   CaretRightIcon,
+  CheckCircleIcon,
   DotsSixVerticalIcon,
   DotsThreeVerticalIcon,
   EyeIcon,
@@ -48,9 +49,21 @@ import {
   useTransition,
 } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Drawer,
   DrawerContent,
@@ -72,15 +85,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
+import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
 import { ProjectStatus } from "@/generated/prisma";
+import type { ActionResult } from "@/lib/action-result";
 import {
   getDefaultItemsPerPage,
   getItemsPerPageOptions,
   paginateItems,
 } from "@/lib/pagination";
 import { cn, formatDate } from "@/lib/utils";
-import { actionReorderProjects } from "../actions";
+import {
+  actionDeleteProjects,
+  actionMoveProjectsToDraft,
+  actionPublishProjects,
+  actionReorderProjects,
+} from "../actions";
 import { ProjectDeleteButton } from "./project-delete-button";
 
 export type DashboardProject = {
@@ -224,14 +244,9 @@ function ProjectsStatCard({
   className?: string;
 }) {
   return (
-    <Card className="min-w-0 border-border/70 bg-card/55 py-4 shadow-sm">
-      <CardContent className="flex items-center gap-3 px-4">
-        <div
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-2xl",
-            iconClassName,
-          )}
-        >
+    <Card className={dashboardStyles.statCard}>
+      <CardContent className={dashboardStyles.statContent}>
+        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
           {icon}
         </div>
         <div className="min-w-0">
@@ -474,13 +489,28 @@ function ProjectActions({
   );
 }
 
-function ProjectsGrid({ projects }: { projects: DashboardProject[] }) {
+function ProjectsGrid({
+  projects,
+  batchMode,
+  selectedIds,
+  onToggleProject,
+}: {
+  projects: DashboardProject[];
+  batchMode: boolean;
+  selectedIds: Set<string>;
+  onToggleProject: (id: string) => void;
+}) {
   return (
-    <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className={dashboardStyles.gridCards}>
       {projects.map((project) => (
         <article
           key={project.id}
-          className="group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/45 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-brand-soft/40 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)]"
+          className={cn(
+            "group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/45 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-brand-soft/40 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)]",
+            selectedIds.has(project.id) && "border-brand-soft/60 bg-brand/5",
+            batchMode && "cursor-pointer",
+          )}
+          onClick={batchMode ? () => onToggleProject(project.id) : undefined}
         >
           <div className="relative">
             <ProjectThumbnail
@@ -488,10 +518,30 @@ function ProjectsGrid({ projects }: { projects: DashboardProject[] }) {
               className="rounded-none border-0"
               sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
             />
-            <div className="absolute top-3 right-3">
+            <div
+              className="absolute top-3 right-3"
+              onClick={(event) => event.stopPropagation()}
+            >
               <ProjectActions project={project} />
             </div>
-            <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+            {batchMode && (
+              <div
+                className="absolute top-3 left-3 z-10"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <Checkbox
+                  checked={selectedIds.has(project.id)}
+                  onCheckedChange={() => onToggleProject(project.id)}
+                  aria-label={`Select ${project.title}`}
+                />
+              </div>
+            )}
+            <div
+              className={cn(
+                "absolute left-3 flex flex-wrap gap-1.5 transition-[top]",
+                batchMode ? "top-11" : "top-3",
+              )}
+            >
               <ProjectStatusBadge project={project} compact />
               {project.isFeatured && (
                 <Badge className="h-5 rounded-full px-2 text-[11px]">
@@ -526,20 +576,48 @@ function ProjectListRow({
   project,
   dragHandle,
   isDragging = false,
+  batchMode,
+  selected,
+  onToggleProject,
 }: {
   project: DashboardProject;
   dragHandle?: ReactNode;
   isDragging?: boolean;
+  batchMode?: boolean;
+  selected?: boolean;
+  onToggleProject?: (id: string) => void;
 }) {
   return (
     <div
       className={cn(
         "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border/70 bg-background/30 xl:grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px] xl:items-center",
+        selected && "border-brand-soft/60 bg-brand/5",
+        batchMode && "cursor-pointer",
         isDragging &&
           "relative z-10 border-brand-soft/60 bg-background/70 opacity-80",
       )}
+      onClick={
+        batchMode && onToggleProject
+          ? () => onToggleProject(project.id)
+          : undefined
+      }
     >
-      <div className="row-span-2 xl:row-span-1">{dragHandle}</div>
+      <div className="row-span-2 xl:row-span-1">
+        {batchMode ? (
+          <div
+            className="flex h-full min-h-24 items-center justify-center border-r border-border/50"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() => onToggleProject?.(project.id)}
+              aria-label={`Select ${project.title}`}
+            />
+          </div>
+        ) : (
+          dragHandle
+        )}
+      </div>
       <div className="flex min-w-0 items-start gap-3 p-4 xl:p-3 xl:pr-4">
         <ProjectThumbnail
           project={project}
@@ -568,7 +646,10 @@ function ProjectListRow({
             <TechPills techStack={project.techStack} limit={4} />
           </div>
         </div>
-        <div className="shrink-0 xl:hidden">
+        <div
+          className="shrink-0 xl:hidden"
+          onClick={(event) => event.stopPropagation()}
+        >
           <ProjectActions project={project} />
         </div>
       </div>
@@ -589,7 +670,9 @@ function ProjectListRow({
         {formatDateTime(project.updatedAt)}
       </div>
       <div className="hidden justify-end p-3 xl:flex">
-        <ProjectActions project={project} />
+        <div onClick={(event) => event.stopPropagation()}>
+          <ProjectActions project={project} />
+        </div>
       </div>
       <div className="col-start-2 flex flex-wrap items-center gap-2 px-4 pb-4 xl:hidden">
         <ProjectStatusBadge project={project} compact />
@@ -607,9 +690,15 @@ function ProjectListRow({
 function SortableProjectListRow({
   project,
   disabled,
+  batchMode,
+  selected,
+  onToggleProject,
 }: {
   project: DashboardProject;
   disabled: boolean;
+  batchMode: boolean;
+  selected: boolean;
+  onToggleProject: (id: string) => void;
 }) {
   const {
     attributes,
@@ -633,6 +722,9 @@ function SortableProjectListRow({
       <ProjectListRow
         project={project}
         isDragging={isDragging}
+        batchMode={batchMode}
+        selected={selected}
+        onToggleProject={onToggleProject}
         dragHandle={
           <Button
             ref={setActivatorNodeRef}
@@ -655,7 +747,12 @@ function SortableProjectListRow({
 
 function ProjectsListHeader() {
   return (
-    <div className="hidden grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px] border-b border-border/60 px-3 py-3 text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase xl:grid">
+    <div
+      className={cn(
+        "hidden grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px] xl:grid",
+        dashboardStyles.listHeader,
+      )}
+    >
       <div />
       <div>Title</div>
       <div>Status</div>
@@ -669,11 +766,17 @@ function ProjectsListHeader() {
 function ProjectsList({
   projects,
   canReorder,
+  batchMode,
+  selectedIds,
   onReorder,
+  onToggleProject,
 }: {
   projects: DashboardProject[];
   canReorder: boolean;
+  batchMode: boolean;
+  selectedIds: Set<string>;
   onReorder: (projects: DashboardProject[]) => void;
+  onToggleProject: (id: string) => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -742,13 +845,16 @@ function ProjectsList({
 
   if (!canReorder) {
     return (
-      <div className="min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/30">
+      <div className={dashboardStyles.listSurface}>
         <ProjectsListHeader />
-        <div className="flex min-w-0 flex-col gap-3 p-2">
+        <div className="flex min-w-0 flex-col gap-3 p-3">
           {projects.map((project) => (
             <ProjectListRow
               key={project.id}
               project={project}
+              batchMode={batchMode}
+              selected={selectedIds.has(project.id)}
+              onToggleProject={onToggleProject}
               dragHandle={
                 <div className="flex h-full min-h-24 items-center justify-center border-r border-border/50 text-muted-foreground">
                   <DotsSixVerticalIcon />
@@ -762,7 +868,7 @@ function ProjectsList({
   }
 
   return (
-    <div className="min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/30">
+    <div className={dashboardStyles.listSurface}>
       <ProjectsListHeader />
       <DndContext
         sensors={sensors}
@@ -770,12 +876,15 @@ function ProjectsList({
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-          <div className="flex min-w-0 flex-col gap-3 p-2">
+          <div className="flex min-w-0 flex-col gap-3 p-3">
             {projects.map((project) => (
               <SortableProjectListRow
                 key={project.id}
                 project={project}
                 disabled={isPending}
+                batchMode={batchMode}
+                selected={selectedIds.has(project.id)}
+                onToggleProject={onToggleProject}
               />
             ))}
           </div>
@@ -925,7 +1034,105 @@ function ItemsPerPageDropdown({
     </div>
   );
 }
+
+function ProjectsBatchActionsBar({
+  selectedCount,
+  isPending,
+  onPublish,
+  onMoveToDraft,
+  onDelete,
+  onCancel,
+}: {
+  selectedCount: number;
+  isPending: boolean;
+  onPublish: () => void;
+  onMoveToDraft: () => void;
+  onDelete: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/55 p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-foreground">
+          {selectedCount} {selectedCount === 1 ? "project" : "projects"}{" "}
+          selected
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Drag ordering is paused while selecting projects.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+        <Button
+          type="button"
+          size="sm"
+          className="rounded-xl"
+          disabled={isPending || selectedCount === 0}
+          onClick={onPublish}
+        >
+          <CheckCircleIcon data-icon="inline-start" />
+          Publish
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="rounded-xl bg-input/35"
+          disabled={isPending || selectedCount === 0}
+          onClick={onMoveToDraft}
+        >
+          Move to draft
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              className="rounded-xl"
+              disabled={isPending || selectedCount === 0}
+            >
+              <TrashIcon data-icon="inline-start" />
+              Delete
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete selected projects?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete {selectedCount}{" "}
+                {selectedCount === 1 ? "project" : "projects"}. This action
+                cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={isPending}
+                onClick={onDelete}
+              >
+                {isPending ? "Deleting..." : "Delete selected"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="rounded-xl"
+          disabled={isPending}
+          onClick={onCancel}
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function ProjectsManager({ projects }: ProjectsManagerProps) {
+  const router = useRouter();
   const [items, setItems] = useState(projects);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -937,6 +1144,9 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     getDefaultItemsPerPage("list"),
   );
   const [page, setPage] = useState(1);
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBatchPending, startBatchTransition] = useTransition();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftStatus, setDraftStatus] = useState<StatusFilter>(status);
   const [draftFeatured, setDraftFeatured] = useState<FeaturedFilter>(featured);
@@ -1148,6 +1358,59 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     setItemsPerPage(getDefaultItemsPerPage(nextViewMode));
   };
 
+  const toggleBatchMode = () => {
+    setBatchMode((current) => {
+      if (current) {
+        setSelectedIds(new Set());
+      }
+
+      return !current;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setBatchMode(false);
+  };
+
+  const toggleProjectSelection = (id: string) => {
+    setSelectedIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+
+      if (nextIds.has(id)) {
+        nextIds.delete(id);
+      } else {
+        nextIds.add(id);
+      }
+
+      return nextIds;
+    });
+  };
+
+  const runBatchAction = (
+    action: (projectIds: string[]) => Promise<ActionResult<{ count: number }>>,
+    fallbackMessage: string,
+  ) => {
+    const projectIds = Array.from(selectedIds);
+
+    if (projectIds.length === 0) {
+      return;
+    }
+
+    startBatchTransition(async () => {
+      const result = await action(projectIds);
+
+      if (result.success) {
+        toast.success(result.message ?? fallbackMessage);
+        clearSelection();
+        router.refresh();
+        return;
+      }
+
+      toast.error(result.error);
+    });
+  };
+
   const statusDisplay =
     statusOptions.find((option) => option.value === status)?.label ??
     "All Status";
@@ -1159,6 +1422,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     "Order asc";
   const canReorder =
     viewMode === "list" &&
+    !batchMode &&
     sortMode === "order" &&
     status === "all" &&
     featured === "all" &&
@@ -1171,7 +1435,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   };
 
   return (
-    <div className="flex min-w-0 flex-col gap-5">
+    <div className={dashboardStyles.page}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="font-heading text-3xl font-bold">Projects</h1>
@@ -1192,7 +1456,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className={dashboardStyles.statGrid}>
         <ProjectsStatCard
           label="Total Projects"
           value={stats.total}
@@ -1227,8 +1491,8 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
         />
       </div>
 
-      <Card className="min-w-0 overflow-hidden border-border/70 bg-card/55 py-0">
-        <CardContent className="min-w-0 p-3 sm:p-4">
+      <Card className={dashboardStyles.toolbarCard}>
+        <CardContent className={dashboardStyles.toolbarContent}>
           <div className="grid gap-3 md:hidden">
             <div className="flex min-w-0 gap-2">
               <div className="relative min-w-0 flex-1">
@@ -1254,10 +1518,18 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
                 <FunnelSimpleIcon data-icon="inline-start" />
                 Filters
               </Button>
+              <Button
+                type="button"
+                variant={batchMode ? "secondary" : "outline"}
+                className="h-10 shrink-0 rounded-2xl bg-input/35"
+                onClick={toggleBatchMode}
+              >
+                {batchMode ? "Cancel" : "Select"}
+              </Button>
             </div>
           </div>
 
-          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_150px_150px_150px_170px_auto]">
+          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_140px_140px_160px_auto_auto]">
             <div className="relative min-w-0 md:col-span-2 xl:col-span-1">
               <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -1305,6 +1577,14 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
                 onViewModeChange={handleViewModeChange}
               />
             </div>
+            <Button
+              type="button"
+              variant={batchMode ? "secondary" : "outline"}
+              className="h-11 rounded-2xl bg-input/35"
+              onClick={toggleBatchMode}
+            >
+              {batchMode ? "Cancel" : "Select"}
+            </Button>
           </div>
           {selectedTechStacks.length > 0 && (
             <div className="mt-3 hidden flex-wrap items-center gap-2 md:flex">
@@ -1337,15 +1617,39 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
           )}
           {!canReorder && viewMode === "list" && (
             <p className="mt-3 text-xs text-muted-foreground">
-              Reordering is available only in list view with order sorting, no
-              active filters, and all projects visible on one page.
+              {batchMode
+                ? "Reordering is paused while selecting projects."
+                : "Reordering is available only in list view with order sorting, no active filters, and all projects visible on one page."}
             </p>
           )}
         </CardContent>
       </Card>
 
+      {batchMode && (
+        <ProjectsBatchActionsBar
+          selectedCount={selectedIds.size}
+          isPending={isBatchPending}
+          onPublish={() =>
+            runBatchAction(
+              actionPublishProjects,
+              "Selected projects published.",
+            )
+          }
+          onMoveToDraft={() =>
+            runBatchAction(
+              actionMoveProjectsToDraft,
+              "Selected projects moved to draft.",
+            )
+          }
+          onDelete={() =>
+            runBatchAction(actionDeleteProjects, "Selected projects deleted.")
+          }
+          onCancel={clearSelection}
+        />
+      )}
+
       {filteredProjects.length === 0 ? (
-        <div className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed text-center">
+        <div className={dashboardStyles.emptyState}>
           <BriefcaseIcon className="size-12 text-muted-foreground/50" />
           <div>
             <p className="font-medium">No projects found</p>
@@ -1365,13 +1669,21 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
           {viewMode === "grid" ? (
             <>
               <div className="hidden md:block">
-                <ProjectsGrid projects={paginatedProjects} />
+                <ProjectsGrid
+                  projects={paginatedProjects}
+                  batchMode={batchMode}
+                  selectedIds={selectedIds}
+                  onToggleProject={toggleProjectSelection}
+                />
               </div>
               <div className="md:hidden">
                 <ProjectsList
                   projects={paginatedProjects}
                   canReorder={false}
+                  batchMode={batchMode}
+                  selectedIds={selectedIds}
                   onReorder={handleReorder}
+                  onToggleProject={toggleProjectSelection}
                 />
               </div>
             </>
@@ -1379,7 +1691,10 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
             <ProjectsList
               projects={paginatedProjects}
               canReorder={canReorder}
+              batchMode={batchMode}
+              selectedIds={selectedIds}
               onReorder={handleReorder}
+              onToggleProject={toggleProjectSelection}
             />
           )}
 

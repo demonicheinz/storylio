@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import {
   type PostActionInput,
   type PostActionValues,
@@ -19,6 +20,8 @@ type PostActionData = {
   slug: string;
   status: "draft" | "published";
 };
+
+const postIdsSchema = z.array(z.string().min(1)).min(1).max(100);
 
 function parsePostInput(input: unknown) {
   const parsed = postActionSchema.safeParse(input);
@@ -82,6 +85,21 @@ function revalidatePostPaths(slug: string, oldSlug?: string) {
 
   if (oldSlug && oldSlug !== slug) {
     revalidatePath(`/blog/${oldSlug}`);
+  }
+}
+
+function revalidatePostsCollection() {
+  revalidatePath("/dashboard/posts");
+  revalidatePath("/dashboard");
+  revalidatePath("/blog");
+  revalidatePath("/");
+}
+
+function revalidatePostSlugs(slugs: string[]) {
+  revalidatePostsCollection();
+
+  for (const slug of slugs) {
+    revalidatePath(`/blog/${slug}`);
   }
 }
 
@@ -279,6 +297,144 @@ export async function actionDeletePost(postId: string): Promise<ActionResult> {
   } catch (error) {
     console.error("Delete post failed:", error);
     return actionError("Failed to delete post.");
+  }
+}
+
+function parsePostIds(postIds: string[]) {
+  const parsed = postIdsSchema.safeParse(postIds);
+
+  if (!parsed.success) {
+    return actionError("Select at least one post.");
+  }
+
+  return parsed.data;
+}
+
+export async function actionPublishPosts(
+  postIds: string[],
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsedIds = parsePostIds(postIds);
+  if (!Array.isArray(parsedIds)) {
+    return parsedIds;
+  }
+
+  try {
+    const posts = await db.post.findMany({
+      where: { id: { in: parsedIds } },
+      select: { slug: true },
+    });
+
+    const result = await db.post.updateMany({
+      where: {
+        id: { in: parsedIds },
+        status: PostStatus.DRAFT,
+      },
+      data: {
+        status: PostStatus.PUBLISHED,
+        publishedAt: new Date(),
+      },
+    });
+
+    revalidatePostSlugs(posts.map((post) => post.slug));
+
+    return actionSuccess(
+      { count: result.count },
+      result.count === 1
+        ? "Post published."
+        : `${result.count} posts published.`,
+    );
+  } catch (error) {
+    console.error("Publish posts failed:", error);
+    return actionError("Failed to publish posts.");
+  }
+}
+
+export async function actionMovePostsToDraft(
+  postIds: string[],
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsedIds = parsePostIds(postIds);
+  if (!Array.isArray(parsedIds)) {
+    return parsedIds;
+  }
+
+  try {
+    const posts = await db.post.findMany({
+      where: { id: { in: parsedIds } },
+      select: { slug: true },
+    });
+
+    const result = await db.post.updateMany({
+      where: {
+        id: { in: parsedIds },
+        status: PostStatus.PUBLISHED,
+      },
+      data: {
+        status: PostStatus.DRAFT,
+        publishedAt: null,
+      },
+    });
+
+    revalidatePostSlugs(posts.map((post) => post.slug));
+
+    return actionSuccess(
+      { count: result.count },
+      result.count === 1
+        ? "Post moved to draft."
+        : `${result.count} posts moved to draft.`,
+    );
+  } catch (error) {
+    console.error("Move posts to draft failed:", error);
+    return actionError("Failed to move posts to draft.");
+  }
+}
+
+export async function actionDeletePosts(
+  postIds: string[],
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsedIds = parsePostIds(postIds);
+  if (!Array.isArray(parsedIds)) {
+    return parsedIds;
+  }
+
+  try {
+    const posts = await db.post.findMany({
+      where: { id: { in: parsedIds } },
+      select: { slug: true },
+    });
+
+    const result = await db.post.deleteMany({
+      where: {
+        id: { in: parsedIds },
+      },
+    });
+
+    revalidatePostSlugs(posts.map((post) => post.slug));
+
+    return actionSuccess(
+      { count: result.count },
+      result.count === 1 ? "Post deleted." : `${result.count} posts deleted.`,
+    );
+  } catch (error) {
+    console.error("Delete posts failed:", error);
+    return actionError("Failed to delete posts.");
   }
 }
 

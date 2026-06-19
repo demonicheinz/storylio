@@ -41,6 +41,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -75,7 +76,10 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   actionCreateGalleryItem,
   actionDeleteGalleryItem,
+  actionDeleteGalleryItems,
+  actionHideGalleryItems,
   actionReorderGalleryItems,
+  actionShowGalleryItems,
   actionUpdateGalleryItem,
 } from "@/features/dashboard/gallery/actions";
 import {
@@ -88,7 +92,9 @@ import {
   DashboardSortableList,
   verticalListSortingStrategy,
 } from "@/features/dashboard/shared/components/sortable-list";
+import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
+import type { ActionResult } from "@/lib/action-result";
 import {
   getDefaultItemsPerPage,
   getItemsPerPageOptions,
@@ -619,14 +625,9 @@ function GalleryStatCard({
   iconClassName?: string;
 }) {
   return (
-    <Card className="overflow-hidden border-border/70 bg-card/50 py-0">
-      <CardContent className="flex items-center gap-3 p-3">
-        <div
-          className={cn(
-            "flex size-9 items-center justify-center rounded-xl [&_svg]:size-4",
-            iconClassName,
-          )}
-        >
+    <Card className={dashboardStyles.statCard}>
+      <CardContent className={dashboardStyles.statContent}>
+        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
           {icon}
         </div>
         <div>
@@ -726,22 +727,36 @@ function CompactFilterDropdown({
 
 function GalleryGrid({
   items,
+  batchMode,
+  selectedIds,
   onSelectItem,
+  onToggleItem,
 }: {
   items: DashboardGalleryItem[];
+  batchMode: boolean;
+  selectedIds: Set<string>;
   onSelectItem: (item: DashboardGalleryItem) => void;
+  onToggleItem: (id: string) => void;
 }) {
   return (
-    <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className={dashboardStyles.gridCards}>
       {items.map((item) => (
         <article
           key={item.id}
-          className="group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/45 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-brand-soft/40 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)]"
+          className={cn(
+            "group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/45 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-brand-soft/40 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)]",
+            selectedIds.has(item.id) && "border-brand-soft/60 bg-brand/5",
+            batchMode && "cursor-pointer",
+          )}
+          onClick={batchMode ? () => onToggleItem(item.id) : undefined}
         >
           <div className="relative aspect-video overflow-hidden bg-muted/35">
             <button
               type="button"
-              className="absolute inset-0 block w-full text-left md:pointer-events-none"
+              className={cn(
+                "absolute inset-0 block w-full text-left",
+                batchMode ? "pointer-events-none" : "md:pointer-events-none",
+              )}
               onClick={(event) =>
                 blurBeforeOpen(event, () => onSelectItem(item))
               }
@@ -752,17 +767,29 @@ function GalleryGrid({
                 caption={item.caption}
               />
             </button>
-            <GalleryStatusBadge
-              isVisible={item.isVisible}
-              className="absolute top-3 left-3 shadow-lg"
-            />
-            <div className="absolute top-3 right-3">
+            {batchMode && (
+              <div
+                className="absolute top-3 left-3 z-10"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <Checkbox
+                  checked={selectedIds.has(item.id)}
+                  onCheckedChange={() => onToggleItem(item.id)}
+                  aria-label={`Select ${getItemTitle(item)}`}
+                />
+              </div>
+            )}
+            <div
+              className="absolute top-3 right-3"
+              onClick={(event) => event.stopPropagation()}
+            >
               <GalleryItemActions item={item} />
             </div>
           </div>
           <div className="relative">
             <div className="flex min-h-36 flex-col px-4 pt-3 pb-4">
-              <div className="flex min-w-0 items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <GalleryStatusBadge isVisible={item.isVisible} />
                 {item.category && (
                   <Badge
                     variant="secondary"
@@ -791,24 +818,50 @@ function GalleryListRow({
   item,
   handle,
   isDragging,
+  batchMode,
+  selected,
   onSelectItem,
+  onToggleItem,
 }: {
   item: DashboardGalleryItem;
   handle: ReactNode;
   isDragging: boolean;
+  batchMode: boolean;
+  selected: boolean;
   onSelectItem: (item: DashboardGalleryItem) => void;
+  onToggleItem: (id: string) => void;
 }) {
   return (
     <div
       className={cn(
-        "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border/70 bg-background/30 xl:grid-cols-[44px_minmax(280px,1fr)_120px_150px_80px_130px_64px]",
+        "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(280px,1fr)_120px_150px_80px_130px_64px]",
+        dashboardStyles.listRow,
+        selected && "border-brand-soft/60 bg-brand/5",
+        batchMode && "cursor-pointer",
         isDragging && "relative z-10 bg-background/70 opacity-80",
       )}
+      onClick={batchMode ? () => onToggleItem(item.id) : undefined}
     >
-      <div className="row-span-2 xl:row-span-1">{handle}</div>
+      <div className="row-span-2 xl:row-span-1">
+        {batchMode ? (
+          <div
+            className="flex h-full min-h-20 items-center justify-center border-r border-border/50"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() => onToggleItem(item.id)}
+              aria-label={`Select ${getItemTitle(item)}`}
+            />
+          </div>
+        ) : (
+          handle
+        )}
+      </div>
       <button
         type="button"
-        className="flex min-w-0 items-center gap-3 p-3 text-left"
+        className="flex min-w-0 items-center gap-3 p-3 text-left disabled:cursor-pointer"
+        disabled={batchMode}
         onClick={(event) => blurBeforeOpen(event, () => onSelectItem(item))}
       >
         <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-xl border border-border/50 bg-muted/35">
@@ -848,7 +901,7 @@ function GalleryListRow({
             {formatDate(item.createdAt)}
           </span>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto" onClick={(event) => event.stopPropagation()}>
           <GalleryItemActions item={item} />
         </div>
       </div>
@@ -997,6 +1050,104 @@ function ItemsPerPageDropdown({
   );
 }
 
+function GalleryBatchActionsBar({
+  selectedCount,
+  isPending,
+  onShow,
+  onHide,
+  onDelete,
+  onCancel,
+}: {
+  selectedCount: number;
+  isPending: boolean;
+  onShow: () => void;
+  onHide: () => void;
+  onDelete: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/55 p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-foreground">
+          {selectedCount} {selectedCount === 1 ? "item" : "items"} selected
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Drag ordering is paused while selecting gallery items.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+        <Button
+          type="button"
+          size="sm"
+          className="rounded-xl"
+          disabled={isPending || selectedCount === 0}
+          onClick={onShow}
+        >
+          <EyeIcon data-icon="inline-start" />
+          Show
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="rounded-xl bg-input/35"
+          disabled={isPending || selectedCount === 0}
+          onClick={onHide}
+        >
+          <EyeSlashIcon data-icon="inline-start" />
+          Hide
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              className="rounded-xl"
+              disabled={isPending || selectedCount === 0}
+            >
+              <TrashIcon data-icon="inline-start" />
+              Delete
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Delete selected gallery items?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete {selectedCount}{" "}
+                {selectedCount === 1 ? "item" : "items"}. This action cannot be
+                undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={isPending}
+                onClick={onDelete}
+              >
+                {isPending ? "Deleting..." : "Delete selected"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="rounded-xl"
+          disabled={isPending}
+          onClick={onCancel}
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function GalleryMobileDetail({
   item,
   onClose,
@@ -1096,6 +1247,9 @@ export function GalleryManager({ items }: GalleryManagerProps) {
     getDefaultItemsPerPage("grid"),
   );
   const [page, setPage] = useState(1);
+  const [batchMode, setBatchMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBatchPending, startBatchTransition] = useTransition();
   const [selectedItem, setSelectedItem] = useState<DashboardGalleryItem | null>(
     null,
   );
@@ -1216,6 +1370,59 @@ export function GalleryManager({ items }: GalleryManagerProps) {
     setItemsPerPage(getDefaultItemsPerPage(nextViewMode));
   };
 
+  const toggleBatchMode = () => {
+    setBatchMode((current) => {
+      if (current) {
+        setSelectedIds(new Set());
+      }
+
+      return !current;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setBatchMode(false);
+  };
+
+  const toggleItemSelection = (id: string) => {
+    setSelectedIds((currentIds) => {
+      const nextIds = new Set(currentIds);
+
+      if (nextIds.has(id)) {
+        nextIds.delete(id);
+      } else {
+        nextIds.add(id);
+      }
+
+      return nextIds;
+    });
+  };
+
+  const runBatchAction = (
+    action: (itemIds: string[]) => Promise<ActionResult<{ count: number }>>,
+    fallbackMessage: string,
+  ) => {
+    const itemIds = Array.from(selectedIds);
+
+    if (itemIds.length === 0) {
+      return;
+    }
+
+    startBatchTransition(async () => {
+      const result = await action(itemIds);
+
+      if (result.success) {
+        toast.success(result.message ?? fallbackMessage);
+        clearSelection();
+        router.refresh();
+        return;
+      }
+
+      toast.error(result.error);
+    });
+  };
+
   const handleReorder = (nextItems: DashboardGalleryItem[]) => {
     startReorderTransition(async () => {
       const result = await actionReorderGalleryItems(
@@ -1235,7 +1442,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
   };
 
   return (
-    <div className="flex min-w-0 flex-col gap-5">
+    <div className={dashboardStyles.page}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="font-heading text-3xl font-bold">Gallery</h1>
@@ -1256,7 +1463,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className={dashboardStyles.statGrid}>
         <GalleryStatCard
           label="Total Items"
           value={stats.total}
@@ -1287,8 +1494,8 @@ export function GalleryManager({ items }: GalleryManagerProps) {
         />
       </div>
 
-      <Card className="min-w-0 overflow-hidden border-border/70 bg-card/55 py-0">
-        <CardContent className="min-w-0 p-3 sm:p-4">
+      <Card className={dashboardStyles.toolbarCard}>
+        <CardContent className={dashboardStyles.toolbarContent}>
           <div className="grid gap-3 md:hidden">
             <div className="relative min-w-0">
               <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -1361,10 +1568,19 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   <ListBulletsIcon />
                 </Button>
               </div>
+              <Button
+                type="button"
+                variant={batchMode ? "secondary" : "outline"}
+                size="sm"
+                className="h-10 shrink-0 rounded-xl bg-input/35"
+                onClick={toggleBatchMode}
+              >
+                {batchMode ? "Cancel" : "Select"}
+              </Button>
             </div>
           </div>
 
-          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_150px_180px_150px_auto]">
+          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_170px_140px_auto_auto]">
             <div className="relative min-w-0 md:col-span-2 xl:col-span-1">
               <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -1455,14 +1671,41 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                 <ListBulletsIcon />
               </Button>
             </div>
+            <Button
+              type="button"
+              variant={batchMode ? "secondary" : "outline"}
+              className="h-11 rounded-2xl bg-input/35"
+              onClick={toggleBatchMode}
+            >
+              {batchMode ? "Cancel" : "Select"}
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="min-w-0 overflow-hidden border-border/70 bg-card/45 py-0">
-        <CardContent className="min-w-0 p-3 sm:p-4">
+      <Card className={dashboardStyles.toolbarCard}>
+        <CardContent className={dashboardStyles.toolbarContent}>
+          {batchMode && (
+            <GalleryBatchActionsBar
+              selectedCount={selectedIds.size}
+              isPending={isBatchPending}
+              onShow={() =>
+                runBatchAction(actionShowGalleryItems, "Selected items shown.")
+              }
+              onHide={() =>
+                runBatchAction(actionHideGalleryItems, "Selected items hidden.")
+              }
+              onDelete={() =>
+                runBatchAction(
+                  actionDeleteGalleryItems,
+                  "Selected items deleted.",
+                )
+              }
+              onCancel={clearSelection}
+            />
+          )}
           {items.length === 0 ? (
-            <div className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed text-center">
+            <div className={dashboardStyles.emptyState}>
               <ImageIcon className="size-12 text-muted-foreground/50" />
               <div>
                 <p className="font-medium">No gallery items yet</p>
@@ -1480,7 +1723,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
               />
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="flex min-h-72 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed text-center">
+            <div className={dashboardStyles.emptyState}>
               <MagnifyingGlassIcon className="size-11 text-muted-foreground/50" />
               <div>
                 <p className="font-medium">No gallery items found</p>
@@ -1492,13 +1735,16 @@ export function GalleryManager({ items }: GalleryManagerProps) {
           ) : viewMode === "grid" ? (
             <GalleryGrid
               items={paginatedItems}
+              batchMode={batchMode}
+              selectedIds={selectedIds}
               onSelectItem={setSelectedItem}
+              onToggleItem={toggleItemSelection}
             />
           ) : (
             <DashboardSortableList
               items={paginatedItems}
-              disabled={isReordering}
-              className="flex min-w-0 flex-col gap-3"
+              disabled={isReordering || batchMode}
+              className={dashboardStyles.sortableRows}
               strategy={verticalListSortingStrategy}
               onReorder={handleReorder}
               renderItem={({ item, handle, isDragging }) => (
@@ -1506,7 +1752,10 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   item={item}
                   handle={handle}
                   isDragging={isDragging}
+                  batchMode={batchMode}
+                  selected={selectedIds.has(item.id)}
                   onSelectItem={setSelectedItem}
+                  onToggleItem={toggleItemSelection}
                 />
               )}
             />

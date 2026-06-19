@@ -5,6 +5,7 @@ import {
   CaretDownIcon,
   CaretLeftIcon,
   CaretRightIcon,
+  CheckCircleIcon,
   DotsThreeVerticalIcon,
   EyeIcon,
   FileTextIcon,
@@ -19,7 +20,20 @@ import {
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,8 +59,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
+import {
+  actionDeletePosts,
+  actionMovePostsToDraft,
+  actionPublishPosts,
+} from "@/features/dashboard/posts/actions";
 import { PostDeleteButton } from "@/features/dashboard/posts/components/post-delete-button";
+import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
+import type { ActionResult } from "@/lib/action-result";
 import {
   getDefaultItemsPerPage,
   getItemsPerPageOptions,
@@ -198,14 +219,9 @@ function PostsStatCard({
   className?: string;
 }) {
   return (
-    <Card className="min-w-0 border-border/70 bg-card/55 py-4 shadow-sm">
-      <CardContent className="flex items-center gap-3 px-4">
-        <div
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-2xl",
-            iconClassName,
-          )}
-        >
+    <Card className={dashboardStyles.statCard}>
+      <CardContent className={dashboardStyles.statContent}>
+        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
           {icon}
         </div>
         <div className="min-w-0">
@@ -454,20 +470,55 @@ function TagPills({
   );
 }
 
-function PostsGrid({ posts }: { posts: DashboardPost[] }) {
+function PostsGrid({
+  posts,
+  batchMode,
+  selectedIds,
+  onTogglePost,
+}: {
+  posts: DashboardPost[];
+  batchMode: boolean;
+  selectedIds: Set<string>;
+  onTogglePost: (id: string) => void;
+}) {
   return (
-    <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className={dashboardStyles.gridCards}>
       {posts.map((post) => (
         <article
           key={post.id}
-          className="group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/45 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-brand-soft/40 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)]"
+          className={cn(
+            "group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/45 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-brand-soft/40 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)]",
+            selectedIds.has(post.id) && "border-brand-soft/60 bg-brand/5",
+            batchMode && "cursor-pointer",
+          )}
+          onClick={batchMode ? () => onTogglePost(post.id) : undefined}
         >
           <div className="relative">
             <PostThumbnail post={post} className="rounded-none border-0" />
-            <div className="absolute top-3 left-3">
+            {batchMode && (
+              <div
+                className="absolute top-3 left-3 z-10"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <Checkbox
+                  checked={selectedIds.has(post.id)}
+                  onCheckedChange={() => onTogglePost(post.id)}
+                  aria-label={`Select ${post.title}`}
+                />
+              </div>
+            )}
+            <div
+              className={cn(
+                "absolute left-3 transition-[top]",
+                batchMode ? "top-11" : "top-3",
+              )}
+            >
               <StatusBadge post={post} compact />
             </div>
-            <div className="absolute top-3 right-3">
+            <div
+              className="absolute top-3 right-3"
+              onClick={(event) => event.stopPropagation()}
+            >
               <PostActions post={post} />
             </div>
           </div>
@@ -500,28 +551,39 @@ function PostsGrid({ posts }: { posts: DashboardPost[] }) {
 function PostsList({
   posts,
   selectedIds,
+  batchMode,
   onTogglePost,
   onTogglePage,
+  onMobilePostClick,
 }: {
   posts: DashboardPost[];
   selectedIds: Set<string>;
+  batchMode: boolean;
   onTogglePost: (id: string) => void;
   onTogglePage: () => void;
+  onMobilePostClick: (id: string) => void;
 }) {
   const allSelected =
     posts.length > 0 && posts.every((post) => selectedIds.has(post.id));
+  const desktopGridColumns = batchMode
+    ? "grid-cols-[44px_minmax(360px,1fr)_130px_90px_160px_160px_56px]"
+    : "grid-cols-[minmax(360px,1fr)_130px_90px_160px_160px_56px]";
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-2xl border border-border/70 bg-background/30 xl:block">
-        <div className="grid grid-cols-[44px_minmax(360px,1fr)_130px_90px_160px_160px_56px] border-b border-border/60 px-3 py-3 text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
-          <div>
-            <Checkbox
-              checked={allSelected}
-              onCheckedChange={onTogglePage}
-              aria-label="Select visible posts"
-            />
-          </div>
+      <div className={cn(dashboardStyles.listSurface, "hidden xl:block")}>
+        <div
+          className={cn("grid", desktopGridColumns, dashboardStyles.listHeader)}
+        >
+          {batchMode && (
+            <div>
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={onTogglePage}
+                aria-label="Select visible posts"
+              />
+            </div>
+          )}
           <div>Title</div>
           <div>Status</div>
           <div>Views</div>
@@ -529,19 +591,24 @@ function PostsList({
           <div>Updated at</div>
           <div className="text-right">Actions</div>
         </div>
-        <div className="divide-y divide-border/60">
+        <div className={dashboardStyles.listRows}>
           {posts.map((post) => (
             <div
               key={post.id}
-              className="grid min-w-0 grid-cols-[44px_minmax(360px,1fr)_130px_90px_160px_160px_56px] items-center px-3 py-3"
+              className={cn(
+                "grid min-w-0 items-center px-3 py-3",
+                desktopGridColumns,
+              )}
             >
-              <div>
-                <Checkbox
-                  checked={selectedIds.has(post.id)}
-                  onCheckedChange={() => onTogglePost(post.id)}
-                  aria-label={`Select ${post.title}`}
-                />
-              </div>
+              {batchMode && (
+                <div>
+                  <Checkbox
+                    checked={selectedIds.has(post.id)}
+                    onCheckedChange={() => onTogglePost(post.id)}
+                    aria-label={`Select ${post.title}`}
+                  />
+                </div>
+              )}
               <div className="flex min-w-0 items-center gap-3 pr-4">
                 <PostThumbnail
                   post={post}
@@ -584,9 +651,39 @@ function PostsList({
         {posts.map((post) => (
           <article
             key={post.id}
-            className="min-w-0 rounded-2xl border border-border/70 bg-background/45 p-4"
+            className={cn(
+              "min-w-0 rounded-2xl border border-border/70 bg-background/45 p-4 transition-colors select-none",
+              selectedIds.has(post.id) && "border-brand-soft/50 bg-brand/5",
+              batchMode && "cursor-pointer",
+            )}
+            onClick={() => onMobilePostClick(post.id)}
           >
-            <div className="flex min-w-0 items-start gap-3">
+            <div
+              className={cn(
+                "flex min-w-0 items-start transition-[gap] duration-200",
+                batchMode ? "gap-3" : "gap-0",
+              )}
+            >
+              <div
+                className={cn(
+                  "grid overflow-hidden transition-[width,opacity,transform] duration-200 ease-out",
+                  batchMode
+                    ? "w-5 translate-x-0 opacity-100"
+                    : "w-0 -translate-x-2 opacity-0",
+                )}
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+                aria-hidden={!batchMode}
+              >
+                <Checkbox
+                  checked={selectedIds.has(post.id)}
+                  onCheckedChange={() => onTogglePost(post.id)}
+                  className="mt-1 shrink-0"
+                  disabled={!batchMode}
+                  tabIndex={batchMode ? 0 : -1}
+                  aria-label={`Select ${post.title}`}
+                />
+              </div>
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 items-center gap-2">
                   <span
@@ -603,7 +700,12 @@ function PostsList({
                   /blog/{post.slug}
                 </p>
               </div>
-              <PostActions post={post} />
+              <div
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                <PostActions post={post} />
+              </div>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <StatusBadge post={post} compact />
@@ -622,6 +724,101 @@ function PostsList({
         ))}
       </div>
     </>
+  );
+}
+
+function BatchActionsBar({
+  selectedCount,
+  isPending,
+  onPublish,
+  onMoveToDraft,
+  onDelete,
+  onClear,
+}: {
+  selectedCount: number;
+  isPending: boolean;
+  onPublish: () => void;
+  onMoveToDraft: () => void;
+  onDelete: () => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/55 p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-foreground">
+          {selectedCount} {selectedCount === 1 ? "post" : "posts"} selected
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Apply publishing changes or remove selected posts.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+        <Button
+          type="button"
+          size="sm"
+          className="rounded-xl"
+          disabled={isPending || selectedCount === 0}
+          onClick={onPublish}
+        >
+          <CheckCircleIcon data-icon="inline-start" />
+          Publish
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="rounded-xl bg-input/35"
+          disabled={isPending || selectedCount === 0}
+          onClick={onMoveToDraft}
+        >
+          Move to draft
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              className="rounded-xl"
+              disabled={isPending || selectedCount === 0}
+            >
+              <TrashIcon data-icon="inline-start" />
+              Delete
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete selected posts?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete {selectedCount}{" "}
+                {selectedCount === 1 ? "post" : "posts"}. This action cannot be
+                undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={isPending}
+                onClick={onDelete}
+              >
+                {isPending ? "Deleting..." : "Delete selected"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="rounded-xl"
+          disabled={isPending}
+          onClick={onClear}
+        >
+          Clear
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -767,6 +964,7 @@ function ItemsPerPageDropdown({
 }
 
 export function PostsManager({ posts }: PostsManagerProps) {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -777,6 +975,8 @@ export function PostsManager({ posts }: PostsManagerProps) {
   );
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchMode, setBatchMode] = useState(false);
+  const [isBatchPending, startBatchTransition] = useTransition();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftStatus, setDraftStatus] = useState<StatusFilter>(status);
   const [draftTags, setDraftTags] = useState<string[]>(selectedTags);
@@ -970,6 +1170,22 @@ export function PostsManager({ posts }: PostsManagerProps) {
     });
   };
 
+  const toggleMobilePostSelection = (id: string) => {
+    const nextIds = new Set(selectedIds);
+
+    if (nextIds.has(id)) {
+      nextIds.delete(id);
+    } else {
+      nextIds.add(id);
+    }
+
+    setSelectedIds(nextIds);
+
+    if (nextIds.size === 0) {
+      setBatchMode(false);
+    }
+  };
+
   const togglePageSelection = () => {
     setSelectedIds((currentIds) => {
       const nextIds = new Set(currentIds);
@@ -989,6 +1205,65 @@ export function PostsManager({ posts }: PostsManagerProps) {
     });
   };
 
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setBatchMode(false);
+  };
+
+  const handleMobilePostClick = (id: string) => {
+    if (!batchMode) {
+      return;
+    }
+
+    toggleMobilePostSelection(id);
+  };
+
+  const toggleBatchMode = () => {
+    setBatchMode((current) => {
+      if (current) {
+        setSelectedIds(new Set());
+      }
+
+      return !current;
+    });
+  };
+
+  const runBatchAction = (
+    action: (postIds: string[]) => Promise<ActionResult<{ count: number }>>,
+    fallbackMessage: string,
+  ) => {
+    const postIds = Array.from(selectedIds);
+
+    if (postIds.length === 0) {
+      return;
+    }
+
+    startBatchTransition(async () => {
+      const result = await action(postIds);
+
+      if (result.success) {
+        toast.success(result.message ?? fallbackMessage);
+        clearSelection();
+        router.refresh();
+        return;
+      }
+
+      toast.error(result.error);
+    });
+  };
+
+  const publishSelectedPosts = () => {
+    runBatchAction(actionPublishPosts, "Selected posts published.");
+  };
+
+  const moveSelectedPostsToDraft = () => {
+    runBatchAction(actionMovePostsToDraft, "Selected posts moved to draft.");
+  };
+
+  const deleteSelectedPosts = () => {
+    runBatchAction(actionDeletePosts, "Selected posts deleted.");
+  };
+
   const statusDisplay =
     statusOptions.find((option) => option.value === status)?.label ??
     "All Status";
@@ -997,7 +1272,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
     "Newest First";
 
   return (
-    <div className="flex min-w-0 flex-col gap-5">
+    <div className={dashboardStyles.page}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="font-heading text-3xl font-bold">Posts</h1>
@@ -1017,7 +1292,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className={dashboardStyles.statGrid}>
         <PostsStatCard
           label="Total Posts"
           value={stats.total}
@@ -1052,8 +1327,8 @@ export function PostsManager({ posts }: PostsManagerProps) {
         />
       </div>
 
-      <Card className="min-w-0 overflow-hidden border-border/70 bg-card/55 py-0">
-        <CardContent className="min-w-0 p-3 sm:p-4">
+      <Card className={dashboardStyles.toolbarCard}>
+        <CardContent className={dashboardStyles.toolbarContent}>
           <div className="grid gap-3 md:hidden">
             <div className="flex min-w-0 gap-2">
               <div className="relative min-w-0 flex-1">
@@ -1079,10 +1354,18 @@ export function PostsManager({ posts }: PostsManagerProps) {
                 <FunnelSimpleIcon data-icon="inline-start" />
                 Filters
               </Button>
+              <Button
+                type="button"
+                variant={batchMode ? "secondary" : "outline"}
+                className="h-10 shrink-0 rounded-2xl bg-input/35"
+                onClick={toggleBatchMode}
+              >
+                {batchMode ? "Cancel" : "Select"}
+              </Button>
             </div>
           </div>
 
-          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_150px_150px_170px_auto]">
+          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_140px_160px_auto_auto]">
             <div className="relative min-w-0 md:col-span-2 xl:col-span-1">
               <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -1123,6 +1406,14 @@ export function PostsManager({ posts }: PostsManagerProps) {
                 onViewModeChange={handleViewModeChange}
               />
             </div>
+            <Button
+              type="button"
+              variant={batchMode ? "secondary" : "outline"}
+              className="h-11 rounded-2xl bg-input/35"
+              onClick={toggleBatchMode}
+            >
+              {batchMode ? "Cancel" : "Select"}
+            </Button>
           </div>
           {selectedTags.length > 0 && (
             <div className="mt-3 hidden flex-wrap items-center gap-2 md:flex">
@@ -1156,8 +1447,19 @@ export function PostsManager({ posts }: PostsManagerProps) {
         </CardContent>
       </Card>
 
+      {batchMode && (
+        <BatchActionsBar
+          selectedCount={selectedIds.size}
+          isPending={isBatchPending}
+          onPublish={publishSelectedPosts}
+          onMoveToDraft={moveSelectedPostsToDraft}
+          onDelete={deleteSelectedPosts}
+          onClear={clearSelection}
+        />
+      )}
+
       {filteredPosts.length === 0 ? (
-        <div className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed text-center">
+        <div className={dashboardStyles.emptyState}>
           <ArticleIcon className="size-12 text-muted-foreground/50" />
           <div>
             <p className="font-medium">No posts found</p>
@@ -1175,13 +1477,20 @@ export function PostsManager({ posts }: PostsManagerProps) {
       ) : (
         <>
           {viewMode === "grid" ? (
-            <PostsGrid posts={paginatedPosts} />
+            <PostsGrid
+              posts={paginatedPosts}
+              batchMode={batchMode}
+              selectedIds={selectedIds}
+              onTogglePost={togglePostSelection}
+            />
           ) : (
             <PostsList
               posts={paginatedPosts}
               selectedIds={selectedIds}
+              batchMode={batchMode}
               onTogglePost={togglePostSelection}
               onTogglePage={togglePageSelection}
+              onMobilePostClick={handleMobilePostClick}
             />
           )}
 
