@@ -1,0 +1,290 @@
+name: Trivy Security Scan
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+  schedule:
+    # Run every Monday at 08:00 UTC (15:00 WIB)
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+jobs:
+  # ── 1. Dependency Vulnerability Scan ────────────────────────────────────────
+  # Upsert comment: always shows latest state, no clutter
+  trivy-dependency:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: trivy-db-
+
+      - name: Trivy — Dependency scan (SARIF)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          scanners: "vuln"
+          format: "sarif"
+          output: "trivy-dependency.sarif"
+          severity: "CRITICAL,HIGH,MEDIUM"
+          exit-code: "0"
+          ignore-unfixed: true
+          cache-dir: ~/.cache/trivy
+
+      - name: Upload results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-dependency.sarif
+          category: trivy-dependency
+
+      - name: Trivy — Dependency scan (Table)
+        if: github.event_name == 'pull_request'
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          scanners: "vuln"
+          format: "table"
+          output: "trivy-dependency.txt"
+          severity: "CRITICAL,HIGH,MEDIUM"
+          exit-code: "0"
+          ignore-unfixed: true
+          cache-dir: ~/.cache/trivy
+
+      - name: Upsert Dependency scan comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('trivy-dependency.txt', 'utf8').trim();
+            const MARKER = '<!-- trivy-dependency -->';
+            const body = output.length > 0
+              ? `${MARKER}\n### 📦 Dependency Vulnerability Scan\n> Last updated: ${new Date().toUTCString()}\n\`\`\`\n${output}\n\`\`\``
+              : `${MARKER}\n### 📦 Dependency Vulnerability Scan\n> Last updated: ${new Date().toUTCString()}\n✅ No vulnerabilities found.`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.includes(MARKER));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  # ── 2. Secret Detection ──────────────────────────────────────────────────────
+  # FIX: scan with exit-code 0 first → post comment → then fail if secrets found
+  # This ensures PR comment always posts, even when secrets are detected
+  trivy-secret:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: trivy-db-
+
+      # Step 1: Scan and collect results — never block here
+      - name: Trivy — Secret scan (SARIF)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          scanners: "secret"
+          format: "sarif"
+          output: "trivy-secret.sarif"
+          severity: "CRITICAL,HIGH,MEDIUM"
+          exit-code: "0" # never block here — comment must post first
+          cache-dir: ~/.cache/trivy
+
+      - name: Trivy — Secret scan (Table + JSON)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          scanners: "secret"
+          format: "json"
+          output: "trivy-secret.json"
+          severity: "CRITICAL,HIGH,MEDIUM"
+          exit-code: "0" # never block here — comment must post first
+          cache-dir: ~/.cache/trivy
+
+      - name: Upload results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-secret.sarif
+          category: trivy-secrets
+
+      # Step 2: Always post comment (secrets found or not)
+      - name: Post Secret scan comment to PR (with history)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const timestamp = new Date().toUTCString();
+            const commitSha = context.sha.slice(0, 7);
+
+            // Parse JSON to check if secrets were found
+            const json = JSON.parse(fs.readFileSync('trivy-secret.json', 'utf8'));
+            const results = json.Results || [];
+            const secrets = results.flatMap(r => r.Secrets || []);
+            const hasSecrets = secrets.length > 0;
+
+            let body;
+            if (hasSecrets) {
+              const lines = secrets.map(s =>
+                `- **${s.RuleID}** · ${s.Severity} · \`${s.Target || 'unknown'}\` line ${s.StartLine || '?'}: ${s.Title}`
+              ).join('\n');
+              body = `### 🔑 Secret Detection — \`${commitSha}\` · ${timestamp}\n⚠️ **${secrets.length} secret(s) detected — remove before merging!**\n\n${lines}`;
+            } else {
+              body = `### 🔑 Secret Detection — \`${commitSha}\` · ${timestamp}\n✅ No secrets found.`;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      # Step 3: Now block the pipeline if secrets were found
+      - name: Fail if secrets were detected
+        run: |
+          SECRETS=$(jq '[.Results[].Secrets // []] | add | length' trivy-secret.json 2>/dev/null || echo "0")
+          if [ "$SECRETS" -gt "0" ]; then
+            echo "❌ $SECRETS secret(s) found. Pipeline blocked."
+            exit 1
+          fi
+          echo "✅ No secrets found."
+
+  # ── 3. Misconfiguration Scan ─────────────────────────────────────────────────
+  # Upsert comment: always shows latest state, no clutter
+  trivy-misconfig:
+    name: Misconfiguration Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: trivy-db-
+
+      - name: Trivy — Misconfiguration scan (SARIF)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "config"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-misconfig.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0"
+          cache-dir: ~/.cache/trivy
+
+      - name: Upload results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-misconfig.sarif
+          category: trivy-misconfig
+
+      - name: Trivy — Misconfiguration scan (Table)
+        if: github.event_name == 'pull_request'
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "config"
+          scan-ref: "."
+          format: "table"
+          output: "trivy-misconfig.txt"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0"
+          cache-dir: ~/.cache/trivy
+
+      - name: Upsert Misconfiguration scan comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('trivy-misconfig.txt', 'utf8').trim();
+            const MARKER = '<!-- trivy-misconfig -->';
+            const body = output.length > 0
+              ? `${MARKER}\n### ⚙️ Misconfiguration Scan\n> Last updated: ${new Date().toUTCString()}\n\`\`\`\n${output}\n\`\`\``
+              : `${MARKER}\n### ⚙️ Misconfiguration Scan\n> Last updated: ${new Date().toUTCString()}\n✅ No misconfigurations found.`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.includes(MARKER));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
