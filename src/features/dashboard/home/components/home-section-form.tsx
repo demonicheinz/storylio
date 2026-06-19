@@ -1217,7 +1217,7 @@ export function HomeContentManager({
           <CardHeader>
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <CardTitle>My Approach</CardTitle>
+                <CardTitle className="font-semibold">My Approach</CardTitle>
                 <CardDescription>
                   Manage the phase cards shown on the Home page.
                 </CardDescription>
@@ -1249,7 +1249,7 @@ export function HomeContentManager({
           <CardHeader>
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <CardTitle>Testimonials</CardTitle>
+                <CardTitle className="font-semibold">Testimonials</CardTitle>
                 <CardDescription>
                   {testimonials.length}{" "}
                   {testimonials.length === 1 ? "testimonial" : "testimonials"}{" "}
@@ -1278,7 +1278,9 @@ export function HomeContentManager({
           <CardHeader>
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <CardTitle>Tech / Client Logos</CardTitle>
+                <CardTitle className="font-semibold">
+                  Tech / Client Logos
+                </CardTitle>
                 <CardDescription>
                   Manage logos shown near testimonials on the Home page.
                 </CardDescription>

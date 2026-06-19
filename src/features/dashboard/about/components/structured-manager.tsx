@@ -1,12 +1,13 @@
 "use client";
 
 import {
-  ArrowDownIcon,
-  ArrowUpIcon,
+  ArrowSquareOutIcon,
+  DotsThreeVerticalIcon,
   PencilSimpleIcon,
   PlusIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useState, useTransition } from "react";
@@ -24,13 +25,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -38,10 +32,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
   actionCreateEducation,
@@ -61,6 +62,8 @@ import {
   actionUpdateSkillCategory,
   actionUpdateWorkExperience,
 } from "@/features/dashboard/about/structured-actions";
+import { DashboardSortableList } from "@/features/dashboard/shared/components/sortable-list";
+import { cn } from "@/lib/utils";
 
 export type AboutStructuredData = {
   experiences: Array<
@@ -102,6 +105,11 @@ type Item = Record<string, unknown> & {
   id: string;
   order: number;
   isVisible: boolean;
+};
+type Section = "experience" | "education" | "skills";
+type SkillItem = Item & {
+  categoryId: string;
+  categoryName: string;
 };
 
 const configs = {
@@ -254,7 +262,9 @@ function EditDialog({
 
   return (
     <>
-      <span onClick={() => setOpen(true)}>{trigger}</span>
+      <div className="contents" onClick={() => setOpen(true)}>
+        {trigger}
+      </div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[calc(100vh-2rem)] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
           <form onSubmit={submit} className="flex min-w-0 flex-col gap-5">
@@ -320,18 +330,64 @@ function EditDialog({
   );
 }
 
+function VisibilityBadge({ isVisible }: { isVisible: boolean }) {
+  return (
+    <Badge
+      variant={isVisible ? "default" : "secondary"}
+      className={cn(
+        "gap-1.5",
+        isVisible
+          ? "bg-emerald-500/12 text-emerald-300"
+          : "bg-amber-500/12 text-amber-300",
+      )}
+    >
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          isVisible ? "bg-emerald-300" : "bg-amber-300",
+        )}
+      />
+      {isVisible ? "Visible" : "Hidden"}
+    </Badge>
+  );
+}
+
+function SkillLevel({ value }: { value: string }) {
+  return (
+    <span className="truncate text-sm text-muted-foreground">{value}</span>
+  );
+}
+
+function SectionHeader({
+  title,
+  subtitle,
+  action,
+}: {
+  title: string;
+  subtitle: string;
+  action: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        <h2 className="font-heading text-xl font-semibold">{title}</h2>
+        <p className="text-sm leading-6 text-muted-foreground">{subtitle}</p>
+      </div>
+      {action}
+    </div>
+  );
+}
+
 function ManagedList({
   kind,
   items,
   categoryId,
   children,
-  compact = false,
 }: {
   kind: Kind;
   items: Item[];
   categoryId?: string;
   children?: (item: Item) => ReactNode;
-  compact?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -358,11 +414,8 @@ function ManagedList({
         : kind === "category"
           ? actionDeleteSkillCategory
           : actionDeleteSkill;
-  const move = (index: number, delta: number) => {
-    const next = [...items];
-    const target = index + delta;
-    if (target < 0 || target >= next.length) return;
-    [next[index], next[target]] = [next[target], next[index]];
+
+  const reorder = (next: Item[]) => {
     startTransition(async () => {
       const result = await reorderAction(
         next.map((item, order) => ({ id: item.id, order })),
@@ -372,124 +425,150 @@ function ManagedList({
         : toast.error(result.error);
     });
   };
-  const preview = (item: Item) => {
-    if (kind === "experience") {
-      const meta = [
-        item.company,
-        item.type,
-        item.location,
-        [item.startDate, item.isCurrent ? "Present" : item.endDate]
+  const title = (item: Item) => String(item[titleKey] ?? "Untitled");
+  const subtitle = (item: Item) =>
+    kind === "experience"
+      ? [item.company, item.type, item.location].filter(Boolean).join(" · ")
+      : kind === "education"
+        ? [item.degree, item.field, item.location].filter(Boolean).join(" · ")
+        : kind === "skill"
+          ? String((item as SkillItem).categoryName ?? "")
+          : String(item.descriptionEn || item.descriptionId || "");
+  const period = (item: Item) =>
+    kind === "experience"
+      ? [item.startDate, item.isCurrent ? "Present" : item.endDate]
           .filter(Boolean)
-          .join(" - "),
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      const description = String(
-        item.descriptionEn || item.descriptionId || "",
-      );
-      return { meta, description };
-    }
-    if (kind === "education") {
-      const meta = [
-        item.degree,
-        item.field,
-        item.location,
-        [item.startYear, item.endYear].filter(Boolean).join(" - "),
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      const description = String(
-        item.descriptionEn || item.descriptionId || "",
-      );
-      return { meta, description };
-    }
-    if (kind === "skill") {
-      return {
-        meta: [item.level, item.icon].filter(Boolean).join(" · "),
-        description: "",
-      };
-    }
-    return { meta: "", description: "" };
-  };
+          .join(" - ")
+      : kind === "education"
+        ? [item.startYear, item.endYear].filter(Boolean).join(" - ")
+        : "";
+  const secondary = (item: Item) =>
+    kind === "category"
+      ? `${((item.skills as unknown[]) ?? []).length} skills`
+      : period(item);
+  const level = (item: Item) => String(item.level ?? "Not set");
+  const titleColumnLabel =
+    kind === "skill" ? "Skill" : kind === "category" ? "Category" : "Title";
+  const secondaryColumnLabel =
+    kind === "skill" ? "Category" : kind === "category" ? "Skills" : "Period";
+  const metaColumnLabel = kind === "skill" ? "Level" : "Visibility";
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="min-w-0 overflow-hidden rounded-3xl border border-border/70 bg-card/55">
+      <div
+        className={cn(
+          "hidden border-b border-border/50 px-4 py-3 text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase lg:grid",
+          kind === "skill"
+            ? "grid-cols-[44px_minmax(0,1.5fr)_minmax(0,1fr)_minmax(8rem,0.8fr)_7rem]"
+            : "grid-cols-[44px_minmax(0,1.4fr)_minmax(8rem,0.8fr)_7rem_7rem]",
+        )}
+      >
+        <span />
+        <span>{titleColumnLabel}</span>
+        <span>{secondaryColumnLabel}</span>
+        <span>{metaColumnLabel}</span>
+        <span className="text-right">Actions</span>
+      </div>
       {items.length === 0 && (
-        <div className="rounded-lg border border-dashed bg-background/20 px-4 py-5 text-sm text-muted-foreground">
+        <div className="m-4 rounded-2xl border border-dashed bg-background/20 px-4 py-5 text-sm text-muted-foreground">
           No CMS items yet. Public About continues using static fallback
           content.
         </div>
       )}
-      {items.map((item, index) => (
-        <Card key={item.id} className="rounded-xl">
-          <CardContent
-            className={
-              compact
-                ? "flex items-center gap-2 px-2.5 py-2 sm:px-3"
-                : "flex items-center gap-3 px-3 py-3 sm:px-4"
-            }
+      <DashboardSortableList
+        items={items}
+        disabled={pending}
+        className="flex flex-col gap-4 p-4"
+        onReorder={reorder}
+        renderItem={({ item, handle }) => (
+          <div
+            className={cn(
+              "grid min-w-0 items-center overflow-hidden rounded-2xl border border-border/70 bg-background/30 transition-[border-color,box-shadow,opacity] hover:border-brand-soft/35",
+              kind === "skill"
+                ? "grid-cols-[44px_minmax(0,1fr)_auto] lg:grid-cols-[44px_minmax(0,1.5fr)_minmax(0,1fr)_minmax(8rem,0.8fr)_7rem]"
+                : "grid-cols-[44px_minmax(0,1fr)_auto] lg:grid-cols-[44px_minmax(0,1.4fr)_minmax(8rem,0.8fr)_7rem_7rem]",
+            )}
           >
-            <div className="flex shrink-0 flex-col gap-0.5">
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                disabled={pending || index === 0}
-                onClick={() => move(index, -1)}
-              >
-                <ArrowUpIcon />
-              </Button>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                disabled={pending || index === items.length - 1}
-                onClick={() => move(index, 1)}
-              >
-                <ArrowDownIcon />
-              </Button>
-            </div>
-            <div className="min-w-0 flex-1 py-1">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <p className="max-w-full min-w-0 truncate font-medium">
-                  {String(item[titleKey])}
-                </p>
-                <Badge
-                  variant={item.isVisible ? "default" : "secondary"}
-                  className="shrink-0"
-                >
-                  {item.isVisible ? "Visible" : "Hidden"}
-                </Badge>
-              </div>
-              {preview(item).meta && (
-                <p className="mt-1 line-clamp-1 scrollbar-none text-xs leading-5 wrap-break-word text-muted-foreground">
-                  {preview(item).meta}
+            <div className="flex self-stretch">{handle}</div>
+            <div className="min-w-0 p-4 lg:py-3 lg:pr-4">
+              <p className="truncate font-heading font-semibold">
+                {title(item)}
+              </p>
+              {subtitle(item) && (
+                <p className="truncate text-xs text-muted-foreground">
+                  {subtitle(item)}
                 </p>
               )}
-              {preview(item).description && (
-                <p className="mt-1 line-clamp-2 scrollbar-none text-sm leading-6 wrap-break-word text-muted-foreground">
-                  {preview(item).description}
+              {kind !== "skill" && secondary(item) && (
+                <p className="mt-1 text-xs text-muted-foreground lg:hidden">
+                  {secondary(item)}
                 </p>
               )}
               {children?.(item)}
             </div>
-            <EditDialog
-              kind={kind}
-              item={item}
-              categoryId={categoryId}
-              trigger={
-                <Button size="icon-sm" variant="ghost">
-                  <PencilSimpleIcon />
-                </Button>
-              }
-            />
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              onClick={() => setDeleting(item)}
-            >
-              <TrashIcon />
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
+            <div className="hidden truncate text-sm text-muted-foreground lg:block">
+              {kind === "skill"
+                ? (item as SkillItem).categoryName
+                : secondary(item)}
+            </div>
+            <div className="hidden lg:block">
+              {kind === "skill" ? (
+                <SkillLevel value={level(item)} />
+              ) : (
+                <VisibilityBadge isVisible={item.isVisible} />
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 pr-4">
+              <div className="flex shrink-0 items-center lg:hidden">
+                {kind === "skill" ? (
+                  <SkillLevel value={level(item)} />
+                ) : (
+                  <VisibilityBadge isVisible={item.isVisible} />
+                )}
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    aria-label={`Open actions for ${title(item)}`}
+                  >
+                    <DotsThreeVerticalIcon />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuLabel>{configs[kind].title}</DropdownMenuLabel>
+                  <EditDialog
+                    kind={kind}
+                    item={item}
+                    categoryId={(item as SkillItem).categoryId ?? categoryId}
+                    trigger={
+                      <DropdownMenuItem
+                        className="cursor-pointer"
+                        onSelect={(event) => event.preventDefault()}
+                      >
+                        <PencilSimpleIcon data-icon="inline-start" />
+                        Edit
+                      </DropdownMenuItem>
+                    }
+                  />
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    className="cursor-pointer"
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      setDeleting(item);
+                    }}
+                  >
+                    <TrashIcon data-icon="inline-start" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        )}
+      />
       <AlertDialog
         open={!!deleting}
         onOpenChange={(open) => !open && setDeleting(null)}
@@ -504,6 +583,7 @@ function ManagedList({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={() =>
                 deleting &&
                 startTransition(async () => {
@@ -526,88 +606,136 @@ function ManagedList({
 
 export function AboutStructuredManager({
   data,
+  section,
 }: {
   data: AboutStructuredData;
+  section: Section;
 }) {
+  const skillItems: SkillItem[] = data.categories.flatMap((category) =>
+    ((category.skills as Item[]) ?? []).map((skill) => ({
+      ...skill,
+      categoryId: category.id,
+      categoryName: category.name,
+    })),
+  );
+  const firstCategory = data.categories[0];
+
+  if (section === "experience") {
+    return (
+      <div className="flex min-w-0 flex-col gap-5">
+        <SectionHeader
+          title="Experience"
+          subtitle="Manage public work experience entries and their display order."
+          action={
+            <EditDialog
+              kind="experience"
+              trigger={
+                <Button className="w-full rounded-2xl sm:w-auto">
+                  <PlusIcon data-icon="inline-start" />
+                  Add experience
+                </Button>
+              }
+            />
+          }
+        />
+        <ManagedList kind="experience" items={data.experiences} />
+        <Button asChild variant="link" className="w-fit px-0 text-brand-soft">
+          <Link href="/about#work-experience" target="_blank">
+            View on public page
+            <ArrowSquareOutIcon data-icon="inline-end" />
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (section === "education") {
+    return (
+      <div className="flex min-w-0 flex-col gap-5">
+        <SectionHeader
+          title="Education"
+          subtitle="Manage public education history entries and their display order."
+          action={
+            <EditDialog
+              kind="education"
+              trigger={
+                <Button className="w-full rounded-2xl sm:w-auto">
+                  <PlusIcon data-icon="inline-start" />
+                  Add education
+                </Button>
+              }
+            />
+          }
+        />
+        <ManagedList kind="education" items={data.education} />
+        <Button asChild variant="link" className="w-fit px-0 text-brand-soft">
+          <Link href="/about#education-history" target="_blank">
+            View on public page
+            <ArrowSquareOutIcon data-icon="inline-end" />
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="border-b border-border/40 px-5 py-5 sm:px-6">
-        <CardTitle>Structured About Sections</CardTitle>
-        <CardDescription>
-          Manage the fixed Work Experience, Education History, and Technical
-          Skills sections.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="px-5 py-6 sm:px-6">
-        <Tabs defaultValue="experience">
-          <TabsList className="mb-6">
-            <TabsTrigger value="experience">Experience</TabsTrigger>
-            <TabsTrigger value="education">Education</TabsTrigger>
-            <TabsTrigger value="skills">Skills</TabsTrigger>
-          </TabsList>
-          <TabsContent value="experience">
-            <div className="mb-5">
+    <div className="flex min-w-0 flex-col gap-5">
+      <SectionHeader
+        title="Skills"
+        subtitle="Manage skill entries, categories, levels, and their public display order."
+        action={
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <EditDialog
+              kind="category"
+              trigger={
+                <Button
+                  variant="outline"
+                  className="w-full rounded-2xl sm:w-auto"
+                >
+                  <PlusIcon data-icon="inline-start" />
+                  Add category
+                </Button>
+              }
+            />
+            {firstCategory ? (
               <EditDialog
-                kind="experience"
+                kind="skill"
+                categoryId={firstCategory.id}
                 trigger={
-                  <Button>
-                    <PlusIcon /> Add experience
+                  <Button className="w-full rounded-2xl sm:w-auto">
+                    <PlusIcon data-icon="inline-start" />
+                    Add skill
                   </Button>
                 }
               />
-            </div>
-            <ManagedList kind="experience" items={data.experiences} />
-          </TabsContent>
-          <TabsContent value="education">
-            <div className="mb-5">
-              <EditDialog
-                kind="education"
-                trigger={
-                  <Button>
-                    <PlusIcon /> Add education
-                  </Button>
-                }
-              />
-            </div>
-            <ManagedList kind="education" items={data.education} />
-          </TabsContent>
-          <TabsContent value="skills">
-            <div className="mb-5">
-              <EditDialog
-                kind="category"
-                trigger={
-                  <Button>
-                    <PlusIcon /> Add category
-                  </Button>
-                }
-              />
-            </div>
-            <ManagedList kind="category" items={data.categories}>
-              {(category) => (
-                <div className="mt-3 min-w-0 overflow-hidden rounded-lg border border-border/40 bg-background/20 p-3 sm:p-4">
-                  <div className="mb-3">
-                    <EditDialog
-                      kind="skill"
-                      categoryId={category.id}
-                      trigger={
-                        <Button size="sm" variant="outline">
-                          <PlusIcon /> Add skill
-                        </Button>
-                      }
-                    />
-                  </div>
-                  <ManagedList
-                    kind="skill"
-                    categoryId={category.id}
-                    items={(category.skills as Item[]) ?? []}
-                    compact
-                  />
-                </div>
-              )}
-            </ManagedList>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+            ) : null}
+          </div>
+        }
+      />
+      <div className="flex min-w-0 flex-col gap-3">
+        <div className="min-w-0">
+          <h3 className="font-heading text-base font-semibold">Categories</h3>
+          <p className="text-sm text-muted-foreground">
+            Organize skill groups, descriptions, and category order.
+          </p>
+        </div>
+        <ManagedList kind="category" items={data.categories} />
+      </div>
+      <div className="flex min-w-0 flex-col gap-3">
+        <div className="min-w-0">
+          <h3 className="font-heading text-base font-semibold">Skills</h3>
+          <p className="text-sm text-muted-foreground">
+            Manage individual skills and their assigned category metadata.
+          </p>
+        </div>
+        <ManagedList kind="skill" items={skillItems} />
+      </div>
+      <Button asChild variant="link" className="w-fit px-0 text-brand-soft">
+        <Link href="/about#technical-skills" target="_blank">
+          View on public page
+          <ArrowSquareOutIcon data-icon="inline-end" />
+        </Link>
+      </Button>
+    </div>
   );
 }

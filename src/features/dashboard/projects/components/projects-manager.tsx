@@ -653,6 +653,19 @@ function SortableProjectListRow({
   );
 }
 
+function ProjectsListHeader() {
+  return (
+    <div className="hidden grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px] border-b border-border/60 px-3 py-3 text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase xl:grid">
+      <div />
+      <div>Title</div>
+      <div>Status</div>
+      <div>Created at</div>
+      <div>Updated at</div>
+      <div className="text-right">Actions</div>
+    </div>
+  );
+}
+
 function ProjectsList({
   projects,
   canReorder,
@@ -729,40 +742,46 @@ function ProjectsList({
 
   if (!canReorder) {
     return (
-      <div className="flex min-w-0 flex-col gap-3">
-        {projects.map((project) => (
-          <ProjectListRow
-            key={project.id}
-            project={project}
-            dragHandle={
-              <div className="flex h-full min-h-24 items-center justify-center border-r border-border/50 text-muted-foreground">
-                <DotsSixVerticalIcon />
-              </div>
-            }
-          />
-        ))}
+      <div className="min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/30">
+        <ProjectsListHeader />
+        <div className="flex min-w-0 flex-col gap-3 p-2">
+          {projects.map((project) => (
+            <ProjectListRow
+              key={project.id}
+              project={project}
+              dragHandle={
+                <div className="flex h-full min-h-24 items-center justify-center border-r border-border/50 text-muted-foreground">
+                  <DotsSixVerticalIcon />
+                </div>
+              }
+            />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-        <div className="flex min-w-0 flex-col gap-3">
-          {projects.map((project) => (
-            <SortableProjectListRow
-              key={project.id}
-              project={project}
-              disabled={isPending}
-            />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+    <div className="min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/30">
+      <ProjectsListHeader />
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+          <div className="flex min-w-0 flex-col gap-3 p-2">
+            {projects.map((project) => (
+              <SortableProjectListRow
+                key={project.id}
+                project={project}
+                disabled={isPending}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
   );
 }
 

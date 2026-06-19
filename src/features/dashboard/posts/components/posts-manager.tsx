@@ -514,7 +514,7 @@ function PostsList({
   return (
     <>
       <div className="hidden overflow-hidden rounded-2xl border border-border/70 bg-background/30 xl:block">
-        <div className="grid grid-cols-[44px_minmax(360px,1fr)_130px_90px_160px_160px_56px] border-b border-border/60 px-3 py-3 text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
+        <div className="grid grid-cols-[44px_minmax(360px,1fr)_130px_90px_160px_160px_56px] border-b border-border/60 px-3 py-3 text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
           <div>
             <Checkbox
               checked={allSelected}
