@@ -379,7 +379,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
       return;
     }
 
-    window.open(`/blog/${slug}`, "_blank", "noopener,noreferrer");
+    window.open(`/preview/posts/${slug}`, "_blank", "noopener,noreferrer");
   };
 
   return (

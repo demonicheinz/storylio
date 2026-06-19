@@ -418,7 +418,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
       return;
     }
 
-    window.open(`/projects/${slug}`, "_blank", "noopener,noreferrer");
+    window.open(`/preview/projects/${slug}`, "_blank", "noopener,noreferrer");
   };
 
   return (
