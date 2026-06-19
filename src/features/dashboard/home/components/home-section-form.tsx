@@ -1106,7 +1106,7 @@ function TestimonialList({
               </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 items-center gap-2">
-                  <h2 className="line-clamp-2 font-heading text-base leading-snug font-semibold wrap-break-words xl:text-sm">
+                  <h2 className="wrap-break-words line-clamp-2 font-heading text-base leading-snug font-semibold xl:text-sm">
                     {testimonial.name}
                   </h2>
                 </div>
