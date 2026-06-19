@@ -24,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
 import { cn, formatDate } from "@/lib/utils";
@@ -222,15 +223,12 @@ async function getOverviewData() {
 
 function DashboardHomeFallback() {
   return (
-    <div className="flex min-w-0 flex-col gap-5">
+    <div className={dashboardStyles.page}>
       <OverviewHeader />
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className={dashboardStyles.statGrid}>
         {["Posts", "Projects", "Gallery", "Views"].map((label) => (
-          <Card
-            key={label}
-            className="min-w-0 border-border/70 bg-card/55 py-4 shadow-sm"
-          >
-            <CardContent className="flex items-center gap-3 px-4">
+          <Card key={label} className={dashboardStyles.statCard}>
+            <CardContent className={dashboardStyles.statContent}>
               <div className="size-10 rounded-2xl bg-muted/50" />
               <div className="min-w-0 flex-1">
                 <div className="h-5 w-12 rounded-md bg-muted/60" />
@@ -266,14 +264,9 @@ function OverviewStatCard({
   iconClassName,
 }: StatCardProps) {
   return (
-    <Card className="min-w-0 border-border/70 bg-card/55 py-4 shadow-sm">
-      <CardContent className="flex items-center gap-3 px-4">
-        <div
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-2xl",
-            iconClassName,
-          )}
-        >
+    <Card className={dashboardStyles.statCard}>
+      <CardContent className={dashboardStyles.statContent}>
+        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
           {icon}
         </div>
         <div className="min-w-0">
@@ -406,7 +399,7 @@ function RecentItemsCard({
   emptyLabel: string;
 }) {
   return (
-    <Card className="min-w-0 border-border/70 bg-card/55">
+    <Card className={dashboardStyles.surface}>
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <SectionHeading title={title} subtitle={subtitle} />
@@ -425,7 +418,7 @@ function RecentItemsCard({
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/70 bg-background/25 p-6 text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-border/70 bg-background/30 p-6 text-sm text-muted-foreground">
             {emptyLabel}
           </div>
         ) : (
@@ -433,7 +426,7 @@ function RecentItemsCard({
             {items.map((item) => (
               <div
                 key={item.id}
-                className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-2xl border border-border/60 bg-background/30 p-3 transition-colors hover:border-brand-soft/40 hover:bg-background/45 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
+                className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-2xl border border-border/60 bg-background/30 p-3 transition-colors hover:border-brand-soft/40 hover:bg-background/40 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
               >
                 <RecentThumbnail item={item} />
                 <div className="min-w-0">
@@ -504,7 +497,7 @@ function QuickActions() {
 
 function ContentHealth({ items }: { items: HealthItem[] }) {
   return (
-    <Card className="min-w-0 border-border/70 bg-card/55">
+    <Card className={dashboardStyles.surface}>
       <CardHeader>
         <SectionHeading
           title="Content Health"
@@ -517,7 +510,7 @@ function ContentHealth({ items }: { items: HealthItem[] }) {
             <Link
               key={item.label}
               href={item.href}
-              className="rounded-2xl border border-border/60 bg-background/30 p-4 transition-colors hover:border-brand-soft/40 hover:bg-background/45"
+              className="rounded-2xl border border-border/60 bg-background/30 p-4 transition-colors hover:border-brand-soft/40 hover:bg-background/40"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-sm font-medium">{item.label}</span>
@@ -558,11 +551,11 @@ async function DashboardHomeContent() {
     await getOverviewData();
 
   return (
-    <div className="flex min-w-0 flex-col gap-5">
+    <div className={dashboardStyles.page}>
       <OverviewHeader />
       <QuickActions />
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className={dashboardStyles.statGrid}>
         <OverviewStatCard
           label="Total Posts"
           value={stats.posts.total}
@@ -614,7 +607,7 @@ async function DashboardHomeContent() {
 
       <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
         <ContentHealth items={healthItems} />
-        <Card className="min-w-0 border-border/70 bg-card/55">
+        <Card className={dashboardStyles.surface}>
           <CardHeader>
             <SectionHeading
               title="Home Signals"
@@ -622,7 +615,12 @@ async function DashboardHomeContent() {
             />
           </CardHeader>
           <CardContent className="grid gap-3">
-            <div className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/30 p-4">
+            <div
+              className={cn(
+                dashboardStyles.nestedPanel,
+                "flex items-center justify-between",
+              )}
+            >
               <span className="text-sm text-muted-foreground">
                 Visible testimonials
               </span>
@@ -630,7 +628,12 @@ async function DashboardHomeContent() {
                 {stats.testimonials.visible}/{stats.testimonials.total}
               </span>
             </div>
-            <div className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/30 p-4">
+            <div
+              className={cn(
+                dashboardStyles.nestedPanel,
+                "flex items-center justify-between",
+              )}
+            >
               <span className="text-sm text-muted-foreground">
                 Featured projects
               </span>

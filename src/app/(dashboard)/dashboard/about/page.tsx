@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getAboutContent } from "@/features/about/data";
 import { AboutContentForm } from "@/features/dashboard/about/components/content-form";
 import { AboutStructuredManager } from "@/features/dashboard/about/components/structured-manager";
+import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
@@ -34,14 +35,9 @@ function AboutStatCard({
   iconClassName,
 }: StatCardProps) {
   return (
-    <Card className="min-w-0 border-border/70 bg-card/55 py-4 shadow-sm">
-      <CardContent className="flex items-center gap-3 px-4">
-        <div
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-2xl",
-            iconClassName,
-          )}
-        >
+    <Card className={dashboardStyles.statCard}>
+      <CardContent className={dashboardStyles.statContent}>
+        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
           <Icon className="size-5" />
         </div>
         <div className="min-w-0">
@@ -88,8 +84,8 @@ export default async function DashboardAboutPage() {
   );
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className={dashboardStyles.page}>
+      <div className={dashboardStyles.header}>
         <div className="min-w-0">
           <h1 className="font-heading text-3xl font-bold">About</h1>
           <p className="mt-2 text-muted-foreground">
@@ -105,7 +101,7 @@ export default async function DashboardAboutPage() {
       </div>
 
       <Tabs defaultValue="content" className="flex min-w-0 flex-col gap-5">
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <div className={dashboardStyles.statGrid}>
           <AboutStatCard
             icon={ArticleIcon}
             label="Content"

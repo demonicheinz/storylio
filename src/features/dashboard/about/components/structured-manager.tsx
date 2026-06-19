@@ -63,6 +63,7 @@ import {
   actionUpdateWorkExperience,
 } from "@/features/dashboard/about/structured-actions";
 import { DashboardSortableList } from "@/features/dashboard/shared/components/sortable-list";
+import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { cn } from "@/lib/utils";
 
 export type AboutStructuredData = {
@@ -453,10 +454,11 @@ function ManagedList({
     kind === "skill" ? "Category" : kind === "category" ? "Skills" : "Period";
   const metaColumnLabel = kind === "skill" ? "Level" : "Visibility";
   return (
-    <div className="min-w-0 overflow-hidden rounded-3xl border border-border/70 bg-card/55">
+    <div className={cn(dashboardStyles.listSurface, "rounded-3xl bg-card/55")}>
       <div
         className={cn(
-          "hidden border-b border-border/50 px-4 py-3 text-xs font-medium tracking-[0.18em] text-muted-foreground uppercase lg:grid",
+          "hidden px-4 tracking-[0.18em] lg:grid",
+          dashboardStyles.listHeader,
           kind === "skill"
             ? "grid-cols-[44px_minmax(0,1.5fr)_minmax(0,1fr)_minmax(8rem,0.8fr)_7rem]"
             : "grid-cols-[44px_minmax(0,1.4fr)_minmax(8rem,0.8fr)_7rem_7rem]",
@@ -469,7 +471,7 @@ function ManagedList({
         <span className="text-right">Actions</span>
       </div>
       {items.length === 0 && (
-        <div className="m-4 rounded-2xl border border-dashed bg-background/20 px-4 py-5 text-sm text-muted-foreground">
+        <div className="m-4 rounded-2xl border border-dashed border-border/70 bg-background/30 px-4 py-5 text-sm text-muted-foreground">
           No CMS items yet. Public About continues using static fallback
           content.
         </div>
@@ -477,12 +479,14 @@ function ManagedList({
       <DashboardSortableList
         items={items}
         disabled={pending}
-        className="flex flex-col gap-4 p-4"
+        className="flex flex-col gap-3 p-3"
         onReorder={reorder}
         renderItem={({ item, handle }) => (
           <div
             className={cn(
-              "grid min-w-0 items-center overflow-hidden rounded-2xl border border-border/70 bg-background/30 transition-[border-color,box-shadow,opacity] hover:border-brand-soft/35",
+              "grid min-w-0 items-center",
+              dashboardStyles.listRow,
+              "hover:border-brand-soft/35",
               kind === "skill"
                 ? "grid-cols-[44px_minmax(0,1fr)_auto] lg:grid-cols-[44px_minmax(0,1.5fr)_minmax(0,1fr)_minmax(8rem,0.8fr)_7rem]"
                 : "grid-cols-[44px_minmax(0,1fr)_auto] lg:grid-cols-[44px_minmax(0,1.4fr)_minmax(8rem,0.8fr)_7rem_7rem]",
@@ -622,7 +626,7 @@ export function AboutStructuredManager({
 
   if (section === "experience") {
     return (
-      <div className="flex min-w-0 flex-col gap-5">
+      <div className={dashboardStyles.page}>
         <SectionHeader
           title="Experience"
           subtitle="Manage public work experience entries and their display order."
@@ -651,7 +655,7 @@ export function AboutStructuredManager({
 
   if (section === "education") {
     return (
-      <div className="flex min-w-0 flex-col gap-5">
+      <div className={dashboardStyles.page}>
         <SectionHeader
           title="Education"
           subtitle="Manage public education history entries and their display order."
@@ -679,7 +683,7 @@ export function AboutStructuredManager({
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-5">
+    <div className={dashboardStyles.page}>
       <SectionHeader
         title="Skills"
         subtitle="Manage skill entries, categories, levels, and their public display order."

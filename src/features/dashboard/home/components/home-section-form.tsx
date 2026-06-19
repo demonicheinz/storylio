@@ -85,6 +85,7 @@ import {
   DashboardSortableList,
   verticalListSortingStrategy,
 } from "@/features/dashboard/shared/components/sortable-list";
+import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { cn, formatDate } from "@/lib/utils";
 
 export type DashboardHomeSection = {
@@ -131,14 +132,9 @@ function HomeStatCard({
   className?: string;
 }) {
   return (
-    <Card className="min-w-0 border-border/70 bg-card/55 py-4 shadow-sm">
-      <CardContent className="flex items-center gap-3 px-4">
-        <div
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-2xl",
-            iconClassName,
-          )}
-        >
+    <Card className={dashboardStyles.statCard}>
+      <CardContent className={dashboardStyles.statContent}>
+        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
           <Icon className="size-5" />
         </div>
         <div className="min-w-0">
@@ -562,13 +558,14 @@ function HomeContentList({
     <DashboardSortableList
       items={items}
       disabled={isReordering}
-      className="flex min-w-0 flex-col gap-3"
+      className={dashboardStyles.sortableRows}
       strategy={verticalListSortingStrategy}
       onReorder={handleReorder}
       renderItem={({ item, handle, isDragging }) => (
         <div
           className={cn(
-            "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border/70 bg-background/30 transition-[border-color,box-shadow,opacity] xl:grid-cols-[44px_minmax(320px,1fr)_180px_56px] xl:items-center",
+            "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(320px,1fr)_180px_56px] xl:items-center",
+            dashboardStyles.listRow,
             isDragging
               ? "relative z-10 border-brand-soft/60 bg-background/70 opacity-80 shadow-[0_0_52px_rgba(139,92,246,0.18)]"
               : "hover:border-brand-soft/35",
@@ -1074,14 +1071,17 @@ function TestimonialList({
     <DashboardSortableList
       items={testimonials}
       disabled={isReordering}
-      className="flex flex-col gap-3"
+      className={dashboardStyles.sortableRows}
       onReorder={handleReorder}
       renderItem={({ item: testimonial, handle, isDragging }) => {
         const title = getTestimonialTitle(testimonial);
         return (
           <div
             className={[
-              "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border/70 bg-background/30 transition-[border-color,box-shadow,opacity] xl:grid-cols-[44px_minmax(320px,1fr)_120px_180px_56px] xl:items-center",
+              [
+                "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(320px,1fr)_120px_180px_56px] xl:items-center",
+                dashboardStyles.listRow,
+              ].join(" "),
               isDragging
                 ? "relative z-10 border-brand-soft/60 bg-background/70 opacity-80"
                 : testimonial.isVisible
@@ -1160,7 +1160,7 @@ export function HomeContentManager({
 
   return (
     <Tabs defaultValue="approach" className="flex min-w-0 flex-col gap-5">
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className={dashboardStyles.statGrid}>
         <HomeStatCard
           icon={StackIcon}
           label="Approach"

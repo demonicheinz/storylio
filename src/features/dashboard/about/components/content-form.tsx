@@ -30,6 +30,7 @@ import {
   type AboutContentActionValues,
   aboutContentActionSchema,
 } from "@/features/dashboard/about/validations";
+import { dashboardStyles } from "@/features/dashboard/shared/styles";
 
 const MdxEditor = dynamic(
   () =>
@@ -173,10 +174,10 @@ export function AboutContentForm({
         </CardContent>
       </Card>
 
-      <Card className="border-border/70 bg-card/55">
+      <Card className={dashboardStyles.surface}>
         <CardContent className="flex flex-col gap-6 p-5 sm:p-6">
           {!content && (
-            <div className="rounded-2xl border border-dashed border-border/60 bg-background/30 p-4">
+            <div className="rounded-2xl border border-dashed border-border/70 bg-background/30 p-4">
               <p className="font-medium text-foreground">
                 About content has not been created yet.
               </p>
