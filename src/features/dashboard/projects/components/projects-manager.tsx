@@ -22,6 +22,8 @@ import {
   ArrowSquareOutIcon,
   BriefcaseIcon,
   CaretDownIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
   DotsSixVerticalIcon,
   DotsThreeVerticalIcon,
   EyeIcon,
@@ -72,6 +74,11 @@ import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
 import { ProjectStatus } from "@/generated/prisma";
+import {
+  getDefaultItemsPerPage,
+  getItemsPerPageOptions,
+  paginateItems,
+} from "@/lib/pagination";
 import { cn, formatDate } from "@/lib/utils";
 import { actionReorderProjects } from "../actions";
 import { ProjectDeleteButton } from "./project-delete-button";
@@ -113,7 +120,7 @@ const featuredOptions: Array<{ value: FeaturedFilter; label: string }> = [
 ];
 
 const sortOptions: Array<{ value: SortMode; label: string }> = [
-  { value: "order", label: "Order asc" },
+  { value: "order", label: "Order (asc)" },
   { value: "updated", label: "Recently Updated" },
   { value: "created", label: "Newest Created" },
   { value: "title", label: "Title A-Z" },
@@ -504,7 +511,7 @@ function ProjectsGrid({ projects }: { projects: DashboardProject[] }) {
               <TechPills techStack={project.techStack} limit={3} />
             </div>
             {project.description && (
-              <p className="mt-2 line-clamp-2 text-sm text-muted-foreground wrap-break-word">
+              <p className="mt-2 line-clamp-2 text-sm wrap-break-word text-muted-foreground">
                 {project.description}
               </p>
             )}
@@ -554,7 +561,10 @@ function ProjectListRow({
           <p className="mt-1 truncate text-xs text-muted-foreground">
             /projects/{project.slug}
           </p>
-          <div className="mt-2">
+          <div className="mt-2 xl:hidden">
+            <TechPills techStack={project.techStack} limit={2} />
+          </div>
+          <div className="mt-2 hidden xl:block">
             <TechPills techStack={project.techStack} limit={4} />
           </div>
         </div>
@@ -756,6 +766,146 @@ function ProjectsList({
   );
 }
 
+function ProjectsPagination({
+  firstIndex,
+  lastIndex,
+  total,
+  page,
+  pageCount,
+  itemsPerPage,
+  itemsPerPageOptions,
+  onPageChange,
+  onItemsPerPageChange,
+}: {
+  firstIndex: number;
+  lastIndex: number;
+  total: number;
+  page: number;
+  pageCount: number;
+  itemsPerPage: number;
+  itemsPerPageOptions: readonly number[];
+  onPageChange: (page: number) => void;
+  onItemsPerPageChange: (value: number) => void;
+}) {
+  const pageControls = (
+    <div className="flex items-center justify-center gap-1">
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        className="size-8 rounded-xl"
+        disabled={page <= 1}
+        onClick={() => onPageChange(Math.max(1, page - 1))}
+        aria-label="Previous page"
+      >
+        <CaretLeftIcon />
+      </Button>
+      {Array.from({ length: pageCount }).map((_, index) => {
+        const pageNumber = index + 1;
+
+        return (
+          <Button
+            key={pageNumber}
+            type="button"
+            size="icon"
+            variant={pageNumber === page ? "default" : "outline"}
+            className="size-8 rounded-xl"
+            onClick={() => onPageChange(pageNumber)}
+            aria-current={pageNumber === page ? "page" : undefined}
+          >
+            {pageNumber}
+          </Button>
+        );
+      })}
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        className="size-8 rounded-xl"
+        disabled={page >= pageCount}
+        onClick={() => onPageChange(Math.min(pageCount, page + 1))}
+        aria-label="Next page"
+      >
+        <CaretRightIcon />
+      </Button>
+    </div>
+  );
+
+  return (
+    <div className="mt-4 grid gap-3 text-sm text-muted-foreground md:grid-cols-[1fr_auto_1fr] md:items-center">
+      <div className="flex items-center justify-between md:contents">
+        <p className="md:hidden">
+          {firstIndex}-{lastIndex} of {total}
+        </p>
+        <p className="hidden md:block">
+          Showing {firstIndex} to {lastIndex} of {total}{" "}
+          {total === 1 ? "item" : "items"}
+        </p>
+        <div className="md:hidden">
+          <ItemsPerPageDropdown
+            value={itemsPerPage}
+            options={itemsPerPageOptions}
+            onValueChange={onItemsPerPageChange}
+          />
+        </div>
+      </div>
+      <div className="md:col-start-2">{pageControls}</div>
+      <div className="hidden justify-end md:flex">
+        <ItemsPerPageDropdown
+          value={itemsPerPage}
+          options={itemsPerPageOptions}
+          onValueChange={onItemsPerPageChange}
+          showLabel
+        />
+      </div>
+    </div>
+  );
+}
+
+function ItemsPerPageDropdown({
+  value,
+  options,
+  onValueChange,
+  showLabel = false,
+}: {
+  value: number;
+  options: readonly number[];
+  onValueChange: (value: number) => void;
+  showLabel?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {showLabel && (
+        <span className="text-sm text-muted-foreground">Items per page</span>
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-xl bg-input/35"
+          >
+            {value}
+            <CaretDownIcon className="size-3.5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-24">
+          <DropdownMenuRadioGroup
+            value={String(value)}
+            onValueChange={(nextValue) => onValueChange(Number(nextValue))}
+          >
+            {options.map((option) => (
+              <DropdownMenuRadioItem key={option} value={String(option)}>
+                {option}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
 export function ProjectsManager({ projects }: ProjectsManagerProps) {
   const [items, setItems] = useState(projects);
   const [query, setQuery] = useState("");
@@ -764,6 +914,10 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   const [selectedTechStacks, setSelectedTechStacks] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>("order");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [itemsPerPage, setItemsPerPage] = useState<number>(
+    getDefaultItemsPerPage("list"),
+  );
+  const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [draftStatus, setDraftStatus] = useState<StatusFilter>(status);
   const [draftFeatured, setDraftFeatured] = useState<FeaturedFilter>(featured);
@@ -776,6 +930,24 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   useEffect(() => {
     setItems(projects);
   }, [projects]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+
+    const syncMobileView = () => {
+      if (!mediaQuery.matches) {
+        return;
+      }
+
+      setViewMode("list");
+      setItemsPerPage(getDefaultItemsPerPage("list"));
+    };
+
+    syncMobileView();
+    mediaQuery.addEventListener("change", syncMobileView);
+
+    return () => mediaQuery.removeEventListener("change", syncMobileView);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -887,6 +1059,19 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
       });
   }, [featured, items, query, selectedTechStacks, sortMode, status]);
 
+  const {
+    items: paginatedProjects,
+    pageCount,
+    currentPage,
+    firstIndex,
+    lastIndex,
+  } = paginateItems(filteredProjects, page, itemsPerPage);
+  const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
+
+  useEffect(() => {
+    setPage(1);
+  }, [featured, itemsPerPage, query, selectedTechStacks, sortMode, status]);
+
   const toggleTechStack = (techStack: string) => {
     setSelectedTechStacks((currentTechStacks) =>
       currentTechStacks.includes(techStack)
@@ -939,6 +1124,11 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     setSortMode("order");
   };
 
+  const handleViewModeChange = (nextViewMode: ViewMode) => {
+    setViewMode(nextViewMode);
+    setItemsPerPage(getDefaultItemsPerPage(nextViewMode));
+  };
+
   const statusDisplay =
     statusOptions.find((option) => option.value === status)?.label ??
     "All Status";
@@ -954,7 +1144,8 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     status === "all" &&
     featured === "all" &&
     selectedTechStacks.length === 0 &&
-    query.trim().length === 0;
+    query.trim().length === 0 &&
+    filteredProjects.length <= itemsPerPage;
 
   const handleReorder = (nextProjects: DashboardProject[]) => {
     setItems(nextProjects);
@@ -1090,7 +1281,10 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               onValueChange={setSortMode}
             />
             <div className="md:justify-self-start xl:justify-self-auto">
-              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              <ViewToggle
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
+              />
             </div>
           </div>
           {selectedTechStacks.length > 0 && (
@@ -1124,8 +1318,8 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
           )}
           {!canReorder && viewMode === "list" && (
             <p className="mt-3 text-xs text-muted-foreground">
-              Reordering is available only in list view with order sorting and
-              no active filters.
+              Reordering is available only in list view with order sorting, no
+              active filters, and all projects visible on one page.
             </p>
           )}
         </CardContent>
@@ -1147,25 +1341,41 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
             </Link>
           </Button>
         </div>
-      ) : viewMode === "grid" ? (
+      ) : (
         <>
-          <div className="hidden md:block">
-            <ProjectsGrid projects={filteredProjects} />
-          </div>
-          <div className="md:hidden">
+          {viewMode === "grid" ? (
+            <>
+              <div className="hidden md:block">
+                <ProjectsGrid projects={paginatedProjects} />
+              </div>
+              <div className="md:hidden">
+                <ProjectsList
+                  projects={paginatedProjects}
+                  canReorder={false}
+                  onReorder={handleReorder}
+                />
+              </div>
+            </>
+          ) : (
             <ProjectsList
-              projects={filteredProjects}
-              canReorder={false}
+              projects={paginatedProjects}
+              canReorder={canReorder}
               onReorder={handleReorder}
             />
-          </div>
+          )}
+
+          <ProjectsPagination
+            firstIndex={firstIndex}
+            lastIndex={lastIndex}
+            total={filteredProjects.length}
+            page={currentPage}
+            pageCount={pageCount}
+            itemsPerPage={itemsPerPage}
+            itemsPerPageOptions={itemsPerPageOptions}
+            onPageChange={setPage}
+            onItemsPerPageChange={setItemsPerPage}
+          />
         </>
-      ) : (
-        <ProjectsList
-          projects={filteredProjects}
-          canReorder={canReorder}
-          onReorder={handleReorder}
-        />
       )}
 
       <Drawer
@@ -1238,7 +1448,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               value={draftSort}
               displayValue={
                 sortOptions.find((option) => option.value === draftSort)
-                  ?.label ?? "Order asc"
+                  ?.label ?? "Order (asc)"
               }
               options={sortOptions}
               onValueChange={setDraftSort}
