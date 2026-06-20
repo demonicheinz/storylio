@@ -456,14 +456,14 @@ function ProjectActions({
       <DropdownMenuContent align={align} className="w-44">
         <DropdownMenuLabel>Project</DropdownMenuLabel>
         {isPublished(project) && (
-          <DropdownMenuItem asChild className="cursor-pointer">
+          <DropdownMenuItem asChild>
             <Link href={`/projects/${project.slug}`} target="_blank">
               <ArrowSquareOutIcon data-icon="inline-start" />
               Preview
             </Link>
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem asChild className="cursor-pointer">
+        <DropdownMenuItem asChild>
           <Link href={`/dashboard/projects/${project.id}/edit`}>
             <PencilSimpleIcon data-icon="inline-start" />
             Edit
@@ -475,7 +475,6 @@ function ProjectActions({
           title={project.title}
           trigger={
             <DropdownMenuItem
-              className="cursor-pointer"
               variant="destructive"
               onSelect={(event) => event.preventDefault()}
             >

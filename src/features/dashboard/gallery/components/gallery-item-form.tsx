@@ -271,10 +271,7 @@ function GalleryItemActions({
         <GalleryItemDialog
           item={item}
           trigger={
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onSelect={(event) => event.preventDefault()}
-            >
+            <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
               <PencilSimpleIcon data-icon="inline-start" />
               Edit item
             </DropdownMenuItem>
@@ -285,7 +282,6 @@ function GalleryItemActions({
           item={item}
           trigger={
             <DropdownMenuItem
-              className="cursor-pointer"
               variant="destructive"
               onSelect={(event) => event.preventDefault()}
             >

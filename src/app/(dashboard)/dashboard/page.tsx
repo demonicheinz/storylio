@@ -322,21 +322,21 @@ function RecentActions({ item }: { item: RecentItem }) {
       <DropdownMenuContent align="end" className="w-44">
         <DropdownMenuLabel>{item.type}</DropdownMenuLabel>
         {canPreview && (
-          <DropdownMenuItem asChild className="cursor-pointer">
+          <DropdownMenuItem asChild>
             <Link href={item.publicHref} target="_blank">
               <EyeIcon data-icon="inline-start" />
               Preview
             </Link>
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem asChild className="cursor-pointer">
+        <DropdownMenuItem asChild>
           <Link href={item.href}>
             <PencilSimpleIcon data-icon="inline-start" />
             Edit {label}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild className="cursor-pointer">
+        <DropdownMenuItem asChild>
           <Link
             href={`/dashboard/${item.type === "Post" ? "posts" : "projects"}`}
           >

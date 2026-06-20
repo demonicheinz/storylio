@@ -472,10 +472,7 @@ function HomeSectionActions({
           section={section}
           type={type}
           trigger={
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onSelect={(event) => event.preventDefault()}
-            >
+            <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
               <PencilSimpleIcon data-icon="inline-start" />
               Edit
             </DropdownMenuItem>
@@ -485,7 +482,6 @@ function HomeSectionActions({
           section={section}
           trigger={
             <DropdownMenuItem
-              className="cursor-pointer"
               variant="destructive"
               onSelect={(event) => event.preventDefault()}
             >
@@ -995,10 +991,7 @@ function TestimonialActions({
         <TestimonialDialog
           testimonial={testimonial}
           trigger={
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onSelect={(event) => event.preventDefault()}
-            >
+            <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
               <PencilSimpleIcon data-icon="inline-start" />
               Edit
             </DropdownMenuItem>
@@ -1009,7 +1002,6 @@ function TestimonialActions({
           testimonial={testimonial}
           trigger={
             <DropdownMenuItem
-              className="cursor-pointer"
               variant="destructive"
               onSelect={(event) => event.preventDefault()}
             >

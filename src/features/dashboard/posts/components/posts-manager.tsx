@@ -399,14 +399,14 @@ function PostActions({
       <DropdownMenuContent align={align} className="w-44">
         <DropdownMenuLabel>Post</DropdownMenuLabel>
         {isPublished(post) && (
-          <DropdownMenuItem asChild className="cursor-pointer">
+          <DropdownMenuItem asChild>
             <Link href={`/blog/${post.slug}`} target="_blank">
               <EyeIcon data-icon="inline-start" />
               Preview
             </Link>
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem asChild className="cursor-pointer">
+        <DropdownMenuItem asChild>
           <Link href={`/dashboard/posts/${post.id}/edit`}>
             <PencilSimpleIcon data-icon="inline-start" />
             Edit
@@ -418,7 +418,6 @@ function PostActions({
           title={post.title}
           trigger={
             <DropdownMenuItem
-              className="cursor-pointer"
               variant="destructive"
               onSelect={(event) => event.preventDefault()}
             >

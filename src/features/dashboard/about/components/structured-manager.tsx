@@ -547,7 +547,6 @@ function ManagedList({
                     categoryId={(item as SkillItem).categoryId ?? categoryId}
                     trigger={
                       <DropdownMenuItem
-                        className="cursor-pointer"
                         onSelect={(event) => event.preventDefault()}
                       >
                         <PencilSimpleIcon data-icon="inline-start" />
@@ -558,7 +557,6 @@ function ManagedList({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     variant="destructive"
-                    className="cursor-pointer"
                     onSelect={(event) => {
                       event.preventDefault();
                       setDeleting(item);
