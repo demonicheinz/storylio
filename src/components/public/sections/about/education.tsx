@@ -11,8 +11,10 @@ type PublicEducation = {
 };
 export function EducationSection({
   education,
+  language = "en",
 }: {
   education?: PublicEducation[];
+  language?: "en" | "id";
 }) {
   const items = education?.length
     ? education
@@ -28,8 +30,8 @@ export function EducationSection({
         level="h2"
         variant="section"
         size="lg"
-        title="Education"
-        highlight="History"
+        title={language === "id" ? "Riwayat" : "Education"}
+        highlight={language === "id" ? "Pendidikan" : "History"}
       />
       <div className="grid gap-4">
         {items.map((institution) => (

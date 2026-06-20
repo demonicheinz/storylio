@@ -36,7 +36,7 @@ function parseTestimonialInput(input: unknown) {
 }
 
 function revalidateTestimonialPaths() {
-  revalidatePath("/dashboard/testimonials");
+  revalidatePath("/dashboard/home");
   revalidatePath("/dashboard");
   revalidatePath("/");
 }

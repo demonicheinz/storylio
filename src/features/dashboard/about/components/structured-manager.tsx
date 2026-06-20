@@ -196,6 +196,27 @@ function EditDialog({
     const value = item?.[field];
     return Array.isArray(value) ? value.join("\n") : String(value ?? "");
   };
+  const isScrollableExperienceField = (field: string) =>
+    kind === "experience" &&
+    (field.startsWith("description") || field.startsWith("highlights"));
+  const isScrollableDescriptionField = (field: string) =>
+    (kind === "education" || kind === "category") &&
+    field.startsWith("description");
+  const getFieldClassName = (field: string) => {
+    if (!config.multiline.includes(field as never)) {
+      return "flex min-w-0 flex-col gap-2";
+    }
+
+    return isScrollableExperienceField(field)
+      ? "flex min-w-0 flex-col gap-2"
+      : "flex min-w-0 flex-col gap-2 sm:col-span-2";
+  };
+  const getTextareaClassName = (field: string) =>
+    isScrollableExperienceField(field)
+      ? "max-h-32 min-h-24 overflow-y-auto scrollbar-none field-sizing-fixed wrap-anywhere"
+      : isScrollableDescriptionField(field)
+        ? "max-h-36 min-h-24 overflow-y-auto scrollbar-none field-sizing-fixed wrap-anywhere"
+        : "min-h-24 max-w-full field-sizing-fixed wrap-anywhere";
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -235,8 +256,8 @@ function EditDialog({
     <>
       <span onClick={() => setOpen(true)}>{trigger}</span>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-2xl">
-          <form onSubmit={submit} className="flex flex-col gap-5">
+        <DialogContent className="max-h-[calc(100vh-2rem)] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
+          <form onSubmit={submit} className="flex min-w-0 flex-col gap-5">
             <DialogHeader>
               <DialogTitle>
                 {item ? "Edit" : "Add"} {config.title}
@@ -246,23 +267,17 @@ function EditDialog({
                 publicly.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
               {config.fields.map((field) => (
-                <div
-                  key={field}
-                  className={
-                    config.multiline.includes(field as never)
-                      ? "flex flex-col gap-2 sm:col-span-2"
-                      : "flex flex-col gap-2"
-                  }
-                >
+                <div key={field} className={getFieldClassName(field)}>
                   <Label htmlFor={`${kind}-${field}`}>{labels[field]}</Label>
                   {config.multiline.includes(field as never) ? (
                     <Textarea
                       id={`${kind}-${field}`}
                       name={field}
                       defaultValue={fieldValue(field)}
-                      className="min-h-24"
+                      wrap="soft"
+                      className={getTextareaClassName(field)}
                     />
                   ) : (
                     <Input
@@ -270,6 +285,7 @@ function EditDialog({
                       name={field}
                       required={field === config.required}
                       defaultValue={fieldValue(field)}
+                      className="min-w-0 truncate"
                     />
                   )}
                 </div>
@@ -431,19 +447,24 @@ function ManagedList({
               </Button>
             </div>
             <div className="min-w-0 flex-1 py-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium">{String(item[titleKey])}</p>
-                <Badge variant={item.isVisible ? "default" : "secondary"}>
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <p className="max-w-full min-w-0 truncate font-medium">
+                  {String(item[titleKey])}
+                </p>
+                <Badge
+                  variant={item.isVisible ? "default" : "secondary"}
+                  className="shrink-0"
+                >
                   {item.isVisible ? "Visible" : "Hidden"}
                 </Badge>
               </div>
               {preview(item).meta && (
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                <p className="mt-1 line-clamp-1 scrollbar-none text-xs leading-5 wrap-break-word text-muted-foreground">
                   {preview(item).meta}
                 </p>
               )}
               {preview(item).description && (
-                <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                <p className="mt-1 line-clamp-2 scrollbar-none text-sm leading-6 wrap-break-word text-muted-foreground">
                   {preview(item).description}
                 </p>
               )}
@@ -563,7 +584,7 @@ export function AboutStructuredManager({
             </div>
             <ManagedList kind="category" items={data.categories}>
               {(category) => (
-                <div className="mt-3 rounded-lg border border-border/40 bg-background/20 p-3 sm:p-4">
+                <div className="mt-3 min-w-0 overflow-hidden rounded-lg border border-border/40 bg-background/20 p-3 sm:p-4">
                   <div className="mb-3">
                     <EditDialog
                       kind="skill"

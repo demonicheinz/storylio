@@ -13,7 +13,7 @@ export function ArticleHeader({ post }: ArticleHeaderProps) {
   const publishedAt = post.publishedAt ?? post.createdAt;
 
   return (
-    <header className="flex flex-col gap-8">
+    <header className="flex flex-col gap-7">
       <div className="max-w-4xl">
         <p className="mb-4 text-xs font-semibold tracking-[0.32em] text-brand-soft uppercase">
           Article / {formatDate(publishedAt)}
@@ -28,25 +28,27 @@ export function ArticleHeader({ post }: ArticleHeaderProps) {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-        <span>{calculateReadingTime(post.content)} min read</span>
-        <span className="text-border">/</span>
-        <span className="inline-flex items-center gap-1.5">
-          <EyeIcon size={16} className="text-brand-soft" />
-          <ViewCounter slug={post.slug} initialViews={post.viewCount} />
-        </span>
-      </div>
+      <div className="flex flex-col gap-4 border-y border-border/30 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+          <span>{calculateReadingTime(post.content)} min read</span>
+          <span className="text-border">/</span>
+          <span className="inline-flex items-center gap-1.5">
+            <EyeIcon size={16} className="text-brand-soft" />
+            <ViewCounter slug={post.slug} initialViews={post.viewCount} />
+          </span>
+        </div>
 
-      <div className="flex flex-wrap gap-2">
-        {post.tags.map((tag) => (
-          <Badge
-            key={tag.id}
-            variant="outline"
-            className="rounded-full border-border/90 bg-background/35 text-foreground/85"
-          >
-            {tag.name}
-          </Badge>
-        ))}
+        <div className="flex flex-wrap gap-2">
+          {post.tags.map((tag) => (
+            <Badge
+              key={tag.id}
+              variant="outline"
+              className="rounded-full border-border/90 bg-background/35 text-foreground/85"
+            >
+              {tag.name}
+            </Badge>
+          ))}
+        </div>
       </div>
 
       <BlogCover
@@ -55,6 +57,7 @@ export function ArticleHeader({ post }: ArticleHeaderProps) {
         fetchPriority="high"
         loading="eager"
         className="aspect-video shadow-[0_0_80px_rgba(139,92,246,0.14)]"
+        sizes="(min-width: 1280px) 1216px, calc(100vw - 2rem)"
       />
     </header>
   );

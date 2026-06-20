@@ -13,13 +13,15 @@ import {
   ProjectCover,
   ProjectNavigation,
   ProjectScreenshots,
+  ProjectToc,
 } from "@/components/public/sections/projects";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
 import { renderMDX } from "@/lib/mdx";
-import { calculateReadingTime, formatDate } from "@/lib/utils";
+import { getProjectContribution } from "@/lib/project-contribution";
+import { calculateReadingTime, formatDate, slugify } from "@/lib/utils";
 
 type ProjectDetailPageProps = {
   params: Promise<{
@@ -41,6 +43,7 @@ async function getProjectBySlug(slug: string) {
       title: true,
       slug: true,
       description: true,
+      contribution: true,
       content: true,
       coverImage: true,
       thumbnailImageUrl: true,
@@ -109,6 +112,27 @@ async function getProjectNeighbors(projectId: string) {
   };
 }
 
+function getProjectTocItems(content: string) {
+  const headings = content.matchAll(/^(##|###)\s+(.+)$/gm);
+  const seenIds = new Map<string, number>();
+
+  return Array.from(headings).map((heading) => {
+    const level: 2 | 3 = heading[1] === "###" ? 3 : 2;
+    const title = heading[2].replace(/[#*_`]/g, "").trim();
+    const baseId = slugify(title);
+    const count = seenIds.get(baseId) ?? 0;
+    const id = count === 0 ? baseId : `${baseId}-${count}`;
+
+    seenIds.set(baseId, count + 1);
+
+    return {
+      id,
+      title,
+      level,
+    };
+  });
+}
+
 export async function generateMetadata({
   params,
 }: ProjectDetailPageProps): Promise<Metadata> {
@@ -162,13 +186,22 @@ export default async function ProjectDetailPage({
     notFound();
   }
 
-  const [mdxContent, { previousProject, nextProject }] = await Promise.all([
-    project.content ? renderMDX(project.content) : null,
-    getProjectNeighbors(project.id),
-  ]);
+  const [mdxContent, tocItems, { previousProject, nextProject }] =
+    await Promise.all([
+      project.content ? renderMDX(project.content) : null,
+      Promise.resolve(
+        project.content ? getProjectTocItems(project.content) : [],
+      ),
+      getProjectNeighbors(project.id),
+    ]);
+  const contribution =
+    project.contribution ?? getProjectContribution(project.techStack);
+  const readingTime = project.content
+    ? `${calculateReadingTime(project.content)} min read`
+    : "Quick view";
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <main className="min-h-screen overflow-x-clip">
       <ViewCounter type="project" slug={project.slug} />
       <PublicBackground variant="projects" />
 
@@ -184,19 +217,20 @@ export default async function ProjectDetailPage({
           </Link>
         </Button>
 
-        <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
+        <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
           <div className="lg:sticky lg:top-28">
             <ProjectCover
               src={project.coverImage}
               alt={project.title}
-              className="aspect-16/11 shadow-[0_0_80px_rgba(139,92,246,0.14)]"
+              className="aspect-video shadow-[0_0_80px_rgba(139,92,246,0.14)]"
               fetchPriority="high"
               loading="eager"
+              sizes="(min-width: 1280px) 640px, (min-width: 1024px) 52vw, calc(100vw - 2rem)"
             />
           </div>
 
-          <div className="flex min-w-0 flex-col rounded-3xl border border-border/40 bg-surface/65 p-6 shadow-[0_0_64px_rgba(139,92,246,0.1)] backdrop-blur-xl md:p-8">
-            <div className="mb-5 flex flex-wrap gap-2">
+          <div className="flex min-w-0 flex-col rounded-3xl border border-border/40 bg-surface/65 p-6 shadow-[0_0_64px_rgba(139,92,246,0.1)] backdrop-blur-xl md:p-8 lg:p-9">
+            <div className="mb-6 flex flex-wrap gap-1.5">
               {project.techStack.map((tech) => (
                 <Badge
                   key={`${project.id}-${tech}`}
@@ -208,45 +242,54 @@ export default async function ProjectDetailPage({
               ))}
             </div>
 
-            <h1 className="font-heading text-4xl leading-tight font-bold text-foreground md:text-6xl">
+            <h1 className="font-heading text-4xl leading-[1.08] font-bold text-foreground md:text-5xl xl:text-6xl">
               {project.title}
             </h1>
 
-            <p className="mt-5 text-base leading-8 text-muted-foreground md:text-lg">
+            <p className="mt-6 text-base leading-8 text-muted-foreground md:text-lg">
               {project.description ??
                 "A selected project from Heinz's archive, focused on thoughtful implementation and polished interaction."}
             </p>
 
-            <div className="mt-8 grid gap-3 border-y border-border/40 py-5 sm:grid-cols-3">
-              <div>
-                <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
-                  Role
-                </p>
-                <p className="mt-2 font-medium text-foreground">
-                  Full-stack build
-                </p>
-              </div>
-              <div>
-                <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
-                  Updated
-                </p>
-                <p className="mt-2 font-medium text-foreground">
-                  {formatDate(project.updatedAt)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
-                  Read
-                </p>
-                <p className="mt-2 font-medium text-foreground">
-                  {project.content
-                    ? `${calculateReadingTime(project.content)} min`
-                    : "Quick view"}
-                </p>
-              </div>
+            <div className="mt-8 border-y border-border/40 py-5 sm:hidden">
+              <p className="font-medium text-foreground">{contribution}</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                {formatDate(project.updatedAt)}
+                <span className="px-2 text-border" aria-hidden="true">
+                  •
+                </span>
+                {readingTime}
+              </p>
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <dl className="mt-9 hidden gap-4 border-y border-border/40 py-6 sm:grid sm:grid-cols-3">
+              <div>
+                <dt className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
+                  Contribution
+                </dt>
+                <dd className="mt-2 font-medium text-foreground">
+                  {contribution}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
+                  Updated
+                </dt>
+                <dd className="mt-2 font-medium text-foreground">
+                  {formatDate(project.updatedAt)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
+                  Read
+                </dt>
+                <dd className="mt-2 font-medium text-foreground">
+                  {readingTime.replace(" read", "")}
+                </dd>
+              </div>
+            </dl>
+
+            <div className="mt-7 flex flex-wrap gap-3">
               {project.liveUrl && (
                 <Button asChild className="rounded-full">
                   <Link href={project.liveUrl} target="_blank" rel="noreferrer">
@@ -277,9 +320,26 @@ export default async function ProjectDetailPage({
         </div>
 
         {mdxContent && (
-          <section className="mt-14 rounded-3xl border border-border/40 bg-surface/65 p-6 shadow-[0_0_64px_rgba(139,92,246,0.1)] backdrop-blur-xl md:p-8">
-            <div className="prose-invert flex max-w-none flex-col gap-5">
-              {mdxContent}
+          <section aria-label="Project case study" className="mt-16 md:mt-24">
+            <div className="mb-10 max-w-3xl">
+              <p className="text-xs font-semibold tracking-[0.28em] text-brand-soft uppercase">
+                Inside the project
+              </p>
+              <h2 className="mt-3 font-heading text-3xl font-semibold text-foreground md:text-4xl">
+                From intent to outcome
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-8 text-muted-foreground">
+                A closer look at the thinking, implementation, and decisions
+                that shaped the final work.
+              </p>
+            </div>
+
+            <div className="grid items-start gap-10 xl:grid-cols-[minmax(0,1fr)_280px]">
+              <div className="prose-invert flex max-w-4xl min-w-0 flex-col gap-6 border-l border-border/30 pl-5 sm:pl-8 lg:pl-10 [&>h2]:mt-20 [&>h2]:pt-2 [&>h2:first-child]:mt-0 [&>h2:first-child]:pt-0 [&>h3]:mt-12">
+                {mdxContent}
+              </div>
+
+              <ProjectToc items={tocItems} />
             </div>
           </section>
         )}

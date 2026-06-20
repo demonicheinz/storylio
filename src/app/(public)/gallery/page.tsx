@@ -14,14 +14,10 @@ type GalleryPageProps = {
   }>;
 };
 
-const aspectRatios = [
-  { width: 1200, height: 1500 },
-  { width: 1200, height: 900 },
-  { width: 1200, height: 1600 },
-  { width: 1200, height: 800 },
-  { width: 1200, height: 1300 },
-  { width: 1200, height: 1000 },
-] as const;
+const fallbackImageDimensions = {
+  width: 1200,
+  height: 900,
+} as const;
 
 export const unstable_instant = {
   prefetch: "runtime",
@@ -82,11 +78,12 @@ async function getGalleryData() {
   });
 
   const photos: GalleryPhoto[] = items.map((item, index) => {
-    const ratio = aspectRatios[index % aspectRatios.length];
-    const width = item.width ?? ratio.width;
+    const width = item.width ?? fallbackImageDimensions.width;
     const height =
       item.height ??
-      (item.aspectRatio ? Math.round(width / item.aspectRatio) : ratio.height);
+      (item.aspectRatio
+        ? Math.round(width / item.aspectRatio)
+        : fallbackImageDimensions.height);
 
     return {
       ...item,
@@ -121,7 +118,7 @@ export default async function GalleryPage({ searchParams }: GalleryPageProps) {
   const { photos, categories } = await getGalleryData();
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <main className="min-h-screen overflow-x-clip">
       <PublicBackground variant="gallery" />
 
       <div className="relative mx-auto flex w-full max-w-295 flex-col px-4 sm:px-6 lg:px-8">

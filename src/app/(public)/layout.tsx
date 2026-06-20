@@ -9,7 +9,8 @@ function UmamiTrackingScript() {
     process.env.UMAMI_WEBSITE_ID?.trim() ??
     process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID?.trim();
   const scriptUrl =
-    process.env.UMAMI_SCRIPT_URL?.trim() || "https://cloud.umami.is/script.js";
+    process.env.UMAMI_SCRIPT_URL?.trim() ||
+    "https://analytics.heinz.id/script.js";
   const trackLocalhost = process.env.UMAMI_TRACK_LOCALHOST === "true";
 
   if (

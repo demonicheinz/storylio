@@ -23,7 +23,6 @@ const segmentLabels: Record<string, string> = {
   posts: "Posts",
   projects: "Projects",
   settings: "Settings",
-  testimonials: "Testimonials",
 };
 
 type BreadcrumbItemData = {

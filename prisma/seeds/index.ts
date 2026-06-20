@@ -1,11 +1,11 @@
 import { db } from "@/lib/db";
-import { seedAboutContent } from "./seeds/about";
-import { seedGallery } from "./seeds/gallery";
-import { seedHomeSections } from "./seeds/home-sections";
-import { seedOwner } from "./seeds/owner";
-import { seedPosts } from "./seeds/posts";
-import { seedProjects } from "./seeds/projects";
-import { seedTestimonials } from "./seeds/testimonials";
+import { seedAboutContent } from "./about";
+import { seedGallery } from "./gallery";
+import { seedHomeSections } from "./home-sections";
+import { seedOwner } from "./owner";
+import { seedPosts } from "./posts";
+import { seedProjects } from "./projects";
+import { seedTestimonials } from "./testimonials";
 
 async function main() {
   const owner = await seedOwner(db);

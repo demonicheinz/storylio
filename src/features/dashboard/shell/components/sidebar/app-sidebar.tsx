@@ -3,7 +3,6 @@
 import {
   ArticleIcon,
   ChartLineIcon,
-  ChatCircleTextIcon,
   CouchIcon,
   FolderOpenIcon,
   GearIcon,
@@ -31,21 +30,29 @@ import { NavMain } from "@/features/dashboard/shell/components/sidebar/nav-main"
 import { NavUser } from "@/features/dashboard/shell/components/sidebar/nav-user";
 import { authClient } from "@/lib/auth-client";
 
-const navItems = [
-  { title: "Overview", url: "/dashboard", icon: HouseIcon },
-  { title: "Home", url: "/dashboard/home", icon: CouchIcon },
-  { title: "About", url: "/dashboard/about", icon: IdentificationCardIcon },
-  { title: "Posts", url: "/dashboard/posts", icon: ArticleIcon },
-  { title: "Projects", url: "/dashboard/projects", icon: FolderOpenIcon },
+const navGroups = [
   {
-    title: "Testimonials",
-    url: "/dashboard/testimonials",
-    icon: ChatCircleTextIcon,
+    label: "Content",
+    items: [
+      { title: "Overview", url: "/dashboard", icon: HouseIcon },
+      { title: "Home", url: "/dashboard/home", icon: CouchIcon },
+      { title: "About", url: "/dashboard/about", icon: IdentificationCardIcon },
+      { title: "Projects", url: "/dashboard/projects", icon: FolderOpenIcon },
+      { title: "Posts", url: "/dashboard/posts", icon: ArticleIcon },
+      { title: "Gallery", url: "/dashboard/gallery", icon: ImagesIcon },
+    ],
   },
-  { title: "Media", url: "/dashboard/media", icon: ImageIcon },
-  { title: "Gallery", url: "/dashboard/gallery", icon: ImagesIcon },
-  { title: "Analytics", url: "/dashboard/analytics", icon: ChartLineIcon },
-  { title: "Settings", url: "/dashboard/settings", icon: GearIcon },
+  {
+    label: "Library",
+    items: [{ title: "Media", url: "/dashboard/media", icon: ImageIcon }],
+  },
+  {
+    label: "System",
+    items: [
+      { title: "Analytics", url: "/dashboard/analytics", icon: ChartLineIcon },
+      { title: "Settings", url: "/dashboard/settings", icon: GearIcon },
+    ],
+  },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -71,22 +78,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg" tooltip="Storylio">
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-xl">
+                <div className="flex aspect-square size-9 items-center justify-center rounded-xl">
                   <Image
                     src="/images/logo.png"
                     alt="Logo"
-                    width={24}
-                    height={24}
-                    className="size-6 object-contain"
+                    width={28}
+                    height={28}
+                    className="size-7 object-contain"
                     priority
                   />
                 </div>
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="truncate font-heading font-semibold">
+                  <span className="truncate font-heading text-[15px] font-semibold">
                     Storylio
-                  </span>
-                  <span className="truncate text-xs text-sidebar-foreground/70">
-                    Dashboard
                   </span>
                 </div>
               </Link>
@@ -95,10 +99,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navItems} />
+        <NavMain groups={navGroups} />
       </SidebarContent>
+      <SidebarSeparator className="mx-0 w-full" />
       <SidebarFooter>
-        <SidebarSeparator />
         <NavUser user={owner} />
       </SidebarFooter>
       <SidebarRail />

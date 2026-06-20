@@ -11,6 +11,7 @@ type ProjectCoverProps = {
   className?: string;
   fetchPriority?: "auto" | "high" | "low";
   loading?: "eager" | "lazy";
+  sizes?: string;
 };
 
 export function ProjectCover({
@@ -19,6 +20,7 @@ export function ProjectCover({
   className,
   fetchPriority,
   loading = "lazy",
+  sizes = "(min-width: 1024px) 50vw, 100vw",
 }: ProjectCoverProps) {
   const [hasImageError, setHasImageError] = useState(false);
   const shouldShowImage = Boolean(src) && !hasImageError;
@@ -35,11 +37,10 @@ export function ProjectCover({
           src={src}
           alt={alt}
           fill
-          sizes="(min-width: 1024px) 50vw, 100vw"
+          sizes={sizes}
           fetchPriority={fetchPriority}
           loading={loading}
           className="object-cover transition-transform duration-500 group-hover/project:scale-105"
-          unoptimized
           onError={() => setHasImageError(true)}
         />
       ) : (

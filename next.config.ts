@@ -14,15 +14,10 @@ function getOrigin(value: string | undefined) {
 }
 
 const umamiScriptOrigin =
-  getOrigin(process.env.UMAMI_SCRIPT_URL) ?? "https://cloud.umami.is";
-const umamiApiOrigin = getOrigin(process.env.UMAMI_API_URL);
-const umamiConnectOrigins = [
-  "https://cloud.umami.is",
-  "https://api.umami.is",
-  "https://gateway.umami.is",
-  umamiScriptOrigin,
-  umamiApiOrigin,
-]
+  getOrigin(process.env.UMAMI_SCRIPT_URL) ?? "https://analytics.heinz.id";
+const umamiApiOrigin =
+  getOrigin(process.env.UMAMI_API_URL) ?? "https://analytics.heinz.id";
+const umamiConnectOrigins = [umamiScriptOrigin, umamiApiOrigin]
   .filter((origin): origin is string => Boolean(origin))
   .filter((origin, index, origins) => origins.indexOf(origin) === index)
   .join(" ");

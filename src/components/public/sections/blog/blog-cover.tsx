@@ -11,6 +11,7 @@ type BlogCoverProps = {
   className?: string;
   fetchPriority?: "auto" | "high" | "low";
   loading?: "eager" | "lazy";
+  sizes?: string;
 };
 
 export function BlogCover({
@@ -19,6 +20,7 @@ export function BlogCover({
   className,
   fetchPriority,
   loading = "lazy",
+  sizes = "(min-width: 1024px) 50vw, 100vw",
 }: BlogCoverProps) {
   const [hasImageError, setHasImageError] = useState(false);
   const shouldShowImage = Boolean(src) && !hasImageError;
@@ -35,11 +37,10 @@ export function BlogCover({
           src={src}
           alt={alt}
           fill
-          sizes="(min-width: 1024px) 50vw, 100vw"
+          sizes={sizes}
           fetchPriority={fetchPriority}
           loading={loading}
           className="object-cover transition-transform duration-500 group-hover/post:scale-105"
-          unoptimized
           onError={() => setHasImageError(true)}
         />
       ) : (

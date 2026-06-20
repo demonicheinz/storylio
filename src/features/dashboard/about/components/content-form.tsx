@@ -206,8 +206,9 @@ export function AboutContentForm({
                       </Label>
                       <Textarea
                         id={introName}
-                        className="min-h-36"
+                        className="field-sizing-fixed min-h-36 max-w-full scrollbar-none wrap-anywhere"
                         disabled={isPending}
+                        wrap="soft"
                         placeholder="Introduction shown only on the About page."
                         aria-invalid={!!errors[introName]}
                         {...register(introName)}

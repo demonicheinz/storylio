@@ -37,7 +37,7 @@ export function RecentPostsSection({ posts }: { posts: HomeRecentPost[] }) {
       </div>
 
       {posts.length > 0 ? (
-        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {posts.map((post) => {
             const publishedAt = post.publishedAt ?? post.createdAt;
 
@@ -50,7 +50,8 @@ export function RecentPostsSection({ posts }: { posts: HomeRecentPost[] }) {
                 <BlogCover
                   src={post.coverImage}
                   alt={post.title}
-                  className="aspect-16/10"
+                  className="aspect-video"
+                  sizes="(min-width: 1280px) 438px, (min-width: 768px) calc(50vw - 2.5rem), calc(100vw - 2rem)"
                 />
 
                 <div className="flex flex-1 flex-col p-4">

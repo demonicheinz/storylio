@@ -15,8 +15,8 @@ export function RelatedPosts({ posts }: RelatedPostsProps) {
   }
 
   return (
-    <section className="mt-14">
-      <div className="mb-6 flex items-end justify-between gap-4">
+    <section className="mt-16 md:mt-20">
+      <div className="mb-7 flex items-end justify-between gap-4 border-b border-border/30 pb-5">
         <div>
           <p className="text-xs font-semibold tracking-[0.28em] text-brand-soft uppercase">
             Continue reading
@@ -35,12 +35,13 @@ export function RelatedPosts({ posts }: RelatedPostsProps) {
             <Link
               key={post.id}
               href={`/blog/${post.slug}`}
-              className="group/post flex min-w-0 flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-brand-soft/45 hover:shadow-[0_0_64px_rgba(139,92,246,0.14)]"
+              className="group/post flex min-w-0 flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 outline-none hover:-translate-y-0.5 hover:border-brand-soft/45 hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] focus-visible:ring-2 focus-visible:ring-brand-soft/60"
             >
               <BlogCover
                 src={post.coverImage}
                 alt={post.title}
-                className="aspect-16/10 rounded-2xl"
+                className="aspect-video rounded-2xl"
+                sizes="(min-width: 1280px) 365px, (min-width: 768px) calc(33vw - 2rem), calc(100vw - 2rem)"
               />
 
               <div className="flex flex-1 flex-col p-2 pt-4">

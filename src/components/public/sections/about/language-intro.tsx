@@ -12,7 +12,7 @@ const languages: {
   value: AboutLanguage;
 }[] = [
   { label: "English", value: "en" },
-  { label: "Indonesia", value: "id" },
+  { label: "Indonesian", value: "id" },
 ];
 
 export function LanguageIntro({

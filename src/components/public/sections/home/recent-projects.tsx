@@ -37,53 +37,70 @@ export function RecentProjectsSection({
 
       {projects.length > 0 ? (
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {projects.map((project) => (
-            <Link
-              href={`/projects/${project.slug}`}
-              key={project.id}
-              className="group/project flex h-full flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-brand-soft/45 hover:shadow-[0_0_64px_rgba(139,92,246,0.14)]"
-            >
-              <ProjectCover
-                src={project.thumbnailImageUrl ?? project.coverImage}
-                alt={project.title}
-                className="aspect-16/10"
-              />
+          {projects.map((project) => {
+            const visibleTech = project.techStack.slice(0, 3);
+            const remainingTech = project.techStack.length - visibleTech.length;
 
-              <div className="flex flex-1 flex-col p-4">
-                <h3 className="font-heading text-2xl leading-tight font-semibold text-foreground transition-colors group-hover/project:text-brand-soft">
-                  {project.title}
-                </h3>
-                {project.isFeatured && (
-                  <Badge className="mt-3 w-fit rounded-full bg-brand-soft text-primary-foreground">
-                    Featured
-                  </Badge>
-                )}
-                <p className="mt-3 line-clamp-2 text-sm leading-7 text-muted-foreground">
-                  {project.description ??
-                    "A selected project from Heinz's archive."}
-                </p>
+            return (
+              <Link
+                href={`/projects/${project.slug}`}
+                key={project.id}
+                className="group/project flex h-full flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-brand-soft/45 hover:shadow-[0_0_64px_rgba(139,92,246,0.14)]"
+              >
+                <div className="relative">
+                  <ProjectCover
+                    src={project.thumbnailImageUrl ?? project.coverImage}
+                    alt={project.title}
+                    className="aspect-video"
+                    sizes="(min-width: 1280px) 672px, (min-width: 768px) calc(50vw - 2.5rem), calc(100vw - 2rem)"
+                  />
+                  {project.isFeatured && (
+                    <Badge className="pointer-events-none absolute top-3 left-3 rounded-full bg-brand-soft/90 px-3 text-primary-foreground shadow-[0_8px_24px_rgba(10,10,20,0.35)] backdrop-blur">
+                      Featured
+                    </Badge>
+                  )}
+                </div>
 
-                {project.techStack.length > 0 && (
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {project.techStack.slice(0, 4).map((tech) => (
-                      <Badge
-                        key={`${project.id}-${tech}`}
-                        variant="outline"
-                        className="rounded-full border-border/60 bg-background/35 text-foreground/85"
-                      >
-                        {tech}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                <div className="flex flex-1 flex-col p-4">
+                  <h3 className="font-heading text-2xl leading-tight font-semibold text-foreground transition-colors group-hover/project:text-brand-soft">
+                    {project.title}
+                  </h3>
+                  <p className="mt-3 line-clamp-2 text-sm leading-7 text-muted-foreground">
+                    {project.description ??
+                      "A selected project from Heinz's archive."}
+                  </p>
 
-                <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-medium text-brand-soft">
-                  View project
-                  <ArrowUpRightIcon size={16} />
-                </span>
-              </div>
-            </Link>
-          ))}
+                  {project.techStack.length > 0 && (
+                    <div className="mt-5 flex max-w-full items-center gap-1.5 overflow-hidden">
+                      {visibleTech.map((tech) => (
+                        <Badge
+                          key={`${project.id}-${tech}`}
+                          variant="outline"
+                          className="shrink-0 rounded-full border-border/90 bg-background/35 text-foreground/85"
+                        >
+                          {tech}
+                        </Badge>
+                      ))}
+                      {remainingTech > 0 && (
+                        <Badge
+                          variant="outline"
+                          className="shrink-0 rounded-full border-border/90 bg-background/35 text-foreground/85"
+                          aria-label={`${remainingTech} more technologies`}
+                        >
+                          +{remainingTech}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+
+                  <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-medium text-brand-soft">
+                    View project
+                    <ArrowUpRightIcon size={16} />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       ) : (
         <div className="mt-10 rounded-3xl border border-dashed border-border/60 bg-surface/45 p-8 text-center text-sm leading-7 text-muted-foreground backdrop-blur-xl">

@@ -3,6 +3,7 @@ export type ProjectListItem = {
   title: string;
   slug: string;
   description: string | null;
+  contribution: string | null;
   coverImage: string | null;
   thumbnailImageUrl: string | null;
   isFeatured: boolean;

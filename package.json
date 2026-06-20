@@ -20,7 +20,7 @@
     "start": "dotenvx run -f .env.local -- next start",
     "start:preview": "dotenvx run -f .env.preview -- next start",
     "start:production": "dotenvx run -f .env.production -- next start",
-    "db:format": "prisma format",
+    "db:format": "dotenvx run -f .env.local -- prisma format",
     "db:generate": "dotenvx run -f .env.local -- prisma generate",
     "db:generate:preview": "dotenvx run -f .env.preview -- prisma generate",
     "db:generate:production": "dotenvx run -f .env.production -- prisma generate",

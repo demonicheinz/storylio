@@ -18,6 +18,7 @@ const projects = [
     slug: "storylio",
     description:
       "A dark-space personal portfolio and CMS for publishing projects, writing, gallery items, and home page content without touching code.",
+    contribution: "Design & full-stack development",
     content: [
       "## Overview",
       "Storylio is a full-stack portfolio platform built with Next.js, Prisma, and PostgreSQL. The public site focuses on expressive storytelling, while the dashboard keeps content management calm and practical for a single owner.",
@@ -58,6 +59,7 @@ const projects = [
     slug: "nebula-commerce",
     description:
       "A storefront concept with product discovery, fast checkout flows, and polished responsive merchandising sections.",
+    contribution: "Frontend architecture and implementation",
     content: [
       "## Overview",
       "Nebula Commerce explores how an online store can feel premium without becoming heavy. The interface emphasizes clear product comparison, fast navigation, and reusable commerce sections that can scale with a growing catalog.",
@@ -82,6 +84,7 @@ const projects = [
     slug: "pulse-analytics",
     description:
       "A focused analytics dashboard for monitoring content performance, popular posts, and lightweight product metrics.",
+    contribution: "Product design and frontend development",
     content: [
       "## Overview",
       "Pulse Analytics is a dashboard prototype designed for fast scanning. It uses compact cards, clear hierarchy, and restrained visual styling so repeated operational checks stay efficient.",
@@ -112,6 +115,7 @@ const projects = [
     slug: "canvas-notes",
     description:
       "An interactive note board experiment with drag-friendly layouts, quick capture, and visual organization patterns.",
+    contribution: "Interaction design and prototyping",
     content: [
       "## Overview",
       "Canvas Notes tests a looser workspace for organizing ideas visually. The focus is interaction detail: quick entry, responsive cards, and a calm canvas that does not fight the content.",
@@ -133,6 +137,7 @@ const projects = [
     slug: "archive-draft",
     description:
       "A draft project used to verify that unpublished work never appears on public project pages.",
+    contribution: "Development and testing",
     content:
       "This project intentionally stays unpublished and should return 404 on the public detail route.",
     coverImage: null,

@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
-import { MotionReveal, PublicBackground } from "@/components/common";
+import { Heading, MotionReveal, PublicBackground } from "@/components/common";
 import {
-  aboutGlowCardClassName,
+  AboutSideNavigation,
   BioSection,
   EducationSection,
   ExperienceSection,
   ProfileSection,
-  SideNavigation,
   SkillsSection,
 } from "@/components/public/sections/about";
 import {
@@ -200,15 +199,27 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
     renderAboutMdx(whatIValue, aboutStoryFallback.whatIValue),
   ]);
   const publicProfile = profile ?? undefined;
-  const storyTitles =
+  const workingPrinciples =
     language === "id"
       ? {
-          howIWork: "Cara Saya Bekerja",
-          whatIValue: "Hal yang Saya Hargai",
+          howIWork: {
+            title: "Cara Saya",
+            highlight: "Bekerja",
+          },
+          whatIValue: {
+            title: "Hal yang Saya",
+            highlight: "Hargai",
+          },
         }
       : {
-          howIWork: "How I Work",
-          whatIValue: "What I Value",
+          howIWork: {
+            title: "How I",
+            highlight: "Work",
+          },
+          whatIValue: {
+            title: "What I",
+            highlight: "Value",
+          },
         };
 
   return (
@@ -217,10 +228,10 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
 
       <div className="flex min-h-screen flex-col justify-center xl:flex-row">
         <div className="fixed left-0 hidden h-screen flex-col items-center justify-center xl:flex">
-          <SideNavigation />
+          <AboutSideNavigation language={language} />
         </div>
 
-        <div className="relative mx-auto flex w-full max-w-264 min-w-0 flex-col justify-center px-4 pt-32 sm:px-6 lg:px-8">
+        <div className="relative mx-auto flex w-full max-w-264 min-w-0 flex-col justify-center px-4 pt-38 sm:px-6 md:pt-40 lg:px-8">
           <div className="flex w-full flex-col md:flex-row">
             <div className="flex w-full flex-col items-center gap-4 pb-8 md:hidden">
               <ProfileSection isMobile profile={publicProfile} />
@@ -242,28 +253,35 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
               </MotionReveal>
 
               <MotionReveal className={sectionSpacing}>
-                <section id="story" className="scroll-mt-28">
-                  <div
-                    className={cn(
-                      aboutGlowCardClassName,
-                      "flex flex-col gap-6 rounded-3xl p-6 md:p-8",
-                    )}
-                  >
-                    <div className="flex min-w-0 flex-col gap-4">
-                      <h2 className="font-heading text-3xl font-semibold text-foreground">
-                        {storyTitles.howIWork}
-                      </h2>
-                      <div className={aboutMdxClassName}>{howIWorkContent}</div>
+                <section id="working-principles" className="scroll-mt-28">
+                  <div className="flex flex-col gap-10 md:gap-12">
+                    <div className="min-w-0">
+                      <Heading
+                        level="h2"
+                        variant="section"
+                        size="lg"
+                        title={workingPrinciples.howIWork.title}
+                        highlight={workingPrinciples.howIWork.highlight}
+                      />
+                      <div className="border-l border-border/40 pl-5 sm:pl-7">
+                        <div className={aboutMdxClassName}>
+                          {howIWorkContent}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="h-px bg-border/40" />
-
-                    <div className="flex min-w-0 flex-col gap-4">
-                      <h2 className="font-heading text-3xl font-semibold text-foreground">
-                        {storyTitles.whatIValue}
-                      </h2>
-                      <div className={aboutMdxClassName}>
-                        {whatIValueContent}
+                    <div className="min-w-0 border-t border-border/30 pt-10 md:pt-12">
+                      <Heading
+                        level="h2"
+                        variant="section"
+                        size="lg"
+                        title={workingPrinciples.whatIValue.title}
+                        highlight={workingPrinciples.whatIValue.highlight}
+                      />
+                      <div className="border-l border-border/40 pl-5 sm:pl-7">
+                        <div className={aboutMdxClassName}>
+                          {whatIValueContent}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -275,6 +293,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
                   id: "work-experience",
                   component: (
                     <ExperienceSection
+                      language={language}
                       experiences={experiences.map((item) => ({
                         ...item,
                         description: localizedOptional(
@@ -298,6 +317,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
                   id: "education-history",
                   component: (
                     <EducationSection
+                      language={language}
                       education={education.map((item) => ({
                         id: item.id,
                         institution: item.institution,
@@ -324,6 +344,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
                   id: "technical-skills",
                   component: (
                     <SkillsSection
+                      language={language}
                       categories={categories.map((item) => ({
                         id: item.id,
                         name: item.name,

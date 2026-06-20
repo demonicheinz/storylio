@@ -7,6 +7,7 @@ import { ProjectCover } from "@/components/public/sections/projects/project-cove
 import type { ProjectListItem } from "@/components/public/sections/projects/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getProjectContribution } from "@/lib/project-contribution";
 
 type FeaturedProjectProps = {
   project: ProjectListItem;
@@ -14,43 +15,41 @@ type FeaturedProjectProps = {
 
 export function FeaturedProject({ project }: FeaturedProjectProps) {
   const cardImage = project.thumbnailImageUrl ?? project.coverImage;
+  const contribution =
+    project.contribution ?? getProjectContribution(project.techStack);
+  const visibleTech = project.techStack.slice(0, 3);
+  const remainingTech = project.techStack.length - visibleTech.length;
 
   return (
     <section className="group/project relative overflow-hidden rounded-[2rem] border border-brand-soft/25 bg-[linear-gradient(135deg,rgba(22,18,36,0.86),rgba(10,10,20,0.94)_48%,rgba(37,28,62,0.86))] p-3 shadow-[0_0_96px_rgba(139,92,246,0.16)] backdrop-blur-xl md:p-4">
       <div className="pointer-events-none absolute -top-32 right-10 size-72 rounded-full bg-brand-soft/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 -left-16 size-80 rounded-full bg-indigo-500/10 blur-3xl" />
-      <span className="pointer-events-none absolute top-5 right-6 font-heading text-7xl font-bold text-foreground/[0.035] md:text-9xl">
-        01
-      </span>
 
-      <div className="relative grid gap-6 lg:min-h-140 lg:grid-cols-[1.18fr_0.82fr] lg:gap-8">
-        <Link
-          href={`/projects/${project.slug}`}
-          aria-label={project.title}
-          className="block h-full"
-        >
-          <ProjectCover
-            src={cardImage}
-            alt={project.title}
-            fetchPriority="high"
-            className="aspect-16/11 h-full rounded-[1.55rem] border-brand-soft/20 shadow-[0_0_80px_rgba(139,92,246,0.18)] lg:aspect-auto"
-            loading="eager"
-          />
-        </Link>
+      <div className="relative grid items-center gap-5 lg:grid-cols-[3fr_2fr] lg:gap-7">
+        <div className="relative">
+          <Link
+            href={`/projects/${project.slug}`}
+            aria-label={project.title}
+            className="block rounded-[1.55rem] outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+          >
+            <ProjectCover
+              src={cardImage}
+              alt={project.title}
+              fetchPriority="high"
+              className="aspect-video rounded-[1.55rem] border-brand-soft/20 shadow-[0_0_80px_rgba(139,92,246,0.18)]"
+              loading="eager"
+              sizes="(min-width: 1280px) 672px, (min-width: 1024px) 58vw, calc(100vw - 2rem)"
+            />
+          </Link>
+          <Badge className="pointer-events-none absolute top-3 left-3 rounded-full bg-brand-soft/90 px-3 text-primary-foreground shadow-[0_8px_24px_rgba(10,10,20,0.35)] backdrop-blur md:top-4 md:left-4">
+            Featured
+          </Badge>
+        </div>
 
-        <div className="flex min-w-0 flex-col justify-between p-3 md:p-5 lg:py-7 lg:pr-7">
+        <div className="flex min-w-0 flex-col justify-between px-2 pt-1 pb-2 md:p-4 lg:py-5 lg:pr-6">
           <div>
-            <div className="mb-6 flex items-center justify-between gap-4">
-              <Badge className="rounded-full bg-brand-soft px-4 py-1.5 text-primary-foreground">
-                Featured Case Study
-              </Badge>
-              <span className="hidden text-xs font-semibold tracking-[0.28em] text-muted-foreground uppercase sm:inline">
-                Selected Work
-              </span>
-            </div>
-
-            <div className="mb-6 flex flex-wrap gap-2">
-              {project.techStack.slice(0, 5).map((tech) => (
+            <div className="mb-3 flex max-w-full items-center gap-1.5 overflow-hidden">
+              {visibleTech.map((tech) => (
                 <Badge
                   key={`${project.id}-${tech}`}
                   variant="outline"
@@ -59,41 +58,45 @@ export function FeaturedProject({ project }: FeaturedProjectProps) {
                   {tech}
                 </Badge>
               ))}
+              {remainingTech > 0 && (
+                <Badge
+                  variant="outline"
+                  className="shrink-0 rounded-full border-border/90 bg-background/35 text-foreground/85"
+                  aria-label={`${remainingTech} more technologies`}
+                >
+                  +{remainingTech}
+                </Badge>
+              )}
             </div>
 
-            <Link href={`/projects/${project.slug}`} className="w-fit">
-              <h2 className="font-heading text-4xl leading-none font-semibold text-foreground transition-colors group-hover/project:text-brand-soft md:text-5xl lg:text-6xl">
+            <Link
+              href={`/projects/${project.slug}`}
+              className="w-fit rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+            >
+              <h2 className="font-heading text-3xl leading-none font-semibold text-foreground transition-colors group-hover/project:text-brand-soft sm:text-4xl md:text-5xl">
                 {project.title}
               </h2>
             </Link>
-            <p className="mt-6 text-base leading-8 text-muted-foreground md:text-lg">
+            <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7 md:text-lg md:leading-8">
               {project.description ??
                 "A selected project from Heinz's archive, focused on thoughtful implementation and polished interaction."}
             </p>
+            <div className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <span className="text-[0.65rem] font-semibold tracking-[0.22em] text-brand-soft uppercase">
+                Contribution
+              </span>
+              <span className="text-border" aria-hidden="true">
+                /
+              </span>
+              <p className="text-sm font-medium text-foreground/90">
+                {contribution}
+              </p>
+            </div>
           </div>
 
-          <div className="mt-10 flex flex-col gap-5">
-            <div className="grid grid-cols-2 gap-3 border-y border-border/35 py-5">
-              <div>
-                <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
-                  Role
-                </p>
-                <p className="mt-2 font-medium text-foreground">
-                  Full-stack build
-                </p>
-              </div>
-              <div>
-                <p className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
-                  Focus
-                </p>
-                <p className="mt-2 font-medium text-foreground">
-                  Interface polish
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="rounded-full">
+          <div className="mt-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button asChild className="rounded-full">
                 <Link href={`/projects/${project.slug}`}>
                   Read case study
                   <ArrowUpRightIcon data-icon="inline-end" />
@@ -103,7 +106,6 @@ export function FeaturedProject({ project }: FeaturedProjectProps) {
               {project.liveUrl && (
                 <Button
                   asChild
-                  size="lg"
                   variant="outline"
                   className="rounded-full border-border/60 bg-surface/70"
                 >
