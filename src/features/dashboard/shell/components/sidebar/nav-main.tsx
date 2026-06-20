@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type * as React from "react";
+import { useEffect, useRef } from "react";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -10,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 type NavItem = {
@@ -25,6 +27,17 @@ type NavGroup = {
 
 export function NavMain({ groups }: { groups: NavGroup[] }) {
   const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const previousPathname = useRef(pathname);
+
+  useEffect(() => {
+    if (previousPathname.current === pathname) {
+      return;
+    }
+
+    previousPathname.current = pathname;
+    setOpenMobile(false);
+  }, [pathname, setOpenMobile]);
 
   return (
     <div className="flex flex-col gap-1">
@@ -49,7 +62,14 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                       isActive={isActive}
                       tooltip={item.title}
                     >
-                      <Link href={item.url}>
+                      <Link
+                        href={item.url}
+                        onClick={() => {
+                          if (isMobile) {
+                            setOpenMobile(false);
+                          }
+                        }}
+                      >
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>

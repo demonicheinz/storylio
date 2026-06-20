@@ -2,6 +2,7 @@
 
 import { TrashIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
@@ -21,9 +22,14 @@ import { actionDeletePost } from "@/features/dashboard/posts/actions";
 type PostDeleteButtonProps = {
   postId: string;
   title: string;
+  trigger?: ReactNode;
 };
 
-export function PostDeleteButton({ postId, title }: PostDeleteButtonProps) {
+export function PostDeleteButton({
+  postId,
+  title,
+  trigger,
+}: PostDeleteButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -45,10 +51,12 @@ export function PostDeleteButton({ postId, title }: PostDeleteButtonProps) {
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button type="button" size="sm" variant="destructive">
-          <TrashIcon data-icon="inline-start" />
-          Delete
-        </Button>
+        {trigger ?? (
+          <Button type="button" size="sm" variant="destructive">
+            <TrashIcon data-icon="inline-start" />
+            Delete
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

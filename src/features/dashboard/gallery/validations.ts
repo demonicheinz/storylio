@@ -37,6 +37,7 @@ export const galleryItemActionSchema = z.object({
     .transform((value) => value ?? 0),
   width: z.coerce.number().int().positive().optional(),
   height: z.coerce.number().int().positive().optional(),
+  size: z.coerce.number().int().positive().optional(),
   aspectRatio: z.coerce.number().positive().optional(),
   blurDataUrl: z
     .string()

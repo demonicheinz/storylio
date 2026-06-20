@@ -28,6 +28,10 @@
 }
 
 .storylio-mdx-editor.dark-theme [class*="_toolbarRoot_"] {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.25rem !important;
+  overflow-x: hidden !important;
   border-bottom: 1px solid var(--border) !important;
   background: color-mix(in oklch, var(--surface) 88%, black) !important;
   color: var(--foreground) !important;
@@ -109,26 +113,156 @@
 }
 
 .storylio-mdx-editor .mdxeditor-root-contenteditable {
-  padding-inline: 0.75rem;
+  min-width: 0;
+  padding: 0.75rem;
 }
 
-.storylio-mdx-editor [contenteditable="true"] {
-  overflow-x: clip;
+.storylio-mdx-editor.dark-theme [class*="_contentEditable_"] {
+  min-width: 0 !important;
+  background: color-mix(in oklch, var(--surface) 78%, black) !important;
 }
 
 .storylio-mdx-editor [contenteditable="true"] ul,
 .storylio-mdx-editor [contenteditable="true"] ol {
-  padding-left: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-left: 1.35rem;
+}
+
+.storylio-mdx-editor [contenteditable="true"] ul {
+  list-style: disc;
+}
+
+.storylio-mdx-editor [contenteditable="true"] ol {
+  list-style: decimal;
 }
 
 .storylio-mdx-editor [contenteditable="true"] li {
-  padding-left: 0.25rem;
+  margin-top: 0.05rem;
+  margin-bottom: 0.05rem;
+  padding-left: 0.35rem;
+}
+
+.storylio-mdx-editor [contenteditable="true"] li > p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.storylio-mdx-editor [contenteditable="true"] li > ul,
+.storylio-mdx-editor [contenteditable="true"] li > ol {
+  margin-top: 0.2rem;
+  margin-bottom: 0.2rem;
+}
+
+.storylio-mdx-editor [contenteditable="true"] li::marker {
+  color: var(--brand-soft);
+}
+
+.storylio-mdx-editor [contenteditable="true"] li:has(input[type="checkbox"]) {
+  position: relative;
+  display: list-item;
+  list-style: none;
+  padding-left: 0;
 }
 
 .storylio-mdx-editor [contenteditable="true"] li input[type="checkbox"] {
-  margin-left: 0;
-  margin-right: 0.5rem;
-  transform: translateY(0.1rem);
+  width: 1rem;
+  height: 1rem;
+  margin: 0 0.6rem 0 0;
+  vertical-align: -0.12rem;
+  accent-color: var(--primary);
+}
+
+.storylio-mdx-editor [contenteditable="true"] [class*="_listItemChecked_"],
+.storylio-mdx-editor [contenteditable="true"] [class*="_listItemUnchecked_"] {
+  position: relative !important;
+  list-style: none !important;
+  margin-block: 0.05rem !important;
+  margin-inline-start: 0 !important;
+  padding-inline-start: 1.65rem !important;
+  padding-inline-end: 0.5rem !important;
+}
+
+.storylio-mdx-editor
+  [contenteditable="true"]
+  [class*="_listItemChecked_"]::before,
+.storylio-mdx-editor
+  [contenteditable="true"]
+  [class*="_listItemUnchecked_"]::before {
+  position: absolute !important;
+  top: 0.15rem !important;
+  left: 0 !important;
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
+.storylio-mdx-editor
+  [contenteditable="true"]
+  [class*="_listItemChecked_"]::after {
+  position: absolute !important;
+  top: 0.28rem !important;
+  left: 0.33rem !important;
+}
+
+.storylio-mdx-editor.dark-theme [class*="_tableEditor_"] {
+  background: color-mix(in oklch, var(--background) 86%, black) !important;
+}
+
+.storylio-mdx-editor.dark-theme
+  [class*="_tableEditor_"]
+  > tbody
+  > tr
+  > td:not([class*="_toolCell_"]),
+.storylio-mdx-editor.dark-theme
+  [class*="_tableEditor_"]
+  > tbody
+  > tr
+  > th:not([class*="_toolCell_"]):not([data-tool-cell="true"]) {
+  border-color: color-mix(
+    in oklch,
+    var(--primary) 34%,
+    var(--border)
+  ) !important;
+  background: color-mix(
+    in oklch,
+    var(--surface) 62%,
+    var(--background)
+  ) !important;
+  color: var(--foreground) !important;
+}
+
+.storylio-mdx-editor.dark-theme [class*="_tableEditor_"] [data-active="true"] {
+  outline: 2px solid var(--brand-soft) !important;
+  outline-offset: -2px;
+}
+
+.storylio-mdx-editor.dark-theme [class*="_toolCell_"] {
+  background: color-mix(
+    in oklch,
+    var(--primary) 12%,
+    var(--background)
+  ) !important;
+  border-color: color-mix(
+    in oklch,
+    var(--primary) 34%,
+    var(--border)
+  ) !important;
+}
+
+.storylio-mdx-editor.dark-theme [class*="_tableColumnEditorTrigger_"],
+.storylio-mdx-editor.dark-theme [class*="_tableRowEditorTrigger_"],
+.storylio-mdx-editor.dark-theme [class*="_addRowButton_"],
+.storylio-mdx-editor.dark-theme [class*="_addColumnButton_"],
+.storylio-mdx-editor.dark-theme [class*="_iconButton_"] {
+  color: var(--foreground) !important;
+}
+
+.storylio-mdx-editor.dark-theme [class*="_tableColumnEditorToolbar_"],
+.storylio-mdx-editor.dark-theme [class*="_tableColumnEditorPopoverContent_"] {
+  border: 1px solid var(--border) !important;
+  background: var(--popover) !important;
+  color: var(--popover-foreground) !important;
 }
 
 .storylio-mdx-editor.dark-theme
@@ -139,6 +273,9 @@
 [class*="_toolbarButtonDropdownContainer_"],
 [class*="_toolbarNodeKindSelectContainer_"],
 [class*="_linkDialogPopoverContent_"],
+[class*="_tableColumnEditorPopoverContent_"],
+[class*="_dialogContent_"],
+[class*="_largeDialogContent_"],
 [class*="_popoverContent_"],
 [class*="_popupContainer_"],
 [class*="_tooltipContent_"] {
@@ -155,19 +292,44 @@
 }
 
 [class*="_linkDialogEditForm_"],
-[class*="_linkDialogInputWrapper_"] {
+[class*="_linkDialogInputWrapper_"],
+[class*="_dialogContent_"] form,
+[class*="_largeDialogContent_"] form,
+[class*="_imageDialogContent_"],
+[class*="_imageDialog_"],
+[class*="_genericDialog_"] {
   background: var(--popover) !important;
   color: var(--popover-foreground) !important;
 }
 
 [class*="_linkDialogPopoverContent_"] label,
 [class*="_linkDialogPopoverContent_"] button,
+[class*="_dialogContent_"] label,
+[class*="_dialogContent_"] button,
+[class*="_largeDialogContent_"] label,
+[class*="_largeDialogContent_"] button,
 [class*="_popoverContent_"] button {
   color: var(--popover-foreground) !important;
 }
 
+[class*="_dialogContent_"] button,
+[class*="_largeDialogContent_"] button,
+[class*="_linkDialogPopoverContent_"] button {
+  border-color: var(--border) !important;
+  background: color-mix(in oklch, var(--surface) 86%, black) !important;
+}
+
+[class*="_dialogContent_"] button:hover,
+[class*="_largeDialogContent_"] button:hover,
+[class*="_linkDialogPopoverContent_"] button:hover {
+  background: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
 [class*="_linkDialogInput_"],
-[class*="_dialogInput_"] {
+[class*="_dialogInput_"],
+[class*="_dialogContent_"] input,
+[class*="_largeDialogContent_"] input {
   border-color: var(--border) !important;
   background: color-mix(
     in oklch,
@@ -178,7 +340,9 @@
 }
 
 [class*="_linkDialogInput_"]::placeholder,
-[class*="_dialogInput_"]::placeholder {
+[class*="_dialogInput_"]::placeholder,
+[class*="_dialogContent_"] input::placeholder,
+[class*="_largeDialogContent_"] input::placeholder {
   color: var(--muted-foreground) !important;
 }
 

@@ -46,6 +46,9 @@ const securityHeaders = [
     value: "camera=(), microphone=(), geolocation=()",
   },
 ];
+const previewHeaders = [
+  { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+];
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
@@ -54,6 +57,10 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/preview/:path*",
+        headers: previewHeaders,
       },
     ];
   },

@@ -158,6 +158,7 @@ model GalleryItem {
   altText     String?
   width       Int?
   height      Int?
+  size        Int?
   aspectRatio Float?
   blurDataUrl String?
   isVisible   Boolean  @default(true)

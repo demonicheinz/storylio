@@ -47,7 +47,7 @@ export default async function SettingsPage() {
       <div>
         <h1 className="font-heading text-3xl font-bold">Settings</h1>
         <p className="mt-2 text-muted-foreground">
-          Manage profile content and account credentials for the dashboard.
+          Manage your profile, account, and security preferences.
         </p>
       </div>
 

@@ -15,7 +15,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,6 +45,7 @@ import {
 } from "@/features/dashboard/posts/validations";
 import { DateTimePicker } from "@/features/dashboard/shared/components/date-time-picker";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
+import { TagsInput } from "@/features/dashboard/shared/components/tag-input";
 import { createSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
 
@@ -134,6 +134,65 @@ function getSubmitLabels(status: PostFormValues["status"]) {
     publish: "Publish",
     publishPending: "Publishing...",
   };
+}
+
+function PostStatusBadge({
+  status,
+  compact = false,
+}: {
+  status: PostFormValues["status"];
+  compact?: boolean;
+}) {
+  const isPublished = status === "published";
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        isPublished
+          ? "bg-emerald-500/12 text-emerald-300"
+          : "bg-amber-500/12 text-amber-300",
+        compact && "px-2 py-0.5",
+      )}
+    >
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          isPublished ? "bg-emerald-300" : "bg-amber-300",
+        )}
+      />
+      {isPublished ? "Published" : "Draft"}
+    </span>
+  );
+}
+
+function AutosaveStatusPill({ status }: { status: AutosaveStatus }) {
+  if (status === "idle") {
+    return null;
+  }
+
+  return (
+    <span
+      className={cn(
+        "inline-flex w-fit items-center rounded-full bg-surface/55 px-2.5 py-1 text-xs text-muted-foreground",
+        status === "saving" && "text-brand-soft",
+        status === "failed" && "text-destructive",
+      )}
+    >
+      {status === "saving"
+        ? "Autosaving..."
+        : status === "saved"
+          ? "Autosaved"
+          : "Autosave failed"}
+    </span>
+  );
+}
+
+function getTagArray(tags: string) {
+  return tags
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
 }
 
 export function PostEditor({ mode, post }: PostEditorProps) {
@@ -320,53 +379,44 @@ export function PostEditor({ mode, post }: PostEditorProps) {
       return;
     }
 
-    window.open(`/blog/${slug}`, "_blank", "noopener,noreferrer");
+    window.open(`/preview/posts/${slug}`, "_blank", "noopener,noreferrer");
   };
 
   return (
-    <form className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex flex-col gap-2">
+    <form className="flex min-w-0 flex-col gap-6 overflow-x-clip">
+      <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="flex min-w-0 flex-col gap-2">
           <Button asChild variant="ghost" className="w-fit">
             <Link href="/dashboard/posts">
               <ArrowLeftIcon data-icon="inline-start" />
-              Posts
+              Back to Posts
             </Link>
           </Button>
-          <div>
-            <h1 className="font-heading text-3xl font-bold">
+          <div className="min-w-0">
+            <h1 className="font-heading text-3xl font-bold wrap-break-word">
               {mode === "create" ? "New Post" : "Edit Post"}
             </h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-2 max-w-2xl wrap-break-word text-muted-foreground">
               Write MDX content, manage metadata, and publish when it is ready.
             </p>
+            {mode === "edit" && (
+              <div className="mt-3">
+                <AutosaveStatusPill status={autosaveStatus} />
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {mode === "edit" && autosaveStatus !== "idle" && (
-            <span
-              className={cn(
-                "rounded-full border border-border/50 bg-surface/60 px-3 py-1 text-xs text-muted-foreground",
-                autosaveStatus === "saving" && "text-brand-soft",
-                autosaveStatus === "failed" && "text-destructive",
-              )}
-            >
-              {autosaveStatus === "saving"
-                ? "Autosaving..."
-                : autosaveStatus === "saved"
-                  ? "Autosaved"
-                  : "Autosave failed"}
-            </span>
-          )}
-          <Badge variant={status === "published" ? "default" : "secondary"}>
-            {status}
-          </Badge>
+        <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:min-w-0 sm:flex-wrap sm:items-center sm:justify-end">
+          <div className="col-span-2 flex justify-start sm:col-span-1 sm:justify-center">
+            <PostStatusBadge status={status} />
+          </div>
           <Button
             type="button"
             variant="outline"
             onClick={handlePreview}
             disabled={!slug || isPending}
+            className="min-w-0"
           >
             <EyeIcon data-icon="inline-start" />
             Preview
@@ -376,6 +426,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
             variant="secondary"
             onClick={submitWithStatus("draft")}
             disabled={isPending}
+            className="min-w-0"
           >
             {pendingAction === "draft" ? (
               <SpinnerIcon data-icon="inline-start" className="animate-spin" />
@@ -390,6 +441,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
             type="button"
             onClick={submitWithStatus("published")}
             disabled={isPending}
+            className="col-span-2 min-w-0 sm:col-span-1"
           >
             {pendingAction === "publish" ? (
               <SpinnerIcon data-icon="inline-start" className="animate-spin" />
@@ -403,9 +455,9 @@ export function PostEditor({ mode, post }: PostEditorProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="flex flex-col gap-6">
-          <Card>
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Content</CardTitle>
               <CardDescription>
@@ -413,7 +465,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                 blocks.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="min-w-0">
               <Controller
                 control={control}
                 name="content"
@@ -435,15 +487,15 @@ export function PostEditor({ mode, post }: PostEditorProps) {
           </Card>
         </div>
 
-        <div className="flex flex-col gap-6">
-          <Card>
+        <div className="flex min-w-0 flex-col gap-6">
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Details</CardTitle>
               <CardDescription>
                 Public metadata for the blog listing and article header.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-5">
+            <CardContent className="flex min-w-0 flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
@@ -505,19 +557,17 @@ export function PostEditor({ mode, post }: PostEditorProps) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Publishing</CardTitle>
               <CardAction>
-                <Badge variant={status === "published" ? "default" : "outline"}>
-                  {status}
-                </Badge>
+                <PostStatusBadge status={status} compact />
               </CardAction>
               <CardDescription>
                 Save as draft while editing, or publish to make it public.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-5">
+            <CardContent className="flex min-w-0 flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="status">Status</Label>
                 <Controller
@@ -532,11 +582,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                           variant="outline"
                           className="h-9 w-full justify-between rounded-3xl bg-input/50 px-3 font-normal"
                         >
-                          <span>
-                            {field.value === "published"
-                              ? "Published"
-                              : "Draft"}
-                          </span>
+                          <PostStatusBadge status={field.value} compact />
                           <CaretDownIcon data-icon="inline-end" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -548,10 +594,10 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                           }
                         >
                           <DropdownMenuRadioItem value="draft">
-                            Draft
+                            <PostStatusBadge status="draft" compact />
                           </DropdownMenuRadioItem>
                           <DropdownMenuRadioItem value="published">
-                            Published
+                            <PostStatusBadge status="published" compact />
                           </DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
                       </DropdownMenuContent>
@@ -585,14 +631,14 @@ export function PostEditor({ mode, post }: PostEditorProps) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Cover & Tags</CardTitle>
               <CardDescription>
                 Reuse the Cloudinary upload flow from the Media Library.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-5">
+            <CardContent className="flex min-w-0 flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <Label>Cover image</Label>
                 <ImageUpload
@@ -622,14 +668,23 @@ export function PostEditor({ mode, post }: PostEditorProps) {
 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="tags">Tags</Label>
-                <Input
-                  id="tags"
-                  placeholder="nextjs, ui, craft"
-                  disabled={isPending}
-                  {...register("tags")}
+                <Controller
+                  control={control}
+                  name="tags"
+                  render={({ field }) => (
+                    <TagsInput
+                      id="tags"
+                      value={getTagArray(field.value ?? "")}
+                      onChange={(nextTags) =>
+                        field.onChange(nextTags.join(", "))
+                      }
+                      disabled={isPending}
+                      placeholder="nextjs, ui, craft"
+                    />
+                  )}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Separate tags with commas.
+                  Type comma + space to create a tag.
                 </p>
               </div>
             </CardContent>

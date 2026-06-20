@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import {
   type GalleryItemActionInput,
   galleryItemActionSchema,
@@ -15,6 +16,8 @@ import { db } from "@/lib/db";
 type GalleryActionData = {
   id: string;
 };
+
+const galleryItemIdsSchema = z.array(z.string().min(1)).min(1).max(100);
 
 function parseGalleryInput(input: unknown) {
   const parsed = galleryItemActionSchema.safeParse(input);
@@ -123,6 +126,7 @@ export async function actionCreateGalleryItem(
           category: parsed.data.category,
           width: parsed.data.width ?? null,
           height: parsed.data.height ?? null,
+          size: parsed.data.size ?? null,
           aspectRatio:
             parsed.data.aspectRatio ??
             (parsed.data.width && parsed.data.height
@@ -182,6 +186,7 @@ export async function actionUpdateGalleryItem(
         category: parsed.data.category,
         width: parsed.data.width ?? null,
         height: parsed.data.height ?? null,
+        size: parsed.data.size ?? null,
         aspectRatio:
           parsed.data.aspectRatio ??
           (parsed.data.width && parsed.data.height
@@ -232,6 +237,129 @@ export async function actionDeleteGalleryItem(
   } catch (error) {
     console.error("Delete gallery item failed:", error);
     return actionError("Failed to delete gallery item.");
+  }
+}
+
+function parseGalleryItemIds(itemIds: string[]) {
+  const parsed = galleryItemIdsSchema.safeParse(itemIds);
+
+  if (!parsed.success) {
+    return actionError("Select at least one gallery item.");
+  }
+
+  return parsed.data;
+}
+
+export async function actionShowGalleryItems(
+  itemIds: string[],
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsedIds = parseGalleryItemIds(itemIds);
+  if (!Array.isArray(parsedIds)) {
+    return parsedIds;
+  }
+
+  try {
+    const result = await db.galleryItem.updateMany({
+      where: {
+        id: { in: parsedIds },
+        isVisible: false,
+      },
+      data: {
+        isVisible: true,
+      },
+    });
+
+    revalidateGalleryPaths();
+
+    return actionSuccess(
+      { count: result.count },
+      result.count === 1
+        ? "Gallery item shown."
+        : `${result.count} gallery items shown.`,
+    );
+  } catch (error) {
+    console.error("Show gallery items failed:", error);
+    return actionError("Failed to show gallery items.");
+  }
+}
+
+export async function actionHideGalleryItems(
+  itemIds: string[],
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsedIds = parseGalleryItemIds(itemIds);
+  if (!Array.isArray(parsedIds)) {
+    return parsedIds;
+  }
+
+  try {
+    const result = await db.galleryItem.updateMany({
+      where: {
+        id: { in: parsedIds },
+        isVisible: true,
+      },
+      data: {
+        isVisible: false,
+      },
+    });
+
+    revalidateGalleryPaths();
+
+    return actionSuccess(
+      { count: result.count },
+      result.count === 1
+        ? "Gallery item hidden."
+        : `${result.count} gallery items hidden.`,
+    );
+  } catch (error) {
+    console.error("Hide gallery items failed:", error);
+    return actionError("Failed to hide gallery items.");
+  }
+}
+
+export async function actionDeleteGalleryItems(
+  itemIds: string[],
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsedIds = parseGalleryItemIds(itemIds);
+  if (!Array.isArray(parsedIds)) {
+    return parsedIds;
+  }
+
+  try {
+    const result = await db.galleryItem.deleteMany({
+      where: {
+        id: { in: parsedIds },
+      },
+    });
+
+    revalidateGalleryPaths();
+
+    return actionSuccess(
+      { count: result.count },
+      result.count === 1
+        ? "Gallery item deleted."
+        : `${result.count} gallery items deleted.`,
+    );
+  } catch (error) {
+    console.error("Delete gallery items failed:", error);
+    return actionError("Failed to delete gallery items.");
   }
 }
 
