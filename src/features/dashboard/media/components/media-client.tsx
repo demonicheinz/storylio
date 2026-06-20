@@ -3,6 +3,8 @@
 import {
   ArrowSquareOutIcon,
   CaretDownIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
   CloudArrowUpIcon,
   CopyIcon,
   DotsThreeVerticalIcon,
@@ -11,12 +13,14 @@ import {
   ImageIcon,
   ListBulletsIcon,
   MagnifyingGlassIcon,
+  PencilSimpleIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import {
   type ChangeEvent,
   type DragEvent,
+  type FormEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -41,6 +45,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Drawer,
   DrawerContent,
   DrawerDescription,
@@ -59,13 +71,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
+import { Label } from "@/components/ui/label";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { uploadFile as uploadImageFile } from "@/features/dashboard/shared/utils/upload";
+import {
+  getDefaultItemsPerPage,
+  getItemsPerPageOptions,
+  paginateItems,
+} from "@/lib/pagination";
 import { cn } from "@/lib/utils";
 import {
   actionCheckMediaUsage,
   actionDeleteMedia,
   actionDeleteMediaBatch,
+  actionRenameMedia,
   type MediaUsagePreview,
 } from "../actions";
 
@@ -145,6 +164,10 @@ function formatReferenceSummary(
     .join(", ");
 }
 
+function getMediaDownloadUrl(item: MediaItem): string {
+  return `/api/media/${item.id}/download`;
+}
+
 function FormatBadge({ format }: { format: string }) {
   const normalizedFormat = format.toLowerCase();
 
@@ -173,12 +196,14 @@ function MediaActionsMenu({
   item,
   isPending,
   onSelect,
+  onRename,
   onCopy,
   onDelete,
 }: {
   item: MediaItem;
   isPending: boolean;
   onSelect: (item: MediaItem) => void;
+  onRename: (item: MediaItem) => void;
   onCopy: (url: string) => void;
   onDelete: (item: MediaItem) => void;
 }) {
@@ -200,6 +225,10 @@ function MediaActionsMenu({
           <ImageIcon data-icon="inline-start" />
           Details
         </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onRename(item)}>
+          <PencilSimpleIcon data-icon="inline-start" />
+          Rename
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onCopy(item.url)}>
           <CopyIcon data-icon="inline-start" />
           Copy URL
@@ -211,7 +240,7 @@ function MediaActionsMenu({
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href={item.url} download={item.filename}>
+          <a href={getMediaDownloadUrl(item)}>
             <DownloadSimpleIcon data-icon="inline-start" />
             Download
           </a>
@@ -349,6 +378,7 @@ function MediaDetailDrawer({
   direction,
   isPending,
   onClose,
+  onRename,
   onCopy,
   onDelete,
 }: {
@@ -356,6 +386,7 @@ function MediaDetailDrawer({
   direction: "bottom" | "right";
   isPending: boolean;
   onClose: () => void;
+  onRename: (item: MediaItem) => void;
   onCopy: (url: string) => void;
   onDelete: (item: MediaItem) => void;
 }) {
@@ -445,13 +476,13 @@ function MediaDetailDrawer({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => onCopy(item.url)}
+                  onClick={() => onRename(item)}
                 >
-                  <CopyIcon data-icon="inline-start" />
-                  Copy URL
+                  <PencilSimpleIcon data-icon="inline-start" />
+                  Rename
                 </Button>
                 <Button type="button" variant="outline" asChild>
-                  <a href={item.url} download={item.filename}>
+                  <a href={getMediaDownloadUrl(item)}>
                     <DownloadSimpleIcon data-icon="inline-start" />
                     Download
                   </a>
@@ -460,6 +491,15 @@ function MediaDetailDrawer({
               <Button
                 type="button"
                 variant="secondary"
+                className="w-full"
+                onClick={() => onCopy(item.url)}
+              >
+                <CopyIcon data-icon="inline-start" />
+                Copy URL
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
                 className="w-full"
                 asChild
               >
@@ -492,6 +532,7 @@ function MediaCard({
   isSelectionMode,
   isPending,
   onSelect,
+  onRename,
   onToggleSelection,
   onCopy,
   onDelete,
@@ -501,6 +542,7 @@ function MediaCard({
   isSelectionMode: boolean;
   isPending: boolean;
   onSelect: (item: MediaItem) => void;
+  onRename: (item: MediaItem) => void;
   onToggleSelection: (item: MediaItem) => void;
   onCopy: (url: string) => void;
   onDelete: (item: MediaItem) => void;
@@ -508,7 +550,8 @@ function MediaCard({
   return (
     <div
       className={cn(
-        "group relative cursor-pointer overflow-hidden rounded-2xl border bg-background/45 transition-colors hover:border-brand-soft/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30",
+        "group relative overflow-hidden rounded-2xl border bg-background/45 transition-colors hover:border-brand-soft/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30",
+        isSelectionMode ? "cursor-pointer" : "cursor-zoom-in",
         isSelected ? "border-primary/70" : "border-border/70",
       )}
       role="button"
@@ -566,6 +609,7 @@ function MediaCard({
             item={item}
             isPending={isPending}
             onSelect={onSelect}
+            onRename={onRename}
             onCopy={onCopy}
             onDelete={onDelete}
           />
@@ -597,6 +641,7 @@ function MediaListRow({
   isSelectionMode,
   isPending,
   onSelect,
+  onRename,
   onToggleSelection,
   onCopy,
   onDelete,
@@ -606,6 +651,7 @@ function MediaListRow({
   isSelectionMode: boolean;
   isPending: boolean;
   onSelect: (item: MediaItem) => void;
+  onRename: (item: MediaItem) => void;
   onToggleSelection: (item: MediaItem) => void;
   onCopy: (url: string) => void;
   onDelete: (item: MediaItem) => void;
@@ -694,6 +740,7 @@ function MediaListRow({
             item={item}
             isPending={isPending}
             onSelect={onSelect}
+            onRename={onRename}
             onCopy={onCopy}
             onDelete={onDelete}
           />
@@ -707,10 +754,152 @@ function MediaListRow({
           item={item}
           isPending={isPending}
           onSelect={onSelect}
+          onRename={onRename}
           onCopy={onCopy}
           onDelete={onDelete}
         />
       </div>
+    </div>
+  );
+}
+
+function MediaPagination({
+  firstIndex,
+  lastIndex,
+  total,
+  page,
+  pageCount,
+  itemsPerPage,
+  itemsPerPageOptions,
+  onPageChange,
+  onItemsPerPageChange,
+}: {
+  firstIndex: number;
+  lastIndex: number;
+  total: number;
+  page: number;
+  pageCount: number;
+  itemsPerPage: number;
+  itemsPerPageOptions: readonly number[];
+  onPageChange: (page: number) => void;
+  onItemsPerPageChange: (value: number) => void;
+}) {
+  const pageControls = (
+    <div className="flex items-center justify-center gap-1">
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        className="size-8 rounded-xl"
+        disabled={page <= 1}
+        onClick={() => onPageChange(Math.max(1, page - 1))}
+        aria-label="Previous page"
+      >
+        <CaretLeftIcon />
+      </Button>
+      {Array.from({ length: pageCount }).map((_, index) => {
+        const pageNumber = index + 1;
+
+        return (
+          <Button
+            key={pageNumber}
+            type="button"
+            size="icon"
+            variant={pageNumber === page ? "default" : "outline"}
+            className="size-8 rounded-xl"
+            onClick={() => onPageChange(pageNumber)}
+            aria-current={pageNumber === page ? "page" : undefined}
+          >
+            {pageNumber}
+          </Button>
+        );
+      })}
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        className="size-8 rounded-xl"
+        disabled={page >= pageCount}
+        onClick={() => onPageChange(Math.min(pageCount, page + 1))}
+        aria-label="Next page"
+      >
+        <CaretRightIcon />
+      </Button>
+    </div>
+  );
+
+  return (
+    <div className="mt-4 grid gap-3 text-sm text-muted-foreground md:grid-cols-[1fr_auto_1fr] md:items-center">
+      <div className="flex items-center justify-between md:contents">
+        <p className="md:hidden">
+          {firstIndex}-{lastIndex} of {total}
+        </p>
+        <p className="hidden md:block">
+          Showing {firstIndex} to {lastIndex} of {total}{" "}
+          {total === 1 ? "item" : "items"}
+        </p>
+        <div className="md:hidden">
+          <MediaItemsPerPageDropdown
+            value={itemsPerPage}
+            options={itemsPerPageOptions}
+            onValueChange={onItemsPerPageChange}
+          />
+        </div>
+      </div>
+      <div className="md:col-start-2">{pageControls}</div>
+      <div className="hidden justify-end md:flex">
+        <MediaItemsPerPageDropdown
+          value={itemsPerPage}
+          options={itemsPerPageOptions}
+          onValueChange={onItemsPerPageChange}
+          showLabel
+        />
+      </div>
+    </div>
+  );
+}
+
+function MediaItemsPerPageDropdown({
+  value,
+  options,
+  onValueChange,
+  showLabel = false,
+}: {
+  value: number;
+  options: readonly number[];
+  onValueChange: (value: number) => void;
+  showLabel?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      {showLabel && (
+        <span className="text-sm text-muted-foreground">Items per page</span>
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-xl bg-input/35"
+          >
+            {value}
+            <CaretDownIcon className="size-3.5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-24">
+          <DropdownMenuRadioGroup
+            value={String(value)}
+            onValueChange={(nextValue) => onValueChange(Number(nextValue))}
+          >
+            {options.map((option) => (
+              <DropdownMenuRadioItem key={option} value={String(option)}>
+                {option}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -723,7 +912,13 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
   const [format, setFormat] = useState("all");
   const [sortMode, setSortMode] = useState<SortMode>("newest");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [itemsPerPage, setItemsPerPage] = useState<number>(
+    getDefaultItemsPerPage("grid"),
+  );
+  const [page, setPage] = useState(1);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
+  const [renameTarget, setRenameTarget] = useState<MediaItem | null>(null);
+  const [renameValue, setRenameValue] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<MediaItem | null>(null);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -874,6 +1069,59 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
       blurActiveElementBeforeOpen(() => setDeleteTarget(item));
     },
     [blurActiveElementBeforeOpen],
+  );
+
+  const openRenameDialog = useCallback(
+    (item: MediaItem) => {
+      blurActiveElementBeforeOpen(() => {
+        setRenameTarget(item);
+        setRenameValue(item.filename);
+      });
+    },
+    [blurActiveElementBeforeOpen],
+  );
+
+  const closeRenameDialog = useCallback(() => {
+    setRenameTarget(null);
+    setRenameValue("");
+  }, []);
+
+  const handleRename = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+
+      if (!renameTarget) {
+        return;
+      }
+
+      const mediaId = renameTarget.id;
+      const nextFilename = renameValue.trim();
+
+      startTransition(async () => {
+        const result = await actionRenameMedia(mediaId, nextFilename);
+
+        if (result.success) {
+          const filename = result.data?.filename ?? nextFilename;
+
+          setMedia((prev) =>
+            prev.map((item) =>
+              item.id === mediaId ? { ...item, filename } : item,
+            ),
+          );
+          setSelectedMedia((current) =>
+            current?.id === mediaId ? { ...current, filename } : current,
+          );
+          setDeleteTarget((current) =>
+            current?.id === mediaId ? { ...current, filename } : current,
+          );
+          closeRenameDialog();
+          toast.success("Media renamed");
+        } else {
+          toast.error(result.error);
+        }
+      });
+    },
+    [closeRenameDialog, renameTarget, renameValue],
   );
 
   const toggleMediaSelection = useCallback((item: MediaItem) => {
@@ -1049,6 +1297,24 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
       });
   }, [format, media, query, sortMode]);
 
+  const {
+    items: paginatedMedia,
+    pageCount,
+    currentPage,
+    firstIndex,
+    lastIndex,
+  } = paginateItems(filteredMedia, page, itemsPerPage);
+  const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
+
+  useEffect(() => {
+    setPage(1);
+  }, [format, itemsPerPage, query, sortMode]);
+
+  const handleViewModeChange = (nextViewMode: ViewMode) => {
+    setViewMode(nextViewMode);
+    setItemsPerPage(getDefaultItemsPerPage(nextViewMode));
+  };
+
   const handleSelectAllFiltered = useCallback(() => {
     setIsSelectionMode(true);
     setSelectedIds(new Set(filteredMedia.map((item) => item.id)));
@@ -1164,7 +1430,10 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
                   onValueChange={setSortMode}
                 />
               </div>
-              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              <ViewToggle
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
+              />
             </div>
           </div>
         </CardContent>
@@ -1289,7 +1558,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
             </div>
           ) : viewMode === "grid" ? (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {filteredMedia.map((item) => (
+              {paginatedMedia.map((item) => (
                 <MediaCard
                   key={item.id}
                   item={item}
@@ -1297,6 +1566,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
                   isSelectionMode={isSelectionMode}
                   isPending={isPending}
                   onSelect={openMediaDetails}
+                  onRename={openRenameDialog}
                   onToggleSelection={toggleMediaSelection}
                   onCopy={handleCopyUrl}
                   onDelete={openDeleteDialog}
@@ -1322,7 +1592,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
                 <div className="text-right">Actions</div>
               </div>
               <div className={dashboardStyles.listRows}>
-                {filteredMedia.map((item) => (
+                {paginatedMedia.map((item) => (
                   <MediaListRow
                     key={item.id}
                     item={item}
@@ -1330,6 +1600,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
                     isSelectionMode={isSelectionMode}
                     isPending={isPending}
                     onSelect={openMediaDetails}
+                    onRename={openRenameDialog}
                     onToggleSelection={toggleMediaSelection}
                     onCopy={handleCopyUrl}
                     onDelete={openDeleteDialog}
@@ -1337,6 +1608,20 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
                 ))}
               </div>
             </div>
+          )}
+
+          {filteredMedia.length > 0 && (
+            <MediaPagination
+              firstIndex={firstIndex}
+              lastIndex={lastIndex}
+              total={filteredMedia.length}
+              page={currentPage}
+              pageCount={pageCount}
+              itemsPerPage={itemsPerPage}
+              itemsPerPageOptions={itemsPerPageOptions}
+              onPageChange={setPage}
+              onItemsPerPageChange={setItemsPerPage}
+            />
           )}
         </CardContent>
       </Card>
@@ -1346,9 +1631,60 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
         direction={drawerDirection}
         isPending={isPending}
         onClose={() => setSelectedMedia(null)}
+        onRename={openRenameDialog}
         onCopy={handleCopyUrl}
         onDelete={openDeleteDialog}
       />
+
+      <Dialog
+        open={!!renameTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeRenameDialog();
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename media</DialogTitle>
+            <DialogDescription>
+              Update the library file name. This does not rename the Cloudinary
+              asset or change the image URL.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            id="media-rename-form"
+            className="space-y-2"
+            onSubmit={handleRename}
+          >
+            <Label htmlFor="media-filename">File name</Label>
+            <Input
+              id="media-filename"
+              value={renameValue}
+              onChange={(event) => setRenameValue(event.target.value)}
+              maxLength={160}
+              autoFocus
+            />
+          </form>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeRenameDialog}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="media-rename-form"
+              disabled={isPending || renameValue.trim().length === 0}
+            >
+              {isPending ? "Saving..." : "Save name"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog
         open={isBatchDialogOpen}

@@ -74,6 +74,26 @@ function summarizeReferences(
     .join(", ");
 }
 
+function normalizeMediaFilename(filename: string) {
+  return filename.trim().replace(/\s+/g, " ");
+}
+
+function validateMediaFilename(filename: string): string | null {
+  if (!filename) {
+    return "File name is required";
+  }
+
+  if (filename.length > 160) {
+    return "File name must be 160 characters or less";
+  }
+
+  if (/[\\/:*?"<>|\r\n]/.test(filename)) {
+    return 'File name cannot contain \\ / : * ? " < > | or line breaks';
+  }
+
+  return null;
+}
+
 async function getUsagePreview(mediaIds: string[]): Promise<MediaUsagePreview> {
   const uniqueIds = Array.from(new Set(mediaIds)).filter(Boolean);
 
@@ -108,6 +128,47 @@ async function getUsagePreview(mediaIds: string[]): Promise<MediaUsagePreview> {
     canDelete: usageItems.filter((item) => item.references.length === 0),
     blocked: usageItems.filter((item) => item.references.length > 0),
   };
+}
+
+export async function actionRenameMedia(
+  mediaId: string,
+  filename: string,
+): Promise<ActionResult<{ id: string; filename: string }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const normalizedFilename = normalizeMediaFilename(filename);
+  const validationError = validateMediaFilename(normalizedFilename);
+
+  if (validationError) {
+    return actionError(validationError);
+  }
+
+  try {
+    const existing = await db.media.findUnique({
+      where: { id: mediaId },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return actionError("Media not found");
+    }
+
+    const media = await db.media.update({
+      where: { id: mediaId },
+      data: { filename: normalizedFilename },
+      select: { id: true, filename: true },
+    });
+
+    revalidatePath("/dashboard/media");
+    return actionSuccess(media);
+  } catch (error) {
+    console.error("Rename media failed:", error);
+    return actionError("Failed to rename media");
+  }
 }
 
 export async function actionCheckMediaUsage(
