@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useActiveSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
 
@@ -44,10 +45,47 @@ const sectionIds = sideNavItems.map((item) => item.id);
 
 export function AboutSideNavigation({ language }: { language: "en" | "id" }) {
   const activeId = useActiveSection(sectionIds, "position");
+  const [displayActiveId, setDisplayActiveId] = useState(activeId);
+  const [lockedActiveId, setLockedActiveId] = useState("");
+  const lockTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (lockedActiveId) {
+      if (activeId === lockedActiveId) {
+        setDisplayActiveId(activeId);
+        setLockedActiveId("");
+      }
+
+      return;
+    }
+
+    if (activeId) {
+      setDisplayActiveId(activeId);
+    }
+  }, [activeId, lockedActiveId]);
+
+  useEffect(() => {
+    return () => {
+      if (lockTimeoutRef.current) {
+        window.clearTimeout(lockTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const scrollTo = (id: string, href: string) => {
     const element = document.getElementById(id);
     if (element) {
+      setDisplayActiveId(href);
+      setLockedActiveId(href);
+
+      if (lockTimeoutRef.current) {
+        window.clearTimeout(lockTimeoutRef.current);
+      }
+
+      lockTimeoutRef.current = window.setTimeout(() => {
+        setLockedActiveId("");
+      }, 1200);
+
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.scrollY - 80;
 
@@ -78,11 +116,11 @@ export function AboutSideNavigation({ language }: { language: "en" | "id" }) {
           <li key={item.id} className="group">
             <button
               type="button"
-              aria-current={activeId === item.href ? "true" : undefined}
+              aria-current={displayActiveId === item.href ? "true" : undefined}
               onClick={() => scrollTo(item.id, item.href)}
               className={cn(
                 "flex cursor-pointer items-center gap-2 transition-colors outline-none hover:text-brand-soft focus-visible:text-brand-soft",
-                activeId === item.href
+                displayActiveId === item.href
                   ? "font-medium text-brand-soft"
                   : "text-muted-foreground",
               )}
@@ -90,7 +128,7 @@ export function AboutSideNavigation({ language }: { language: "en" | "id" }) {
               <div
                 className={cn(
                   "h-px w-4 bg-muted-foreground transition-all",
-                  activeId === item.href
+                  displayActiveId === item.href
                     ? "w-6 bg-brand-soft"
                     : "bg-muted-foreground",
                 )}

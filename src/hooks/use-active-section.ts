@@ -24,8 +24,10 @@ export function useActiveSection(
         }
 
         const documentElement = document.documentElement;
+        const scrollPosition = window.scrollY;
+        const activationOffset = Math.min(140, window.innerHeight * 0.25);
         const isNearPageEnd =
-          window.scrollY + window.innerHeight >=
+          scrollPosition + window.innerHeight >=
           documentElement.scrollHeight - 24;
 
         if (isNearPageEnd) {
@@ -33,11 +35,14 @@ export function useActiveSection(
           return;
         }
 
-        const activationLine = window.innerHeight * 0.3;
+        const activationPosition = scrollPosition + activationOffset;
         let currentSection = sections[0];
 
         for (const section of sections) {
-          if (section.getBoundingClientRect().top <= activationLine) {
+          const sectionTop =
+            section.getBoundingClientRect().top + scrollPosition;
+
+          if (sectionTop <= activationPosition) {
             currentSection = section;
           } else {
             break;
