@@ -2,10 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  ArrowSquareOutIcon,
   CalendarBlankIcon,
   CaretDownIcon,
   CaretLeftIcon,
   CaretRightIcon,
+  CopyIcon,
   DotsThreeVerticalIcon,
   EyeIcon,
   EyeSlashIcon,
@@ -55,6 +57,7 @@ import {
   Drawer,
   DrawerContent,
   DrawerDescription,
+  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
@@ -111,6 +114,7 @@ export type DashboardGalleryItem = {
   altText: string | null;
   width: number | null;
   height: number | null;
+  size: number | null;
   aspectRatio: number | null;
   blurDataUrl: string | null;
   isVisible: boolean;
@@ -139,6 +143,7 @@ const emptyDefaults: GalleryItemActionValues = {
   category: "",
   width: undefined,
   height: undefined,
+  size: undefined,
   aspectRatio: undefined,
   blurDataUrl: undefined,
   isVisible: true,
@@ -158,6 +163,7 @@ function getDefaults(item?: DashboardGalleryItem): GalleryItemActionValues {
     category: item.category ?? "",
     width: item.width ?? undefined,
     height: item.height ?? undefined,
+    size: item.size ?? undefined,
     aspectRatio: item.aspectRatio ?? undefined,
     blurDataUrl: item.blurDataUrl ?? undefined,
     isVisible: item.isVisible,
@@ -222,6 +228,34 @@ function getDimensions(item: DashboardGalleryItem) {
   }
 
   return `${item.width} x ${item.height}`;
+}
+
+function getGalleryAspectRatio(item: DashboardGalleryItem) {
+  if (item.aspectRatio && item.aspectRatio > 0) {
+    return item.aspectRatio;
+  }
+
+  if (item.width && item.height && item.height > 0) {
+    return item.width / item.height;
+  }
+
+  return 1;
+}
+
+function formatBytes(bytes: number | null) {
+  if (!bytes) {
+    return "Not stored";
+  }
+
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function GalleryStatusBadge({
@@ -390,6 +424,10 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
                   shouldValidate: true,
                 });
                 setValue("height", metadata?.height ?? undefined, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
+                setValue("size", metadata?.size ?? undefined, {
                   shouldDirty: true,
                   shouldValidate: true,
                 });
@@ -742,27 +780,19 @@ function GalleryGrid({
           className={cn(
             "group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/45 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-brand-soft/40 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)]",
             selectedIds.has(item.id) && "border-brand-soft/60 bg-brand/5",
-            batchMode && "cursor-pointer",
+            batchMode ? "cursor-pointer" : "cursor-zoom-in",
           )}
-          onClick={batchMode ? () => onToggleItem(item.id) : undefined}
+          onClick={() => {
+            if (batchMode) {
+              onToggleItem(item.id);
+              return;
+            }
+
+            onSelectItem(item);
+          }}
         >
-          <div className="relative aspect-video overflow-hidden bg-muted/35">
-            <button
-              type="button"
-              className={cn(
-                "absolute inset-0 block w-full text-left",
-                batchMode ? "pointer-events-none" : "md:pointer-events-none",
-              )}
-              onClick={(event) =>
-                blurBeforeOpen(event, () => onSelectItem(item))
-              }
-              aria-label={`Open details for ${getItemTitle(item)}`}
-            >
-              <GalleryThumbnail
-                imageUrl={item.imageUrl}
-                caption={item.caption}
-              />
-            </button>
+          <div className="relative aspect-square overflow-hidden bg-muted/35">
+            <GalleryThumbnail imageUrl={item.imageUrl} caption={item.caption} />
             {batchMode && (
               <div
                 className="absolute top-3 left-3 z-10"
@@ -783,7 +813,7 @@ function GalleryGrid({
             </div>
           </div>
           <div className="relative">
-            <div className="flex min-h-36 flex-col px-4 pt-3 pb-4">
+            <div className="px-4 pt-3 pb-4">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <GalleryStatusBadge isVisible={item.isVisible} />
                 {item.category && (
@@ -795,10 +825,13 @@ function GalleryGrid({
                   </Badge>
                 )}
               </div>
-              <h2 className="mt-2 line-clamp-3 font-heading text-base leading-snug font-semibold wrap-break-word">
+              <h2
+                className="mt-2 truncate font-heading text-base leading-snug font-semibold"
+                title={getItemTitle(item)}
+              >
                 {getItemTitle(item)}
               </h2>
-              <p className="mt-auto flex items-center gap-1.5 pt-4 text-xs text-muted-foreground">
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                 <CalendarBlankIcon className="size-3.5" />
                 {formatDate(item.createdAt)}
               </p>
@@ -868,7 +901,10 @@ function GalleryListRow({
           />
         </div>
         <div className="min-w-0">
-          <p className="line-clamp-2 leading-snug font-medium wrap-break-word">
+          <p
+            className="truncate leading-snug font-medium"
+            title={getItemTitle(item)}
+          >
             {getItemTitle(item)}
           </p>
           <p className="mt-1 truncate text-xs text-muted-foreground xl:hidden">
@@ -1144,13 +1180,22 @@ function GalleryBatchActionsBar({
   );
 }
 
-function GalleryMobileDetail({
+function GalleryDetailDrawer({
   item,
+  direction,
   onClose,
 }: {
   item: DashboardGalleryItem;
+  direction: "bottom" | "right";
   onClose: () => void;
 }) {
+  const aspectRatio = getGalleryAspectRatio(item);
+
+  const handleCopyImageUrl = () => {
+    navigator.clipboard.writeText(item.imageUrl);
+    toast.success("Image URL copied.");
+  };
+
   const metadata = [
     {
       icon: <CalendarBlankIcon />,
@@ -1162,30 +1207,46 @@ function GalleryMobileDetail({
       label: "File name",
       value: getFileName(item.imageUrl),
     },
-    { icon: <FolderIcon />, label: "Size", value: "Not stored" },
+    { icon: <FolderIcon />, label: "Size", value: formatBytes(item.size) },
     { icon: <RulerIcon />, label: "Dimensions", value: getDimensions(item) },
   ];
 
   return (
-    <Drawer open direction="bottom" onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="max-h-[86vh] overflow-hidden p-0 before:inset-x-0! before:top-2! before:bottom-0! before:rounded-b-none!">
+    <Drawer
+      open
+      direction={direction}
+      onOpenChange={(open) => !open && onClose()}
+    >
+      <DrawerContent
+        className={cn(
+          "overflow-hidden p-0",
+          direction === "right"
+            ? "h-dvh before:inset-y-0! before:right-0! before:left-0! before:rounded-l-4xl! before:rounded-r-none!"
+            : "max-h-[86vh] before:inset-x-0! before:top-2! before:bottom-0! before:rounded-b-none!",
+        )}
+      >
         <DrawerHeader className="sr-only p-0">
           <DrawerTitle>Gallery item detail</DrawerTitle>
           <DrawerDescription>
             Preview metadata and actions for {getItemTitle(item)}.
           </DrawerDescription>
         </DrawerHeader>
-        <div className="min-h-0 scrollbar-none overflow-y-auto">
-          <div className="px-4 pt-7">
-            <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-muted/35">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 scrollbar-none overflow-y-auto px-4 pt-7 pb-4">
+            <div
+              className="relative w-full overflow-hidden rounded-2xl border border-border bg-muted/35"
+              style={{ aspectRatio }}
+            >
               <GalleryThumbnail
                 imageUrl={item.imageUrl}
                 caption={item.caption}
+                imageClassName="object-contain"
               />
             </div>
-          </div>
-          <div className="mt-4 px-4">
-            <h3 className="font-heading text-xl leading-tight font-semibold">
+            <h3
+              className="mt-4 truncate font-heading text-xl leading-tight font-semibold"
+              title={getItemTitle(item)}
+            >
               {getItemTitle(item)}
             </h3>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -1194,23 +1255,31 @@ function GalleryMobileDetail({
                 <Badge variant="secondary">{item.category}</Badge>
               )}
             </div>
-          </div>
-          <div className="mx-4 mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-border/70 bg-card/50 p-3">
-            {metadata.map((row) => (
-              <div key={row.label} className="flex min-w-0 items-start gap-2">
-                <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">
-                  {row.icon}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground">{row.label}</p>
-                  <p className="mt-0.5 line-clamp-2 text-sm font-medium wrap-anywhere">
-                    {row.value}
-                  </p>
+
+            {item.description && (
+              <p className="mt-3 text-sm leading-6 wrap-anywhere text-muted-foreground">
+                {item.description}
+              </p>
+            )}
+
+            <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-border/70 bg-card/50 p-3">
+              {metadata.map((row) => (
+                <div key={row.label} className="flex min-w-0 items-start gap-2">
+                  <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">
+                    {row.icon}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">{row.label}</p>
+                    <p className="mt-0.5 line-clamp-2 text-sm font-medium wrap-anywhere">
+                      {row.value}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-          <div className="mt-4 grid gap-2 px-4 pb-4">
+
+          <DrawerFooter className="grid gap-2 px-4 pb-4">
             <GalleryItemDialog
               item={item}
               trigger={
@@ -1220,6 +1289,22 @@ function GalleryMobileDetail({
                 </Button>
               }
             />
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCopyImageUrl}
+              >
+                <CopyIcon data-icon="inline-start" />
+                Copy URL
+              </Button>
+              <Button type="button" variant="outline" asChild>
+                <a href={item.imageUrl} target="_blank" rel="noreferrer">
+                  <ArrowSquareOutIcon data-icon="inline-start" />
+                  View
+                </a>
+              </Button>
+            </div>
             <GalleryDeleteButton
               item={item}
               trigger={
@@ -1229,7 +1314,7 @@ function GalleryMobileDetail({
                 </Button>
               }
             />
-          </div>
+          </DrawerFooter>
         </div>
       </DrawerContent>
     </Drawer>
@@ -1253,6 +1338,9 @@ export function GalleryManager({ items }: GalleryManagerProps) {
   const [isBatchPending, startBatchTransition] = useTransition();
   const [selectedItem, setSelectedItem] = useState<DashboardGalleryItem | null>(
     null,
+  );
+  const [drawerDirection, setDrawerDirection] = useState<"bottom" | "right">(
+    "bottom",
   );
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
@@ -1341,6 +1429,19 @@ export function GalleryManager({ items }: GalleryManagerProps) {
   useEffect(() => {
     setPage(1);
   }, [category, itemsPerPage, query, sortMode, visibility]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 768px)");
+
+    const syncDrawerDirection = () => {
+      setDrawerDirection(mediaQuery.matches ? "right" : "bottom");
+    };
+
+    syncDrawerDirection();
+    mediaQuery.addEventListener("change", syncDrawerDirection);
+
+    return () => mediaQuery.removeEventListener("change", syncDrawerDirection);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -1781,8 +1882,9 @@ export function GalleryManager({ items }: GalleryManagerProps) {
       </Card>
 
       {selectedItem && (
-        <GalleryMobileDetail
+        <GalleryDetailDrawer
           item={selectedItem}
+          direction={drawerDirection}
           onClose={() => setSelectedItem(null)}
         />
       )}

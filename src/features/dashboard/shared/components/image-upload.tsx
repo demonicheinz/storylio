@@ -34,6 +34,7 @@ type ImageUploadProps = {
     metadata?: {
       width?: number | null;
       height?: number | null;
+      size?: number | null;
       aspectRatio?: number | null;
       blurDataUrl?: string | null;
     },
@@ -167,6 +168,7 @@ export function ImageUpload({
         onChange(data.url, {
           width: data.width ?? null,
           height: data.height ?? null,
+          size: data.size ?? null,
           aspectRatio: data.aspectRatio ?? null,
           blurDataUrl: data.blurDataUrl ?? null,
         });

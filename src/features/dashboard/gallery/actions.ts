@@ -126,6 +126,7 @@ export async function actionCreateGalleryItem(
           category: parsed.data.category,
           width: parsed.data.width ?? null,
           height: parsed.data.height ?? null,
+          size: parsed.data.size ?? null,
           aspectRatio:
             parsed.data.aspectRatio ??
             (parsed.data.width && parsed.data.height
@@ -185,6 +186,7 @@ export async function actionUpdateGalleryItem(
         category: parsed.data.category,
         width: parsed.data.width ?? null,
         height: parsed.data.height ?? null,
+        size: parsed.data.size ?? null,
         aspectRatio:
           parsed.data.aspectRatio ??
           (parsed.data.width && parsed.data.height
