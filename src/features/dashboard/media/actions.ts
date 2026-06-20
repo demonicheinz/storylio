@@ -7,6 +7,17 @@ import { getActionSession } from "@/lib/auth-session";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { db } from "@/lib/db";
 
+export type MediaUsageItem = {
+  id: string;
+  filename: string;
+  references: Array<{ label: string; count: number }>;
+};
+
+export type MediaUsagePreview = {
+  canDelete: MediaUsageItem[];
+  blocked: MediaUsageItem[];
+};
+
 async function getMediaReferences(url: string) {
   const [
     profiles,
@@ -51,6 +62,133 @@ async function getMediaReferences(url: string) {
   return references.filter(([, count]) => count > 0);
 }
 
+function serializeReferences(references: [string, number][]) {
+  return references.map(([label, count]) => ({ label, count }));
+}
+
+function summarizeReferences(
+  references: Array<{ label: string; count: number }>,
+) {
+  return references
+    .map(({ label, count }) => `${count} ${label}${count === 1 ? "" : "s"}`)
+    .join(", ");
+}
+
+function normalizeMediaFilename(filename: string) {
+  return filename.trim().replace(/\s+/g, " ");
+}
+
+function validateMediaFilename(filename: string): string | null {
+  if (!filename) {
+    return "File name is required";
+  }
+
+  if (filename.length > 160) {
+    return "File name must be 160 characters or less";
+  }
+
+  if (/[\\/:*?"<>|\r\n]/.test(filename)) {
+    return 'File name cannot contain \\ / : * ? " < > | or line breaks';
+  }
+
+  return null;
+}
+
+async function getUsagePreview(mediaIds: string[]): Promise<MediaUsagePreview> {
+  const uniqueIds = Array.from(new Set(mediaIds)).filter(Boolean);
+
+  if (uniqueIds.length === 0) {
+    return { canDelete: [], blocked: [] };
+  }
+
+  const mediaItems = await db.media.findMany({
+    where: { id: { in: uniqueIds } },
+    select: {
+      id: true,
+      filename: true,
+      url: true,
+    },
+  });
+
+  const usageItems = await Promise.all(
+    mediaItems.map(async (media) => {
+      const references = serializeReferences(
+        await getMediaReferences(media.url),
+      );
+
+      return {
+        id: media.id,
+        filename: media.filename,
+        references,
+      };
+    }),
+  );
+
+  return {
+    canDelete: usageItems.filter((item) => item.references.length === 0),
+    blocked: usageItems.filter((item) => item.references.length > 0),
+  };
+}
+
+export async function actionRenameMedia(
+  mediaId: string,
+  filename: string,
+): Promise<ActionResult<{ id: string; filename: string }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const normalizedFilename = normalizeMediaFilename(filename);
+  const validationError = validateMediaFilename(normalizedFilename);
+
+  if (validationError) {
+    return actionError(validationError);
+  }
+
+  try {
+    const existing = await db.media.findUnique({
+      where: { id: mediaId },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return actionError("Media not found");
+    }
+
+    const media = await db.media.update({
+      where: { id: mediaId },
+      data: { filename: normalizedFilename },
+      select: { id: true, filename: true },
+    });
+
+    revalidatePath("/dashboard/media");
+    return actionSuccess(media);
+  } catch (error) {
+    console.error("Rename media failed:", error);
+    return actionError("Failed to rename media");
+  }
+}
+
+export async function actionCheckMediaUsage(
+  mediaIds: string[],
+): Promise<ActionResult<MediaUsagePreview>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  try {
+    const preview = await getUsagePreview(mediaIds);
+    return actionSuccess(preview);
+  } catch (error) {
+    console.error("Check media usage failed:", error);
+    return actionError("Failed to check media usage");
+  }
+}
+
 export async function actionDeleteMedia(
   mediaId: string,
 ): Promise<ActionResult> {
@@ -71,9 +209,7 @@ export async function actionDeleteMedia(
 
     const references = await getMediaReferences(media.url);
     if (references.length > 0) {
-      const summary = references
-        .map(([label, count]) => `${count} ${label}${count === 1 ? "" : "s"}`)
-        .join(", ");
+      const summary = summarizeReferences(serializeReferences(references));
 
       return actionError(
         `Media is still in use by ${summary}. Remove those references before deleting it.`,
@@ -90,5 +226,59 @@ export async function actionDeleteMedia(
   } catch (error) {
     console.error("Delete media failed:", error);
     return actionError("Failed to delete media");
+  }
+}
+
+export async function actionDeleteMediaBatch(
+  mediaIds: string[],
+): Promise<ActionResult<{ deletedIds: string[] }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  try {
+    const preview = await getUsagePreview(mediaIds);
+
+    if (preview.blocked.length > 0) {
+      const blockedSummary = preview.blocked
+        .map(
+          (item) =>
+            `${item.filename} (${summarizeReferences(item.references)})`,
+        )
+        .join("; ");
+
+      return actionError(
+        `Some media is still in use: ${blockedSummary}. Remove those references before deleting it.`,
+      );
+    }
+
+    const deleteIds = preview.canDelete.map((item) => item.id);
+    if (deleteIds.length === 0) {
+      return actionError("No media selected for deletion");
+    }
+
+    const mediaItems = await db.media.findMany({
+      where: { id: { in: deleteIds } },
+      select: {
+        id: true,
+        publicId: true,
+      },
+    });
+
+    await Promise.all(
+      mediaItems.map((media) => deleteFromCloudinary(media.publicId)),
+    );
+
+    await db.media.deleteMany({
+      where: { id: { in: deleteIds } },
+    });
+
+    revalidatePath("/dashboard/media");
+    return actionSuccess({ deletedIds: deleteIds });
+  } catch (error) {
+    console.error("Delete media batch failed:", error);
+    return actionError("Failed to delete selected media");
   }
 }

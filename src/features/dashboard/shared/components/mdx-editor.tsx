@@ -1,14 +1,21 @@
 "use client";
 
 import {
+  AdmonitionDirectiveDescriptor,
   BlockTypeSelect,
   BoldItalicUnderlineToggles,
+  CodeToggle,
   CreateLink,
   codeBlockPlugin,
   codeMirrorPlugin,
+  directivesPlugin,
+  HighlightToggle,
   headingsPlugin,
+  InsertAdmonition,
   InsertCodeBlock,
   InsertImage,
+  InsertTable,
+  InsertThematicBreak,
   imagePlugin,
   ListsToggle,
   linkDialogPlugin,
@@ -18,6 +25,9 @@ import {
   markdownShortcutPlugin,
   quotePlugin,
   Separator,
+  StrikeThroughSupSubToggles,
+  tablePlugin,
+  thematicBreakPlugin,
   toolbarPlugin,
   UndoRedo,
 } from "@mdxeditor/editor";
@@ -53,7 +63,7 @@ export function DashboardMdxEditor({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border bg-input/30",
+        "min-w-0 overflow-hidden rounded-2xl border bg-input/30",
         error ? "border-destructive" : "border-border",
       )}
     >
@@ -66,14 +76,19 @@ export function DashboardMdxEditor({
         }}
         placeholder="Write the post in MDX..."
         className="storylio-mdx-editor dark-theme"
-        contentEditableClassName="min-h-[360px] prose prose-invert max-w-none py-3 text-sm outline-none"
+        contentEditableClassName="min-h-[360px] min-w-0 prose prose-invert max-w-none py-3 text-sm outline-none"
         plugins={[
-          headingsPlugin({ allowedHeadingLevels: [1, 2, 3, 4] }),
+          headingsPlugin({ allowedHeadingLevels: [2, 3, 4] }),
           listsPlugin(),
           quotePlugin(),
           linkPlugin(),
           linkDialogPlugin(),
           imagePlugin(),
+          tablePlugin(),
+          thematicBreakPlugin(),
+          directivesPlugin({
+            directiveDescriptors: [AdmonitionDirectiveDescriptor],
+          }),
           codeBlockPlugin({ defaultCodeBlockLanguage: "tsx" }),
           codeMirrorPlugin({
             codeBlockLanguages: {
@@ -94,12 +109,18 @@ export function DashboardMdxEditor({
                 <Separator />
                 <BlockTypeSelect />
                 <Separator />
-                <BoldItalicUnderlineToggles />
+                <BoldItalicUnderlineToggles options={["Bold", "Italic"]} />
+                <CodeToggle />
+                <HighlightToggle />
+                <StrikeThroughSupSubToggles options={["Strikethrough"]} />
                 <ListsToggle />
                 <Separator />
                 <CreateLink />
                 <InsertImage />
+                <InsertTable />
+                <InsertThematicBreak />
                 <InsertCodeBlock />
+                <InsertAdmonition />
               </>
             ),
           }),

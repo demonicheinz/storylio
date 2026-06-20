@@ -8,7 +8,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -37,14 +37,31 @@ export function NavUser({ user }: { user: User }) {
   const router = useRouter();
   const { isMobile } = useSidebar();
   const [currentUser, setCurrentUser] = useState(user);
+  const optimisticUserRef = useRef<Partial<User> | null>(null);
 
   useEffect(() => {
+    const optimisticUser = optimisticUserRef.current;
+
+    if (optimisticUser) {
+      const hasSynced =
+        (!optimisticUser.name || optimisticUser.name === user.name) &&
+        (!optimisticUser.email || optimisticUser.email === user.email) &&
+        (!optimisticUser.avatar || optimisticUser.avatar === user.avatar);
+
+      if (!hasSynced) {
+        return;
+      }
+
+      optimisticUserRef.current = null;
+    }
+
     setCurrentUser(user);
   }, [user]);
 
   useEffect(() => {
     const handleUserUpdate = (event: Event) => {
       const detail = (event as CustomEvent<Partial<User>>).detail;
+      optimisticUserRef.current = detail;
 
       setCurrentUser((current) => ({
         name: detail.name ?? current.name,
@@ -91,7 +108,7 @@ export function NavUser({ user }: { user: User }) {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="min-w-56 rounded-lg **:[[role='menuitem']]:cursor-pointer"
+            className="min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}

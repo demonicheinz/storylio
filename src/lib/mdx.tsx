@@ -3,9 +3,15 @@ import type { MDXComponents } from "next-mdx-remote-client/rsc";
 import { evaluate } from "next-mdx-remote-client/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
+import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 import { BlogHeadingLink } from "@/components/public/sections/blog/heading-link";
-import { rejectExecutableMdx } from "@/lib/mdx-safety";
+import {
+  normalizeHeadingDepths,
+  rejectExecutableMdx,
+  remarkHighlightMark,
+  transformAdmonitionDirectives,
+} from "@/lib/mdx-safety";
 import { cn } from "@/lib/utils";
 
 function getSafeHref(href?: string) {
@@ -34,7 +40,25 @@ function getSafeImageSrc(src?: string) {
   }
 }
 
+function getTableCellAlign(align: unknown) {
+  return align === "center" || align === "right" || align === "left"
+    ? align
+    : "left";
+}
+
 const components: MDXComponents = {
+  h1: ({ children, className, id }) => (
+    <BlogHeadingLink
+      as="h2"
+      id={typeof id === "string" ? id : undefined}
+      className={cn(
+        "mt-12 scroll-mt-28 font-heading text-3xl font-semibold text-foreground first:mt-0",
+        className,
+      )}
+    >
+      {children}
+    </BlogHeadingLink>
+  ),
   h2: ({ children, className, id }) => (
     <BlogHeadingLink
       as="h2"
@@ -99,6 +123,17 @@ const components: MDXComponents = {
       {children}
     </blockquote>
   ),
+  hr: () => <hr className="my-10 border-border/60" />,
+  mark: ({ children }) => (
+    <mark className="rounded-md bg-brand-soft/20 px-1 py-0.5 text-foreground">
+      {children}
+    </mark>
+  ),
+  del: ({ children }) => (
+    <del className="text-muted-foreground decoration-brand-soft/80 decoration-2">
+      {children}
+    </del>
+  ),
   img: ({ alt, src }) => {
     const safeSrc = typeof src === "string" ? getSafeImageSrc(src) : null;
     if (!safeSrc) {
@@ -130,20 +165,49 @@ const components: MDXComponents = {
       {children}
     </code>
   ),
+  input: ({ type, checked, className, ...props }) => {
+    if (type !== "checkbox") {
+      return <input type={type} className={className} {...props} />;
+    }
+
+    return (
+      <input
+        {...props}
+        type="checkbox"
+        checked={Boolean(checked)}
+        readOnly
+        className={cn("storylio-article-checkbox", className)}
+      />
+    );
+  },
   table: ({ children }) => (
-    <div className="my-8 max-w-full overflow-x-auto rounded-2xl border border-border/40">
-      <table className="w-full min-w-max border-collapse text-sm">
+    <div className="my-8 max-w-full overflow-x-auto rounded-2xl border border-border/60">
+      <table className="w-full min-w-max border-separate border-spacing-0 text-sm">
         {children}
       </table>
     </div>
   ),
-  th: ({ children }) => (
-    <th className="border-b border-border/40 bg-surface/70 px-4 py-3 text-left font-semibold text-foreground">
+  th: ({ align, children, className, style, ...props }) => (
+    <th
+      {...props}
+      style={{ textAlign: getTableCellAlign(align), ...style }}
+      className={cn(
+        "border-r border-b border-border/60 bg-surface/70 px-4 py-3 font-semibold text-foreground last:border-r-0",
+        className,
+      )}
+    >
       {children}
     </th>
   ),
-  td: ({ children }) => (
-    <td className="border-b border-border/30 px-4 py-3 text-muted-foreground">
+  td: ({ align, children, className, style, ...props }) => (
+    <td
+      {...props}
+      style={{ textAlign: getTableCellAlign(align), ...style }}
+      className={cn(
+        "border-r border-b border-border/40 px-4 py-3 text-muted-foreground last:border-r-0",
+        className,
+      )}
+    >
       {children}
     </td>
   ),
@@ -157,7 +221,14 @@ export async function renderMDX(source: string) {
       disableExports: true,
       disableImports: true,
       mdxOptions: {
-        remarkPlugins: [rejectExecutableMdx, remarkGfm],
+        remarkPlugins: [
+          remarkDirective,
+          remarkHighlightMark,
+          rejectExecutableMdx,
+          normalizeHeadingDepths,
+          transformAdmonitionDirectives,
+          remarkGfm,
+        ],
         rehypePlugins: [
           rehypeSlug,
           [

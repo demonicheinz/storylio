@@ -25,12 +25,91 @@ type ProfileSettingsActionData = {
   image: string | null;
 };
 
+export type DashboardSessionItem = {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  isCurrent: boolean;
+};
+
 function revalidateSettingsPaths() {
   updateTag("public-profile");
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
   revalidatePath("/");
   revalidatePath("/about");
+}
+
+export async function actionListDashboardSessions(): Promise<
+  ActionResult<DashboardSessionItem[]>
+> {
+  let session: Awaited<ReturnType<typeof getActionSession>>;
+
+  try {
+    session = await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  try {
+    const sessions = await db.session.findMany({
+      where: { userId: session.user.id },
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        token: true,
+        createdAt: true,
+        updatedAt: true,
+        expiresAt: true,
+        ipAddress: true,
+        userAgent: true,
+      },
+    });
+
+    return actionSuccess(
+      sessions.map((item) => ({
+        id: item.id,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+        expiresAt: item.expiresAt.toISOString(),
+        ipAddress: item.ipAddress,
+        userAgent: item.userAgent,
+        isCurrent: item.token === session.session.token,
+      })),
+    );
+  } catch (error) {
+    console.error("List dashboard sessions failed:", error);
+    return actionError("Failed to load sessions.");
+  }
+}
+
+export async function actionRevokeOtherDashboardSessions(): Promise<ActionResult> {
+  let session: Awaited<ReturnType<typeof getActionSession>>;
+
+  try {
+    session = await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  try {
+    await db.session.deleteMany({
+      where: {
+        userId: session.user.id,
+        token: { not: session.session.token },
+      },
+    });
+
+    revalidatePath("/dashboard/settings");
+
+    return actionSuccess(undefined, "Other sessions revoked.");
+  } catch (error) {
+    console.error("Revoke other dashboard sessions failed:", error);
+    return actionError("Failed to revoke sessions.");
+  }
 }
 
 export async function actionUpdateProfileSettings(

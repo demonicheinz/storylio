@@ -35,7 +35,7 @@ export default function DashboardLayout({
             </Suspense>
           </header>
           <Suspense fallback={null}>
-            <RouteMotion className="container mx-auto max-w-7xl p-4 md:p-6">
+            <RouteMotion className="container mx-auto max-w-7xl min-w-0 overflow-x-clip p-4 md:p-6">
               {children}
             </RouteMotion>
           </Suspense>

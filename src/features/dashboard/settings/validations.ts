@@ -46,10 +46,30 @@ export const accountPasswordActionSchema = z
     newPassword: z
       .string()
       .min(8, "New password must be at least 8 characters")
-      .max(128, "New password must be 128 characters or fewer"),
+      .max(128, "New password must be 128 characters or fewer")
+      .refine((value) => /[a-z]/.test(value), {
+        message: "Add at least one lowercase letter",
+      })
+      .refine((value) => /[A-Z]/.test(value), {
+        message: "Add at least one uppercase letter",
+      })
+      .refine((value) => /\d/.test(value), {
+        message: "Add at least one number",
+      })
+      .refine((value) => /[^A-Za-z0-9]/.test(value), {
+        message: "Add at least one symbol",
+      }),
     confirmPassword: z.string().min(1, "Confirm the new password"),
   })
   .superRefine((value, ctx) => {
+    if (value.currentPassword === value.newPassword) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["newPassword"],
+        message: "New password must be different from current password",
+      });
+    }
+
     if (value.newPassword !== value.confirmPassword) {
       ctx.addIssue({
         code: "custom",

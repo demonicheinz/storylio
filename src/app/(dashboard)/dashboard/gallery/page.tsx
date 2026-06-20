@@ -3,7 +3,7 @@ import { GalleryManager } from "@/features/dashboard/gallery/components/gallery-
 import { db } from "@/lib/db";
 
 async function getGalleryItems() {
-  return db.galleryItem.findMany({
+  const galleryItems = await db.galleryItem.findMany({
     orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     select: {
       id: true,
@@ -14,6 +14,7 @@ async function getGalleryItems() {
       altText: true,
       width: true,
       height: true,
+      size: true,
       aspectRatio: true,
       blurDataUrl: true,
       isVisible: true,
@@ -21,6 +22,30 @@ async function getGalleryItems() {
       createdAt: true,
     },
   });
+  const itemsWithoutSize = galleryItems.filter((item) => item.size === null);
+
+  const mediaSizeByUrl = new Map<string, number | null>();
+  if (itemsWithoutSize.length > 0) {
+    const mediaItems = await db.media.findMany({
+      where: {
+        url: {
+          in: itemsWithoutSize.map((item) => item.imageUrl),
+        },
+      },
+      select: {
+        url: true,
+        size: true,
+      },
+    });
+    for (const media of mediaItems) {
+      mediaSizeByUrl.set(media.url, media.size);
+    }
+  }
+
+  return galleryItems.map((item) => ({
+    ...item,
+    size: item.size ?? mediaSizeByUrl.get(item.imageUrl) ?? null,
+  }));
 }
 
 export default async function GalleryPage() {
@@ -29,15 +54,7 @@ export default async function GalleryPage() {
   const items = await getGalleryItems();
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-heading text-3xl font-bold">Gallery</h1>
-        <p className="mt-2 text-muted-foreground">
-          Manage gallery images, visibility, categories, and display order.
-          Hidden items remain editable but are not shown publicly.
-        </p>
-      </div>
-
+    <div className="flex min-w-0 flex-col gap-6">
       <GalleryManager
         items={items.map((item) => ({
           ...item,

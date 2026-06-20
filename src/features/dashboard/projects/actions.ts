@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import {
   type ProjectActionInput,
   type ProjectActionValues,
@@ -21,6 +22,8 @@ type ProjectActionData = {
   slug: string;
   status: "draft" | "published";
 };
+
+const projectIdsSchema = z.array(z.string().min(1)).min(1).max(100);
 
 function parseProjectInput(input: unknown) {
   const parsed = projectActionSchema.safeParse(input);
@@ -54,6 +57,21 @@ function revalidateProjectPaths(slug: string, oldSlug?: string) {
 
   if (oldSlug && oldSlug !== slug) {
     revalidatePath(`/projects/${oldSlug}`);
+  }
+}
+
+function revalidateProjectsCollection() {
+  revalidatePath("/dashboard/projects");
+  revalidatePath("/dashboard");
+  revalidatePath("/projects");
+  revalidatePath("/");
+}
+
+function revalidateProjectSlugs(slugs: string[]) {
+  revalidateProjectsCollection();
+
+  for (const slug of slugs) {
+    revalidatePath(`/projects/${slug}`);
   }
 }
 
@@ -354,6 +372,144 @@ export async function actionDeleteProject(
   } catch (error) {
     console.error("Delete project failed:", error);
     return actionError("Failed to delete project.");
+  }
+}
+
+function parseProjectIds(projectIds: string[]) {
+  const parsed = projectIdsSchema.safeParse(projectIds);
+
+  if (!parsed.success) {
+    return actionError("Select at least one project.");
+  }
+
+  return parsed.data;
+}
+
+export async function actionPublishProjects(
+  projectIds: string[],
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsedIds = parseProjectIds(projectIds);
+  if (!Array.isArray(parsedIds)) {
+    return parsedIds;
+  }
+
+  try {
+    const projects = await db.project.findMany({
+      where: { id: { in: parsedIds } },
+      select: { slug: true },
+    });
+
+    const result = await db.project.updateMany({
+      where: {
+        id: { in: parsedIds },
+        status: ProjectStatus.DRAFT,
+      },
+      data: {
+        status: ProjectStatus.PUBLISHED,
+      },
+    });
+
+    revalidateProjectSlugs(projects.map((project) => project.slug));
+
+    return actionSuccess(
+      { count: result.count },
+      result.count === 1
+        ? "Project published."
+        : `${result.count} projects published.`,
+    );
+  } catch (error) {
+    console.error("Publish projects failed:", error);
+    return actionError("Failed to publish projects.");
+  }
+}
+
+export async function actionMoveProjectsToDraft(
+  projectIds: string[],
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsedIds = parseProjectIds(projectIds);
+  if (!Array.isArray(parsedIds)) {
+    return parsedIds;
+  }
+
+  try {
+    const projects = await db.project.findMany({
+      where: { id: { in: parsedIds } },
+      select: { slug: true },
+    });
+
+    const result = await db.project.updateMany({
+      where: {
+        id: { in: parsedIds },
+        status: ProjectStatus.PUBLISHED,
+      },
+      data: {
+        status: ProjectStatus.DRAFT,
+      },
+    });
+
+    revalidateProjectSlugs(projects.map((project) => project.slug));
+
+    return actionSuccess(
+      { count: result.count },
+      result.count === 1
+        ? "Project moved to draft."
+        : `${result.count} projects moved to draft.`,
+    );
+  } catch (error) {
+    console.error("Move projects to draft failed:", error);
+    return actionError("Failed to move projects to draft.");
+  }
+}
+
+export async function actionDeleteProjects(
+  projectIds: string[],
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+
+  const parsedIds = parseProjectIds(projectIds);
+  if (!Array.isArray(parsedIds)) {
+    return parsedIds;
+  }
+
+  try {
+    const projects = await db.project.findMany({
+      where: { id: { in: parsedIds } },
+      select: { slug: true },
+    });
+
+    const result = await db.project.deleteMany({
+      where: {
+        id: { in: parsedIds },
+      },
+    });
+
+    revalidateProjectSlugs(projects.map((project) => project.slug));
+
+    return actionSuccess(
+      { count: result.count },
+      result.count === 1
+        ? "Project deleted."
+        : `${result.count} projects deleted.`,
+    );
+  } catch (error) {
+    console.error("Delete projects failed:", error);
+    return actionError("Failed to delete projects.");
   }
 }
 

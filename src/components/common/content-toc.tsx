@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useActiveSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
 
@@ -26,14 +26,33 @@ export function ContentToc({
   indicator = "line",
 }: ContentTocProps) {
   const sectionIds = useMemo(() => items.map((item) => item.id), [items]);
-  const activeId = useActiveSection(sectionIds);
+  const activeId = useActiveSection(sectionIds, "position");
   const [displayActiveId, setDisplayActiveId] = useState(activeId);
+  const [lockedActiveId, setLockedActiveId] = useState("");
+  const lockTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (lockedActiveId) {
+      if (activeId === lockedActiveId) {
+        setDisplayActiveId(activeId);
+        setLockedActiveId("");
+      }
+
+      return;
+    }
+
     if (activeId) {
       setDisplayActiveId(activeId);
     }
-  }, [activeId]);
+  }, [activeId, lockedActiveId]);
+
+  useEffect(() => {
+    return () => {
+      if (lockTimeoutRef.current) {
+        window.clearTimeout(lockTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (items.length === 0) return null;
 
@@ -41,7 +60,17 @@ export function ContentToc({
     const element = document.getElementById(id);
     if (!element) return;
 
-    setDisplayActiveId(`#${id}`);
+    const targetId = `#${id}`;
+    setDisplayActiveId(targetId);
+    setLockedActiveId(targetId);
+
+    if (lockTimeoutRef.current) {
+      window.clearTimeout(lockTimeoutRef.current);
+    }
+
+    lockTimeoutRef.current = window.setTimeout(() => {
+      setLockedActiveId("");
+    }, 1200);
 
     const offsetPosition =
       element.getBoundingClientRect().top + window.scrollY - 96;

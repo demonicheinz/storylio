@@ -23,7 +23,7 @@ export type UmamiAnalytics = {
   locations: UmamiMetric[];
 };
 
-const REQUEST_TIMEOUT_MS = 10_000;
+const REQUEST_TIMEOUT_MS = 3_500;
 
 function readNumber(value: unknown) {
   return typeof value === "number" && Number.isFinite(value)

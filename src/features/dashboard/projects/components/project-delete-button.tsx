@@ -2,6 +2,7 @@
 
 import { TrashIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
@@ -21,11 +22,13 @@ import { actionDeleteProject } from "@/features/dashboard/projects/actions";
 type ProjectDeleteButtonProps = {
   projectId: string;
   title: string;
+  trigger?: ReactNode;
 };
 
 export function ProjectDeleteButton({
   projectId,
   title,
+  trigger,
 }: ProjectDeleteButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -48,10 +51,12 @@ export function ProjectDeleteButton({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button type="button" size="sm" variant="destructive">
-          <TrashIcon data-icon="inline-start" />
-          Delete
-        </Button>
+        {trigger ?? (
+          <Button type="button" size="sm" variant="destructive">
+            <TrashIcon data-icon="inline-start" />
+            Delete
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

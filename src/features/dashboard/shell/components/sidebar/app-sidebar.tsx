@@ -56,14 +56,22 @@ const navGroups = [
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: session } = authClient.useSession();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const user = isMounted ? session?.user : undefined;
+  if (!isMounted) {
+    return null;
+  }
+
+  return <AppSidebarContent {...props} />;
+}
+
+function AppSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
 
   const owner = {
     name: user?.name || "User",
