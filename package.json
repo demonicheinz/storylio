@@ -120,5 +120,9 @@
     "*.{js,ts,cjs,mjs,jsx,tsx,json,jsonc,css}": [
       "biome check --write --no-errors-on-unmatched"
     ]
+  },
+  "resolutions": {
+    "js-yaml": "^4.2.0",
+    "@hono/node-server": "^1.19.13"
   }
 }
