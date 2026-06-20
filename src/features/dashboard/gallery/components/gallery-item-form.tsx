@@ -780,7 +780,7 @@ function GalleryGrid({
               </div>
             )}
             <div
-              className="absolute top-3 right-3"
+              className="absolute top-3 right-3 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
               onClick={(event) => event.stopPropagation()}
             >
               <GalleryItemActions item={item} />
@@ -1179,56 +1179,61 @@ function GalleryMobileDetail({
             Preview metadata and actions for {getItemTitle(item)}.
           </DrawerDescription>
         </DrawerHeader>
-        <div className="px-4 pt-7">
-          <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-muted/35">
-            <GalleryThumbnail imageUrl={item.imageUrl} caption={item.caption} />
-          </div>
-        </div>
-        <div className="mt-4 px-4">
-          <h3 className="font-heading text-xl leading-tight font-semibold">
-            {getItemTitle(item)}
-          </h3>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <GalleryStatusBadge isVisible={item.isVisible} />
-            {item.category && (
-              <Badge variant="secondary">{item.category}</Badge>
-            )}
-          </div>
-        </div>
-        <div className="mx-4 mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-border/70 bg-card/50 p-3">
-          {metadata.map((row) => (
-            <div key={row.label} className="flex min-w-0 items-start gap-2">
-              <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">
-                {row.icon}
-              </span>
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">{row.label}</p>
-                <p className="mt-0.5 line-clamp-2 text-sm font-medium wrap-anywhere">
-                  {row.value}
-                </p>
-              </div>
+        <div className="min-h-0 scrollbar-none overflow-y-auto">
+          <div className="px-4 pt-7">
+            <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-muted/35">
+              <GalleryThumbnail
+                imageUrl={item.imageUrl}
+                caption={item.caption}
+              />
             </div>
-          ))}
-        </div>
-        <div className="mt-4 grid gap-2 px-4 pb-4">
-          <GalleryItemDialog
-            item={item}
-            trigger={
-              <Button type="button" variant="secondary" className="w-full">
-                <PencilSimpleIcon data-icon="inline-start" />
-                Edit Item
-              </Button>
-            }
-          />
-          <GalleryDeleteButton
-            item={item}
-            trigger={
-              <Button type="button" variant="destructive" className="w-full">
-                <TrashIcon data-icon="inline-start" />
-                Delete Item
-              </Button>
-            }
-          />
+          </div>
+          <div className="mt-4 px-4">
+            <h3 className="font-heading text-xl leading-tight font-semibold">
+              {getItemTitle(item)}
+            </h3>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <GalleryStatusBadge isVisible={item.isVisible} />
+              {item.category && (
+                <Badge variant="secondary">{item.category}</Badge>
+              )}
+            </div>
+          </div>
+          <div className="mx-4 mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-border/70 bg-card/50 p-3">
+            {metadata.map((row) => (
+              <div key={row.label} className="flex min-w-0 items-start gap-2">
+                <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">
+                  {row.icon}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">{row.label}</p>
+                  <p className="mt-0.5 line-clamp-2 text-sm font-medium wrap-anywhere">
+                    {row.value}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 grid gap-2 px-4 pb-4">
+            <GalleryItemDialog
+              item={item}
+              trigger={
+                <Button type="button" variant="secondary" className="w-full">
+                  <PencilSimpleIcon data-icon="inline-start" />
+                  Edit Item
+                </Button>
+              }
+            />
+            <GalleryDeleteButton
+              item={item}
+              trigger={
+                <Button type="button" variant="destructive" className="w-full">
+                  <TrashIcon data-icon="inline-start" />
+                  Delete Item
+                </Button>
+              }
+            />
+          </div>
         </div>
       </DrawerContent>
     </Drawer>
@@ -1544,7 +1549,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   })),
                 ]}
               />
-              <div className="grid shrink-0 grid-cols-2 rounded-xl border border-border/60 bg-background/35 p-1">
+              <div className="ml-auto grid w-fit shrink-0 grid-cols-2 rounded-xl border border-border/60 bg-background/35 p-1">
                 <Button
                   type="button"
                   size="icon"
@@ -1580,7 +1585,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
             </div>
           </div>
 
-          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_170px_140px_auto_auto]">
+          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_170px_140px_auto]">
             <div className="relative min-w-0 md:col-span-2 xl:col-span-1">
               <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -1647,38 +1652,40 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                 { value: "created-asc", label: "Oldest" },
               ]}
             />
-            <div className="grid grid-cols-2 rounded-2xl border border-border/60 bg-background/35 p-1 md:justify-self-start xl:justify-self-auto">
+            <div className="flex w-fit items-center gap-2 justify-self-end md:justify-self-start xl:justify-self-auto">
+              <div className="grid w-fit grid-cols-2 rounded-2xl border border-border/60 bg-background/35 p-1">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  className="size-8 rounded-lg"
+                  onClick={() => handleViewModeChange("grid")}
+                  aria-label="Grid view"
+                  aria-pressed={viewMode === "grid"}
+                >
+                  <GridFourIcon />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={viewMode === "list" ? "default" : "ghost"}
+                  className="size-8 rounded-lg"
+                  onClick={() => handleViewModeChange("list")}
+                  aria-label="List view"
+                  aria-pressed={viewMode === "list"}
+                >
+                  <ListBulletsIcon />
+                </Button>
+              </div>
               <Button
                 type="button"
-                size="icon"
-                variant={viewMode === "grid" ? "default" : "ghost"}
-                className="size-8 rounded-lg"
-                onClick={() => handleViewModeChange("grid")}
-                aria-label="Grid view"
-                aria-pressed={viewMode === "grid"}
+                variant={batchMode ? "secondary" : "outline"}
+                className="h-11 shrink-0 rounded-2xl bg-input/35"
+                onClick={toggleBatchMode}
               >
-                <GridFourIcon />
-              </Button>
-              <Button
-                type="button"
-                size="icon"
-                variant={viewMode === "list" ? "default" : "ghost"}
-                className="size-8 rounded-lg"
-                onClick={() => handleViewModeChange("list")}
-                aria-label="List view"
-                aria-pressed={viewMode === "list"}
-              >
-                <ListBulletsIcon />
+                {batchMode ? "Cancel" : "Select"}
               </Button>
             </div>
-            <Button
-              type="button"
-              variant={batchMode ? "secondary" : "outline"}
-              className="h-11 rounded-2xl bg-input/35"
-              onClick={toggleBatchMode}
-            >
-              {batchMode ? "Cancel" : "Select"}
-            </Button>
           </div>
         </CardContent>
       </Card>

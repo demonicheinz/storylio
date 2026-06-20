@@ -349,7 +349,7 @@ function ViewToggle({
   onViewModeChange: (mode: ViewMode) => void;
 }) {
   return (
-    <div className="grid shrink-0 grid-cols-2 rounded-xl border border-border/60 bg-background/35 p-1">
+    <div className="grid w-fit shrink-0 grid-cols-2 justify-self-end rounded-xl border border-border/60 bg-background/35 p-1">
       <Button
         type="button"
         size="icon"
@@ -516,7 +516,7 @@ function PostsGrid({
               <StatusBadge post={post} compact />
             </div>
             <div
-              className="absolute top-3 right-3"
+              className="absolute top-3 right-3 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
               onClick={(event) => event.stopPropagation()}
             >
               <PostActions post={post} />
@@ -1365,7 +1365,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
             </div>
           </div>
 
-          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_140px_160px_auto_auto]">
+          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_140px_160px_auto]">
             <div className="relative min-w-0 md:col-span-2 xl:col-span-1">
               <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -1400,20 +1400,20 @@ export function PostsManager({ posts }: PostsManagerProps) {
               options={sortOptions}
               onValueChange={setSortMode}
             />
-            <div className="md:justify-self-start xl:justify-self-auto">
+            <div className="flex w-fit items-center gap-2 justify-self-end md:justify-self-start xl:justify-self-auto">
               <ViewToggle
                 viewMode={viewMode}
                 onViewModeChange={handleViewModeChange}
               />
+              <Button
+                type="button"
+                variant={batchMode ? "secondary" : "outline"}
+                className="h-11 shrink-0 rounded-2xl bg-input/35"
+                onClick={toggleBatchMode}
+              >
+                {batchMode ? "Cancel" : "Select"}
+              </Button>
             </div>
-            <Button
-              type="button"
-              variant={batchMode ? "secondary" : "outline"}
-              className="h-11 rounded-2xl bg-input/35"
-              onClick={toggleBatchMode}
-            >
-              {batchMode ? "Cancel" : "Select"}
-            </Button>
           </div>
           {selectedTags.length > 0 && (
             <div className="mt-3 hidden flex-wrap items-center gap-2 md:flex">
@@ -1520,7 +1520,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
               Refine posts by publishing state, tags, and order.
             </DrawerDescription>
           </DrawerHeader>
-          <div className="grid gap-4 px-4 pb-2">
+          <div className="grid max-h-[52vh] scrollbar-none gap-4 overflow-y-auto px-4 pb-2">
             <FilterDropdown
               label="Status"
               value={draftStatus}
