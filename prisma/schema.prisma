@@ -98,6 +98,7 @@ model Project {
   title             String
   slug              String        @unique
   description       String?
+  contribution      String?
   content           String?       @db.Text
   coverImage        String?
   thumbnailImageUrl String?
@@ -295,16 +296,16 @@ enum ProjectStatus {
 }
 
 model Passkey {
-  id             String    @id
-  name           String?
-  publicKey      String
-  userId         String
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  credentialID   String
-  counter        Int
-  deviceType     String
-  backedUp       Boolean
-  transports     String?
-  aaguid         String?
-  createdAt      DateTime?
+  id           String    @id
+  name         String?
+  publicKey    String
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  aaguid       String?
+  createdAt    DateTime?
 }

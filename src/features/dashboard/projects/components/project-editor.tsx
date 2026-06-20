@@ -73,6 +73,7 @@ type ProjectEditorProject = {
   title: string;
   slug: string;
   description: string | null;
+  contribution: string | null;
   content: string | null;
   coverImage: string | null;
   thumbnailImageUrl: string | null;
@@ -101,6 +102,7 @@ const emptyDefaults: ProjectFormValues = {
   title: "",
   slug: "",
   description: "",
+  contribution: "",
   content: "",
   coverImage: undefined,
   thumbnailImageUrl: undefined,
@@ -126,6 +128,7 @@ function getDefaults(project?: ProjectEditorProject): ProjectFormValues {
     title: project.title,
     slug: project.slug,
     description: project.description ?? "",
+    contribution: project.contribution ?? "",
     content: project.content ?? "",
     coverImage: project.coverImage ?? undefined,
     thumbnailImageUrl: project.thumbnailImageUrl ?? undefined,
@@ -539,6 +542,26 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
               </div>
 
               <div className="flex flex-col gap-2">
+                <Label htmlFor="contribution">Contribution</Label>
+                <Input
+                  id="contribution"
+                  placeholder="Design & full-stack development"
+                  aria-invalid={!!errors.contribution}
+                  disabled={isPending}
+                  {...register("contribution")}
+                />
+                <p
+                  className={cn(
+                    "text-xs text-muted-foreground",
+                    errors.contribution && "text-destructive",
+                  )}
+                >
+                  {errors.contribution?.message ??
+                    "Your contribution to this project. Maximum 160 characters."}
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="order">Display order</Label>
                 <Input
                   id="order"
@@ -756,7 +779,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 <ImageUpload
                   value={thumbnailImageUrl}
                   disabled={isPending}
-                  cropAspect={16 / 10}
+                  cropAspect={16 / 9}
                   cropLabel="Crop project card image"
                   onChange={(url) =>
                     setValue("thumbnailImageUrl", url, {

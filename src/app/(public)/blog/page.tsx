@@ -146,7 +146,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const [featuredPost, ...remainingPosts] = posts;
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
+    <main className="min-h-screen overflow-x-clip">
       <PublicBackground variant="blog" />
 
       <div className="relative mx-auto flex w-full max-w-295 flex-col px-4 sm:px-6 lg:px-8">
@@ -164,7 +164,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           <BlogFilters tags={tags} selectedTag={selectedTag} />
         </Suspense>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-muted-foreground">
           <p>{formatBlogSummary(posts.length, selectedTag)}</p>
           {selectedTag && (
             <Link
@@ -177,7 +177,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           )}
         </div>
 
-        <div className="flex flex-col gap-8 py-10 md:py-12">
+        <div className="flex flex-col gap-7 pt-8 pb-12 md:gap-8 md:pt-10 md:pb-14">
           {featuredPost ? (
             <>
               <BlogReveal>

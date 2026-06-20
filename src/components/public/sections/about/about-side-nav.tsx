@@ -4,21 +4,37 @@ import { useActiveSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
 
 export interface SideNavItem {
-  title: string;
+  title: {
+    en: string;
+    id: string;
+  };
   href: string;
   id: string;
 }
 
 export const sideNavItems: SideNavItem[] = [
-  { title: "Introduction", href: "#introduction", id: "introduction" },
-  { title: "Work Experience", href: "#work-experience", id: "work-experience" },
   {
-    title: "Education History",
+    title: { en: "Introduction", id: "Perkenalan" },
+    href: "#introduction",
+    id: "introduction",
+  },
+  {
+    title: { en: "Working Principles", id: "Prinsip Kerja" },
+    href: "#working-principles",
+    id: "working-principles",
+  },
+  {
+    title: { en: "Work Experience", id: "Pengalaman Kerja" },
+    href: "#work-experience",
+    id: "work-experience",
+  },
+  {
+    title: { en: "Education History", id: "Riwayat Pendidikan" },
     href: "#education-history",
     id: "education-history",
   },
   {
-    title: "Technical Skills",
+    title: { en: "Technical Skills", id: "Keahlian Teknis" },
     href: "#technical-skills",
     id: "technical-skills",
   },
@@ -26,8 +42,8 @@ export const sideNavItems: SideNavItem[] = [
 
 const sectionIds = sideNavItems.map((item) => item.id);
 
-export function SideNavigation() {
-  const activeId = useActiveSection(sectionIds);
+export function AboutSideNavigation({ language }: { language: "en" | "id" }) {
+  const activeId = useActiveSection(sectionIds, "position");
 
   const scrollTo = (id: string, href: string) => {
     const element = document.getElementById(id);
@@ -65,21 +81,21 @@ export function SideNavigation() {
               aria-current={activeId === item.href ? "true" : undefined}
               onClick={() => scrollTo(item.id, item.href)}
               className={cn(
-                "flex cursor-pointer items-center gap-2 transition-colors hover:text-foreground",
+                "flex cursor-pointer items-center gap-2 transition-colors outline-none hover:text-brand-soft focus-visible:text-brand-soft",
                 activeId === item.href
-                  ? "font-medium text-foreground"
+                  ? "font-medium text-brand-soft"
                   : "text-muted-foreground",
               )}
             >
               <div
                 className={cn(
-                  "h-px w-4 transition-all group-hover:w-6 group-hover:bg-foreground",
+                  "h-px w-4 bg-muted-foreground transition-all",
                   activeId === item.href
-                    ? "w-6 bg-primary"
+                    ? "w-6 bg-brand-soft"
                     : "bg-muted-foreground",
                 )}
               />
-              <span>{item.title}</span>
+              <span>{item.title[language]}</span>
             </button>
           </li>
         ))}

@@ -11,8 +11,10 @@ type PublicSkillCategory = {
 };
 export function SkillsSection({
   categories,
+  language = "en",
 }: {
   categories?: PublicSkillCategory[];
+  language?: "en" | "id";
 }) {
   const items = categories?.length
     ? categories
@@ -28,8 +30,8 @@ export function SkillsSection({
         level="h2"
         variant="section"
         size="lg"
-        title="Technical"
-        highlight="Skills"
+        title={language === "id" ? "Keahlian" : "Technical"}
+        highlight={language === "id" ? "Teknis" : "Skills"}
       />
       <div className="grid gap-4 sm:grid-cols-2">
         {items.map((skill) => (

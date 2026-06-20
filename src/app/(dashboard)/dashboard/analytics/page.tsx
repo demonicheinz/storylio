@@ -405,8 +405,108 @@ function UmamiMetricList({
   );
 }
 
+function formatDuration(seconds?: number) {
+  if (seconds === undefined) {
+    return "Unavailable";
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.round(seconds % 60);
+
+  if (minutes <= 0) {
+    return `${remainingSeconds}s`;
+  }
+
+  return `${minutes}m ${remainingSeconds.toString().padStart(2, "0")}s`;
+}
+
+function formatDelta(value?: number) {
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  const rounded = Math.round(value ?? 0);
+  const prefix = rounded > 0 ? "↑ " : rounded < 0 ? "↓ " : "";
+
+  return `${prefix}${Math.abs(rounded).toLocaleString("en-US")}%`;
+}
+
+function UmamiStatCard({
+  inverseTrend = false,
+  label,
+  stat,
+  value,
+}: {
+  inverseTrend?: boolean;
+  label: string;
+  stat: UmamiAnalytics["pageviews"];
+  value: string;
+}) {
+  const change = stat.change ?? (stat.value !== undefined ? 0 : undefined);
+  const delta = formatDelta(change);
+  const isPositive = (change ?? 0) > 0;
+  const isNegative = (change ?? 0) < 0;
+  const isGood = inverseTrend ? isNegative : isPositive;
+  const isBad = inverseTrend ? isPositive : isNegative;
+
+  return (
+    <div className="rounded-2xl border bg-background/40 p-4">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-2 font-heading text-3xl font-semibold">{value}</p>
+      {delta && (
+        <p
+          className={[
+            "mt-3 inline-flex rounded-full px-2 py-1 text-xs font-medium",
+            isGood
+              ? "bg-emerald-500/15 text-emerald-300"
+              : isBad
+                ? "bg-destructive/15 text-destructive"
+                : "bg-muted text-muted-foreground",
+          ].join(" ")}
+        >
+          {delta}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function UmamiPanel({ analytics }: { analytics: UmamiAnalytics }) {
   if (analytics.status === "available") {
+    const statCards = [
+      {
+        label: "Visitors",
+        stat: analytics.visitors,
+        value:
+          analytics.visitors.value?.toLocaleString("en-US") ?? "Unavailable",
+      },
+      {
+        label: "Visits",
+        stat: analytics.visits,
+        value: analytics.visits.value?.toLocaleString("en-US") ?? "Unavailable",
+      },
+      {
+        label: "Views",
+        stat: analytics.pageviews,
+        value:
+          analytics.pageviews.value?.toLocaleString("en-US") ?? "Unavailable",
+      },
+      {
+        inverseTrend: true,
+        label: "Bounce rate",
+        stat: analytics.bounceRate,
+        value:
+          analytics.bounceRate.value !== undefined
+            ? `${Math.round(analytics.bounceRate.value)}%`
+            : "Unavailable",
+      },
+      {
+        label: "Visit duration",
+        stat: analytics.visitDuration,
+        value: formatDuration(analytics.visitDuration.value),
+      },
+    ];
+
     return (
       <Card>
         <CardHeader>
@@ -420,23 +520,9 @@ function UmamiPanel({ analytics }: { analytics: UmamiAnalytics }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            {[
-              ["Pageviews", analytics.pageviews],
-              ["Visitors", analytics.visitors],
-              ["Visits", analytics.visits],
-            ].map(([label, value]) => (
-              <div
-                key={String(label)}
-                className="rounded-2xl border bg-background/40 p-4"
-              >
-                <p className="text-sm text-muted-foreground">{label}</p>
-                <p className="mt-2 font-heading text-2xl font-semibold">
-                  {typeof value === "number"
-                    ? value.toLocaleString("en-US")
-                    : "Unavailable"}
-                </p>
-              </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {statCards.map((item) => (
+              <UmamiStatCard key={item.label} {...item} />
             ))}
           </div>
           <div className="grid gap-4 xl:grid-cols-2">
@@ -449,6 +535,16 @@ function UmamiPanel({ analytics }: { analytics: UmamiAnalytics }) {
               title="Top Referrers"
               items={analytics.referrers}
               emptyDescription="No referrer metrics were returned by Umami."
+            />
+            <UmamiMetricList
+              title="Environment"
+              items={analytics.browsers}
+              emptyDescription="No browser metrics were returned by Umami."
+            />
+            <UmamiMetricList
+              title="Location"
+              items={analytics.locations}
+              emptyDescription="No location metrics were returned by Umami."
             />
           </div>
           {umamiShareUrl && (
@@ -481,7 +577,7 @@ function UmamiPanel({ analytics }: { analytics: UmamiAnalytics }) {
           <p className="mt-2 text-sm text-muted-foreground">
             {analytics.status === "error"
               ? `${analytics.error ?? "The API request failed."} Local analytics remain available.`
-              : "Configure UMAMI_API_URL, UMAMI_API_KEY, and UMAMI_WEBSITE_ID to load optional traffic metrics. Local analytics remain available."}
+              : "Configure UMAMI_API_URL, UMAMI_USERNAME, UMAMI_PASSWORD, and UMAMI_WEBSITE_ID to load optional self-hosted traffic metrics. Local analytics remain available."}
           </p>
         </div>
       </CardContent>

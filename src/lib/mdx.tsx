@@ -119,9 +119,11 @@ const components: MDXComponents = {
     );
   },
   pre: ({ children }) => (
-    <pre className="max-w-full scrollbar-thin overflow-x-auto rounded-2xl border border-border/40 bg-background/80 p-4 text-sm leading-7 whitespace-pre **:data-highlighted-chars:bg-transparent **:data-highlighted-line:bg-transparent [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit [&_mark]:bg-transparent">
-      {children}
-    </pre>
+    <div className="max-w-full overflow-hidden rounded-2xl border border-border/40 bg-background/80">
+      <pre className="max-w-full scrollbar-thin overflow-x-auto p-4 text-sm leading-7 whitespace-pre **:data-highlighted-chars:bg-transparent **:data-highlighted-line:bg-transparent [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit [&_mark]:bg-transparent">
+        {children}
+      </pre>
+    </div>
   ),
   code: ({ children }) => (
     <code className="rounded-md bg-brand-soft/10 px-1.5 py-0.5 font-mono text-sm wrap-anywhere text-brand-soft">

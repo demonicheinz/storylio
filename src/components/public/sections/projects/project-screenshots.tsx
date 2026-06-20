@@ -44,17 +44,20 @@ export function ProjectScreenshots({
   const activeSlide = activeIndex >= 0 ? slides[activeIndex] : null;
 
   return (
-    <section className="mt-14">
-      <div className="mb-6 flex flex-col gap-2">
+    <section className="mt-16 md:mt-20" aria-labelledby="project-screenshots">
+      <div className="mb-7 flex flex-col gap-2 border-b border-border/30 pb-5">
         <p className="text-xs font-semibold tracking-[0.28em] text-brand-soft uppercase">
           Screenshots
         </p>
-        <h2 className="font-heading text-3xl font-semibold text-foreground">
+        <h2
+          id="project-screenshots"
+          className="font-heading text-3xl font-semibold text-foreground"
+        >
           Interface details
         </h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2 lg:gap-6">
         {items.map((item, index) => (
           <motion.div
             key={item.imageUrl}
@@ -67,15 +70,16 @@ export function ProjectScreenshots({
               delay: Math.min(index * 0.08, 0.24),
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="flex flex-col gap-3"
+            className="group/shot overflow-hidden rounded-3xl border border-border/40 bg-surface/55 p-2.5 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl"
           >
             <button
               type="button"
-              className="group/project flex flex-col gap-2 rounded-3xl text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+              className="group/project block w-full rounded-[1.2rem] text-left outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
               onClick={() => setActiveIndex(index)}
+              aria-label={`Open ${item.altText || item.caption || `${title} screenshot ${index + 1}`}`}
             >
               {item.width && item.height ? (
-                <div className="relative aspect-16/10 w-full overflow-hidden rounded-3xl border border-border/40 bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.28),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(49,46,129,0.28),rgba(10,10,20,0.96))] shadow-[0_0_48px_rgba(139,92,246,0.08)]">
+                <div className="relative aspect-video w-full overflow-hidden rounded-[1.2rem] border border-border/40 bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.28),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(49,46,129,0.28),rgba(10,10,20,0.96))]">
                   <Image
                     src={item.imageUrl}
                     alt={
@@ -92,7 +96,6 @@ export function ProjectScreenshots({
                           blurDataURL: item.blurDataUrl,
                         }
                       : {})}
-                    unoptimized
                   />
                   <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/30 via-transparent to-white/5" />
                 </div>
@@ -104,13 +107,14 @@ export function ProjectScreenshots({
                     item.caption ||
                     `${title} screenshot ${index + 1}`
                   }
-                  className="aspect-16/10 rounded-3xl shadow-[0_0_48px_rgba(139,92,246,0.08)]"
+                  className="aspect-video rounded-[1.2rem]"
+                  sizes="(min-width: 1280px) 536px, (min-width: 768px) calc(50vw - 2.5rem), calc(100vw - 2rem)"
                 />
               )}
             </button>
             {item.caption && (
-              <p className="px-2 text-sm leading-5 text-foreground/90">
-                — {item.caption}
+              <p className="px-2 pt-3 pb-1 text-sm leading-6 text-muted-foreground">
+                {item.caption}
               </p>
             )}
           </motion.div>

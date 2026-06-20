@@ -196,7 +196,7 @@ function SortableProjectRow({
       </Button>
 
       <div className="grid min-w-0 gap-4 p-4 sm:grid-cols-[112px_minmax(0,1fr)]">
-        <div className="relative aspect-16/10 overflow-hidden rounded-xl border border-border/50 bg-muted/35">
+        <div className="relative aspect-video overflow-hidden rounded-xl border border-border/50 bg-muted/35">
           {cardImage ? (
             <Image
               src={cardImage}

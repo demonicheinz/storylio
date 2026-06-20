@@ -16,8 +16,10 @@ type PublicExperience = {
 
 export function ExperienceSection({
   experiences,
+  language = "en",
 }: {
   experiences?: PublicExperience[];
+  language?: "en" | "id";
 }) {
   const items = experiences?.length
     ? experiences
@@ -39,8 +41,8 @@ export function ExperienceSection({
         level="h2"
         variant="section"
         size="lg"
-        title="Work"
-        highlight="Experience"
+        title={language === "id" ? "Pengalaman" : "Work"}
+        highlight={language === "id" ? "Kerja" : "Experience"}
       />
       <div className="relative flex flex-col gap-10 before:absolute before:top-2 before:bottom-2 before:left-1 before:w-px before:bg-border/70">
         {items.map((experience) => (
@@ -53,7 +55,11 @@ export function ExperienceSection({
               <span className="text-sm text-muted-foreground">
                 {[
                   experience.startDate,
-                  experience.isCurrent ? "Present" : experience.endDate,
+                  experience.isCurrent
+                    ? language === "id"
+                      ? "Sekarang"
+                      : "Present"
+                    : experience.endDate,
                 ]
                   .filter(Boolean)
                   .join(" - ")}

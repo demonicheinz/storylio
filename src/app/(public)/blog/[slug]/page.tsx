@@ -201,7 +201,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   ]);
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen overflow-x-clip">
       <ArticleProgress />
       <PublicBackground variant="blog" />
 
@@ -223,22 +223,24 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         <ArticleHeader post={post} />
 
-        <div className="mt-14 grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_280px]">
-          <section className="min-w-0 rounded-3xl border border-border/40 bg-surface/65 p-6 shadow-[0_0_64px_rgba(139,92,246,0.1)] backdrop-blur-xl md:p-8">
-            <div className="prose-invert flex max-w-full min-w-0 flex-col gap-5 overflow-hidden">
+        <div className="mt-16 grid items-start gap-10 md:mt-20 xl:grid-cols-[minmax(0,1fr)_280px]">
+          <section
+            aria-label="Article content"
+            className="min-w-0 border-l border-border/30 pl-5 sm:pl-8 lg:pl-10"
+          >
+            <div className="prose-invert flex max-w-4xl min-w-0 flex-col gap-6 overflow-hidden [&>h2]:mt-20 [&>h2]:pt-2 [&>h2:first-child]:mt-0 [&>h2:first-child]:pt-0 [&>h3]:mt-12">
               {mdxContent}
             </div>
-
-            <ArticleNavigation
-              previousPost={companions.previousPost}
-              nextPost={companions.nextPost}
-            />
           </section>
 
           <ArticleToc items={tocItems} />
         </div>
 
         <RelatedPosts posts={companions.relatedPosts} />
+        <ArticleNavigation
+          previousPost={companions.previousPost}
+          nextPost={companions.nextPost}
+        />
       </article>
     </main>
   );
