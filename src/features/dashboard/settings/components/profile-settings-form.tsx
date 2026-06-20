@@ -6,8 +6,8 @@ import {
   EnvelopeSimpleIcon,
   EyeIcon,
   EyeSlashIcon,
-  FingerprintIcon,
   FloppyDiskIcon,
+  GearSixIcon,
   GithubLogoIcon,
   InstagramLogoIcon,
   KeyIcon,
@@ -17,7 +17,6 @@ import {
   SpinnerIcon,
   UploadSimpleIcon,
   UserCircleIcon,
-  UserIcon,
   XLogoIcon,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
@@ -1283,7 +1282,7 @@ export function SettingsManager({
           value="account"
           className="h-9 justify-center! rounded-2xl px-2 text-xs sm:text-sm lg:h-11 lg:justify-start! lg:px-3 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
         >
-          <UserIcon data-icon="inline-start" />
+          <GearSixIcon data-icon="inline-start" />
           Account
         </TabsTrigger>
         <TabsTrigger
