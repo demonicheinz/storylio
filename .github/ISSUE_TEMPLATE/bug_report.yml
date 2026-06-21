@@ -1,0 +1,109 @@
+name: Bug Report
+description: Report a reproducible bug or unexpected behavior
+title: "fix: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Storylio. Please include enough detail for the issue to be reproduced.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened?
+      placeholder: Describe the bug clearly and concisely.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of Storylio is affected?
+      options:
+        - Public site
+        - Dashboard / CMS
+        - Authentication / authorization
+        - API / server actions
+        - Database / Prisma
+        - MDX / content rendering
+        - Media / Cloudinary
+        - Analytics
+        - Tooling / CI
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps needed to reproduce the issue.
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include error messages, logs, or console output if relevant.
+      placeholder: What actually happened?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment
+      options:
+        - Production
+        - Preview
+        - Local development
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: Chrome 124, Firefox 126, Safari 17, etc.
+
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options:
+        - Desktop
+        - Mobile
+        - Tablet
+        - Multiple devices
+        - Not applicable
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: UI evidence
+      description: Attach screenshots or recordings if the issue has a visual component.
+      placeholder: Drag and drop images or videos here.
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      placeholder: Add anything else that may help diagnose the issue.

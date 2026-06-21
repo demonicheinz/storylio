@@ -1,0 +1,91 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement for Storylio. Clear use cases make the request easier to evaluate.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What should be added or improved?
+      placeholder: Describe the feature clearly and concisely.
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: What problem or use case does this solve?
+      placeholder: Explain why this feature is needed.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Which part of Storylio would this touch?
+      multiple: true
+      options:
+        - Public site
+        - Dashboard / CMS
+        - Authentication / authorization
+        - API / server actions
+        - Database / Prisma
+        - MDX / content rendering
+        - Media / Cloudinary
+        - Analytics
+        - Tooling / CI
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this request?
+      options:
+        - Nice to have
+        - Important
+        - Blocking current work
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed solution
+      description: Describe how you imagine this working.
+      placeholder: Include UI flow, API shape, screenshots, sketches, or references if useful.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: What should be true when this is done?
+      placeholder: |
+        - Users can ...
+        - The dashboard shows ...
+        - Existing behavior remains ...
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      placeholder: Describe other approaches and why they may not be ideal.
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      placeholder: Add links, references, screenshots, or prior art.

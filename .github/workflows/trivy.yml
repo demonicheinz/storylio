@@ -27,17 +27,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Cache Trivy DB
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/trivy
           key: trivy-db-${{ github.run_id }}
           restore-keys: trivy-db-
 
       - name: Trivy — Dependency scan (SARIF)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -58,7 +58,7 @@ jobs:
 
       - name: Trivy — Dependency scan (Table)
         if: github.event_name == 'pull_request'
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -120,10 +120,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Cache Trivy DB
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/trivy
           key: trivy-db-${{ github.run_id }}
@@ -131,7 +131,7 @@ jobs:
 
       # Step 1: Scan and collect results — never block here
       - name: Trivy — Secret scan (SARIF)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -143,7 +143,7 @@ jobs:
           cache-dir: ~/.cache/trivy
 
       - name: Trivy — Secret scan (Table + JSON)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -162,7 +162,7 @@ jobs:
           category: trivy-secrets
 
       # Step 2: Always post comment (secrets found or not)
-      - name: Post Secret scan comment to PR (with history)
+      - name: Upsert Secret scan comment on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
         with:
@@ -170,6 +170,7 @@ jobs:
             const fs = require('fs');
             const timestamp = new Date().toUTCString();
             const commitSha = context.sha.slice(0, 7);
+            const MARKER = '<!-- trivy-secret -->';
 
             // Parse JSON to check if secrets were found
             const json = JSON.parse(fs.readFileSync('trivy-secret.json', 'utf8'));
@@ -182,17 +183,34 @@ jobs:
               const lines = secrets.map(s =>
                 `- **${s.RuleID}** · ${s.Severity} · \`${s.Target || 'unknown'}\` line ${s.StartLine || '?'}: ${s.Title}`
               ).join('\n');
-              body = `### 🔑 Secret Detection — \`${commitSha}\` · ${timestamp}\n⚠️ **${secrets.length} secret(s) detected — remove before merging!**\n\n${lines}`;
+              body = `${MARKER}\n### 🔑 Secret Detection — \`${commitSha}\` · ${timestamp}\n⚠️ **${secrets.length} secret(s) detected — remove before merging!**\n\n${lines}`;
             } else {
-              body = `### 🔑 Secret Detection — \`${commitSha}\` · ${timestamp}\n✅ No secrets found.`;
+              body = `${MARKER}\n### 🔑 Secret Detection — \`${commitSha}\` · ${timestamp}\n✅ No secrets found.`;
             }
 
-            await github.rest.issues.createComment({
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body,
             });
+
+            const existing = comments.find(c => c.body.includes(MARKER));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
 
       # Step 3: Now block the pipeline if secrets were found
       - name: Fail if secrets were detected
@@ -217,17 +235,17 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Cache Trivy DB
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/trivy
           key: trivy-db-${{ github.run_id }}
           restore-keys: trivy-db-
 
       - name: Trivy — Misconfiguration scan (SARIF)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "config"
           scan-ref: "."
@@ -246,7 +264,7 @@ jobs:
 
       - name: Trivy — Misconfiguration scan (Table)
         if: github.event_name == 'pull_request'
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "config"
           scan-ref: "."

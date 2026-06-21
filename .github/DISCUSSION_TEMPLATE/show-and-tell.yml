@@ -1,0 +1,40 @@
+title: "[Show & Tell] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Built something with Storylio or adapted it for your own portfolio? Share it here.
+
+  - type: input
+    id: site_url
+    attributes:
+      label: Site URL
+      description: Link to your live site or repository.
+      placeholder: https://yoursite.com
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What Did You Build?
+      description: Describe what you made, what you changed, and what you are proud of.
+    validations:
+      required: true
+
+  - type: textarea
+    id: changes
+    attributes:
+      label: Notable Customizations
+      description: Did you extend Storylio in an interesting way? Add a new integration, change the design, or modify the CMS? Share the details.
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Attach screenshots or recordings of your site.
+    validations:
+      required: false

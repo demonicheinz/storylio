@@ -1,0 +1,56 @@
+title: "[Q&A] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask a question about how Storylio works, how to set it up, or how to adapt it for your own use.
+        Please search existing discussions before opening a new one.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: Be as specific as possible. Vague questions are hard to answer.
+      placeholder: How do I...? Why does...? What is the recommended way to...?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of Storylio does your question relate to?
+      options:
+        - Setup and environment
+        - Authentication and auth config
+        - Database and Prisma
+        - MDX and content
+        - Media and Cloudinary
+        - Dashboard and CMS
+        - Deployment and Vercel
+        - Analytics and Umami
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What Have You Tried?
+      description: Describe what you have already attempted and what the outcome was.
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        Relevant details such as Node version, Bun version, deployment platform, or browser.
+      placeholder: |
+        Bun: 1.x
+        Database: Neon / local PostgreSQL
+        Deployment: Vercel / local
+    validations:
+      required: false
