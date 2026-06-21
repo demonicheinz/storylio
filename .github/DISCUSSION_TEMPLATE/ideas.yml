@@ -1,0 +1,51 @@
+title: "[Idea] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share an idea or improvement before opening a formal feature request.
+        This is a good place to gauge interest and discuss direction before writing code.
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: The Idea
+      description: Describe your idea clearly and concisely.
+      placeholder: I think it would be interesting if...
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: What problem does this solve or what value does it add?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected Area
+      description: Which part of Storylio does this idea relate to?
+      options:
+        - Public site
+        - Dashboard or CMS
+        - Authentication
+        - Database or schema
+        - MDX or content rendering
+        - Media or Cloudinary
+        - Analytics
+        - Developer experience
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Links to similar implementations, prior art, or relevant discussions.
+    validations:
+      required: false

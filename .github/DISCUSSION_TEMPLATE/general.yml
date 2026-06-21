@@ -1,0 +1,25 @@
+title: ""
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for general questions, thoughts, or anything that does not fit a bug report or feature request.
+        For security vulnerabilities, use [private reporting](https://github.com/demonicheinz/storylio/security/advisories/new) instead.
+
+  - type: textarea
+    id: content
+    attributes:
+      label: What's on your mind?
+      description: Share your question, thought, or feedback.
+      placeholder: Write your message here...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any relevant links, screenshots, or background information.
+    validations:
+      required: false
