@@ -52,7 +52,7 @@ const components: MDXComponents = {
       as="h2"
       id={typeof id === "string" ? id : undefined}
       className={cn(
-        "mt-12 scroll-mt-28 font-heading text-3xl font-semibold text-foreground first:mt-0",
+        "mt-12 first:mt-0 font-heading font-semibold text-foreground text-3xl scroll-mt-28",
         className,
       )}
     >
@@ -64,7 +64,7 @@ const components: MDXComponents = {
       as="h2"
       id={typeof id === "string" ? id : undefined}
       className={cn(
-        "mt-12 scroll-mt-28 font-heading text-3xl font-semibold text-foreground first:mt-0",
+        "mt-12 first:mt-0 font-heading font-semibold text-foreground text-3xl scroll-mt-28",
         className,
       )}
     >
@@ -76,7 +76,7 @@ const components: MDXComponents = {
       as="h3"
       id={typeof id === "string" ? id : undefined}
       className={cn(
-        "mt-8 scroll-mt-28 font-heading text-2xl font-semibold text-foreground",
+        "mt-8 font-heading font-semibold text-foreground text-2xl scroll-mt-28",
         className,
       )}
     >
@@ -84,7 +84,7 @@ const components: MDXComponents = {
     </BlogHeadingLink>
   ),
   p: ({ children }) => (
-    <p className="max-w-full text-base leading-8 wrap-break-word text-muted-foreground">
+    <p className="max-w-full text-muted-foreground text-base wrap-break-word leading-8">
       {children}
     </p>
   ),
@@ -95,7 +95,7 @@ const components: MDXComponents = {
     return (
       <a
         href={safeHref}
-        className="font-medium wrap-anywhere text-brand-soft underline-offset-4 hover:underline"
+        className="font-medium text-brand-soft hover:underline underline-offset-4 wrap-anywhere"
         target={isExternal ? "_blank" : undefined}
         rel={isExternal ? "noopener noreferrer" : undefined}
       >
@@ -104,33 +104,33 @@ const components: MDXComponents = {
     );
   },
   ul: ({ children }) => (
-    <ul className="ml-5 flex list-disc flex-col gap-2 marker:text-brand-soft">
+    <ul className="flex flex-col gap-2 ml-5 marker:text-brand-soft list-disc">
       {children}
     </ul>
   ),
   ol: ({ children }) => (
-    <ol className="ml-5 flex list-decimal flex-col gap-2 marker:text-brand-soft">
+    <ol className="flex flex-col gap-2 ml-5 marker:text-brand-soft list-decimal">
       {children}
     </ol>
   ),
   li: ({ children }) => (
-    <li className="text-base leading-7 wrap-break-word text-muted-foreground">
+    <li className="text-muted-foreground text-base wrap-break-word leading-7">
       {children}
     </li>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="border-l-2 border-brand-soft/50 pl-5 text-foreground">
+    <blockquote className="pl-5 border-brand-soft/50 border-l-2 text-foreground">
       {children}
     </blockquote>
   ),
   hr: () => <hr className="my-10 border-border/60" />,
   mark: ({ children }) => (
-    <mark className="rounded-md bg-brand-soft/20 px-1 py-0.5 text-foreground">
+    <mark className="bg-brand-soft/20 px-1 py-0.5 rounded-md text-foreground">
       {children}
     </mark>
   ),
   del: ({ children }) => (
-    <del className="text-muted-foreground decoration-brand-soft/80 decoration-2">
+    <del className="text-muted-foreground decoration-2 decoration-brand-soft/80">
       {children}
     </del>
   ),
@@ -141,7 +141,7 @@ const components: MDXComponents = {
     }
 
     return (
-      <span className="relative my-8 block aspect-video w-full overflow-hidden rounded-2xl border border-border/40 bg-surface/60">
+      <span className="block relative bg-surface/60 my-8 border border-border/40 rounded-2xl w-full aspect-video overflow-hidden">
         <Image
           src={safeSrc}
           alt={alt ?? ""}
@@ -154,14 +154,14 @@ const components: MDXComponents = {
     );
   },
   pre: ({ children }) => (
-    <div className="max-w-full overflow-hidden rounded-2xl border border-border/40 bg-background/80">
-      <pre className="max-w-full scrollbar-thin overflow-x-auto p-4 text-sm leading-7 whitespace-pre **:data-highlighted-chars:bg-transparent **:data-highlighted-line:bg-transparent [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-inherit [&_mark]:bg-transparent">
+    <div className="bg-background/80 border border-border/40 rounded-2xl max-w-full overflow-hidden">
+      <pre className="[&_code]:bg-transparent [&_mark]:bg-transparent **:data-highlighted-chars:bg-transparent **:data-highlighted-line:bg-transparent p-4 [&_code]:p-0 max-w-full overflow-x-auto [&_code]:text-inherit text-sm leading-7 whitespace-pre scrollbar-thin">
         {children}
       </pre>
     </div>
   ),
   code: ({ children }) => (
-    <code className="rounded-md bg-brand-soft/10 px-1.5 py-0.5 font-mono text-sm wrap-anywhere text-brand-soft">
+    <code className="bg-brand-soft/10 px-1.5 py-0.5 rounded-md font-mono text-brand-soft text-sm wrap-anywhere">
       {children}
     </code>
   ),
@@ -181,8 +181,8 @@ const components: MDXComponents = {
     );
   },
   table: ({ children }) => (
-    <div className="my-8 max-w-full overflow-x-auto rounded-2xl border border-border/60">
-      <table className="w-full min-w-max border-separate border-spacing-0 text-sm">
+    <div className="my-8 border border-border/60 rounded-2xl max-w-full overflow-x-auto">
+      <table className="w-full min-w-max text-sm border-separate border-spacing-0">
         {children}
       </table>
     </div>
@@ -192,7 +192,7 @@ const components: MDXComponents = {
       {...props}
       style={{ textAlign: getTableCellAlign(align), ...style }}
       className={cn(
-        "border-r border-b border-border/60 bg-surface/70 px-4 py-3 font-semibold text-foreground last:border-r-0",
+        "bg-surface/70 px-4 py-3 border-border/60 border-r last:border-r-0 border-b font-semibold text-foreground",
         className,
       )}
     >
@@ -204,7 +204,7 @@ const components: MDXComponents = {
       {...props}
       style={{ textAlign: getTableCellAlign(align), ...style }}
       className={cn(
-        "border-r border-b border-border/40 px-4 py-3 text-muted-foreground last:border-r-0",
+        "px-4 py-3 border-border/40 border-r last:border-r-0 border-b text-muted-foreground",
         className,
       )}
     >

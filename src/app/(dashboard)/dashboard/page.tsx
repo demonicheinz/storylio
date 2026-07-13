@@ -229,11 +229,11 @@ function DashboardHomeFallback() {
         {["Posts", "Projects", "Gallery", "Views"].map((label) => (
           <Card key={label} className={dashboardStyles.statCard}>
             <CardContent className={dashboardStyles.statContent}>
-              <div className="size-10 rounded-2xl bg-muted/50" />
-              <div className="min-w-0 flex-1">
-                <div className="h-5 w-12 rounded-md bg-muted/60" />
-                <div className="mt-2 h-3 w-20 rounded-md bg-muted/40" />
-                <div className="mt-1 h-2.5 w-16 rounded-md bg-muted/30" />
+              <div className="bg-muted/50 rounded-2xl size-10" />
+              <div className="flex-1 min-w-0">
+                <div className="bg-muted/60 rounded-md w-12 h-5" />
+                <div className="bg-muted/40 mt-2 rounded-md w-20 h-3" />
+                <div className="bg-muted/30 mt-1 rounded-md w-16 h-2.5" />
               </div>
             </CardContent>
           </Card>
@@ -247,8 +247,8 @@ function OverviewHeader() {
   return (
     <div className="min-w-0">
       <div className="min-w-0">
-        <h1 className="font-heading text-3xl font-bold">Overview</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+        <h1 className="font-heading font-bold text-3xl">Overview</h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
           A focused snapshot of your content, recent updates, and quick actions.
         </p>
       </div>
@@ -270,7 +270,7 @@ function OverviewStatCard({
           {icon}
         </div>
         <div className="min-w-0">
-          <p className="font-heading text-xl font-bold">{value}</p>
+          <p className="font-heading font-bold text-xl">{value}</p>
           <p className="text-[11px] text-muted-foreground">{label}</p>
           <p className="mt-0.5 text-[10px] text-muted-foreground/80">
             {description}
@@ -285,7 +285,7 @@ function StatusBadge({ status }: { status: RecentItem["status"] }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-xs",
         status === "Published"
           ? "bg-emerald-500/12 text-emerald-300"
           : "bg-amber-500/12 text-amber-300",
@@ -293,7 +293,7 @@ function StatusBadge({ status }: { status: RecentItem["status"] }) {
     >
       <span
         className={cn(
-          "size-1.5 rounded-full",
+          "rounded-full size-1.5",
           status === "Published" ? "bg-emerald-300" : "bg-amber-300",
         )}
       />
@@ -313,7 +313,7 @@ function RecentActions({ item }: { item: RecentItem }) {
           type="button"
           variant="ghost"
           size="icon"
-          className="size-8 rounded-xl bg-background/70 text-foreground backdrop-blur hover:bg-background"
+          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
           aria-label={`Open actions for ${item.title}`}
         >
           <DotsThreeVerticalIcon />
@@ -350,7 +350,7 @@ function RecentActions({ item }: { item: RecentItem }) {
 
 function RecentThumbnail({ item }: { item: RecentItem }) {
   return (
-    <div className="relative hidden aspect-video w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/60 bg-muted/30 text-muted-foreground sm:flex">
+    <div className="hidden relative sm:flex justify-center items-center bg-muted/30 border border-border/60 rounded-xl w-20 aspect-video overflow-hidden text-muted-foreground shrink-0">
       {item.image ? (
         <Image
           src={item.image}
@@ -378,7 +378,7 @@ function SectionHeading({
   return (
     <div>
       <CardTitle className="font-heading">{title}</CardTitle>
-      <p className="text-sm text-muted-foreground">{subtitle}</p>
+      <p className="text-muted-foreground text-sm">{subtitle}</p>
     </div>
   );
 }
@@ -401,13 +401,13 @@ function RecentItemsCard({
   return (
     <Card className={dashboardStyles.surface}>
       <CardHeader>
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex justify-between items-start gap-4">
           <SectionHeading title={title} subtitle={subtitle} />
           <Button
             asChild
             variant="ghost"
             size="sm"
-            className="shrink-0 text-brand-soft hover:text-brand-soft"
+            className="text-brand-soft hover:text-brand-soft shrink-0"
           >
             <Link href={viewAllHref}>
               {viewAllLabel}
@@ -418,7 +418,7 @@ function RecentItemsCard({
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/70 bg-background/30 p-6 text-sm text-muted-foreground">
+          <div className="bg-background/30 p-6 border border-border/70 border-dashed rounded-2xl text-muted-foreground text-sm">
             {emptyLabel}
           </div>
         ) : (
@@ -426,17 +426,17 @@ function RecentItemsCard({
             {items.map((item) => (
               <div
                 key={item.id}
-                className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-2xl border border-border/60 bg-background/30 p-3 transition-colors hover:border-brand-soft/40 hover:bg-background/40 sm:grid-cols-[auto_minmax(0,1fr)_auto_auto]"
+                className="items-center gap-3 grid grid-cols-[minmax(0,1fr)_auto_auto] sm:grid-cols-[auto_minmax(0,1fr)_auto_auto] bg-background/30 hover:bg-background/40 p-3 border border-border/60 hover:border-brand-soft/40 rounded-2xl min-w-0 transition-colors"
               >
                 <RecentThumbnail item={item} />
                 <div className="min-w-0">
                   <Link
                     href={item.href}
-                    className="block truncate font-heading text-sm font-semibold hover:text-brand-soft"
+                    className="block font-heading font-semibold hover:text-brand-soft text-sm truncate"
                   >
                     {item.title}
                   </Link>
-                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                  <p className="mt-1 text-muted-foreground text-xs truncate">
                     {formatDate(item.date)} ·{" "}
                     {item.views.toLocaleString("en-US")} views
                   </p>
@@ -477,7 +477,7 @@ function QuickActions() {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
+    <div className="md:flex md:flex-wrap gap-2 grid grid-cols-2">
       {actions.map((action, index) => (
         <Button
           key={action.href}
@@ -505,18 +505,18 @@ function ContentHealth({ items }: { items: HealthItem[] }) {
         />
       </CardHeader>
       <CardContent>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="gap-3 grid sm:grid-cols-2">
           {items.map((item) => (
             <Link
               key={item.label}
               href={item.href}
-              className="rounded-2xl border border-border/60 bg-background/30 p-4 transition-colors hover:border-brand-soft/40 hover:bg-background/40"
+              className="bg-background/30 hover:bg-background/40 p-4 border border-border/60 hover:border-brand-soft/40 rounded-2xl transition-colors"
             >
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-medium">{item.label}</span>
+              <div className="flex justify-between items-center gap-3">
+                <span className="font-medium text-sm">{item.label}</span>
                 <span
                   className={cn(
-                    "font-heading text-lg font-bold",
+                    "font-heading font-bold text-lg",
                     item.tone === "success" && "text-emerald-300",
                     item.tone === "warning" && "text-amber-300",
                     item.tone === "danger" && "text-rose-300",
@@ -525,7 +525,7 @@ function ContentHealth({ items }: { items: HealthItem[] }) {
                   {item.value}
                 </span>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-muted-foreground text-xs">
                 {item.description}
               </p>
             </Link>
@@ -586,7 +586,7 @@ async function DashboardHomeContent() {
         />
       </div>
 
-      <div className="grid min-w-0 gap-5 xl:grid-cols-2">
+      <div className="gap-5 grid xl:grid-cols-2 min-w-0">
         <RecentItemsCard
           title="Recent Posts"
           subtitle="Your latest blog articles."
@@ -605,7 +605,7 @@ async function DashboardHomeContent() {
         />
       </div>
 
-      <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+      <div className="gap-5 grid xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] min-w-0">
         <ContentHealth items={healthItems} />
         <Card className={dashboardStyles.surface}>
           <CardHeader>
@@ -614,17 +614,17 @@ async function DashboardHomeContent() {
               subtitle="Small public-facing content indicators."
             />
           </CardHeader>
-          <CardContent className="grid gap-3">
+          <CardContent className="gap-3 grid">
             <div
               className={cn(
                 dashboardStyles.nestedPanel,
                 "flex items-center justify-between",
               )}
             >
-              <span className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 Visible testimonials
               </span>
-              <span className="font-heading text-lg font-bold">
+              <span className="font-heading font-bold text-lg">
                 {stats.testimonials.visible}/{stats.testimonials.total}
               </span>
             </div>
@@ -634,10 +634,10 @@ async function DashboardHomeContent() {
                 "flex items-center justify-between",
               )}
             >
-              <span className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 Featured projects
               </span>
-              <span className="font-heading text-lg font-bold">
+              <span className="font-heading font-bold text-lg">
                 {stats.projects.featured}
               </span>
             </div>

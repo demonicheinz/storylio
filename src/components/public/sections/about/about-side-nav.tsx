@@ -119,7 +119,7 @@ export function AboutSideNavigation({ language }: { language: "en" | "id" }) {
               aria-current={displayActiveId === item.href ? "true" : undefined}
               onClick={() => scrollTo(item.id, item.href)}
               className={cn(
-                "flex cursor-pointer items-center gap-2 transition-colors outline-none hover:text-brand-soft focus-visible:text-brand-soft",
+                "flex items-center gap-2 outline-none hover:text-brand-soft focus-visible:text-brand-soft transition-colors cursor-pointer",
                 displayActiveId === item.href
                   ? "font-medium text-brand-soft"
                   : "text-muted-foreground",
@@ -127,7 +127,7 @@ export function AboutSideNavigation({ language }: { language: "en" | "id" }) {
             >
               <div
                 className={cn(
-                  "h-px w-4 bg-muted-foreground transition-all",
+                  "bg-muted-foreground w-4 h-px transition-all",
                   displayActiveId === item.href
                     ? "w-6 bg-brand-soft"
                     : "bg-muted-foreground",

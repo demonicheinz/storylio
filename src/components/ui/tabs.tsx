@@ -15,7 +15,7 @@ function Tabs({
       data-slot="tabs"
       data-orientation={orientation}
       className={cn(
-        "group/tabs flex gap-2 data-horizontal:flex-col",
+        "group/tabs flex data-horizontal:flex-col gap-2",
         className,
       )}
       {...props}
@@ -24,7 +24,7 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "group/tabs-list inline-flex w-fit items-center justify-center rounded-full p-1 text-muted-foreground group-data-horizontal/tabs:h-9 group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col group-data-vertical/tabs:rounded-2xl data-[variant=line]:rounded-none",
+  "group/tabs-list inline-flex group-data-vertical/tabs:flex-col justify-center items-center p-1 rounded-full data-[variant=line]:rounded-none group-data-vertical/tabs:rounded-2xl w-fit group-data-horizontal/tabs:h-9 group-data-vertical/tabs:h-fit text-muted-foreground",
   {
     variants: {
       variant: {
@@ -80,7 +80,7 @@ function TabsContent({
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn("flex-1 text-sm outline-none", className)}
+      className={cn("flex-1 outline-none text-sm", className)}
       {...props}
     />
   );

@@ -5,18 +5,18 @@ import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-24">
+    <main className="flex justify-center items-center px-4 py-24 min-h-screen">
       <PublicBackground variant="home" />
 
-      <section className="relative w-full max-w-2xl rounded-3xl border border-border/40 bg-surface/70 p-8 text-center shadow-[0_0_72px_rgba(139,92,246,0.12)] backdrop-blur-xl md:p-10">
+      <section className="relative bg-surface/70 shadow-[0_0_72px_rgba(139,92,246,0.12)] backdrop-blur-xl p-8 md:p-10 border border-border/40 rounded-3xl w-full max-w-2xl text-center">
         <CompassIcon className="mx-auto size-12 text-brand-soft" />
-        <p className="mt-6 text-xs font-semibold tracking-[0.32em] text-brand-soft uppercase">
+        <p className="mt-6 font-semibold text-brand-soft text-xs uppercase tracking-[0.32em]">
           404 / Page not found
         </p>
-        <h1 className="mt-4 font-heading text-4xl font-bold text-foreground md:text-5xl">
+        <h1 className="mt-4 font-heading font-bold text-foreground text-4xl md:text-5xl">
           This page drifted out of view.
         </h1>
-        <p className="mx-auto mt-5 max-w-lg text-base leading-8 text-muted-foreground">
+        <p className="mx-auto mt-5 max-w-lg text-muted-foreground text-base leading-8">
           The address may be incorrect, or the page may have moved. Return home
           to continue exploring Storylio.
         </p>

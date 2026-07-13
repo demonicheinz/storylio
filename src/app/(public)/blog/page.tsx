@@ -149,7 +149,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     <main className="min-h-screen overflow-x-clip">
       <PublicBackground variant="blog" />
 
-      <div className="relative mx-auto flex w-full max-w-295 flex-col px-4 sm:px-6 lg:px-8">
+      <div className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-295">
         <BlogHero
           totalPosts={totalPosts}
           totalTags={tags.length}
@@ -158,26 +158,26 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
         <Suspense
           fallback={
-            <div className="h-24 rounded-3xl border border-border/40 bg-surface/55 backdrop-blur-xl" />
+            <div className="bg-surface/55 backdrop-blur-xl border border-border/40 rounded-3xl h-24" />
           }
         >
           <BlogFilters tags={tags} selectedTag={selectedTag} />
         </Suspense>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-muted-foreground">
+        <div className="flex flex-wrap justify-between items-center gap-3 mt-4 px-1 text-muted-foreground text-sm">
           <p>{formatBlogSummary(posts.length, selectedTag)}</p>
           {selectedTag && (
             <Link
               href="/blog"
               scroll={false}
-              className="text-brand-soft underline-offset-4 transition-colors hover:text-foreground hover:underline"
+              className="text-brand-soft hover:text-foreground hover:underline underline-offset-4 transition-colors"
             >
               Reset topic
             </Link>
           )}
         </div>
 
-        <div className="flex flex-col gap-7 pt-8 pb-12 md:gap-8 md:pt-10 md:pb-14">
+        <div className="flex flex-col gap-7 md:gap-8 pt-8 md:pt-10 pb-12 md:pb-14">
           {featuredPost ? (
             <>
               <BlogReveal>

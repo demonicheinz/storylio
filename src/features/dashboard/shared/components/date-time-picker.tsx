@@ -156,16 +156,16 @@ export function DateTimePicker({
   const panel = (
     <div
       id="storylio-date-time-picker-panel"
-      className="fixed z-100 grid max-h-[min(560px,calc(100vh-2rem))] gap-4 overflow-y-auto rounded-3xl border border-border/70 bg-popover p-4 text-popover-foreground shadow-[0_24px_80px_rgba(0,0,0,0.48)] ring-1 ring-foreground/10"
+      className="z-100 fixed gap-4 grid bg-popover shadow-[0_24px_80px_rgba(0,0,0,0.48)] p-4 border border-border/70 rounded-3xl ring-1 ring-foreground/10 max-h-[min(560px,calc(100vh-2rem))] overflow-y-auto text-popover-foreground"
       style={{
         left: panelPosition.left,
         top: panelPosition.top,
         width: panelPosition.width,
       }}
     >
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_104px]">
-        <div className="grid gap-3">
-          <div className="flex items-center justify-between">
+      <div className="gap-4 grid sm:grid-cols-[minmax(0,1fr)_104px]">
+        <div className="gap-3 grid">
+          <div className="flex justify-between items-center">
             <Button
               type="button"
               variant="ghost"
@@ -178,7 +178,7 @@ export function DateTimePicker({
             >
               <CaretLeftIcon />
             </Button>
-            <p className="text-sm font-medium">
+            <p className="font-medium text-sm">
               {monthFormatter.format(viewDate)}
             </p>
             <Button
@@ -195,7 +195,7 @@ export function DateTimePicker({
             </Button>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-xs">
+          <div className="gap-1 grid grid-cols-7 text-xs text-center">
             {dayLabels.map((day) => (
               <div key={day} className="py-1 text-muted-foreground">
                 {day}
@@ -211,7 +211,7 @@ export function DateTimePicker({
                   key={day.toISOString()}
                   type="button"
                   className={cn(
-                    "rounded-2xl py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                    "hover:bg-accent py-1.5 rounded-2xl text-sm transition-colors hover:text-accent-foreground",
                     !isCurrentMonth && "text-muted-foreground/55",
                     isSelected && "bg-primary text-primary-foreground",
                   )}
@@ -224,18 +224,18 @@ export function DateTimePicker({
           </div>
         </div>
 
-        <div className="grid gap-2 border-t border-border/60 pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-3">
-          <p className="text-center text-xs font-medium text-muted-foreground">
+        <div className="gap-2 grid pt-3 sm:pt-0 sm:pl-3 border-border/60 border-t sm:border-t-0 sm:border-l">
+          <p className="font-medium text-muted-foreground text-xs text-center">
             Time
           </p>
-          <div className="grid grid-cols-2 gap-1">
-            <div className="no-scrollbar grid max-h-60 gap-1 overflow-y-auto">
+          <div className="gap-1 grid grid-cols-2">
+            <div className="gap-1 grid max-h-60 overflow-y-auto no-scrollbar">
               {Array.from({ length: 24 }, (_, hour) => (
                 <button
                   key={hour}
                   type="button"
                   className={cn(
-                    "rounded-2xl px-2 py-1.5 text-center text-sm hover:bg-accent",
+                    "hover:bg-accent px-2 py-1.5 rounded-2xl text-sm text-center",
                     selectedHour === hour &&
                       "bg-primary text-primary-foreground",
                   )}
@@ -245,13 +245,13 @@ export function DateTimePicker({
                 </button>
               ))}
             </div>
-            <div className="no-scrollbar grid max-h-60 gap-1 overflow-y-auto">
+            <div className="gap-1 grid max-h-60 overflow-y-auto no-scrollbar">
               {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minute) => (
                 <button
                   key={minute}
                   type="button"
                   className={cn(
-                    "rounded-2xl px-2 py-1.5 text-center text-sm hover:bg-accent",
+                    "hover:bg-accent px-2 py-1.5 rounded-2xl text-sm text-center",
                     selectedMinute === minute &&
                       "bg-primary text-primary-foreground",
                   )}
@@ -265,7 +265,7 @@ export function DateTimePicker({
         </div>
       </div>
 
-      <div className="flex justify-between border-t border-border/60 pt-3">
+      <div className="flex justify-between pt-3 border-border/60 border-t">
         <Button
           type="button"
           variant="ghost"
@@ -298,7 +298,7 @@ export function DateTimePicker({
         type="button"
         variant="outline"
         disabled={disabled}
-        className="h-9 w-full justify-between rounded-3xl bg-input/50 px-3 font-normal"
+        className="justify-between bg-input/50 px-3 rounded-3xl w-full h-9 font-normal"
         onClick={() => {
           updatePanelPosition();
           setOpen((current) => !current);

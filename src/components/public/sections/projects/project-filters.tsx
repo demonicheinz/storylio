@@ -39,15 +39,15 @@ export function ProjectFilters({
   };
 
   return (
-    <div className="-mx-4 border-y border-border/30 bg-background/65 px-4 py-3.5 backdrop-blur-xl sm:mx-0 sm:rounded-3xl sm:border sm:bg-surface/55 sm:px-5">
-      <div className="mb-2.5 flex items-center gap-2 text-xs font-semibold tracking-[0.24em] text-muted-foreground uppercase">
+    <div className="bg-background/65 sm:bg-surface/55 backdrop-blur-xl -mx-4 sm:mx-0 px-4 sm:px-5 py-3.5 sm:border border-border/30 border-y sm:rounded-3xl">
+      <div className="flex items-center gap-2 mb-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-[0.24em]">
         <FunnelSimpleIcon className="text-brand-soft" size={16} />
         Filter by stack
       </div>
 
       <div
         className={cn(
-          "flex scrollbar-none gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden",
+          "[&::-webkit-scrollbar]:hidden flex gap-2 pb-1 overflow-x-auto scrollbar-none",
           isPending && "opacity-70",
         )}
       >
@@ -55,7 +55,7 @@ export function ProjectFilters({
           type="button"
           size="sm"
           variant={!selectedTech ? "default" : "outline"}
-          className="shrink-0 rounded-full"
+          className="rounded-full shrink-0"
           onClick={() => updateFilter()}
         >
           All
@@ -69,7 +69,7 @@ export function ProjectFilters({
               type="button"
               size="sm"
               variant={isActive ? "default" : "outline"}
-              className="shrink-0 rounded-full"
+              className="rounded-full shrink-0"
               onClick={() => updateFilter(tech)}
             >
               {tech}

@@ -138,7 +138,7 @@ function HomeStatCard({
           <Icon className="size-5" />
         </div>
         <div className="min-w-0">
-          <p className={cn("font-heading text-xl font-bold", className)}>
+          <p className={cn("font-heading font-bold text-xl", className)}>
             {value}
           </p>
           <p className="text-[11px] text-muted-foreground">{label}</p>
@@ -249,7 +249,7 @@ function HomeSectionDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto">
         <form className="flex flex-col gap-5" onSubmit={onSubmit}>
           <DialogHeader>
             <DialogTitle>
@@ -264,7 +264,7 @@ function HomeSectionDialog({
 
           <input type="hidden" value={type} {...register("type")} />
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="gap-4 grid sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor={`${type}-label`}>
                 {type === "LOGO" ? "Logo name" : "Phase title"}
@@ -277,7 +277,7 @@ function HomeSectionDialog({
                 {...register("label")}
               />
               {errors.label?.message && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.label.message}
                 </p>
               )}
@@ -294,7 +294,7 @@ function HomeSectionDialog({
                 {...register("order")}
               />
               {errors.order?.message && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.order.message}
                 </p>
               )}
@@ -313,7 +313,7 @@ function HomeSectionDialog({
                 {...register("content")}
               />
               {errors.content?.message && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.content.message}
                 </p>
               )}
@@ -339,7 +339,7 @@ function HomeSectionDialog({
                   }
                 />
                 {errors.imageUrl?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.imageUrl.message}
                   </p>
                 )}
@@ -355,7 +355,7 @@ function HomeSectionDialog({
                   disabled={isPending}
                   {...register("imageUrl")}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Upload a logo or paste an existing image URL.
                 </p>
               </div>
@@ -459,7 +459,7 @@ function HomeSectionActions({
           type="button"
           variant="ghost"
           size="icon"
-          className="size-8 rounded-xl bg-background/70 text-foreground backdrop-blur hover:bg-background"
+          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
           aria-label={`Open actions for ${section.label}`}
         >
           <DotsThreeVerticalIcon />
@@ -525,7 +525,7 @@ function HomeContentList({
 
   if (items.length === 0) {
     return (
-      <div className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border/70 bg-background/30 p-6 text-center">
+      <div className="flex flex-col justify-center items-center gap-4 bg-background/30 p-6 border border-border/70 border-dashed rounded-2xl min-h-72 text-center">
         {type === "LOGO" ? (
           <ImageIcon className="size-12 text-muted-foreground/50" />
         ) : (
@@ -533,7 +533,7 @@ function HomeContentList({
         )}
         <div>
           <p className="font-medium">{emptyLabel}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-muted-foreground text-sm">
             {emptyDescription}
           </p>
         </div>
@@ -560,62 +560,62 @@ function HomeContentList({
       renderItem={({ item, handle, isDragging }) => (
         <div
           className={cn(
-            "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(320px,1fr)_180px_56px] xl:items-center",
+            "xl:items-center grid grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(320px,1fr)_180px_56px] min-w-0",
             dashboardStyles.listRow,
             isDragging
               ? "relative z-10 border-brand-soft/60 bg-background/70 opacity-80 shadow-[0_0_52px_rgba(139,92,246,0.18)]"
               : "hover:border-brand-soft/35",
           )}
         >
-          <div className="row-span-2 flex self-stretch xl:row-span-1">
+          <div className="flex self-stretch row-span-2 xl:row-span-1">
             {handle}
           </div>
           <div
             className={cn(
-              "flex min-w-0 gap-3 p-4 xl:p-3 xl:pr-4",
+              "flex gap-3 p-4 xl:p-3 xl:pr-4 min-w-0",
               type === "LOGO" ? "items-center" : "items-start",
             )}
           >
             {type === "LOGO" && (
-              <div className="flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/50 bg-muted/30 p-2">
+              <div className="flex justify-center items-center bg-muted/30 p-2 border border-border/50 rounded-xl w-20 h-14 overflow-hidden shrink-0">
                 {item.imageUrl ? (
                   <Image
                     src={item.imageUrl}
                     alt={item.label}
                     width={96}
                     height={40}
-                    className="max-h-10 w-auto object-contain"
+                    className="w-auto max-h-10 object-contain"
                   />
                 ) : (
                   <ImageIcon className="size-7 text-muted-foreground" />
                 )}
               </div>
             )}
-            <div className="min-w-0 flex-1">
-              <div className="flex min-w-0 items-center gap-2">
-                <h2 className="truncate font-heading text-lg font-semibold">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <h2 className="font-heading font-semibold text-lg truncate">
                   {item.label}
                 </h2>
               </div>
               {type !== "LOGO" && (
-                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                <p className="mt-1 text-muted-foreground text-sm line-clamp-2">
                   {item.content || "No description yet."}
                 </p>
               )}
-              <div className="mt-3 flex flex-wrap items-center gap-2 xl:hidden">
-                <span className="text-xs text-muted-foreground">
+              <div className="xl:hidden flex flex-wrap items-center gap-2 mt-3">
+                <span className="text-muted-foreground text-xs">
                   Created {formatDate(item.createdAt)}
                 </span>
               </div>
             </div>
-            <div className="shrink-0 xl:hidden">
+            <div className="xl:hidden shrink-0">
               <HomeSectionActions section={item} type={type} />
             </div>
           </div>
-          <div className="hidden items-center p-3 text-sm whitespace-nowrap text-muted-foreground xl:flex">
+          <div className="hidden xl:flex items-center p-3 text-muted-foreground text-sm whitespace-nowrap">
             Created {formatDate(item.createdAt)}
           </div>
-          <div className="hidden justify-end p-3 xl:flex">
+          <div className="hidden xl:flex justify-end p-3">
             <HomeSectionActions section={item} type={type} />
           </div>
         </div>
@@ -718,7 +718,7 @@ function TestimonialDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto">
         <form className="flex flex-col gap-5" onSubmit={onSubmit}>
           <DialogHeader>
             <DialogTitle>
@@ -730,7 +730,7 @@ function TestimonialDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="gap-4 grid sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -741,7 +741,7 @@ function TestimonialDialog({
                 {...register("name")}
               />
               {errors.name?.message && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.name.message}
                 </p>
               )}
@@ -758,14 +758,14 @@ function TestimonialDialog({
                 {...register("order")}
               />
               {errors.order?.message && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.order.message}
                 </p>
               )}
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="gap-4 grid sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="role">Role</Label>
               <Input
@@ -776,7 +776,7 @@ function TestimonialDialog({
                 {...register("role")}
               />
               {errors.role?.message && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.role.message}
                 </p>
               )}
@@ -792,7 +792,7 @@ function TestimonialDialog({
                 {...register("company")}
               />
               {errors.company?.message && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.company.message}
                 </p>
               )}
@@ -810,16 +810,16 @@ function TestimonialDialog({
               {...register("content")}
             />
             {errors.content?.message && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.content.message}
               </p>
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/35 p-4">
+          <div className="flex justify-between items-center gap-4 bg-background/35 p-4 border border-border/60 rounded-2xl">
             <div>
               <Label htmlFor="isVisible">Visible publicly</Label>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              <p className="mt-1 text-muted-foreground text-xs leading-5">
                 Hidden testimonials stay editable here but are not shown on the
                 Home page.
               </p>
@@ -860,7 +860,7 @@ function TestimonialDialog({
               }
             />
             {errors.avatar?.message && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.avatar.message}
               </p>
             )}
@@ -876,7 +876,7 @@ function TestimonialDialog({
               disabled={isPending}
               {...register("avatar")}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               You can upload an avatar or paste an existing image URL.
             </p>
           </div>
@@ -980,7 +980,7 @@ function TestimonialActions({
           type="button"
           size="icon"
           variant="ghost"
-          className="size-8 rounded-xl bg-background/70 text-foreground backdrop-blur hover:bg-background"
+          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
           aria-label={`Open actions for ${testimonial.name}`}
         >
           <DotsThreeVerticalIcon />
@@ -1039,11 +1039,11 @@ function TestimonialList({
 
   if (testimonials.length === 0) {
     return (
-      <div className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border/70 bg-background/25 text-center">
+      <div className="flex flex-col justify-center items-center gap-4 bg-background/25 border border-border/70 border-dashed rounded-2xl min-h-72 text-center">
         <ChatCircleTextIcon className="size-12 text-muted-foreground/50" />
         <div>
           <p className="font-medium">No testimonials yet</p>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-muted-foreground text-sm">
             Add client quotes to power the Home page social proof.
           </p>
         </div>
@@ -1081,10 +1081,10 @@ function TestimonialList({
                   : "border-dashed opacity-65 hover:border-brand-soft/35 hover:opacity-100",
             ].join(" ")}
           >
-            <div className="row-span-2 flex self-stretch xl:row-span-1">
+            <div className="flex self-stretch row-span-2 xl:row-span-1">
               {handle}
             </div>
-            <div className="flex min-w-0 items-start gap-3 p-4 xl:p-3 xl:pr-4">
+            <div className="flex items-start gap-3 p-4 xl:p-3 xl:pr-4 min-w-0">
               <Avatar className="size-12 shrink-0">
                 {testimonial.avatar && (
                   <AvatarImage
@@ -1096,41 +1096,41 @@ function TestimonialList({
                   {getInitials(testimonial.name) || "T"}
                 </AvatarFallback>
               </Avatar>
-              <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 items-center gap-2">
-                  <h2 className="wrap-break-words line-clamp-2 font-heading text-base leading-snug font-semibold xl:text-sm">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h2 className="font-heading font-semibold xl:text-sm text-base wrap-break-words line-clamp-2 leading-snug">
                     {testimonial.name}
                   </h2>
                 </div>
                 {title && (
-                  <p className="mt-1 truncate text-sm text-muted-foreground">
+                  <p className="mt-1 text-muted-foreground text-sm truncate">
                     {title}
                   </p>
                 )}
-                <p className="mt-2 line-clamp-2 text-sm leading-6 wrap-break-word text-muted-foreground">
+                <p className="mt-2 text-muted-foreground text-sm wrap-break-word line-clamp-2 leading-6">
                   {testimonial.content}
                 </p>
               </div>
-              <div className="shrink-0 xl:hidden">
+              <div className="xl:hidden shrink-0">
                 <TestimonialActions testimonial={testimonial} />
               </div>
             </div>
-            <div className="hidden items-center p-3 xl:flex">
+            <div className="hidden xl:flex items-center p-3">
               <Badge variant={testimonial.isVisible ? "default" : "outline"}>
                 {testimonial.isVisible ? "Visible" : "Hidden"}
               </Badge>
             </div>
-            <div className="hidden items-center p-3 text-sm whitespace-nowrap text-muted-foreground xl:flex">
+            <div className="hidden xl:flex items-center p-3 text-muted-foreground text-sm whitespace-nowrap">
               Created {formatDate(testimonial.createdAt)}
             </div>
-            <div className="hidden justify-end p-3 xl:flex">
+            <div className="hidden xl:flex justify-end p-3">
               <TestimonialActions testimonial={testimonial} />
             </div>
-            <div className="col-start-2 flex flex-wrap items-center gap-2 px-4 pb-4 xl:hidden">
+            <div className="xl:hidden flex flex-wrap items-center gap-2 col-start-2 px-4 pb-4">
               <Badge variant={testimonial.isVisible ? "default" : "outline"}>
                 {testimonial.isVisible ? "Visible" : "Hidden"}
               </Badge>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 Created {formatDate(testimonial.createdAt)}
               </span>
             </div>
@@ -1151,7 +1151,7 @@ export function HomeContentManager({
   ).length;
 
   return (
-    <Tabs defaultValue="approach" className="flex min-w-0 flex-col gap-5">
+    <Tabs defaultValue="approach" className="flex flex-col gap-5 min-w-0">
       <div className={dashboardStyles.statGrid}>
         <HomeStatCard
           icon={StackIcon}
@@ -1183,22 +1183,22 @@ export function HomeContentManager({
         />
       </div>
 
-      <TabsList className="grid h-auto min-h-12 w-full min-w-0 grid-cols-3 content-center rounded-2xl border border-border/60 bg-card/55 p-1.5 md:w-fit md:min-w-96">
+      <TabsList className="content-center grid grid-cols-3 bg-card/55 p-1.5 border border-border/60 rounded-2xl w-full md:w-fit min-w-0 md:min-w-96 h-auto min-h-12">
         <TabsTrigger
           value="approach"
-          className="min-h-9 min-w-0 rounded-xl px-2 py-2.5 text-xs leading-none sm:px-3 sm:text-sm"
+          className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
         >
           Approach
         </TabsTrigger>
         <TabsTrigger
           value="testimonials"
-          className="min-h-9 min-w-0 rounded-xl px-2 py-2.5 text-xs leading-none sm:px-3 sm:text-sm"
+          className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
         >
           Testimonials
         </TabsTrigger>
         <TabsTrigger
           value="logos"
-          className="min-h-9 min-w-0 rounded-xl px-2 py-2.5 text-xs leading-none sm:px-3 sm:text-sm"
+          className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
         >
           Tech / Client
         </TabsTrigger>
@@ -1207,7 +1207,7 @@ export function HomeContentManager({
       <TabsContent value="approach">
         <Card>
           <CardHeader>
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
               <div>
                 <CardTitle className="font-semibold">My Approach</CardTitle>
                 <CardDescription>
@@ -1239,7 +1239,7 @@ export function HomeContentManager({
       <TabsContent value="testimonials">
         <Card>
           <CardHeader>
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
               <div>
                 <CardTitle className="font-semibold">Testimonials</CardTitle>
                 <CardDescription>
@@ -1268,7 +1268,7 @@ export function HomeContentManager({
       <TabsContent value="logos">
         <Card>
           <CardHeader>
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
               <div>
                 <CardTitle className="font-semibold">
                   Tech / Client Logos

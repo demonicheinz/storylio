@@ -60,11 +60,11 @@ export const FloatingNav = ({
           duration: 0.2,
         }}
         className={cn(
-          "fixed inset-x-0 top-5 z-50 mx-auto flex max-w-fit items-center justify-center",
+          "top-5 z-50 fixed inset-x-0 flex justify-center items-center mx-auto max-w-fit",
           className,
         )}
       >
-        <div className="flex items-center justify-center gap-4 rounded-2xl border bg-card/80 px-2 py-2 shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)] backdrop-blur-md">
+        <div className="flex justify-center items-center gap-4 bg-card/80 shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)] backdrop-blur-md px-2 py-2 border rounded-2xl">
           <div className="flex items-center gap-2">
             {navItems.map((navItem) => {
               const isActive =
@@ -78,20 +78,20 @@ export const FloatingNav = ({
                   href={navItem.link}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "relative flex items-center gap-1 rounded-2xl px-3 py-2 text-sm font-bold text-foreground transition-all duration-200",
+                    "relative flex items-center gap-1 px-3 py-2 rounded-2xl font-bold text-foreground text-sm transition-all duration-200",
                     isActive
                       ? "bg-brand-soft/10 text-brand-soft"
                       : "text-neutral-50 hover:bg-brand-soft/10 hover:text-brand-soft",
                   )}
                 >
                   {navItem.icon && (
-                    <span className="flex size-4.5 items-center justify-center sm:mr-1.5 [&>svg]:size-4.5">
+                    <span className="flex justify-center items-center sm:mr-1.5 size-4.5 [&>svg]:size-4.5">
                       {navItem.icon}
                     </span>
                   )}
                   <span className="hidden sm:block">{navItem.name}</span>
                   {isActive && (
-                    <span className="absolute inset-x-0 -bottom-px mx-auto h-px w-1/2 bg-linear-to-r from-transparent via-brand-soft to-transparent" />
+                    <span className="-bottom-px absolute inset-x-0 bg-linear-to-r from-transparent via-brand-soft to-transparent mx-auto w-1/2 h-px" />
                   )}
                 </Link>
               );

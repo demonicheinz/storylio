@@ -21,19 +21,19 @@ export function ArticleNavigation({
   }
 
   return (
-    <section className="mt-16 border-t border-border/30 pt-9 md:mt-20 md:pt-10">
+    <section className="mt-16 md:mt-20 pt-9 md:pt-10 border-border/30 border-t">
       <div className="mb-5">
-        <p className="text-xs font-semibold tracking-[0.28em] text-brand-soft uppercase">
+        <p className="font-semibold text-brand-soft text-xs uppercase tracking-[0.28em]">
           From the archive
         </p>
-        <h2 className="mt-2 font-heading text-2xl font-semibold text-foreground">
+        <h2 className="mt-2 font-heading font-semibold text-foreground text-2xl">
           Keep reading
         </h2>
       </div>
 
       <nav
         aria-label="Article navigation"
-        className="grid gap-4 md:grid-cols-2"
+        className="gap-4 grid md:grid-cols-2"
       >
         <ArticleNavigationCard post={previousPost} direction="previous" />
         <ArticleNavigationCard post={nextPost} direction="next" />
@@ -59,7 +59,7 @@ function ArticleNavigationCard({
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group rounded-3xl border border-border/40 bg-surface/65 p-5 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 outline-none hover:-translate-y-0.5 hover:border-brand-soft/45 hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+      className="group bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] backdrop-blur-xl p-5 border border-border/40 hover:border-brand-soft/45 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60 transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 duration-300"
     >
       <div
         className={`flex items-center gap-2 text-xs font-semibold tracking-[0.24em] text-muted-foreground uppercase ${

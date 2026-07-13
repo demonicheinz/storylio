@@ -24,18 +24,18 @@ export default function DashboardLayout({
           <AppSidebar />
         </Suspense>
         <SidebarInset>
-          <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur">
+          <header className="top-0 z-30 sticky flex items-center gap-3 bg-background/95 backdrop-blur px-4 border-b h-14 shrink-0">
             <SidebarTrigger className="-ml-1" />
             <Separator
               orientation="vertical"
-              className="h-4 self-center data-vertical:h-4 data-vertical:self-center"
+              className="self-center data-vertical:self-center h-4 data-vertical:h-4"
             />
             <Suspense fallback={null}>
               <DashboardBreadcrumb />
             </Suspense>
           </header>
           <Suspense fallback={null}>
-            <RouteMotion className="container mx-auto max-w-7xl min-w-0 overflow-x-clip p-4 md:p-6">
+            <RouteMotion className="mx-auto p-4 md:p-6 min-w-0 max-w-7xl overflow-x-clip container">
               {children}
             </RouteMotion>
           </Suspense>

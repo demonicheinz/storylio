@@ -45,7 +45,7 @@ const navItems: FloatingNavItem[] = [
 
 export function PublicChrome({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex flex-col min-h-screen">
       <ScrollToTop />
       <Suspense fallback={null}>
         <FloatingNav navItems={navItems} />

@@ -3,13 +3,13 @@ export default function PublicRouteLoading() {
     <main
       aria-busy="true"
       aria-label="Loading page"
-      className="min-h-screen px-4 pt-32 sm:px-6 lg:px-8"
+      className="px-4 sm:px-6 lg:px-8 pt-32 min-h-screen"
     >
-      <div className="mx-auto flex w-full max-w-295 animate-pulse flex-col gap-6">
-        <div className="h-4 w-28 rounded-full bg-brand-soft/20" />
-        <div className="h-12 w-full max-w-xl rounded-2xl bg-surface/70" />
-        <div className="h-5 w-full max-w-2xl rounded-full bg-surface/50" />
-        <div className="mt-8 h-72 rounded-3xl border border-border/40 bg-surface/45" />
+      <div className="flex flex-col gap-6 mx-auto w-full max-w-295 animate-pulse">
+        <div className="bg-brand-soft/20 rounded-full w-28 h-4" />
+        <div className="bg-surface/70 rounded-2xl w-full max-w-xl h-12" />
+        <div className="bg-surface/50 rounded-full w-full max-w-2xl h-5" />
+        <div className="bg-surface/45 mt-8 border border-border/40 rounded-3xl h-72" />
       </div>
     </main>
   );

@@ -121,7 +121,7 @@ export default async function GalleryPage({ searchParams }: GalleryPageProps) {
     <main className="min-h-screen overflow-x-clip">
       <PublicBackground variant="gallery" />
 
-      <div className="relative mx-auto flex w-full max-w-295 flex-col px-4 sm:px-6 lg:px-8">
+      <div className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-295">
         <GalleryHero
           totalItems={photos.length}
           totalCategories={categories.length}

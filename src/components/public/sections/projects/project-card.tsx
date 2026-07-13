@@ -18,7 +18,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const remainingTech = project.techStack.length - visibleTech.length;
 
   return (
-    <article className="group/project flex h-full flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-1 hover:border-brand-soft/45 hover:shadow-[0_0_72px_rgba(139,92,246,0.15)]">
+    <article className="group/project flex flex-col bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] hover:shadow-[0_0_72px_rgba(139,92,246,0.15)] backdrop-blur-xl p-3 border border-border/40 hover:border-brand-soft/45 rounded-3xl h-full overflow-hidden transition-[border-color,box-shadow,transform] hover:-translate-y-1 duration-300">
       <Link
         href={`/projects/${project.slug}`}
         aria-label={project.title}
@@ -31,19 +31,19 @@ export function ProjectCard({ project }: ProjectCardProps) {
           sizes="(min-width: 1280px) 536px, (min-width: 768px) calc(50vw - 2.5rem), calc(100vw - 2rem)"
         />
         {project.isFeatured && (
-          <Badge className="pointer-events-none absolute top-3 left-3 rounded-full bg-brand-soft/90 px-3 text-primary-foreground shadow-[0_8px_24px_rgba(10,10,20,0.35)] backdrop-blur">
+          <Badge className="top-3 left-3 absolute bg-brand-soft/90 shadow-[0_8px_24px_rgba(10,10,20,0.35)] backdrop-blur px-3 rounded-full text-primary-foreground pointer-events-none">
             Featured
           </Badge>
         )}
       </Link>
 
-      <div className="flex flex-1 flex-col px-3 pt-4 pb-3">
-        <div className="mb-3.5 flex max-w-full items-center gap-1.5 overflow-hidden">
+      <div className="flex flex-col flex-1 px-3 pt-4 pb-3">
+        <div className="flex items-center gap-1.5 mb-3.5 max-w-full overflow-hidden">
           {visibleTech.map((tech) => (
             <Badge
               key={`${project.id}-${tech}`}
               variant="outline"
-              className="rounded-full border-border/90 bg-background/35 text-foreground/85"
+              className="bg-background/35 border-border/90 rounded-full text-foreground/85"
             >
               {tech}
             </Badge>
@@ -51,7 +51,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
           {remainingTech > 0 && (
             <Badge
               variant="outline"
-              className="shrink-0 rounded-full border-border/90 bg-background/35 text-foreground/85"
+              className="bg-background/35 border-border/90 rounded-full text-foreground/85 shrink-0"
               aria-label={`${remainingTech} more technologies`}
             >
               +{remainingTech}
@@ -61,17 +61,17 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
         <Link
           href={`/projects/${project.slug}`}
-          className="w-fit rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+          className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60 w-fit"
         >
-          <h2 className="font-heading text-2xl leading-tight font-semibold text-foreground transition-colors group-hover/project:text-brand-soft">
+          <h2 className="font-heading font-semibold text-foreground group-hover/project:text-brand-soft text-2xl leading-tight transition-colors">
             {project.title}
           </h2>
         </Link>
-        <p className="mt-3 line-clamp-3 text-sm leading-6.5 text-muted-foreground">
+        <p className="mt-3 text-muted-foreground text-sm line-clamp-3 leading-6.5">
           {project.description ?? "A selected project from Heinz's archive."}
         </p>
 
-        <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
+        <div className="flex flex-wrap items-center gap-2 mt-auto pt-5">
           <Button asChild size="sm" className="rounded-full">
             <Link href={`/projects/${project.slug}`}>
               View case
@@ -84,7 +84,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
               asChild
               size="icon"
               variant="outline"
-              className="rounded-full border-border/60 bg-surface/70"
+              className="bg-surface/70 border-border/60 rounded-full"
             >
               <Link
                 href={project.liveUrl}
@@ -102,7 +102,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
               asChild
               size="icon"
               variant="outline"
-              className="rounded-full border-border/60 bg-surface/70"
+              className="bg-surface/70 border-border/60 rounded-full"
             >
               <Link
                 href={project.githubUrl}

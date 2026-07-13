@@ -148,7 +148,7 @@ function PostStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-xs",
         isPublished
           ? "bg-emerald-500/12 text-emerald-300"
           : "bg-amber-500/12 text-amber-300",
@@ -157,7 +157,7 @@ function PostStatusBadge({
     >
       <span
         className={cn(
-          "size-1.5 rounded-full",
+          "rounded-full size-1.5",
           isPublished ? "bg-emerald-300" : "bg-amber-300",
         )}
       />
@@ -174,7 +174,7 @@ function AutosaveStatusPill({ status }: { status: AutosaveStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex w-fit items-center rounded-full bg-surface/55 px-2.5 py-1 text-xs text-muted-foreground",
+        "inline-flex items-center bg-surface/55 px-2.5 py-1 rounded-full w-fit text-muted-foreground text-xs",
         status === "saving" && "text-brand-soft",
         status === "failed" && "text-destructive",
       )}
@@ -383,9 +383,9 @@ export function PostEditor({ mode, post }: PostEditorProps) {
   };
 
   return (
-    <form className="flex min-w-0 flex-col gap-6 overflow-x-clip">
-      <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex min-w-0 flex-col gap-2">
+    <form className="flex flex-col gap-6 min-w-0 overflow-x-clip">
+      <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4 min-w-0">
+        <div className="flex flex-col gap-2 min-w-0">
           <Button asChild variant="ghost" className="w-fit">
             <Link href="/dashboard/posts">
               <ArrowLeftIcon data-icon="inline-start" />
@@ -393,10 +393,10 @@ export function PostEditor({ mode, post }: PostEditorProps) {
             </Link>
           </Button>
           <div className="min-w-0">
-            <h1 className="font-heading text-3xl font-bold wrap-break-word">
+            <h1 className="font-heading font-bold text-3xl wrap-break-word">
               {mode === "create" ? "New Post" : "Edit Post"}
             </h1>
-            <p className="mt-2 max-w-2xl wrap-break-word text-muted-foreground">
+            <p className="mt-2 max-w-2xl text-muted-foreground wrap-break-word">
               Write MDX content, manage metadata, and publish when it is ready.
             </p>
             {mode === "edit" && (
@@ -407,8 +407,8 @@ export function PostEditor({ mode, post }: PostEditorProps) {
           </div>
         </div>
 
-        <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:min-w-0 sm:flex-wrap sm:items-center sm:justify-end">
-          <div className="col-span-2 flex justify-start sm:col-span-1 sm:justify-center">
+        <div className="sm:flex sm:flex-wrap sm:justify-end sm:items-center gap-2 grid grid-cols-2 w-full sm:w-auto min-w-0 sm:min-w-0">
+          <div className="flex justify-start sm:justify-center col-span-2 sm:col-span-1">
             <PostStatusBadge status={status} />
           </div>
           <Button
@@ -441,7 +441,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
             type="button"
             onClick={submitWithStatus("published")}
             disabled={isPending}
-            className="col-span-2 min-w-0 sm:col-span-1"
+            className="col-span-2 sm:col-span-1 min-w-0"
           >
             {pendingAction === "publish" ? (
               <SpinnerIcon data-icon="inline-start" className="animate-spin" />
@@ -455,8 +455,8 @@ export function PostEditor({ mode, post }: PostEditorProps) {
         </div>
       </div>
 
-      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="flex min-w-0 flex-col gap-6">
+      <div className="gap-6 grid xl:grid-cols-[minmax(0,1fr)_360px] min-w-0">
+        <div className="flex flex-col gap-6 min-w-0">
           <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Content</CardTitle>
@@ -479,7 +479,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                 )}
               />
               {errors.content?.message && (
-                <p className="mt-2 text-sm text-destructive">
+                <p className="mt-2 text-destructive text-sm">
                   {errors.content.message}
                 </p>
               )}
@@ -487,7 +487,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
           </Card>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-6">
+        <div className="flex flex-col gap-6 min-w-0">
           <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Details</CardTitle>
@@ -495,7 +495,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                 Public metadata for the blog listing and article header.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex min-w-0 flex-col gap-5">
+            <CardContent className="flex flex-col gap-5 min-w-0">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
@@ -506,7 +506,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                   {...register("title")}
                 />
                 {errors.title?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.title.message}
                   </p>
                 )}
@@ -529,7 +529,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                   }}
                 />
                 {errors.slug?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.slug.message}
                   </p>
                 )}
@@ -547,7 +547,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                 />
                 <p
                   className={cn(
-                    "text-xs text-muted-foreground",
+                    "text-muted-foreground text-xs",
                     errors.excerpt && "text-destructive",
                   )}
                 >
@@ -567,7 +567,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                 Save as draft while editing, or publish to make it public.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex min-w-0 flex-col gap-5">
+            <CardContent className="flex flex-col gap-5 min-w-0">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="status">Status</Label>
                 <Controller
@@ -580,7 +580,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                           id="status"
                           type="button"
                           variant="outline"
-                          className="h-9 w-full justify-between rounded-3xl bg-input/50 px-3 font-normal"
+                          className="justify-between bg-input/50 px-3 rounded-3xl w-full h-9 font-normal"
                         >
                           <PostStatusBadge status={field.value} compact />
                           <CaretDownIcon data-icon="inline-end" />
@@ -623,7 +623,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                   )}
                 />
                 {errors.scheduledPublishDate?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.scheduledPublishDate.message}
                   </p>
                 )}
@@ -638,7 +638,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                 Reuse the Cloudinary upload flow from the Media Library.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex min-w-0 flex-col gap-5">
+            <CardContent className="flex flex-col gap-5 min-w-0">
               <div className="flex flex-col gap-2">
                 <Label>Cover image</Label>
                 <ImageUpload
@@ -660,7 +660,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                   }
                 />
                 {errors.coverImage?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.coverImage.message}
                   </p>
                 )}
@@ -683,7 +683,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                     />
                   )}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Type comma + space to create a tag.
                 </p>
               </div>

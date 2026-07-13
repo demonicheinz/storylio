@@ -173,7 +173,7 @@ function ProjectStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-xs",
         published
           ? "bg-emerald-500/12 text-emerald-300"
           : "bg-amber-500/12 text-amber-300",
@@ -182,7 +182,7 @@ function ProjectStatusBadge({
     >
       <span
         className={cn(
-          "size-1.5 rounded-full",
+          "rounded-full size-1.5",
           published ? "bg-emerald-300" : "bg-amber-300",
         )}
       />
@@ -206,7 +206,7 @@ function ProjectThumbnail({
   return (
     <div
       className={cn(
-        "relative aspect-video overflow-hidden rounded-2xl border border-border/60 bg-muted/30",
+        "relative bg-muted/30 border border-border/60 rounded-2xl aspect-video overflow-hidden",
         className,
       )}
     >
@@ -220,7 +220,7 @@ function ProjectThumbnail({
           onError={() => setFailed(true)}
         />
       ) : (
-        <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_20%_20%,rgba(139,92,246,0.28),transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(10,10,20,0.96))] text-muted-foreground">
+        <div className="flex justify-center items-center bg-[radial-gradient(circle_at_20%_20%,rgba(139,92,246,0.28),transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(10,10,20,0.96))] h-full text-muted-foreground">
           <BriefcaseIcon className="size-8" />
         </div>
       )}
@@ -250,7 +250,7 @@ function ProjectsStatCard({
           {icon}
         </div>
         <div className="min-w-0">
-          <p className={cn("font-heading text-xl font-bold", className)}>
+          <p className={cn("font-heading font-bold text-xl", className)}>
             {value}
           </p>
           <p className="text-[11px] text-muted-foreground">{label}</p>
@@ -282,17 +282,17 @@ function FilterDropdown<T extends string>({
         <Button
           type="button"
           variant="outline"
-          className="h-11 min-w-0 justify-between rounded-2xl bg-input/35 px-3"
+          className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
         >
           <span className="min-w-0 text-left">
-            <span className="block text-[10px] leading-none text-muted-foreground">
+            <span className="block text-[10px] text-muted-foreground leading-none">
               {label}
             </span>
-            <span className="mt-1 block truncate text-xs font-medium">
+            <span className="block mt-1 font-medium text-xs truncate">
               {displayValue}
             </span>
           </span>
-          <CaretDownIcon className="ml-2 size-3.5 shrink-0 text-muted-foreground" />
+          <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
@@ -328,19 +328,19 @@ function TechStackDropdown({
         <Button
           type="button"
           variant="outline"
-          className="h-11 min-w-0 justify-between rounded-2xl bg-input/35 px-3"
+          className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
         >
           <span className="min-w-0 text-left">
-            <span className="block text-[10px] leading-none text-muted-foreground">
+            <span className="block text-[10px] text-muted-foreground leading-none">
               Tech stack
             </span>
-            <span className="mt-1 block truncate text-xs font-medium">
+            <span className="block mt-1 font-medium text-xs truncate">
               {selectedTechStacks.length === 0
                 ? "All Tech"
                 : `${selectedTechStacks.length} selected`}
             </span>
           </span>
-          <CaretDownIcon className="ml-2 size-3.5 shrink-0 text-muted-foreground" />
+          <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-60">
@@ -374,12 +374,12 @@ function ViewToggle({
   onViewModeChange: (mode: ViewMode) => void;
 }) {
   return (
-    <div className="grid w-fit shrink-0 grid-cols-2 justify-self-end rounded-xl border border-border/60 bg-background/35 p-1">
+    <div className="justify-self-end grid grid-cols-2 bg-background/35 p-1 border border-border/60 rounded-xl w-fit shrink-0">
       <Button
         type="button"
         size="icon"
         variant={viewMode === "list" ? "default" : "ghost"}
-        className="size-8 rounded-lg"
+        className="rounded-lg size-8"
         onClick={() => onViewModeChange("list")}
         aria-label="List view"
         aria-pressed={viewMode === "list"}
@@ -390,7 +390,7 @@ function ViewToggle({
         type="button"
         size="icon"
         variant={viewMode === "grid" ? "default" : "ghost"}
-        className="size-8 rounded-lg"
+        className="rounded-lg size-8"
         onClick={() => onViewModeChange("grid")}
         aria-label="Grid view"
         aria-pressed={viewMode === "grid"}
@@ -412,22 +412,22 @@ function TechPills({
   const remaining = techStack.length - visible.length;
 
   if (techStack.length === 0) {
-    return <span className="text-xs text-muted-foreground">No tech stack</span>;
+    return <span className="text-muted-foreground text-xs">No tech stack</span>;
   }
 
   return (
-    <div className="flex min-w-0 flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-1.5 min-w-0">
       {visible.map((tech) => (
         <Badge
           key={tech}
           variant="outline"
-          className="max-w-28 truncate text-[11px]"
+          className="max-w-28 text-[11px] truncate"
         >
           {tech}
         </Badge>
       ))}
       {remaining > 0 && (
-        <span className="text-xs text-muted-foreground">+{remaining} more</span>
+        <span className="text-muted-foreground text-xs">+{remaining} more</span>
       )}
     </div>
   );
@@ -447,7 +447,7 @@ function ProjectActions({
           type="button"
           size="icon"
           variant="ghost"
-          className="size-8 rounded-xl bg-background/70 text-foreground backdrop-blur hover:bg-background"
+          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
           aria-label={`Open actions for ${project.title}`}
         >
           <DotsThreeVerticalIcon />
@@ -505,7 +505,7 @@ function ProjectsGrid({
         <article
           key={project.id}
           className={cn(
-            "group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/45 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-brand-soft/40 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)]",
+            "group bg-background/45 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)] border border-border/70 hover:border-brand-soft/40 rounded-2xl min-w-0 overflow-hidden transition-[border-color,transform,box-shadow] hover:-translate-y-0.5",
             selectedIds.has(project.id) && "border-brand-soft/60 bg-brand/5",
             batchMode && "cursor-pointer",
           )}
@@ -514,18 +514,18 @@ function ProjectsGrid({
           <div className="relative">
             <ProjectThumbnail
               project={project}
-              className="rounded-none border-0"
+              className="border-0 rounded-none"
               sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
             />
             <div
-              className="absolute top-3 right-3 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+              className="top-3 right-3 absolute opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity"
               onClick={(event) => event.stopPropagation()}
             >
               <ProjectActions project={project} />
             </div>
             {batchMode && (
               <div
-                className="absolute top-3 left-3 z-10"
+                className="top-3 left-3 z-10 absolute"
                 onClick={(event) => event.stopPropagation()}
               >
                 <Checkbox
@@ -537,30 +537,30 @@ function ProjectsGrid({
             )}
             <div
               className={cn(
-                "absolute left-3 flex flex-wrap gap-1.5 transition-[top]",
+                "left-3 absolute flex flex-wrap gap-1.5 transition-[top]",
                 batchMode ? "top-11" : "top-3",
               )}
             >
               <ProjectStatusBadge project={project} compact />
               {project.isFeatured && (
-                <Badge className="h-5 rounded-full px-2 text-[11px]">
+                <Badge className="px-2 rounded-full h-5 text-[11px]">
                   featured
                 </Badge>
               )}
             </div>
           </div>
-          <div className="flex min-h-56 flex-col p-4">
-            <h2 className="mt-2 line-clamp-2 font-heading text-base leading-snug font-semibold wrap-break-word">
+          <div className="flex flex-col p-4 min-h-56">
+            <h2 className="mt-2 font-heading font-semibold text-base wrap-break-word line-clamp-2 leading-snug">
               {project.title}
             </h2>
-            <p className="mt-1 truncate text-xs text-muted-foreground">
+            <p className="mt-1 text-muted-foreground text-xs truncate">
               /projects/{project.slug}
             </p>
             <div className="mt-3">
               <TechPills techStack={project.techStack} limit={3} />
             </div>
             {project.description && (
-              <p className="mt-2 line-clamp-2 text-sm wrap-break-word text-muted-foreground">
+              <p className="mt-2 text-muted-foreground text-sm wrap-break-word line-clamp-2">
                 {project.description}
               </p>
             )}
@@ -589,7 +589,7 @@ function ProjectListRow({
   return (
     <div
       className={cn(
-        "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border/70 bg-background/30 xl:grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px] xl:items-center",
+        "xl:items-center grid grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px] bg-background/30 border border-border/70 rounded-2xl min-w-0 overflow-hidden",
         selected && "border-brand-soft/60 bg-brand/5",
         batchMode && "cursor-pointer",
         isDragging &&
@@ -604,7 +604,7 @@ function ProjectListRow({
       <div className="row-span-2 xl:row-span-1">
         {batchMode ? (
           <div
-            className="flex h-full min-h-24 items-center justify-center border-r border-border/50"
+            className="flex justify-center items-center border-border/50 border-r h-full min-h-24"
             onClick={(event) => event.stopPropagation()}
           >
             <Checkbox
@@ -617,68 +617,68 @@ function ProjectListRow({
           dragHandle
         )}
       </div>
-      <div className="flex min-w-0 items-start gap-3 p-4 xl:p-3 xl:pr-4">
+      <div className="flex items-start gap-3 p-4 xl:p-3 xl:pr-4 min-w-0">
         <ProjectThumbnail
           project={project}
-          className="hidden h-16 w-28 shrink-0 rounded-xl sm:block"
+          className="hidden sm:block rounded-xl w-28 h-16 shrink-0"
           sizes="112px"
         />
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
             <span
               className={cn(
-                "size-2 shrink-0 rounded-full xl:hidden",
+                "xl:hidden rounded-full size-2 shrink-0",
                 isPublished(project) ? "bg-emerald-300" : "bg-amber-300",
               )}
             />
-            <h2 className="line-clamp-2 font-heading text-base leading-snug font-semibold wrap-break-word xl:text-sm">
+            <h2 className="font-heading font-semibold xl:text-sm text-base wrap-break-word line-clamp-2 leading-snug">
               {project.title}
             </h2>
           </div>
-          <p className="mt-1 truncate text-xs text-muted-foreground">
+          <p className="mt-1 text-muted-foreground text-xs truncate">
             /projects/{project.slug}
           </p>
-          <div className="mt-2 xl:hidden">
+          <div className="xl:hidden mt-2">
             <TechPills techStack={project.techStack} limit={2} />
           </div>
-          <div className="mt-2 hidden xl:block">
+          <div className="hidden xl:block mt-2">
             <TechPills techStack={project.techStack} limit={4} />
           </div>
         </div>
         <div
-          className="shrink-0 xl:hidden"
+          className="xl:hidden shrink-0"
           onClick={(event) => event.stopPropagation()}
         >
           <ProjectActions project={project} />
         </div>
       </div>
-      <div className="hidden items-center p-3 xl:flex">
+      <div className="hidden xl:flex items-center p-3">
         <div className="flex flex-wrap items-center gap-2">
           <ProjectStatusBadge project={project} compact />
           {project.isFeatured && (
-            <Badge className="h-5 rounded-full px-2 text-[11px]">
+            <Badge className="px-2 rounded-full h-5 text-[11px]">
               featured
             </Badge>
           )}
         </div>
       </div>
-      <div className="hidden p-3 text-sm text-muted-foreground xl:block">
+      <div className="hidden xl:block p-3 text-muted-foreground text-sm">
         {formatDateTime(project.createdAt)}
       </div>
-      <div className="hidden p-3 text-sm text-muted-foreground xl:block">
+      <div className="hidden xl:block p-3 text-muted-foreground text-sm">
         {formatDateTime(project.updatedAt)}
       </div>
-      <div className="hidden justify-end p-3 xl:flex">
+      <div className="hidden xl:flex justify-end p-3">
         <div onClick={(event) => event.stopPropagation()}>
           <ProjectActions project={project} />
         </div>
       </div>
-      <div className="col-start-2 flex flex-wrap items-center gap-2 px-4 pb-4 xl:hidden">
+      <div className="xl:hidden flex flex-wrap items-center gap-2 col-start-2 px-4 pb-4">
         <ProjectStatusBadge project={project} compact />
         {project.isFeatured && (
-          <Badge className="h-5 rounded-full px-2 text-[11px]">featured</Badge>
+          <Badge className="px-2 rounded-full h-5 text-[11px]">featured</Badge>
         )}
-        <span className="text-xs text-muted-foreground">
+        <span className="text-muted-foreground text-xs">
           Updated {formatDate(project.updatedAt)}
         </span>
       </div>
@@ -730,7 +730,7 @@ function SortableProjectListRow({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-full min-h-24 w-full cursor-grab touch-none items-center justify-center rounded-none border-r border-border/50 p-0 text-muted-foreground active:cursor-grabbing disabled:cursor-not-allowed"
+            className="justify-center items-center p-0 border-border/50 border-r rounded-none w-full h-full min-h-24 text-muted-foreground touch-none cursor-grab active:cursor-grabbing disabled:cursor-not-allowed"
             disabled={disabled}
             aria-label={`Drag ${project.title} to reorder`}
             {...attributes}
@@ -748,7 +748,7 @@ function ProjectsListHeader() {
   return (
     <div
       className={cn(
-        "hidden grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px] xl:grid",
+        "hidden xl:grid grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px]",
         dashboardStyles.listHeader,
       )}
     >
@@ -846,7 +846,7 @@ function ProjectsList({
     return (
       <div className={dashboardStyles.listSurface}>
         <ProjectsListHeader />
-        <div className="flex min-w-0 flex-col gap-3 p-3">
+        <div className="flex flex-col gap-3 p-3 min-w-0">
           {projects.map((project) => (
             <ProjectListRow
               key={project.id}
@@ -855,7 +855,7 @@ function ProjectsList({
               selected={selectedIds.has(project.id)}
               onToggleProject={onToggleProject}
               dragHandle={
-                <div className="flex h-full min-h-24 items-center justify-center border-r border-border/50 text-muted-foreground">
+                <div className="flex justify-center items-center border-border/50 border-r h-full min-h-24 text-muted-foreground">
                   <DotsSixVerticalIcon />
                 </div>
               }
@@ -875,7 +875,7 @@ function ProjectsList({
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-          <div className="flex min-w-0 flex-col gap-3 p-3">
+          <div className="flex flex-col gap-3 p-3 min-w-0">
             {projects.map((project) => (
               <SortableProjectListRow
                 key={project.id}
@@ -915,12 +915,12 @@ function ProjectsPagination({
   onItemsPerPageChange: (value: number) => void;
 }) {
   const pageControls = (
-    <div className="flex items-center justify-center gap-1">
+    <div className="flex justify-center items-center gap-1">
       <Button
         type="button"
         size="icon"
         variant="outline"
-        className="size-8 rounded-xl"
+        className="rounded-xl size-8"
         disabled={page <= 1}
         onClick={() => onPageChange(Math.max(1, page - 1))}
         aria-label="Previous page"
@@ -936,7 +936,7 @@ function ProjectsPagination({
             type="button"
             size="icon"
             variant={pageNumber === page ? "default" : "outline"}
-            className="size-8 rounded-xl"
+            className="rounded-xl size-8"
             onClick={() => onPageChange(pageNumber)}
             aria-current={pageNumber === page ? "page" : undefined}
           >
@@ -948,7 +948,7 @@ function ProjectsPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="size-8 rounded-xl"
+        className="rounded-xl size-8"
         disabled={page >= pageCount}
         onClick={() => onPageChange(Math.min(pageCount, page + 1))}
         aria-label="Next page"
@@ -959,8 +959,8 @@ function ProjectsPagination({
   );
 
   return (
-    <div className="mt-4 grid gap-3 text-sm text-muted-foreground md:grid-cols-[1fr_auto_1fr] md:items-center">
-      <div className="flex items-center justify-between md:contents">
+    <div className="md:items-center gap-3 grid md:grid-cols-[1fr_auto_1fr] mt-4 text-muted-foreground text-sm">
+      <div className="md:contents flex justify-between items-center">
         <p className="md:hidden">
           {firstIndex}-{lastIndex} of {total}
         </p>
@@ -977,7 +977,7 @@ function ProjectsPagination({
         </div>
       </div>
       <div className="md:col-start-2">{pageControls}</div>
-      <div className="hidden justify-end md:flex">
+      <div className="hidden md:flex justify-end">
         <ItemsPerPageDropdown
           value={itemsPerPage}
           options={itemsPerPageOptions}
@@ -1003,7 +1003,7 @@ function ItemsPerPageDropdown({
   return (
     <div className="flex items-center gap-2">
       {showLabel && (
-        <span className="text-sm text-muted-foreground">Items per page</span>
+        <span className="text-muted-foreground text-sm">Items per page</span>
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -1011,7 +1011,7 @@ function ItemsPerPageDropdown({
             type="button"
             variant="outline"
             size="sm"
-            className="rounded-xl bg-input/35"
+            className="bg-input/35 rounded-xl"
           >
             {value}
             <CaretDownIcon className="size-3.5" />
@@ -1050,17 +1050,17 @@ function ProjectsBatchActionsBar({
   onCancel: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/55 p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-card/55 shadow-sm p-3 border border-border/70 rounded-2xl">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-foreground">
+        <p className="font-medium text-foreground text-sm">
           {selectedCount} {selectedCount === 1 ? "project" : "projects"}{" "}
           selected
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Drag ordering is paused while selecting projects.
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+      <div className="sm:flex sm:flex-wrap sm:justify-end gap-2 grid grid-cols-2">
         <Button
           type="button"
           size="sm"
@@ -1075,7 +1075,7 @@ function ProjectsBatchActionsBar({
           type="button"
           size="sm"
           variant="outline"
-          className="rounded-xl bg-input/35"
+          className="bg-input/35 rounded-xl"
           disabled={isPending || selectedCount === 0}
           onClick={onMoveToDraft}
         >
@@ -1435,10 +1435,10 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
 
   return (
     <div className={dashboardStyles.page}>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex justify-between items-start gap-4">
         <div className="min-w-0">
-          <h1 className="font-heading text-3xl font-bold">Projects</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          <h1 className="font-heading font-bold text-3xl">Projects</h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
             Manage portfolio drafts, published case studies, media, and display
             order.
           </p>
@@ -1446,7 +1446,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
         <Button
           asChild
           size="icon"
-          className="size-10 shrink-0 rounded-full md:h-9 md:w-auto md:rounded-3xl md:px-4"
+          className="md:px-4 rounded-full md:rounded-3xl md:w-auto md:h-9 size-10 shrink-0"
         >
           <Link href="/dashboard/projects/new">
             <PlusIcon data-icon="inline-start" />
@@ -1492,26 +1492,26 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
 
       <Card className={dashboardStyles.toolbarCard}>
         <CardContent className={dashboardStyles.toolbarContent}>
-          <div className="grid gap-3 md:hidden">
-            <div className="flex min-w-0 gap-2">
-              <div className="relative min-w-0 flex-1">
-                <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="md:hidden gap-3 grid">
+            <div className="flex gap-2 min-w-0">
+              <div className="relative flex-1 min-w-0">
+                <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
                 <Input
                   ref={mobileSearchInputRef}
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search projects..."
-                  className="h-10 rounded-2xl bg-input/45 pr-14 pl-9"
+                  className="bg-input/45 pr-14 pl-9 rounded-2xl h-10"
                   aria-label="Search projects"
                 />
-                <Kbd className="absolute top-1/2 right-2 -translate-y-1/2 border border-border/50 bg-background/60">
+                <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
                   ⌘ K
                 </Kbd>
               </div>
               <Button
                 type="button"
                 variant="outline"
-                className="h-10 shrink-0 rounded-2xl bg-input/35"
+                className="bg-input/35 rounded-2xl h-10 shrink-0"
                 onClick={(event) => blurBeforeOpen(event, openFilters)}
               >
                 <FunnelSimpleIcon data-icon="inline-start" />
@@ -1520,7 +1520,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               <Button
                 type="button"
                 variant={batchMode ? "secondary" : "outline"}
-                className="h-10 shrink-0 rounded-2xl bg-input/35"
+                className="bg-input/35 rounded-2xl h-10 shrink-0"
                 onClick={toggleBatchMode}
               >
                 {batchMode ? "Cancel" : "Select"}
@@ -1528,18 +1528,18 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
             </div>
           </div>
 
-          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_140px_140px_160px_auto]">
-            <div className="relative min-w-0 md:col-span-2 xl:col-span-1">
-              <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_140px_140px_160px_auto] min-w-0">
+            <div className="relative md:col-span-2 xl:col-span-1 min-w-0">
+              <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
               <Input
                 ref={desktopSearchInputRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search projects..."
-                className="h-11 rounded-2xl bg-input/45 pr-14 pl-9"
+                className="bg-input/45 pr-14 pl-9 rounded-2xl h-11"
                 aria-label="Search projects"
               />
-              <Kbd className="absolute top-1/2 right-2 -translate-y-1/2 border border-border/50 bg-background/60">
+              <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
                 ⌘ K
               </Kbd>
             </div>
@@ -1570,7 +1570,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               options={sortOptions}
               onValueChange={setSortMode}
             />
-            <div className="flex w-fit items-center gap-2 justify-self-end md:justify-self-start xl:justify-self-auto">
+            <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
               <ViewToggle
                 viewMode={viewMode}
                 onViewModeChange={handleViewModeChange}
@@ -1578,7 +1578,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               <Button
                 type="button"
                 variant={batchMode ? "secondary" : "outline"}
-                className="h-11 shrink-0 rounded-2xl bg-input/35"
+                className="bg-input/35 rounded-2xl h-11 shrink-0"
                 onClick={toggleBatchMode}
               >
                 {batchMode ? "Cancel" : "Select"}
@@ -1586,8 +1586,8 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
             </div>
           </div>
           {selectedTechStacks.length > 0 && (
-            <div className="mt-3 hidden flex-wrap items-center gap-2 md:flex">
-              <span className="text-xs text-muted-foreground">
+            <div className="hidden md:flex flex-wrap items-center gap-2 mt-3">
+              <span className="text-muted-foreground text-xs">
                 Active tech:
               </span>
               {selectedTechStacks.map((techStack) => (
@@ -1596,7 +1596,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
                   type="button"
                   size="sm"
                   variant="secondary"
-                  className="h-7 rounded-full px-2.5 text-xs"
+                  className="px-2.5 rounded-full h-7 text-xs"
                   onClick={() => toggleTechStack(techStack)}
                 >
                   {techStack}
@@ -1607,7 +1607,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="h-7 rounded-full px-2.5 text-xs"
+                className="px-2.5 rounded-full h-7 text-xs"
                 onClick={() => setSelectedTechStacks([])}
               >
                 Clear
@@ -1615,7 +1615,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
             </div>
           )}
           {!canReorder && viewMode === "list" && (
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className="mt-3 text-muted-foreground text-xs">
               {batchMode
                 ? "Reordering is paused while selecting projects."
                 : "Reordering is available only in list view with order sorting, no active filters, and all projects visible on one page."}
@@ -1652,7 +1652,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
           <BriefcaseIcon className="size-12 text-muted-foreground/50" />
           <div>
             <p className="font-medium">No projects found</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-muted-foreground text-sm">
               Adjust the filters or create a new portfolio entry.
             </p>
           </div>
@@ -1716,14 +1716,14 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
         onOpenChange={handleFiltersOpenChange}
         direction="bottom"
       >
-        <DrawerContent className="p-0 before:inset-x-0 before:top-2 before:bottom-0 before:rounded-t-4xl before:rounded-b-none">
+        <DrawerContent className="before:top-2 before:bottom-0 before:inset-x-0 p-0 before:rounded-t-4xl before:rounded-b-none">
           <DrawerHeader>
             <DrawerTitle>Filters</DrawerTitle>
             <DrawerDescription>
               Refine projects by status, featured state, tech stack, and order.
             </DrawerDescription>
           </DrawerHeader>
-          <div className="grid max-h-[52vh] scrollbar-none gap-4 overflow-y-auto px-4 pb-2">
+          <div className="gap-4 grid px-4 pb-2 max-h-[52vh] overflow-y-auto scrollbar-none">
             <FilterDropdown
               label="Status"
               value={draftStatus}
@@ -1745,7 +1745,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               onValueChange={setDraftFeatured}
             />
             <div>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">
+              <p className="mb-2 font-medium text-muted-foreground text-xs">
                 Tech stack
               </p>
               <div className="flex flex-wrap gap-2">
@@ -1788,7 +1788,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
             />
           </div>
           <DrawerFooter>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="gap-2 grid grid-cols-2">
               <Button
                 type="button"
                 variant="outline"
