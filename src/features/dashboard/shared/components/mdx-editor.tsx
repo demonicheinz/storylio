@@ -63,7 +63,7 @@ export function DashboardMdxEditor({
   return (
     <div
       className={cn(
-        "min-w-0 overflow-hidden rounded-2xl border bg-input/30",
+        "bg-input/30 border rounded-2xl min-w-0 overflow-hidden",
         error ? "border-destructive" : "border-border",
       )}
     >

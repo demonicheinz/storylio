@@ -98,9 +98,9 @@ export function NavUser({ user }: { user: User }) {
                   {currentUser.name?.slice(0, 2).toUpperCase() || "US"}
                 </AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{currentUser.name}</span>
-                <span className="truncate text-xs text-sidebar-foreground/70">
+              <div className="flex-1 grid text-sm text-left leading-tight">
+                <span className="font-medium truncate">{currentUser.name}</span>
+                <span className="text-sidebar-foreground/70 text-xs truncate">
                   {currentUser.email}
                 </span>
               </div>
@@ -108,13 +108,13 @@ export function NavUser({ user }: { user: User }) {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="min-w-56 rounded-lg"
+            className="rounded-lg min-w-56"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
           >
             <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+              <div className="flex items-center gap-2 px-1 py-1.5 text-sm text-left">
                 <Avatar className="rounded-xl">
                   <AvatarImage
                     src={currentUser.avatar}
@@ -124,11 +124,11 @@ export function NavUser({ user }: { user: User }) {
                     {currentUser.name?.slice(0, 2).toUpperCase() || "US"}
                   </AvatarFallback>
                 </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
+                <div className="flex-1 grid text-sm text-left leading-tight">
+                  <span className="font-medium truncate">
                     {currentUser.name}
                   </span>
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="text-muted-foreground text-xs truncate">
                     {currentUser.email}
                   </span>
                 </div>

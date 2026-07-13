@@ -42,7 +42,7 @@ export function BlogHeadingLink({
           type="button"
           variant="ghost"
           size="icon-sm"
-          className="ml-2 inline-flex translate-y-[-0.12em] rounded-full opacity-0 transition-opacity group-focus-within/heading:opacity-100 group-hover/heading:opacity-100"
+          className="inline-flex opacity-0 group-focus-within/heading:opacity-100 group-hover/heading:opacity-100 ml-2 rounded-full transition-opacity translate-y-[-0.12em]"
           aria-label="Copy heading link"
           onClick={copyLink}
         >

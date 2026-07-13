@@ -44,7 +44,7 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
       {groups.map((group) => (
         <SidebarGroup
           key={group.label}
-          className="py-1.5 transition-[padding] duration-200 ease-linear group-data-[collapsible=icon]:py-0.5"
+          className="py-1.5 group-data-[collapsible=icon]:py-0.5 transition-[padding] duration-200 ease-linear"
         >
           <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
           <SidebarGroupContent>

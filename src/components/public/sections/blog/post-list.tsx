@@ -8,7 +8,7 @@ type PostListProps = {
 
 export function PostList({ posts }: PostListProps) {
   return (
-    <div className="mx-auto flex w-full flex-col gap-5">
+    <div className="flex flex-col gap-5 mx-auto w-full">
       {posts.map((post, index) => (
         <BlogReveal key={post.id} delay={Math.min(index * 0.05, 0.2)}>
           <PostCard post={post} />

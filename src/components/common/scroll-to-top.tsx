@@ -53,7 +53,7 @@ export function ScrollToTop({
         <motion.button
           onClick={scrollToTop}
           className={cn(
-            "fixed bottom-6",
+            "bottom-6 fixed",
             buttonPosition,
             buttonSize,
             "border bg-surface/90 hover:bg-surface-hover",

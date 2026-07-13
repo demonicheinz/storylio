@@ -58,12 +58,12 @@ function ChartTooltip({ active, label, payload }: ChartTooltipProps) {
         : label;
 
   return (
-    <div className="border-border-hover min-w-40 rounded-xl border bg-card px-4 py-3 text-card-foreground shadow-2xl">
-      <p className="max-w-64 text-xs leading-5 font-medium">{title}</p>
-      <div className="mt-2 flex items-center justify-between gap-6 text-sm">
+    <div className="bg-card shadow-2xl px-4 py-3 border border-border-hover rounded-xl min-w-40 text-card-foreground">
+      <p className="max-w-64 font-medium text-xs leading-5">{title}</p>
+      <div className="flex justify-between items-center gap-6 mt-2 text-sm">
         <span className="flex items-center gap-2 text-muted-foreground">
           <span
-            className="size-2.5 rounded-full"
+            className="rounded-full size-2.5"
             style={{ backgroundColor: item.color ?? "var(--chart-2)" }}
           />
           Views
@@ -78,7 +78,7 @@ function ChartTooltip({ active, label, payload }: ChartTooltipProps) {
 
 export function ViewsTimelineChart({ data }: { data: TimelinePoint[] }) {
   return (
-    <div className="h-64 min-h-64 w-full min-w-0">
+    <div className="w-full min-w-0 h-64 min-h-64">
       <AreaChart
         responsive
         data={data}
@@ -135,7 +135,7 @@ export function ViewsTimelineChart({ data }: { data: TimelinePoint[] }) {
 
 export function ContentRankingChart({ data }: { data: RankingPoint[] }) {
   return (
-    <div className="h-64 min-h-64 w-full min-w-0">
+    <div className="w-full min-w-0 h-64 min-h-64">
       <BarChart
         responsive
         data={data}

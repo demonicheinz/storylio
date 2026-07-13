@@ -188,7 +188,7 @@ function GalleryThumbnail({
     return (
       <div
         className={cn(
-          "flex h-full min-h-30 items-center justify-center bg-muted text-muted-foreground",
+          "flex justify-center items-center bg-muted h-full min-h-30 text-muted-foreground",
           className,
         )}
       >
@@ -294,7 +294,7 @@ function GalleryItemActions({
           type="button"
           size="icon"
           variant="ghost"
-          className="size-8 rounded-xl bg-background/70 text-foreground backdrop-blur hover:bg-background"
+          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
           aria-label={`Open actions for ${getItemTitle(item)}`}
         >
           <DotsThreeVerticalIcon />
@@ -396,7 +396,7 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[calc(100vh-2rem)] scrollbar-none overflow-y-auto sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-none">
         <form className="flex flex-col gap-5" onSubmit={onSubmit}>
           <DialogHeader>
             <DialogTitle>
@@ -448,13 +448,13 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
               }
             />
             {errors.imageUrl?.message && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.imageUrl.message}
               </p>
             )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="gap-4 grid sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="altText">Alt text</Label>
               <Input
@@ -465,16 +465,16 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
                 {...register("altText")}
               />
               {errors.altText?.message && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.altText.message}
                 </p>
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-background/35 p-4">
+            <div className="flex justify-between items-center gap-4 bg-background/35 p-4 border border-border/60 rounded-2xl">
               <div>
                 <Label htmlFor="isVisible">Visible publicly</Label>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                <p className="mt-1 text-muted-foreground text-xs leading-5">
                   Hidden items stay editable here but are not shown on the
                   public Gallery.
                 </p>
@@ -493,7 +493,7 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="gap-4 grid sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="category">Category</Label>
               <Input
@@ -504,7 +504,7 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
                 {...register("category")}
               />
               {errors.category?.message && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.category.message}
                 </p>
               )}
@@ -521,7 +521,7 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
                 {...register("order")}
               />
               {errors.order?.message && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.order.message}
                 </p>
               )}
@@ -536,11 +536,11 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
               aria-invalid={!!errors.caption}
               disabled={isPending}
               wrap="soft"
-              className="field-sizing-fixed min-h-24 max-w-full scrollbar-none wrap-anywhere"
+              className="max-w-full min-h-24 field-sizing-fixed scrollbar-none wrap-anywhere"
               {...register("caption")}
             />
             {errors.caption?.message && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.caption.message}
               </p>
             )}
@@ -554,11 +554,11 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
               aria-invalid={!!errors.description}
               disabled={isPending}
               wrap="soft"
-              className="field-sizing-fixed min-h-24 max-w-full scrollbar-none wrap-anywhere"
+              className="max-w-full min-h-24 field-sizing-fixed scrollbar-none wrap-anywhere"
               {...register("description")}
             />
             {errors.description?.message && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.description.message}
               </p>
             )}
@@ -665,7 +665,7 @@ function GalleryStatCard({
           {icon}
         </div>
         <div>
-          <p className={cn("font-heading text-xl font-bold", className)}>
+          <p className={cn("font-heading font-bold text-xl", className)}>
             {value}
           </p>
           <p className="text-[11px] text-muted-foreground">{label}</p>
@@ -694,17 +694,17 @@ function FilterDropdown({
         <Button
           type="button"
           variant="outline"
-          className="h-11 min-w-0 justify-between rounded-2xl bg-input/35 px-3"
+          className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
         >
           <span className="min-w-0 text-left">
-            <span className="block text-[10px] leading-none text-muted-foreground">
+            <span className="block text-[10px] text-muted-foreground leading-none">
               {label}
             </span>
-            <span className="mt-1 block truncate text-xs font-medium">
+            <span className="block mt-1 font-medium text-xs truncate">
               {displayValue}
             </span>
           </span>
-          <CaretDownIcon className="ml-2 size-3.5 shrink-0 text-muted-foreground" />
+          <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
@@ -740,10 +740,10 @@ function CompactFilterDropdown({
           type="button"
           variant="outline"
           size="sm"
-          className="min-w-0 flex-1 justify-between rounded-xl bg-input/35 px-3"
+          className="flex-1 justify-between bg-input/35 px-3 rounded-xl min-w-0"
         >
-          <span className="truncate text-xs">{displayValue || label}</span>
-          <CaretDownIcon className="size-3.5 shrink-0 text-muted-foreground" />
+          <span className="text-xs truncate">{displayValue || label}</span>
+          <CaretDownIcon className="size-3.5 text-muted-foreground shrink-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
@@ -778,7 +778,7 @@ function GalleryGrid({
         <article
           key={item.id}
           className={cn(
-            "group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/45 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-brand-soft/40 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)]",
+            "group bg-background/45 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)] border border-border/70 hover:border-brand-soft/40 rounded-2xl min-w-0 overflow-hidden transition-[border-color,transform,box-shadow] hover:-translate-y-0.5",
             selectedIds.has(item.id) && "border-brand-soft/60 bg-brand/5",
             batchMode ? "cursor-pointer" : "cursor-zoom-in",
           )}
@@ -791,11 +791,11 @@ function GalleryGrid({
             onSelectItem(item);
           }}
         >
-          <div className="relative aspect-square overflow-hidden bg-muted/35">
+          <div className="relative bg-muted/35 aspect-square overflow-hidden">
             <GalleryThumbnail imageUrl={item.imageUrl} caption={item.caption} />
             {batchMode && (
               <div
-                className="absolute top-3 left-3 z-10"
+                className="top-3 left-3 z-10 absolute"
                 onClick={(event) => event.stopPropagation()}
               >
                 <Checkbox
@@ -806,7 +806,7 @@ function GalleryGrid({
               </div>
             )}
             <div
-              className="absolute top-3 right-3 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+              className="top-3 right-3 absolute opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity"
               onClick={(event) => event.stopPropagation()}
             >
               <GalleryItemActions item={item} />
@@ -814,24 +814,24 @@ function GalleryGrid({
           </div>
           <div className="relative">
             <div className="px-4 pt-3 pb-4">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
                 <GalleryStatusBadge isVisible={item.isVisible} />
                 {item.category && (
                   <Badge
                     variant="secondary"
-                    className="max-w-full min-w-0 truncate"
+                    className="min-w-0 max-w-full truncate"
                   >
                     {item.category}
                   </Badge>
                 )}
               </div>
               <h2
-                className="mt-2 truncate font-heading text-base leading-snug font-semibold"
+                className="mt-2 font-heading font-semibold text-base truncate leading-snug"
                 title={getItemTitle(item)}
               >
                 {getItemTitle(item)}
               </h2>
-              <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <p className="flex items-center gap-1.5 mt-2 text-muted-foreground text-xs">
                 <CalendarBlankIcon className="size-3.5" />
                 {formatDate(item.createdAt)}
               </p>
@@ -863,7 +863,7 @@ function GalleryListRow({
   return (
     <div
       className={cn(
-        "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(280px,1fr)_120px_150px_80px_130px_64px]",
+        "grid grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(280px,1fr)_120px_150px_80px_130px_64px] min-w-0",
         dashboardStyles.listRow,
         selected && "border-brand-soft/60 bg-brand/5",
         batchMode && "cursor-pointer",
@@ -874,7 +874,7 @@ function GalleryListRow({
       <div className="row-span-2 xl:row-span-1">
         {batchMode ? (
           <div
-            className="flex h-full min-h-20 items-center justify-center border-r border-border/50"
+            className="flex justify-center items-center border-border/50 border-r h-full min-h-20"
             onClick={(event) => event.stopPropagation()}
           >
             <Checkbox
@@ -889,11 +889,11 @@ function GalleryListRow({
       </div>
       <button
         type="button"
-        className="flex min-w-0 items-center gap-3 p-3 text-left disabled:cursor-pointer"
+        className="flex items-center gap-3 p-3 min-w-0 text-left disabled:cursor-pointer"
         disabled={batchMode}
         onClick={(event) => blurBeforeOpen(event, () => onSelectItem(item))}
       >
-        <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-xl border border-border/50 bg-muted/35">
+        <div className="relative bg-muted/35 border border-border/50 rounded-xl w-20 h-14 overflow-hidden shrink-0">
           <GalleryThumbnail
             imageUrl={item.imageUrl}
             caption={item.caption}
@@ -902,34 +902,34 @@ function GalleryListRow({
         </div>
         <div className="min-w-0">
           <p
-            className="truncate leading-snug font-medium"
+            className="font-medium truncate leading-snug"
             title={getItemTitle(item)}
           >
             {getItemTitle(item)}
           </p>
-          <p className="mt-1 truncate text-xs text-muted-foreground xl:hidden">
+          <p className="xl:hidden mt-1 text-muted-foreground text-xs truncate">
             {item.category || "Uncategorized"} · order {item.order}
           </p>
         </div>
       </button>
-      <div className="hidden items-center p-3 xl:flex">
+      <div className="hidden xl:flex items-center p-3">
         <GalleryStatusBadge isVisible={item.isVisible} />
       </div>
-      <div className="hidden min-w-0 items-center p-3 xl:flex">
-        <Badge variant="secondary" className="max-w-full min-w-0 truncate">
+      <div className="hidden xl:flex items-center p-3 min-w-0">
+        <Badge variant="secondary" className="min-w-0 max-w-full truncate">
           {item.category || "Uncategorized"}
         </Badge>
       </div>
-      <div className="hidden items-center p-3 text-sm text-muted-foreground xl:flex">
+      <div className="hidden xl:flex items-center p-3 text-muted-foreground text-sm">
         {item.order}
       </div>
-      <div className="hidden items-center p-3 text-sm text-muted-foreground xl:flex">
+      <div className="hidden xl:flex items-center p-3 text-muted-foreground text-sm">
         {formatDate(item.createdAt)}
       </div>
-      <div className="col-start-2 flex items-center gap-2 px-3 pb-3 xl:col-auto xl:p-3 xl:pl-0">
-        <div className="flex flex-wrap items-center gap-2 xl:hidden">
+      <div className="flex items-center gap-2 col-start-2 xl:p-3 px-3 pb-3 xl:pl-0 xl:col-auto">
+        <div className="xl:hidden flex flex-wrap items-center gap-2">
           <GalleryStatusBadge isVisible={item.isVisible} />
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             {formatDate(item.createdAt)}
           </span>
         </div>
@@ -963,12 +963,12 @@ function GalleryPagination({
   onItemsPerPageChange: (value: number) => void;
 }) {
   const pageControls = (
-    <div className="flex items-center justify-center gap-1">
+    <div className="flex justify-center items-center gap-1">
       <Button
         type="button"
         size="icon"
         variant="outline"
-        className="size-8 rounded-xl"
+        className="rounded-xl size-8"
         disabled={page <= 1}
         onClick={() => onPageChange(Math.max(1, page - 1))}
         aria-label="Previous page"
@@ -984,7 +984,7 @@ function GalleryPagination({
             type="button"
             size="icon"
             variant={pageNumber === page ? "default" : "outline"}
-            className="size-8 rounded-xl"
+            className="rounded-xl size-8"
             onClick={() => onPageChange(pageNumber)}
             aria-current={pageNumber === page ? "page" : undefined}
           >
@@ -996,7 +996,7 @@ function GalleryPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="size-8 rounded-xl"
+        className="rounded-xl size-8"
         disabled={page >= pageCount}
         onClick={() => onPageChange(Math.min(pageCount, page + 1))}
         aria-label="Next page"
@@ -1007,8 +1007,8 @@ function GalleryPagination({
   );
 
   return (
-    <div className="mt-4 grid gap-3 text-sm text-muted-foreground md:grid-cols-[1fr_auto_1fr] md:items-center">
-      <div className="flex items-center justify-between md:contents">
+    <div className="md:items-center gap-3 grid md:grid-cols-[1fr_auto_1fr] mt-4 text-muted-foreground text-sm">
+      <div className="md:contents flex justify-between items-center">
         <p className="md:hidden">
           {firstIndex}-{lastIndex} of {total}
         </p>
@@ -1025,7 +1025,7 @@ function GalleryPagination({
         </div>
       </div>
       <div className="md:col-start-2">{pageControls}</div>
-      <div className="hidden justify-end md:flex">
+      <div className="hidden md:flex justify-end">
         <ItemsPerPageDropdown
           value={itemsPerPage}
           options={itemsPerPageOptions}
@@ -1051,7 +1051,7 @@ function ItemsPerPageDropdown({
   return (
     <div className="flex items-center gap-2">
       {showLabel && (
-        <span className="text-sm text-muted-foreground">Items per page</span>
+        <span className="text-muted-foreground text-sm">Items per page</span>
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -1059,7 +1059,7 @@ function ItemsPerPageDropdown({
             type="button"
             variant="outline"
             size="sm"
-            className="rounded-xl bg-input/35"
+            className="bg-input/35 rounded-xl"
           >
             {value}
             <CaretDownIcon className="size-3.5" />
@@ -1098,16 +1098,16 @@ function GalleryBatchActionsBar({
   onCancel: () => void;
 }) {
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/55 p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-card/55 shadow-sm mb-4 p-3 border border-border/70 rounded-2xl">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-foreground">
+        <p className="font-medium text-foreground text-sm">
           {selectedCount} {selectedCount === 1 ? "item" : "items"} selected
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Drag ordering is paused while selecting gallery items.
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+      <div className="sm:flex sm:flex-wrap sm:justify-end gap-2 grid grid-cols-2">
         <Button
           type="button"
           size="sm"
@@ -1122,7 +1122,7 @@ function GalleryBatchActionsBar({
           type="button"
           size="sm"
           variant="outline"
-          className="rounded-xl bg-input/35"
+          className="bg-input/35 rounded-xl"
           disabled={isPending || selectedCount === 0}
           onClick={onHide}
         >
@@ -1219,7 +1219,7 @@ function GalleryDetailDrawer({
     >
       <DrawerContent
         className={cn(
-          "overflow-hidden p-0",
+          "p-0 overflow-hidden",
           direction === "right"
             ? "h-dvh before:inset-y-0! before:right-0! before:left-0! before:rounded-l-4xl! before:rounded-r-none!"
             : "max-h-[86vh] before:inset-x-0! before:top-2! before:bottom-0! before:rounded-b-none!",
@@ -1231,10 +1231,10 @@ function GalleryDetailDrawer({
             Preview metadata and actions for {getItemTitle(item)}.
           </DrawerDescription>
         </DrawerHeader>
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 scrollbar-none overflow-y-auto px-4 pt-7 pb-4">
+        <div className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 px-4 pt-7 pb-4 min-h-0 overflow-y-auto scrollbar-none">
             <div
-              className="relative w-full overflow-hidden rounded-2xl border border-border bg-muted/35"
+              className="relative bg-muted/35 border border-border rounded-2xl w-full overflow-hidden"
               style={{ aspectRatio }}
             >
               <GalleryThumbnail
@@ -1244,12 +1244,12 @@ function GalleryDetailDrawer({
               />
             </div>
             <h3
-              className="mt-4 truncate font-heading text-xl leading-tight font-semibold"
+              className="mt-4 font-heading font-semibold text-xl truncate leading-tight"
               title={getItemTitle(item)}
             >
               {getItemTitle(item)}
             </h3>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mt-2">
               <GalleryStatusBadge isVisible={item.isVisible} />
               {item.category && (
                 <Badge variant="secondary">{item.category}</Badge>
@@ -1257,20 +1257,20 @@ function GalleryDetailDrawer({
             </div>
 
             {item.description && (
-              <p className="mt-3 text-sm leading-6 wrap-anywhere text-muted-foreground">
+              <p className="mt-3 text-muted-foreground text-sm leading-6 wrap-anywhere">
                 {item.description}
               </p>
             )}
 
-            <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-border/70 bg-card/50 p-3">
+            <div className="gap-3 grid grid-cols-2 bg-card/50 mt-4 p-3 border border-border/70 rounded-2xl">
               {metadata.map((row) => (
-                <div key={row.label} className="flex min-w-0 items-start gap-2">
-                  <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">
+                <div key={row.label} className="flex items-start gap-2 min-w-0">
+                  <span className="mt-0.5 [&_svg]:size-4 text-muted-foreground">
                     {row.icon}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">{row.label}</p>
-                    <p className="mt-0.5 line-clamp-2 text-sm font-medium wrap-anywhere">
+                    <p className="text-muted-foreground text-xs">{row.label}</p>
+                    <p className="mt-0.5 font-medium text-sm line-clamp-2 wrap-anywhere">
                       {row.value}
                     </p>
                   </div>
@@ -1279,7 +1279,7 @@ function GalleryDetailDrawer({
             </div>
           </div>
 
-          <DrawerFooter className="grid gap-2 px-4 pb-4">
+          <DrawerFooter className="gap-2 grid px-4 pb-4">
             <GalleryItemDialog
               item={item}
               trigger={
@@ -1289,7 +1289,7 @@ function GalleryDetailDrawer({
                 </Button>
               }
             />
-            <div className="grid grid-cols-2 gap-2">
+            <div className="gap-2 grid grid-cols-2">
               <Button
                 type="button"
                 variant="outline"
@@ -1545,10 +1545,10 @@ export function GalleryManager({ items }: GalleryManagerProps) {
 
   return (
     <div className={dashboardStyles.page}>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex justify-between items-start gap-4">
         <div className="min-w-0">
-          <h1 className="font-heading text-3xl font-bold">Gallery</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          <h1 className="font-heading font-bold text-3xl">Gallery</h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
             Manage gallery images, visibility, categories, and display order.
           </p>
         </div>
@@ -1556,7 +1556,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
           trigger={
             <Button
               size="icon"
-              className="size-10 shrink-0 rounded-full md:h-9 md:w-auto md:rounded-3xl md:px-4"
+              className="md:px-4 rounded-full md:rounded-3xl md:w-auto md:h-9 size-10 shrink-0"
             >
               <PlusIcon data-icon="inline-start" />
               <span className="sr-only md:not-sr-only">Add Gallery Item</span>
@@ -1598,22 +1598,22 @@ export function GalleryManager({ items }: GalleryManagerProps) {
 
       <Card className={dashboardStyles.toolbarCard}>
         <CardContent className={dashboardStyles.toolbarContent}>
-          <div className="grid gap-3 md:hidden">
+          <div className="md:hidden gap-3 grid">
             <div className="relative min-w-0">
-              <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
               <Input
                 ref={mobileSearchInputRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search gallery items..."
-                className="h-10 rounded-2xl bg-input/45 pr-14 pl-9"
+                className="bg-input/45 pr-14 pl-9 rounded-2xl h-10"
                 aria-label="Search gallery items"
               />
-              <Kbd className="absolute top-1/2 right-2 -translate-y-1/2 border border-border/50 bg-background/60">
+              <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
                 ⌘ K
               </Kbd>
             </div>
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <CompactFilterDropdown
                 label="All"
                 value={visibility}
@@ -1646,12 +1646,12 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   })),
                 ]}
               />
-              <div className="ml-auto grid w-fit shrink-0 grid-cols-2 rounded-xl border border-border/60 bg-background/35 p-1">
+              <div className="grid grid-cols-2 bg-background/35 ml-auto p-1 border border-border/60 rounded-xl w-fit shrink-0">
                 <Button
                   type="button"
                   size="icon"
                   variant={viewMode === "grid" ? "default" : "ghost"}
-                  className="size-8 rounded-lg"
+                  className="rounded-lg size-8"
                   onClick={() => handleViewModeChange("grid")}
                   aria-label="Grid view"
                   aria-pressed={viewMode === "grid"}
@@ -1662,7 +1662,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   type="button"
                   size="icon"
                   variant={viewMode === "list" ? "default" : "ghost"}
-                  className="size-8 rounded-lg"
+                  className="rounded-lg size-8"
                   onClick={() => handleViewModeChange("list")}
                   aria-label="List view"
                   aria-pressed={viewMode === "list"}
@@ -1674,7 +1674,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                 type="button"
                 variant={batchMode ? "secondary" : "outline"}
                 size="sm"
-                className="h-10 shrink-0 rounded-xl bg-input/35"
+                className="bg-input/35 rounded-xl h-10 shrink-0"
                 onClick={toggleBatchMode}
               >
                 {batchMode ? "Cancel" : "Select"}
@@ -1682,18 +1682,18 @@ export function GalleryManager({ items }: GalleryManagerProps) {
             </div>
           </div>
 
-          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_170px_140px_auto]">
-            <div className="relative min-w-0 md:col-span-2 xl:col-span-1">
-              <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_170px_140px_auto] min-w-0">
+            <div className="relative md:col-span-2 xl:col-span-1 min-w-0">
+              <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
               <Input
                 ref={desktopSearchInputRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search gallery items..."
-                className="h-11 rounded-2xl bg-input/45 pr-14 pl-9"
+                className="bg-input/45 pr-14 pl-9 rounded-2xl h-11"
                 aria-label="Search gallery items"
               />
-              <Kbd className="absolute top-1/2 right-2 -translate-y-1/2 border border-border/50 bg-background/60">
+              <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
                 ⌘ K
               </Kbd>
             </div>
@@ -1749,13 +1749,13 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                 { value: "created-asc", label: "Oldest" },
               ]}
             />
-            <div className="flex w-fit items-center gap-2 justify-self-end md:justify-self-start xl:justify-self-auto">
-              <div className="grid w-fit grid-cols-2 rounded-2xl border border-border/60 bg-background/35 p-1">
+            <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
+              <div className="grid grid-cols-2 bg-background/35 p-1 border border-border/60 rounded-2xl w-fit">
                 <Button
                   type="button"
                   size="icon"
                   variant={viewMode === "grid" ? "default" : "ghost"}
-                  className="size-8 rounded-lg"
+                  className="rounded-lg size-8"
                   onClick={() => handleViewModeChange("grid")}
                   aria-label="Grid view"
                   aria-pressed={viewMode === "grid"}
@@ -1766,7 +1766,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   type="button"
                   size="icon"
                   variant={viewMode === "list" ? "default" : "ghost"}
-                  className="size-8 rounded-lg"
+                  className="rounded-lg size-8"
                   onClick={() => handleViewModeChange("list")}
                   aria-label="List view"
                   aria-pressed={viewMode === "list"}
@@ -1777,7 +1777,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
               <Button
                 type="button"
                 variant={batchMode ? "secondary" : "outline"}
-                className="h-11 shrink-0 rounded-2xl bg-input/35"
+                className="bg-input/35 rounded-2xl h-11 shrink-0"
                 onClick={toggleBatchMode}
               >
                 {batchMode ? "Cancel" : "Select"}
@@ -1813,7 +1813,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
               <ImageIcon className="size-12 text-muted-foreground/50" />
               <div>
                 <p className="font-medium">No gallery items yet</p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-muted-foreground text-sm">
                   Add the first image and assign it to a category.
                 </p>
               </div>
@@ -1831,7 +1831,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
               <MagnifyingGlassIcon className="size-11 text-muted-foreground/50" />
               <div>
                 <p className="font-medium">No gallery items found</p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-muted-foreground text-sm">
                   Try adjusting the search, visibility, or category filter.
                 </p>
               </div>

@@ -173,7 +173,7 @@ function AnalyticsStatCard({
           {icon}
         </div>
         <div className="min-w-0">
-          <p className="font-heading text-xl font-bold">
+          <p className="font-heading font-bold text-xl">
             {value.toLocaleString("en-US")}
           </p>
           <p className="text-[11px] text-muted-foreground">{label}</p>
@@ -196,11 +196,11 @@ function EmptyState({
   title: string;
 }) {
   return (
-    <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed text-center">
-      <div className="text-4xl text-muted-foreground/50">{icon}</div>
+    <div className="flex flex-col justify-center items-center gap-3 border border-dashed rounded-2xl min-h-48 text-center">
+      <div className="text-muted-foreground/50 text-4xl">{icon}</div>
       <div>
         <p className="font-medium">{title}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        <p className="mt-1 text-muted-foreground text-sm">{description}</p>
       </div>
     </div>
   );
@@ -226,7 +226,7 @@ function ViewsTimeline({
   }));
 
   return (
-    <Card className="border-border/70 bg-card/55 shadow-sm">
+    <Card className="bg-card/55 shadow-sm border-border/70">
       <CardHeader>
         <CardTitle>Views Over Time</CardTitle>
         <CardDescription>
@@ -241,7 +241,7 @@ function ViewsTimeline({
             description="New public content views will appear here."
           />
         ) : (
-          <div className="rounded-2xl border border-border/70 bg-background/40 p-4">
+          <div className="bg-background/40 p-4 border border-border/70 rounded-2xl">
             <ViewsTimelineChart data={chartData} />
           </div>
         )}
@@ -268,7 +268,7 @@ function RankingChart({
   }));
 
   return (
-    <Card className="border-border/70 bg-card/55 shadow-sm">
+    <Card className="bg-card/55 shadow-sm border-border/70">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>Top five items by local view count.</CardDescription>
@@ -281,7 +281,7 @@ function RankingChart({
             description="Content will appear here after it is created."
           />
         ) : (
-          <div className="rounded-2xl border border-border/70 bg-background/40 p-4">
+          <div className="bg-background/40 p-4 border border-border/70 rounded-2xl">
             <ContentRankingChart data={chartData} />
           </div>
         )}
@@ -323,28 +323,28 @@ function ContentBreakdown({
   ];
 
   return (
-    <Card className="border-border/70 bg-card/55 shadow-sm">
+    <Card className="bg-card/55 shadow-sm border-border/70">
       <CardHeader>
         <CardTitle>Content Breakdown</CardTitle>
         <CardDescription>
           A compact inventory of dashboard content health.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <CardContent className="gap-3 grid md:grid-cols-2 xl:grid-cols-4">
         {groups.map((item) => (
           <div
             key={item.label}
-            className="flex min-w-0 items-center gap-3 rounded-2xl border border-border/70 bg-background/40 p-4"
+            className="flex items-center gap-3 bg-background/40 p-4 border border-border/70 rounded-2xl min-w-0"
           >
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <div className="flex justify-center items-center bg-primary/10 rounded-2xl size-10 text-primary shrink-0">
               {item.icon}
             </div>
             <div className="min-w-0">
-              <p className="font-heading text-xl font-bold">
+              <p className="font-heading font-bold text-xl">
                 {item.value.toLocaleString("en-US")}
               </p>
-              <p className="text-xs text-muted-foreground">{item.label}</p>
-              <p className="mt-0.5 truncate text-[10px] text-muted-foreground/80">
+              <p className="text-muted-foreground text-xs">{item.label}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground/80 truncate">
                 {item.meta}
               </p>
             </div>
@@ -361,7 +361,7 @@ function RecentViews({
   items: Awaited<ReturnType<typeof getAnalyticsData>>["recentViews"];
 }) {
   return (
-    <Card className="border-border/70 bg-card/55 shadow-sm">
+    <Card className="bg-card/55 shadow-sm border-border/70">
       <CardHeader>
         <CardTitle>Recent Views</CardTitle>
         <CardDescription>
@@ -376,21 +376,21 @@ function RecentViews({
             description="Events appear after published posts or projects are viewed."
           />
         ) : (
-          <div className="divide-y divide-border/60 rounded-2xl border border-border/70 bg-background/40">
+          <div className="bg-background/40 border border-border/70 rounded-2xl divide-y divide-border/60">
             {items.map((event) => (
               <div
                 key={event.id}
-                className="flex items-center justify-between gap-3 px-4 py-3"
+                className="flex justify-between items-center gap-3 px-4 py-3"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
+                  <p className="font-medium text-sm truncate">
                     /{event.type === "post" ? "blog" : "projects"}/{event.slug}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-muted-foreground text-xs">
                     {event.type} view
                   </p>
                 </div>
-                <span className="shrink-0 text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs shrink-0">
                   {formatDate(event.createdAt)}
                 </span>
               </div>
@@ -451,8 +451,8 @@ export default async function AnalyticsPage() {
   return (
     <div className={dashboardStyles.page}>
       <div>
-        <h1 className="font-heading text-3xl font-bold">Analytics</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+        <h1 className="font-heading font-bold text-3xl">Analytics</h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
           Measure public traffic, local content performance, and recent view
           activity across Storylio.
         </p>
@@ -464,10 +464,10 @@ export default async function AnalyticsPage() {
 
       <section className="flex flex-col gap-4">
         <div>
-          <h2 className="font-heading text-xl font-semibold">
+          <h2 className="font-heading font-semibold text-xl">
             Local Content Analytics
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-muted-foreground text-sm">
             Database-backed metrics that work without external analytics.
           </p>
         </div>
@@ -479,12 +479,12 @@ export default async function AnalyticsPage() {
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+      <div className="gap-6 grid xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <ViewsTimeline timeline={data.timeline} />
         <RecentViews items={data.recentViews} />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="gap-6 grid xl:grid-cols-2">
         <RankingChart items={data.topPosts} title="Top Posts" />
         <RankingChart items={data.topProjects} title="Top Projects" />
       </div>

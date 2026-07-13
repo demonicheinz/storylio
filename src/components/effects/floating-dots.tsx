@@ -246,11 +246,11 @@ export function FloatingDots({
     <div
       ref={containerRef}
       className={cn(
-        "pointer-events-none absolute inset-0 overflow-hidden",
+        "absolute inset-0 overflow-hidden pointer-events-none",
         className,
       )}
     >
-      <canvas ref={canvasRef} className="block h-full w-full" />
+      <canvas ref={canvasRef} className="block w-full h-full" />
     </div>
   );
 }

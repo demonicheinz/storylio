@@ -226,22 +226,22 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
     <main className="min-h-screen">
       <PublicBackground variant="about" />
 
-      <div className="flex min-h-screen flex-col justify-center xl:flex-row">
-        <div className="fixed left-0 hidden h-screen flex-col items-center justify-center xl:flex">
+      <div className="flex xl:flex-row flex-col justify-center min-h-screen">
+        <div className="hidden left-0 fixed xl:flex flex-col justify-center items-center h-screen">
           <AboutSideNavigation language={language} />
         </div>
 
-        <div className="relative mx-auto flex w-full max-w-264 min-w-0 flex-col justify-center px-4 pt-38 sm:px-6 md:pt-40 lg:px-8">
-          <div className="flex w-full flex-col md:flex-row">
-            <div className="flex w-full flex-col items-center gap-4 pb-8 md:hidden">
+        <div className="relative flex flex-col justify-center mx-auto px-4 sm:px-6 lg:px-8 pt-38 md:pt-40 w-full min-w-0 max-w-264">
+          <div className="flex md:flex-row flex-col w-full">
+            <div className="md:hidden flex flex-col items-center gap-4 pb-8 w-full">
               <ProfileSection isMobile profile={publicProfile} />
             </div>
 
-            <div className="z-10 hidden shrink-0 md:sticky md:top-28 md:flex md:w-70 md:self-start lg:w-[320px]">
+            <div className="hidden md:top-28 z-10 md:sticky md:flex md:self-start md:w-70 lg:w-[320px] shrink-0">
               <ProfileSection profile={publicProfile} />
             </div>
 
-            <div className="relative flex w-full max-w-full flex-col md:max-w-[calc(100%-280px)] md:pl-8 lg:max-w-[calc(100%-320px)] lg:pl-10 xl:max-w-2xl">
+            <div className="relative flex flex-col md:pl-8 lg:pl-10 w-full max-w-full md:max-w-[calc(100%-280px)] lg:max-w-[calc(100%-320px)] xl:max-w-2xl">
               <MotionReveal>
                 <section id="introduction" className="scroll-mt-28">
                   <BioSection
@@ -263,14 +263,14 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
                         title={workingPrinciples.howIWork.title}
                         highlight={workingPrinciples.howIWork.highlight}
                       />
-                      <div className="border-l border-border/40 pl-5 sm:pl-7">
+                      <div className="pl-5 sm:pl-7 border-border/40 border-l">
                         <div className={aboutMdxClassName}>
                           {howIWorkContent}
                         </div>
                       </div>
                     </div>
 
-                    <div className="min-w-0 border-t border-border/30 pt-10 md:pt-12">
+                    <div className="pt-10 md:pt-12 border-border/30 border-t min-w-0">
                       <Heading
                         level="h2"
                         variant="section"
@@ -278,7 +278,7 @@ export default async function AboutPage({ searchParams }: AboutPageProps) {
                         title={workingPrinciples.whatIValue.title}
                         highlight={workingPrinciples.whatIValue.highlight}
                       />
-                      <div className="border-l border-border/40 pl-5 sm:pl-7">
+                      <div className="pl-5 sm:pl-7 border-border/40 border-l">
                         <div className={aboutMdxClassName}>
                           {whatIValueContent}
                         </div>

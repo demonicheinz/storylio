@@ -106,7 +106,7 @@ export function InfiniteCards({
     <div
       ref={containerRef}
       className={cn(
-        "scroller relative z-20 w-full overflow-hidden mask-[linear-gradient(to_right,transparent,white_5%,white_95%,transparent)]",
+        "z-20 relative w-full overflow-hidden scroller mask-[linear-gradient(to_right,transparent,white_5%,white_95%,transparent)]",
         className,
       )}
     >
@@ -114,7 +114,7 @@ export function InfiniteCards({
         aria-label={isPaused ? "Resume testimonials" : "Pause testimonials"}
         aria-pressed={isPaused}
         className={cn(
-          "flex w-max min-w-full shrink-0 flex-nowrap py-8 text-left",
+          "flex flex-nowrap py-8 w-max min-w-full text-left shrink-0",
           start && "animate-scroll",
         )}
         onClick={handleClick}
@@ -144,7 +144,7 @@ function MarqueeGroup({
   return (
     <div
       aria-hidden={ariaHidden}
-      className="flex shrink-0 flex-nowrap gap-6 pr-6"
+      className="flex flex-nowrap gap-6 pr-6 shrink-0"
     >
       {groups.flatMap((group) =>
         group.items.map((item) => (
@@ -157,24 +157,24 @@ function MarqueeGroup({
 
 function TestimonialCard({ item }: { item: Testimonial }) {
   return (
-    <article className="relative flex h-68 w-[min(86vw,22rem)] shrink-0 rounded-3xl border border-border/40 bg-surface/90 px-6 py-6 shadow-md backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:border-brand-soft/60 hover:bg-surface-hover hover:shadow-xl sm:h-64 sm:w-95 sm:px-8 md:h-60 md:w-112.5">
-      <blockquote className="flex h-full min-w-0 flex-col">
-        <p className="relative z-20 min-w-0 text-base leading-[1.8] font-normal tracking-wide text-wrap wrap-break-word text-[#E4ECFF] italic">
+    <article className="relative flex bg-surface/90 hover:bg-surface-hover shadow-md hover:shadow-xl backdrop-blur-sm px-6 sm:px-8 py-6 border border-border/40 hover:border-brand-soft/60 rounded-3xl w-[min(86vw,22rem)] sm:w-95 md:w-112.5 h-68 sm:h-64 md:h-60 transition-all hover:-translate-y-2 duration-300 shrink-0">
+      <blockquote className="flex flex-col min-w-0 h-full">
+        <p className="z-20 relative min-w-0 font-normal text-[#E4ECFF] text-base wrap-break-word italic text-wrap leading-[1.8] tracking-wide">
           &ldquo;{item.quote}&rdquo;
         </p>
-        <div className="relative z-20 mt-auto flex flex-row items-center gap-3 pt-6">
-          <Avatar className="size-12 border-2 border-brand-soft/50">
+        <div className="z-20 relative flex flex-row items-center gap-3 mt-auto pt-6">
+          <Avatar className="border-2 border-brand-soft/50 size-12">
             {item.avatar ? (
               <AvatarImage src={item.avatar} alt={`${item.name} avatar`} />
             ) : null}
             <AvatarFallback>{getInitials(item.name)}</AvatarFallback>
           </Avatar>
           <span className="flex flex-col">
-            <span className="text-sm leading-[1.6] font-semibold text-brand-soft/90">
+            <span className="font-semibold text-brand-soft/90 text-sm leading-[1.6]">
               {item.name}
             </span>
             {item.title ? (
-              <span className="text-xs leading-[1.6] font-normal text-gray-400">
+              <span className="font-normal text-gray-400 text-xs leading-[1.6]">
                 {item.title}
               </span>
             ) : null}

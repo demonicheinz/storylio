@@ -166,7 +166,7 @@ export function ScreenshotsUpload({
           renderItem={({ item, index, handle, isDragging: dragging }) => (
             <div
               className={cn(
-                "group overflow-hidden rounded-lg border border-border bg-background/40 transition-[border-color,box-shadow,opacity]",
+                "group bg-background/40 border border-border rounded-lg overflow-hidden transition-[border-color,box-shadow,opacity]",
                 dragging
                   ? "border-brand-soft/60 shadow-[0_0_36px_rgba(139,92,246,0.16)]"
                   : "hover:border-brand-soft/35",
@@ -183,12 +183,12 @@ export function ScreenshotsUpload({
                       className="object-cover"
                       sizes="(max-width: 768px) 100vw, 340px"
                     />
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+                    <div className="top-2 right-2 absolute flex gap-1 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity">
                       <Button
                         type="button"
                         variant="destructive"
                         size="icon"
-                        className="size-7 rounded-full"
+                        className="rounded-full size-7"
                         onClick={() => removeItem(index)}
                         disabled={disabled || isUploading}
                         aria-label="Remove screenshot"
@@ -196,7 +196,7 @@ export function ScreenshotsUpload({
                         <XIcon />
                       </Button>
                     </div>
-                    <div className="absolute bottom-2 left-2 rounded-full border border-border/60 bg-background/75 px-2 py-1 text-xs text-muted-foreground backdrop-blur">
+                    <div className="bottom-2 left-2 absolute bg-background/75 backdrop-blur px-2 py-1 border border-border/60 rounded-full text-muted-foreground text-xs">
                       {index + 1}
                     </div>
                   </div>
@@ -243,7 +243,7 @@ export function ScreenshotsUpload({
           }
         }}
         className={cn(
-          "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-6 text-center transition-colors",
+          "flex flex-col justify-center items-center gap-3 p-6 border-2 border-dashed rounded-lg text-center transition-colors cursor-pointer",
           isDragging
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/50 hover:bg-muted/30",
@@ -252,22 +252,22 @@ export function ScreenshotsUpload({
       >
         {isUploading ? (
           <>
-            <CloudArrowUpIcon className="size-9 animate-pulse text-primary" />
-            <p className="text-sm text-muted-foreground">Uploading...</p>
+            <CloudArrowUpIcon className="size-9 text-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm">Uploading...</p>
           </>
         ) : value.length > 0 ? (
           <>
             <PlusIcon className="size-9 text-muted-foreground" />
-            <p className="text-sm font-medium">Add screenshots</p>
+            <p className="font-medium text-sm">Add screenshots</p>
           </>
         ) : (
           <>
             <ImageIcon className="size-9 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium">
+              <p className="font-medium text-sm">
                 Drop screenshots here or click to upload
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-muted-foreground text-xs">
                 JPG, PNG, WebP, GIF - max 10MB each
               </p>
             </div>
@@ -285,7 +285,7 @@ export function ScreenshotsUpload({
         disabled={disabled || isUploading}
       />
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-destructive text-sm">{error}</p>}
     </div>
   );
 }

@@ -294,7 +294,7 @@ export function ImageUpload({
       <div className={cn("relative", className)}>
         <div
           className={cn(
-            "relative aspect-video w-full overflow-hidden rounded-lg border border-border",
+            "relative border border-border rounded-lg w-full aspect-video overflow-hidden",
             cropShape === "round" && "aspect-square rounded-full",
             previewClassName,
           )}
@@ -313,7 +313,7 @@ export function ImageUpload({
             type="button"
             variant="destructive"
             size="icon"
-            className="absolute -top-2 -right-2 size-7 rounded-full"
+            className="-top-2 -right-2 absolute rounded-full size-7"
             onClick={onRemove}
             disabled={disabled}
           >
@@ -340,7 +340,7 @@ export function ImageUpload({
           }
         }}
         className={cn(
-          "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 transition-colors",
+          "flex flex-col justify-center items-center gap-3 p-8 border-2 border-dashed rounded-lg transition-colors cursor-pointer",
           isDragging
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/50 hover:bg-muted/30",
@@ -349,21 +349,21 @@ export function ImageUpload({
       >
         {isUploading ? (
           <>
-            <CloudArrowUpIcon className="size-10 animate-pulse text-primary" />
-            <p className="text-sm text-muted-foreground">Uploading...</p>
+            <CloudArrowUpIcon className="size-10 text-primary animate-pulse" />
+            <p className="text-muted-foreground text-sm">Uploading...</p>
           </>
         ) : (
           <>
             <ImageIcon className="size-10 text-muted-foreground" />
             <div className="text-center">
-              <p className="text-sm font-medium">
+              <p className="font-medium text-sm">
                 Drop an image here or click to upload
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-muted-foreground text-xs">
                 JPG, PNG, WebP, GIF — max {maxSizeLabel}
               </p>
               {cropAspect && (
-                <p className="mt-1 inline-flex items-center justify-center gap-1 text-xs text-brand-soft">
+                <p className="inline-flex justify-center items-center gap-1 mt-1 text-brand-soft text-xs">
                   <CropIcon size={14} />
                   Crop available before upload
                 </p>
@@ -382,7 +382,7 @@ export function ImageUpload({
         disabled={disabled || isUploading}
       />
 
-      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+      {error && <p className="mt-2 text-destructive text-sm">{error}</p>}
 
       <Dialog
         open={cropDialogOpen}
@@ -401,7 +401,7 @@ export function ImageUpload({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="relative h-90 overflow-hidden rounded-3xl border border-border bg-background">
+          <div className="relative bg-background border border-border rounded-3xl h-90 overflow-hidden">
             {cropSource && (
               <Cropper
                 image={cropSource}
@@ -422,7 +422,7 @@ export function ImageUpload({
           <div className="flex flex-col gap-2">
             <label
               htmlFor="image-crop-zoom"
-              className="text-sm font-medium text-foreground"
+              className="font-medium text-foreground text-sm"
             >
               Zoom
             </label>

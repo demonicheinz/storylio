@@ -179,10 +179,10 @@ export default async function HomePage() {
     `Hi! I'm Heinz, a ${owner?.tagline ?? "Full Stack Developer"} based in Central Java, Indonesia.`;
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center">
-      <div className="relative flex min-h-screen w-full flex-col items-center overflow-x-hidden text-white">
+    <div className="flex flex-col flex-1 justify-center items-center">
+      <div className="relative flex flex-col items-center w-full min-h-screen overflow-x-hidden text-white">
         <PublicBackground variant="home" />
-        <section className="h-screen w-full">
+        <section className="w-full h-screen">
           <HeroSection
             title={title}
             subtitle="Dynamic Web Magic with Next.js"
@@ -192,7 +192,7 @@ export default async function HomePage() {
           />
         </section>
 
-        <div className="relative z-10 mx-auto w-full max-w-350 px-4 sm:px-6 lg:px-8">
+        <div className="z-10 relative mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-350">
           <div className="flex flex-col gap-10">
             <MotionReveal>
               <RecentProjectsSection projects={recentProjects} />

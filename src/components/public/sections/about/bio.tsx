@@ -62,17 +62,17 @@ export function BioSection({
   return (
     <div className="flex flex-col gap-8 md:py-2">
       <div className="flex flex-col items-center md:items-start">
-        <p className="mb-3 text-xs font-semibold tracking-[0.28em] text-brand-soft uppercase">
+        <p className="mb-3 font-semibold text-brand-soft text-xs uppercase tracking-[0.28em]">
           About Heinz
         </p>
-        <h1 className="text-center font-heading text-[34px] leading-none font-bold text-foreground sm:text-[48px] md:text-left md:text-[56px]">
+        <h1 className="font-heading font-bold text-[34px] text-foreground sm:text-[48px] md:text-[56px] md:text-left text-center leading-none">
           {name}
         </h1>
-        <p className="mt-3 text-center text-[20px] text-brand-soft sm:text-[28px] md:text-left md:text-[32px]">
+        <p className="mt-3 text-[20px] text-brand-soft sm:text-[28px] md:text-[32px] md:text-left text-center">
           {role}
         </p>
 
-        <div className="mt-6 mb-2 flex flex-wrap justify-center gap-2 md:justify-start">
+        <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-6 mb-2">
           {links.map((item) => {
             const Icon = icons[item.icon];
 
@@ -81,7 +81,7 @@ export function BioSection({
                 key={item.name}
                 variant="outline"
                 size="sm"
-                className="rounded-full border-border/60 bg-surface/70 backdrop-blur"
+                className="bg-surface/70 backdrop-blur border-border/60 rounded-full"
                 asChild
               >
                 <Link href={item.link} target="_blank" rel="noreferrer">

@@ -32,23 +32,23 @@ export const Card = ({ title, icon, children, des }: CardProps) => {
   const handleClick = () => isMobile && setActive(!active);
 
   return (
-    <div className="group/canvas-card relative mx-auto w-full max-w-md sm:w-[calc(100%-2rem)] md:w-[calc(50%-1.5rem)] lg:w-[calc(33.333%-1.5rem)]">
+    <div className="group/canvas-card relative mx-auto w-full sm:w-[calc(100%-2rem)] md:w-[calc(50%-1.5rem)] lg:w-[calc(33.333%-1.5rem)] max-w-md">
       {/* Plus icons positioned absolutely relative to the container */}
       <PlusIcon
         size={40}
-        className="pointer-events-none absolute -top-3 -left-3 z-10 text-gray-400 opacity-30 dark:text-white/40"
+        className="-top-3 -left-3 z-10 absolute opacity-30 text-gray-400 dark:text-white/40 pointer-events-none"
       />
       <PlusIcon
         size={40}
-        className="pointer-events-none absolute -bottom-3 -left-3 z-10 text-gray-400 opacity-30 dark:text-white/40"
+        className="-bottom-3 -left-3 z-10 absolute opacity-30 text-gray-400 dark:text-white/40 pointer-events-none"
       />
       <PlusIcon
         size={40}
-        className="pointer-events-none absolute -top-3 -right-3 z-10 text-gray-400 opacity-30 dark:text-white/40"
+        className="-top-3 -right-3 z-10 absolute opacity-30 text-gray-400 dark:text-white/40 pointer-events-none"
       />
       <PlusIcon
         size={40}
-        className="pointer-events-none absolute -right-3 -bottom-3 z-10 text-gray-400 opacity-30 dark:text-white/40"
+        className="-right-3 -bottom-3 z-10 absolute opacity-30 text-gray-400 dark:text-white/40 pointer-events-none"
       />
 
       {/* Main card content */}
@@ -58,7 +58,7 @@ export const Card = ({ title, icon, children, des }: CardProps) => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
-        className="flex aspect-3/4 h-full w-full cursor-pointer items-center justify-center overflow-hidden rounded-3xl border border-gray-200 bg-white p-4 shadow-sm dark:border-border/40 dark:bg-card"
+        className="flex justify-center items-center bg-white dark:bg-card shadow-sm p-4 border border-gray-200 dark:border-border/40 rounded-3xl w-full h-full aspect-3/4 overflow-hidden cursor-pointer"
       >
         <AnimatePresence>
           {active && (
@@ -70,14 +70,14 @@ export const Card = ({ title, icon, children, des }: CardProps) => {
                 duration: 0.3,
                 ease: "easeOut",
               }}
-              className="absolute inset-0 h-full w-full"
+              className="absolute inset-0 w-full h-full"
             >
               {children}
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="relative z-20 flex h-full w-full flex-col items-center justify-center">
+        <div className="z-20 relative flex flex-col justify-center items-center w-full h-full">
           <motion.div
             animate={{
               opacity: active ? 0 : 1,
@@ -89,7 +89,7 @@ export const Card = ({ title, icon, children, des }: CardProps) => {
               ease: [0.4, 0, 0.2, 1], // Material design ease
               type: "tween", // Memastikan menggunakan tween, bukan spring
             }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+            className="top-1/2 left-1/2 absolute -translate-x-1/2 -translate-y-1/2"
           >
             {icon}
           </motion.div>
@@ -108,10 +108,10 @@ export const Card = ({ title, icon, children, des }: CardProps) => {
                 }}
                 className="px-6 text-center"
               >
-                <h2 className="text-2xl font-bold text-white md:text-3xl">
+                <h2 className="font-bold text-white text-2xl md:text-3xl">
                   {title}
                 </h2>
-                <p className="mt-4 max-w-prose text-sm text-white">{des}</p>
+                <p className="mt-4 max-w-prose text-white text-sm">{des}</p>
               </motion.div>
             )}
           </AnimatePresence>

@@ -20,15 +20,15 @@ export function RecentProjectsSection({
   projects: HomeRecentProject[];
 }) {
   return (
-    <section className="w-full py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <h2 className="heading text-left">
+    <section className="py-10 w-full">
+      <div className="flex flex-wrap justify-between items-end gap-4">
+        <h2 className="text-left heading">
           Featured
           <span className="text-brand-soft"> projects</span>
         </h2>
         <Link
           href="/projects"
-          className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-surface/60 px-4 py-2 text-sm font-medium text-brand-soft transition-colors hover:border-brand-soft/50 hover:text-foreground"
+          className="inline-flex items-center gap-2 bg-surface/60 px-4 py-2 border border-border/50 hover:border-brand-soft/50 rounded-full font-medium text-brand-soft hover:text-foreground text-sm transition-colors"
         >
           View all projects
           <ArrowUpRightIcon size={16} />
@@ -36,7 +36,7 @@ export function RecentProjectsSection({
       </div>
 
       {projects.length > 0 ? (
-        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="gap-6 grid grid-cols-1 md:grid-cols-2 mt-10">
           {projects.map((project) => {
             const visibleTech = project.techStack.slice(0, 3);
             const remainingTech = project.techStack.length - visibleTech.length;
@@ -45,7 +45,7 @@ export function RecentProjectsSection({
               <Link
                 href={`/projects/${project.slug}`}
                 key={project.id}
-                className="group/project flex h-full flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-brand-soft/45 hover:shadow-[0_0_64px_rgba(139,92,246,0.14)]"
+                className="group/project flex flex-col bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] backdrop-blur-xl p-3 border border-border/40 hover:border-brand-soft/45 rounded-3xl h-full overflow-hidden transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 duration-300"
               >
                 <div className="relative">
                   <ProjectCover
@@ -55,28 +55,28 @@ export function RecentProjectsSection({
                     sizes="(min-width: 1280px) 672px, (min-width: 768px) calc(50vw - 2.5rem), calc(100vw - 2rem)"
                   />
                   {project.isFeatured && (
-                    <Badge className="pointer-events-none absolute top-3 left-3 rounded-full bg-brand-soft/90 px-3 text-primary-foreground shadow-[0_8px_24px_rgba(10,10,20,0.35)] backdrop-blur">
+                    <Badge className="top-3 left-3 absolute bg-brand-soft/90 shadow-[0_8px_24px_rgba(10,10,20,0.35)] backdrop-blur px-3 rounded-full text-primary-foreground pointer-events-none">
                       Featured
                     </Badge>
                   )}
                 </div>
 
-                <div className="flex flex-1 flex-col p-4">
-                  <h3 className="font-heading text-2xl leading-tight font-semibold text-foreground transition-colors group-hover/project:text-brand-soft">
+                <div className="flex flex-col flex-1 p-4">
+                  <h3 className="font-heading font-semibold text-foreground group-hover/project:text-brand-soft text-2xl leading-tight transition-colors">
                     {project.title}
                   </h3>
-                  <p className="mt-3 line-clamp-2 text-sm leading-7 text-muted-foreground">
+                  <p className="mt-3 text-muted-foreground text-sm line-clamp-2 leading-7">
                     {project.description ??
                       "A selected project from Heinz's archive."}
                   </p>
 
                   {project.techStack.length > 0 && (
-                    <div className="mt-5 flex max-w-full items-center gap-1.5 overflow-hidden">
+                    <div className="flex items-center gap-1.5 mt-5 max-w-full overflow-hidden">
                       {visibleTech.map((tech) => (
                         <Badge
                           key={`${project.id}-${tech}`}
                           variant="outline"
-                          className="shrink-0 rounded-full border-border/90 bg-background/35 text-foreground/85"
+                          className="bg-background/35 border-border/90 rounded-full text-foreground/85 shrink-0"
                         >
                           {tech}
                         </Badge>
@@ -84,7 +84,7 @@ export function RecentProjectsSection({
                       {remainingTech > 0 && (
                         <Badge
                           variant="outline"
-                          className="shrink-0 rounded-full border-border/90 bg-background/35 text-foreground/85"
+                          className="bg-background/35 border-border/90 rounded-full text-foreground/85 shrink-0"
                           aria-label={`${remainingTech} more technologies`}
                         >
                           +{remainingTech}
@@ -93,7 +93,7 @@ export function RecentProjectsSection({
                     </div>
                   )}
 
-                  <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-medium text-brand-soft">
+                  <span className="inline-flex items-center gap-2 mt-auto pt-6 font-medium text-brand-soft text-sm">
                     View project
                     <ArrowUpRightIcon size={16} />
                   </span>
@@ -103,7 +103,7 @@ export function RecentProjectsSection({
           })}
         </div>
       ) : (
-        <div className="mt-10 rounded-3xl border border-dashed border-border/60 bg-surface/45 p-8 text-center text-sm leading-7 text-muted-foreground backdrop-blur-xl">
+        <div className="bg-surface/45 backdrop-blur-xl mt-10 p-8 border border-border/60 border-dashed rounded-3xl text-muted-foreground text-sm text-center leading-7">
           Published projects will appear here once they are added from the CMS.
         </div>
       )}

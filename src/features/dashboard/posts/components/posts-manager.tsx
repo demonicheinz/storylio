@@ -149,7 +149,7 @@ function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-xs",
         published
           ? "bg-emerald-500/12 text-emerald-300"
           : "bg-amber-500/12 text-amber-300",
@@ -158,7 +158,7 @@ function StatusBadge({
     >
       <span
         className={cn(
-          "size-1.5 rounded-full",
+          "rounded-full size-1.5",
           published ? "bg-emerald-300" : "bg-amber-300",
         )}
       />
@@ -181,7 +181,7 @@ function PostThumbnail({
   return (
     <div
       className={cn(
-        "relative aspect-video overflow-hidden rounded-2xl border border-border/60 bg-muted/30",
+        "relative bg-muted/30 border border-border/60 rounded-2xl aspect-video overflow-hidden",
         className,
       )}
     >
@@ -195,7 +195,7 @@ function PostThumbnail({
           onError={() => setFailed(true)}
         />
       ) : (
-        <div className="flex h-full items-center justify-center text-muted-foreground">
+        <div className="flex justify-center items-center h-full text-muted-foreground">
           <ArticleIcon className="size-8" />
         </div>
       )}
@@ -225,7 +225,7 @@ function PostsStatCard({
           {icon}
         </div>
         <div className="min-w-0">
-          <p className={cn("font-heading text-xl font-bold", className)}>
+          <p className={cn("font-heading font-bold text-xl", className)}>
             {value}
           </p>
           <p className="text-[11px] text-muted-foreground">{label}</p>
@@ -257,17 +257,17 @@ function FilterDropdown<T extends string>({
         <Button
           type="button"
           variant="outline"
-          className="h-11 min-w-0 justify-between rounded-2xl bg-input/35 px-3"
+          className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
         >
           <span className="min-w-0 text-left">
-            <span className="block text-[10px] leading-none text-muted-foreground">
+            <span className="block text-[10px] text-muted-foreground leading-none">
               {label}
             </span>
-            <span className="mt-1 block truncate text-xs font-medium">
+            <span className="block mt-1 font-medium text-xs truncate">
               {displayValue}
             </span>
           </span>
-          <CaretDownIcon className="ml-2 size-3.5 shrink-0 text-muted-foreground" />
+          <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
@@ -303,19 +303,19 @@ function TagDropdown({
         <Button
           type="button"
           variant="outline"
-          className="h-11 min-w-0 justify-between rounded-2xl bg-input/35 px-3"
+          className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
         >
           <span className="min-w-0 text-left">
-            <span className="block text-[10px] leading-none text-muted-foreground">
+            <span className="block text-[10px] text-muted-foreground leading-none">
               Tag
             </span>
-            <span className="mt-1 block truncate text-xs font-medium">
+            <span className="block mt-1 font-medium text-xs truncate">
               {selectedTags.length === 0
                 ? "All Tags"
                 : `${selectedTags.length} selected`}
             </span>
           </span>
-          <CaretDownIcon className="ml-2 size-3.5 shrink-0 text-muted-foreground" />
+          <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-60">
@@ -349,12 +349,12 @@ function ViewToggle({
   onViewModeChange: (mode: ViewMode) => void;
 }) {
   return (
-    <div className="grid w-fit shrink-0 grid-cols-2 justify-self-end rounded-xl border border-border/60 bg-background/35 p-1">
+    <div className="justify-self-end grid grid-cols-2 bg-background/35 p-1 border border-border/60 rounded-xl w-fit shrink-0">
       <Button
         type="button"
         size="icon"
         variant={viewMode === "list" ? "default" : "ghost"}
-        className="size-8 rounded-lg"
+        className="rounded-lg size-8"
         onClick={() => onViewModeChange("list")}
         aria-label="List view"
         aria-pressed={viewMode === "list"}
@@ -365,7 +365,7 @@ function ViewToggle({
         type="button"
         size="icon"
         variant={viewMode === "grid" ? "default" : "ghost"}
-        className="size-8 rounded-lg"
+        className="rounded-lg size-8"
         onClick={() => onViewModeChange("grid")}
         aria-label="Grid view"
         aria-pressed={viewMode === "grid"}
@@ -390,7 +390,7 @@ function PostActions({
           type="button"
           size="icon"
           variant="ghost"
-          className="size-8 rounded-xl bg-background/70 text-foreground backdrop-blur hover:bg-background"
+          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
           aria-label={`Open actions for ${post.title}`}
         >
           <DotsThreeVerticalIcon />
@@ -450,12 +450,12 @@ function TagPills({
   }
 
   return (
-    <div className="flex min-w-0 flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-1.5 min-w-0">
       {visibleTags.map((tag) => (
         <Badge
           key={tag.name}
           variant="secondary"
-          className="max-w-32 truncate text-[11px]"
+          className="max-w-32 text-[11px] truncate"
         >
           {tag.name}
         </Badge>
@@ -486,17 +486,17 @@ function PostsGrid({
         <article
           key={post.id}
           className={cn(
-            "group min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-background/45 transition-[border-color,transform,box-shadow] hover:-translate-y-0.5 hover:border-brand-soft/40 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)]",
+            "group bg-background/45 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)] border border-border/70 hover:border-brand-soft/40 rounded-2xl min-w-0 overflow-hidden transition-[border-color,transform,box-shadow] hover:-translate-y-0.5",
             selectedIds.has(post.id) && "border-brand-soft/60 bg-brand/5",
             batchMode && "cursor-pointer",
           )}
           onClick={batchMode ? () => onTogglePost(post.id) : undefined}
         >
           <div className="relative">
-            <PostThumbnail post={post} className="rounded-none border-0" />
+            <PostThumbnail post={post} className="border-0 rounded-none" />
             {batchMode && (
               <div
-                className="absolute top-3 left-3 z-10"
+                className="top-3 left-3 z-10 absolute"
                 onClick={(event) => event.stopPropagation()}
               >
                 <Checkbox
@@ -508,34 +508,34 @@ function PostsGrid({
             )}
             <div
               className={cn(
-                "absolute left-3 transition-[top]",
+                "left-3 absolute transition-[top]",
                 batchMode ? "top-11" : "top-3",
               )}
             >
               <StatusBadge post={post} compact />
             </div>
             <div
-              className="absolute top-3 right-3 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+              className="top-3 right-3 absolute opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity"
               onClick={(event) => event.stopPropagation()}
             >
               <PostActions post={post} />
             </div>
           </div>
-          <div className="flex min-h-48 flex-col gap-3 p-4">
+          <div className="flex flex-col gap-3 p-4 min-h-48">
             <div className="min-w-0">
-              <h2 className="line-clamp-2 font-heading text-base leading-snug font-semibold">
+              <h2 className="font-heading font-semibold text-base line-clamp-2 leading-snug">
                 {post.title}
               </h2>
-              <p className="mt-1 truncate text-xs text-muted-foreground">
+              <p className="mt-1 text-muted-foreground text-xs truncate">
                 /blog/{post.slug}
               </p>
             </div>
             <TagPills tags={post.tags} />
-            <div className="mt-auto flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <div className="flex justify-between items-center gap-3 mt-auto text-muted-foreground text-xs">
               <span className="truncate">
                 {post.publishedAt ? formatDate(post.publishedAt) : "—"}
               </span>
-              <span className="inline-flex shrink-0 items-center gap-1">
+              <span className="inline-flex items-center gap-1 shrink-0">
                 <EyeIcon className="size-3.5" />
                 {getPostViews(post).toLocaleString("en-US")} views
               </span>
@@ -595,7 +595,7 @@ function PostsList({
             <div
               key={post.id}
               className={cn(
-                "grid min-w-0 items-center px-3 py-3",
+                "items-center grid px-3 py-3 min-w-0",
                 desktopGridColumns,
               )}
             >
@@ -608,17 +608,17 @@ function PostsList({
                   />
                 </div>
               )}
-              <div className="flex min-w-0 items-center gap-3 pr-4">
+              <div className="flex items-center gap-3 pr-4 min-w-0">
                 <PostThumbnail
                   post={post}
-                  className="h-16 w-28 shrink-0 rounded-xl"
+                  className="rounded-xl w-28 h-16 shrink-0"
                   sizes="112px"
                 />
                 <div className="min-w-0">
-                  <h2 className="line-clamp-2 font-heading text-sm leading-snug font-semibold">
+                  <h2 className="font-heading font-semibold text-sm line-clamp-2 leading-snug">
                     {post.title}
                   </h2>
-                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                  <p className="mt-1 text-muted-foreground text-xs truncate">
                     /blog/{post.slug}
                   </p>
                   <div className="mt-2">
@@ -629,13 +629,13 @@ function PostsList({
               <div>
                 <StatusBadge post={post} />
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 {getPostViews(post).toLocaleString("en-US")}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 {formatDateTime(post.createdAt)}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 {formatDateTime(post.updatedAt)}
               </div>
               <div className="flex justify-end">
@@ -646,12 +646,12 @@ function PostsList({
         </div>
       </div>
 
-      <div className="grid gap-3 xl:hidden">
+      <div className="xl:hidden gap-3 grid">
         {posts.map((post) => (
           <article
             key={post.id}
             className={cn(
-              "min-w-0 rounded-2xl border border-border/70 bg-background/45 p-4 transition-colors select-none",
+              "bg-background/45 p-4 border border-border/70 rounded-2xl min-w-0 transition-colors select-none",
               selectedIds.has(post.id) && "border-brand-soft/50 bg-brand/5",
               batchMode && "cursor-pointer",
             )}
@@ -659,7 +659,7 @@ function PostsList({
           >
             <div
               className={cn(
-                "flex min-w-0 items-start transition-[gap] duration-200",
+                "flex items-start min-w-0 transition-[gap] duration-200",
                 batchMode ? "gap-3" : "gap-0",
               )}
             >
@@ -683,19 +683,19 @@ function PostsList({
                   aria-label={`Select ${post.title}`}
                 />
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
                   <span
                     className={cn(
-                      "size-2 shrink-0 rounded-full",
+                      "rounded-full size-2 shrink-0",
                       isPublished(post) ? "bg-emerald-300" : "bg-amber-300",
                     )}
                   />
-                  <h2 className="line-clamp-2 font-heading text-base leading-snug font-semibold">
+                  <h2 className="font-heading font-semibold text-base line-clamp-2 leading-snug">
                     {post.title}
                   </h2>
                 </div>
-                <p className="mt-1 truncate text-xs text-muted-foreground">
+                <p className="mt-1 text-muted-foreground text-xs truncate">
                   /blog/{post.slug}
                 </p>
               </div>
@@ -706,13 +706,13 @@ function PostsList({
                 <PostActions post={post} />
               </div>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 mt-3">
               <StatusBadge post={post} compact />
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1 text-muted-foreground text-xs">
                 <EyeIcon className="size-3.5" />
                 {getPostViews(post).toLocaleString("en-US")} views
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 Updated {formatDate(post.updatedAt)}
               </span>
             </div>
@@ -742,16 +742,16 @@ function BatchActionsBar({
   onClear: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card/55 p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-card/55 shadow-sm p-3 border border-border/70 rounded-2xl">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-foreground">
+        <p className="font-medium text-foreground text-sm">
           {selectedCount} {selectedCount === 1 ? "post" : "posts"} selected
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           Apply publishing changes or remove selected posts.
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+      <div className="sm:flex sm:flex-wrap sm:justify-end gap-2 grid grid-cols-2">
         <Button
           type="button"
           size="sm"
@@ -766,7 +766,7 @@ function BatchActionsBar({
           type="button"
           size="sm"
           variant="outline"
-          className="rounded-xl bg-input/35"
+          className="bg-input/35 rounded-xl"
           disabled={isPending || selectedCount === 0}
           onClick={onMoveToDraft}
         >
@@ -843,12 +843,12 @@ function PostsPagination({
   onItemsPerPageChange: (value: number) => void;
 }) {
   const pageControls = (
-    <div className="flex items-center justify-center gap-1">
+    <div className="flex justify-center items-center gap-1">
       <Button
         type="button"
         size="icon"
         variant="outline"
-        className="size-8 rounded-xl"
+        className="rounded-xl size-8"
         disabled={page <= 1}
         onClick={() => onPageChange(Math.max(1, page - 1))}
         aria-label="Previous page"
@@ -864,7 +864,7 @@ function PostsPagination({
             type="button"
             size="icon"
             variant={pageNumber === page ? "default" : "outline"}
-            className="size-8 rounded-xl"
+            className="rounded-xl size-8"
             onClick={() => onPageChange(pageNumber)}
             aria-current={pageNumber === page ? "page" : undefined}
           >
@@ -876,7 +876,7 @@ function PostsPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="size-8 rounded-xl"
+        className="rounded-xl size-8"
         disabled={page >= pageCount}
         onClick={() => onPageChange(Math.min(pageCount, page + 1))}
         aria-label="Next page"
@@ -887,8 +887,8 @@ function PostsPagination({
   );
 
   return (
-    <div className="mt-4 grid gap-3 text-sm text-muted-foreground md:grid-cols-[1fr_auto_1fr] md:items-center">
-      <div className="flex items-center justify-between md:contents">
+    <div className="md:items-center gap-3 grid md:grid-cols-[1fr_auto_1fr] mt-4 text-muted-foreground text-sm">
+      <div className="md:contents flex justify-between items-center">
         <p className="md:hidden">
           {firstIndex}-{lastIndex} of {total}
         </p>
@@ -905,7 +905,7 @@ function PostsPagination({
         </div>
       </div>
       <div className="md:col-start-2">{pageControls}</div>
-      <div className="hidden justify-end md:flex">
+      <div className="hidden md:flex justify-end">
         <ItemsPerPageDropdown
           value={itemsPerPage}
           options={itemsPerPageOptions}
@@ -931,7 +931,7 @@ function ItemsPerPageDropdown({
   return (
     <div className="flex items-center gap-2">
       {showLabel && (
-        <span className="text-sm text-muted-foreground">Items per page</span>
+        <span className="text-muted-foreground text-sm">Items per page</span>
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -939,7 +939,7 @@ function ItemsPerPageDropdown({
             type="button"
             variant="outline"
             size="sm"
-            className="rounded-xl bg-input/35"
+            className="bg-input/35 rounded-xl"
           >
             {value}
             <CaretDownIcon className="size-3.5" />
@@ -1272,17 +1272,17 @@ export function PostsManager({ posts }: PostsManagerProps) {
 
   return (
     <div className={dashboardStyles.page}>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex justify-between items-start gap-4">
         <div className="min-w-0">
-          <h1 className="font-heading text-3xl font-bold">Posts</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          <h1 className="font-heading font-bold text-3xl">Posts</h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
             Manage blog drafts, published articles, metadata, and view counts.
           </p>
         </div>
         <Button
           asChild
           size="icon"
-          className="size-10 shrink-0 rounded-full md:h-9 md:w-auto md:rounded-3xl md:px-4"
+          className="md:px-4 rounded-full md:rounded-3xl md:w-auto md:h-9 size-10 shrink-0"
         >
           <Link href="/dashboard/posts/new">
             <PlusIcon data-icon="inline-start" />
@@ -1328,26 +1328,26 @@ export function PostsManager({ posts }: PostsManagerProps) {
 
       <Card className={dashboardStyles.toolbarCard}>
         <CardContent className={dashboardStyles.toolbarContent}>
-          <div className="grid gap-3 md:hidden">
-            <div className="flex min-w-0 gap-2">
-              <div className="relative min-w-0 flex-1">
-                <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="md:hidden gap-3 grid">
+            <div className="flex gap-2 min-w-0">
+              <div className="relative flex-1 min-w-0">
+                <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
                 <Input
                   ref={mobileSearchInputRef}
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search posts..."
-                  className="h-10 rounded-2xl bg-input/45 pr-14 pl-9"
+                  className="bg-input/45 pr-14 pl-9 rounded-2xl h-10"
                   aria-label="Search posts"
                 />
-                <Kbd className="absolute top-1/2 right-2 -translate-y-1/2 border border-border/50 bg-background/60">
+                <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
                   ⌘ K
                 </Kbd>
               </div>
               <Button
                 type="button"
                 variant="outline"
-                className="h-10 shrink-0 rounded-2xl bg-input/35"
+                className="bg-input/35 rounded-2xl h-10 shrink-0"
                 onClick={(event) => blurBeforeOpen(event, openFilters)}
               >
                 <FunnelSimpleIcon data-icon="inline-start" />
@@ -1356,7 +1356,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
               <Button
                 type="button"
                 variant={batchMode ? "secondary" : "outline"}
-                className="h-10 shrink-0 rounded-2xl bg-input/35"
+                className="bg-input/35 rounded-2xl h-10 shrink-0"
                 onClick={toggleBatchMode}
               >
                 {batchMode ? "Cancel" : "Select"}
@@ -1364,18 +1364,18 @@ export function PostsManager({ posts }: PostsManagerProps) {
             </div>
           </div>
 
-          <div className="hidden min-w-0 gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_140px_160px_auto]">
-            <div className="relative min-w-0 md:col-span-2 xl:col-span-1">
-              <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_140px_160px_auto] min-w-0">
+            <div className="relative md:col-span-2 xl:col-span-1 min-w-0">
+              <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
               <Input
                 ref={desktopSearchInputRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search posts..."
-                className="h-11 rounded-2xl bg-input/45 pr-14 pl-9"
+                className="bg-input/45 pr-14 pl-9 rounded-2xl h-11"
                 aria-label="Search posts"
               />
-              <Kbd className="absolute top-1/2 right-2 -translate-y-1/2 border border-border/50 bg-background/60">
+              <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
                 ⌘ K
               </Kbd>
             </div>
@@ -1399,7 +1399,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
               options={sortOptions}
               onValueChange={setSortMode}
             />
-            <div className="flex w-fit items-center gap-2 justify-self-end md:justify-self-start xl:justify-self-auto">
+            <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
               <ViewToggle
                 viewMode={viewMode}
                 onViewModeChange={handleViewModeChange}
@@ -1407,7 +1407,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
               <Button
                 type="button"
                 variant={batchMode ? "secondary" : "outline"}
-                className="h-11 shrink-0 rounded-2xl bg-input/35"
+                className="bg-input/35 rounded-2xl h-11 shrink-0"
                 onClick={toggleBatchMode}
               >
                 {batchMode ? "Cancel" : "Select"}
@@ -1415,8 +1415,8 @@ export function PostsManager({ posts }: PostsManagerProps) {
             </div>
           </div>
           {selectedTags.length > 0 && (
-            <div className="mt-3 hidden flex-wrap items-center gap-2 md:flex">
-              <span className="text-xs text-muted-foreground">
+            <div className="hidden md:flex flex-wrap items-center gap-2 mt-3">
+              <span className="text-muted-foreground text-xs">
                 Active tags:
               </span>
               {selectedTags.map((tag) => (
@@ -1425,7 +1425,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
                   type="button"
                   size="sm"
                   variant="secondary"
-                  className="h-7 rounded-full px-2.5 text-xs"
+                  className="px-2.5 rounded-full h-7 text-xs"
                   onClick={() => toggleTag(tag)}
                 >
                   {tag}
@@ -1436,7 +1436,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="h-7 rounded-full px-2.5 text-xs"
+                className="px-2.5 rounded-full h-7 text-xs"
                 onClick={() => setSelectedTags([])}
               >
                 Clear
@@ -1462,7 +1462,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
           <ArticleIcon className="size-12 text-muted-foreground/50" />
           <div>
             <p className="font-medium">No posts found</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-muted-foreground text-sm">
               Adjust the filters or create a new article draft.
             </p>
           </div>
@@ -1512,14 +1512,14 @@ export function PostsManager({ posts }: PostsManagerProps) {
         onOpenChange={handleFiltersOpenChange}
         direction="bottom"
       >
-        <DrawerContent className="p-0 before:inset-x-0 before:top-2 before:bottom-0 before:rounded-t-4xl before:rounded-b-none">
+        <DrawerContent className="before:top-2 before:bottom-0 before:inset-x-0 p-0 before:rounded-t-4xl before:rounded-b-none">
           <DrawerHeader>
             <DrawerTitle>Filters</DrawerTitle>
             <DrawerDescription>
               Refine posts by publishing state, tags, and order.
             </DrawerDescription>
           </DrawerHeader>
-          <div className="grid max-h-[52vh] scrollbar-none gap-4 overflow-y-auto px-4 pb-2">
+          <div className="gap-4 grid px-4 pb-2 max-h-[52vh] overflow-y-auto scrollbar-none">
             <FilterDropdown
               label="Status"
               value={draftStatus}
@@ -1531,7 +1531,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
               onValueChange={setDraftStatus}
             />
             <div>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">
+              <p className="mb-2 font-medium text-muted-foreground text-xs">
                 Tags
               </p>
               <div className="flex flex-wrap gap-2">
@@ -1571,7 +1571,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
             />
           </div>
           <DrawerFooter>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="gap-2 grid grid-cols-2">
               <Button
                 type="button"
                 variant="outline"

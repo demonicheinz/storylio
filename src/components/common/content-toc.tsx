@@ -80,12 +80,12 @@ export function ContentToc({
   };
 
   return (
-    <aside className="sticky top-28 hidden max-h-[calc(100vh-8rem)] self-start overflow-y-auto rounded-3xl border border-border/40 bg-surface/60 p-5 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl xl:block">
-      <p className="text-xs font-semibold tracking-[0.24em] text-brand-soft uppercase">
+    <aside className="hidden xl:block top-28 sticky self-start bg-surface/60 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl p-5 border border-border/40 rounded-3xl max-h-[calc(100vh-8rem)] overflow-y-auto">
+      <p className="font-semibold text-brand-soft text-xs uppercase tracking-[0.24em]">
         {eyebrow}
       </p>
       {description && (
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        <p className="mt-2 text-muted-foreground text-sm leading-6">
           {description}
         </p>
       )}
@@ -102,7 +102,7 @@ export function ContentToc({
                   aria-current={isActive ? "true" : undefined}
                   onClick={() => scrollTo(item.id)}
                   className={cn(
-                    "flex w-full cursor-pointer items-start text-left text-sm leading-6 transition-colors outline-none hover:text-brand-soft focus-visible:text-brand-soft",
+                    "flex items-start outline-none w-full hover:text-brand-soft focus-visible:text-brand-soft text-sm text-left leading-6 transition-colors cursor-pointer",
                     indicator === "line" ? "gap-2" : "gap-3",
                     item.level === 3 &&
                       (indicator === "line" ? "pl-4" : "pl-7"),
@@ -116,7 +116,7 @@ export function ContentToc({
                   {indicator === "line" ? (
                     <span
                       className={cn(
-                        "mt-3 h-px w-3 shrink-0 bg-muted-foreground transition-all",
+                        "bg-muted-foreground mt-3 w-3 h-px transition-all shrink-0",
                         isActive && "w-5 bg-brand-soft",
                       )}
                     />
@@ -124,7 +124,7 @@ export function ContentToc({
                     item.level === 2 && (
                       <span
                         className={cn(
-                          "mt-0.5 font-mono text-[0.65rem] tracking-wider text-muted-foreground transition-colors group-focus-within:text-brand-soft group-hover:text-brand-soft",
+                          "mt-0.5 font-mono text-[0.65rem] text-muted-foreground group-focus-within:text-brand-soft group-hover:text-brand-soft tracking-wider transition-colors",
                           isActive && "text-brand-soft",
                         )}
                       >

@@ -52,7 +52,7 @@ export function ClientsSection({
 
       <div className="flex flex-col items-center max-lg:mt-10">
         {testimonialItems.length > 0 ? (
-          <div className="relative flex h-[50vh] w-screen flex-col items-center justify-center overflow-hidden bg-transparent antialiased md:h-120">
+          <div className="relative flex flex-col justify-center items-center bg-transparent w-screen h-[50vh] md:h-120 overflow-hidden antialiased">
             <InfiniteCards
               clientItems={testimonialItems}
               direction="left"
@@ -60,19 +60,19 @@ export function ClientsSection({
             />
           </div>
         ) : (
-          <div className="mt-10 rounded-3xl border border-dashed border-border/60 bg-surface/45 px-6 py-8 text-center text-sm leading-7 text-muted-foreground backdrop-blur-xl">
+          <div className="bg-surface/45 backdrop-blur-xl mt-10 px-6 py-8 border border-border/60 border-dashed rounded-3xl text-muted-foreground text-sm text-center leading-7">
             Testimonials will appear here when they are added from the CMS.
           </div>
         )}
 
         {logos.length > 0 ? (
-          <div className="flex flex-wrap items-center justify-center gap-4 max-lg:mt-10 md:gap-10">
+          <div className="flex flex-wrap justify-center items-center gap-4 md:gap-10 max-lg:mt-10">
             {logos.map((logo) => (
               <LogoCard key={logo.id} logo={logo} />
             ))}
           </div>
         ) : (
-          <div className="mt-10 rounded-3xl border border-dashed border-border/60 bg-surface/45 px-6 py-8 text-center text-sm leading-7 text-muted-foreground backdrop-blur-xl">
+          <div className="bg-surface/45 backdrop-blur-xl mt-10 px-6 py-8 border border-border/60 border-dashed rounded-3xl text-muted-foreground text-sm text-center leading-7">
             Client and technology logos will appear here when they are added
             from the CMS.
           </div>
@@ -91,7 +91,7 @@ function LogoCard({ logo }: { logo: HomeLogo }) {
       whileHover={{ y: -4, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2 }}
-      className="flex min-h-14 min-w-32 items-center justify-center rounded-2xl border border-border/40 bg-surface/90 px-5 py-3 text-sm font-semibold text-blue-100 shadow-[0_0_32px_rgba(139,92,246,0.08)] backdrop-blur-md transition-colors hover:border-brand-soft/40 hover:text-white"
+      className="flex justify-center items-center bg-surface/90 shadow-[0_0_32px_rgba(139,92,246,0.08)] backdrop-blur-md px-5 py-3 border border-border/40 hover:border-brand-soft/40 rounded-2xl min-w-32 min-h-14 font-semibold text-blue-100 hover:text-white text-sm transition-colors"
     >
       {shouldShowImage && logo.imageUrl ? (
         <Image
@@ -99,7 +99,7 @@ function LogoCard({ logo }: { logo: HomeLogo }) {
           alt={logo.label}
           width={120}
           height={40}
-          className="h-8 w-auto object-contain"
+          className="w-auto h-8 object-contain"
           loading="lazy"
           unoptimized
           onError={() => setHasImageError(true)}

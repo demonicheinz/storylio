@@ -184,7 +184,7 @@ function ProjectStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-xs",
         isPublished
           ? "bg-emerald-500/12 text-emerald-300"
           : "bg-amber-500/12 text-amber-300",
@@ -193,7 +193,7 @@ function ProjectStatusBadge({
     >
       <span
         className={cn(
-          "size-1.5 rounded-full",
+          "rounded-full size-1.5",
           isPublished ? "bg-emerald-300" : "bg-amber-300",
         )}
       />
@@ -210,7 +210,7 @@ function AutosaveStatusPill({ status }: { status: AutosaveStatus }) {
   return (
     <span
       className={cn(
-        "inline-flex w-fit items-center rounded-full bg-surface/55 px-2.5 py-1 text-xs text-muted-foreground",
+        "inline-flex items-center bg-surface/55 px-2.5 py-1 rounded-full w-fit text-muted-foreground text-xs",
         status === "saving" && "text-brand-soft",
         status === "failed" && "text-destructive",
       )}
@@ -423,7 +423,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
 
   return (
     <form className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
         <div className="flex flex-col gap-2">
           <Button asChild variant="ghost" className="w-fit">
             <Link href="/dashboard/projects">
@@ -432,10 +432,10 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
             </Link>
           </Button>
           <div className="min-w-0">
-            <h1 className="font-heading text-3xl font-bold wrap-break-word">
+            <h1 className="font-heading font-bold text-3xl wrap-break-word">
               {mode === "create" ? "New Project" : "Edit Project"}
             </h1>
-            <p className="mt-2 max-w-2xl wrap-break-word text-muted-foreground">
+            <p className="mt-2 max-w-2xl text-muted-foreground wrap-break-word">
               Shape portfolio case studies, visuals, links, and publish state.
             </p>
             {mode === "edit" && (
@@ -446,8 +446,8 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
           </div>
         </div>
 
-        <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:min-w-0 sm:flex-wrap sm:items-center sm:justify-end">
-          <div className="col-span-2 flex justify-start sm:col-span-1 sm:justify-center">
+        <div className="sm:flex sm:flex-wrap sm:justify-end sm:items-center gap-2 grid grid-cols-2 w-full sm:w-auto min-w-0 sm:min-w-0">
+          <div className="flex justify-start sm:justify-center col-span-2 sm:col-span-1">
             <ProjectStatusBadge status={status} />
           </div>
           <Button
@@ -480,7 +480,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
             type="button"
             onClick={submitWithStatus("published")}
             disabled={isPending}
-            className="col-span-2 min-w-0 sm:col-span-1"
+            className="col-span-2 sm:col-span-1 min-w-0"
           >
             {pendingAction === "publish" ? (
               <SpinnerIcon data-icon="inline-start" className="animate-spin" />
@@ -494,8 +494,8 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
         </div>
       </div>
 
-      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="flex min-w-0 flex-col gap-6">
+      <div className="gap-6 grid xl:grid-cols-[minmax(0,1fr)_380px] min-w-0">
+        <div className="flex flex-col gap-6 min-w-0">
           <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Case Study</CardTitle>
@@ -517,7 +517,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 )}
               />
               {errors.content?.message && (
-                <p className="mt-2 text-sm text-destructive">
+                <p className="mt-2 text-destructive text-sm">
                   {errors.content.message}
                 </p>
               )}
@@ -544,7 +544,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                   {...register("title")}
                 />
                 {errors.title?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.title.message}
                   </p>
                 )}
@@ -567,7 +567,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                   }}
                 />
                 {errors.slug?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.slug.message}
                   </p>
                 )}
@@ -585,7 +585,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 />
                 <p
                   className={cn(
-                    "text-xs text-muted-foreground",
+                    "text-muted-foreground text-xs",
                     errors.description && "text-destructive",
                   )}
                 >
@@ -604,7 +604,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 />
                 <p
                   className={cn(
-                    "text-xs text-muted-foreground",
+                    "text-muted-foreground text-xs",
                     errors.contribution && "text-destructive",
                   )}
                 >
@@ -624,7 +624,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                   {...register("order")}
                 />
                 {errors.order?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.order.message}
                   </p>
                 )}
@@ -642,7 +642,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 Keep projects as drafts until they are ready for the portfolio.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex min-w-0 flex-col gap-5">
+            <CardContent className="flex flex-col gap-5 min-w-0">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="status">Status</Label>
                 <Controller
@@ -655,7 +655,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                           id="status"
                           type="button"
                           variant="outline"
-                          className="h-9 w-full justify-between rounded-3xl bg-input/50 px-3 font-normal"
+                          className="justify-between bg-input/50 px-3 rounded-3xl w-full h-9 font-normal"
                         >
                           <ProjectStatusBadge status={field.value} compact />
                           <CaretDownIcon data-icon="inline-end" />
@@ -685,10 +685,10 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 control={control}
                 name="isFeatured"
                 render={({ field }) => (
-                  <div className="flex items-start justify-between gap-4 rounded-2xl border border-border/60 bg-background/35 p-4">
+                  <div className="flex justify-between items-start gap-4 bg-background/35 p-4 border border-border/60 rounded-2xl">
                     <div>
                       <Label htmlFor="isFeatured">Featured project</Label>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      <p className="mt-1 text-muted-foreground text-xs leading-5">
                         Featured projects are prioritized on Home and Projects
                         pages.
                       </p>
@@ -730,7 +730,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                     />
                   )}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Type comma + space to create a tech stack tag.
                 </p>
               </div>
@@ -746,7 +746,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                   {...register("liveUrl")}
                 />
                 {errors.liveUrl?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.liveUrl.message}
                   </p>
                 )}
@@ -763,7 +763,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                   {...register("githubUrl")}
                 />
                 {errors.githubUrl?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.githubUrl.message}
                   </p>
                 )}
@@ -773,10 +773,10 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 control={control}
                 name="isClosedSource"
                 render={({ field }) => (
-                  <div className="flex items-start justify-between gap-4 rounded-2xl border border-border/60 bg-background/35 p-4">
+                  <div className="flex justify-between items-start gap-4 bg-background/35 p-4 border border-border/60 rounded-2xl">
                     <div>
                       <Label htmlFor="isClosedSource">Closed source</Label>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      <p className="mt-1 text-muted-foreground text-xs leading-5">
                         Hide GitHub button even if repository URL is empty or
                         unavailable.
                       </p>
@@ -823,7 +823,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                   }
                 />
                 {errors.coverImage?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.coverImage.message}
                   </p>
                 )}
@@ -849,12 +849,12 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                     })
                   }
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Optional. Project cards use this first, then fall back to the
                   cover image.
                 </p>
                 {errors.thumbnailImageUrl?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.thumbnailImageUrl.message}
                   </p>
                 )}
@@ -880,12 +880,12 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                     })
                   }
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Used when this project is shared on social platforms.
                   Recommended ratio: 1200×630.
                 </p>
                 {errors.ogImageUrl?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.ogImageUrl.message}
                   </p>
                 )}
@@ -904,7 +904,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                     />
                   )}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {structuredScreenshots.length}{" "}
                   {structuredScreenshots.length === 1
                     ? "screenshot"
@@ -912,7 +912,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                   attached.
                 </p>
                 {errors.structuredScreenshots?.message && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-destructive text-sm">
                     {errors.structuredScreenshots.message}
                   </p>
                 )}

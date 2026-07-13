@@ -28,7 +28,7 @@ export function ProjectCover({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border/40 bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.28),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(49,46,129,0.28),rgba(10,10,20,0.96))]",
+        "relative bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.28),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(49,46,129,0.28),rgba(10,10,20,0.96))] border border-border/40 rounded-2xl overflow-hidden",
         className,
       )}
     >
@@ -40,27 +40,27 @@ export function ProjectCover({
           sizes={sizes}
           fetchPriority={fetchPriority}
           loading={loading}
-          className="object-cover transition-transform duration-500 group-hover/project:scale-105"
+          className="object-cover group-hover/project:scale-105 transition-transform duration-500"
           onError={() => setHasImageError(true)}
         />
       ) : (
-        <div className="flex h-full min-h-56 flex-col justify-between p-5">
-          <div className="h-2 w-24 rounded-full bg-brand-soft/50" />
+        <div className="flex flex-col justify-between p-5 h-full min-h-56">
+          <div className="bg-brand-soft/50 rounded-full w-24 h-2" />
           <div className="space-y-3">
-            <div className="h-3 w-3/4 rounded-full bg-foreground/35" />
-            <div className="h-3 w-1/2 rounded-full bg-foreground/20" />
-            <div className="grid grid-cols-3 gap-2 pt-3">
-              <div className="h-16 rounded-xl bg-foreground/10" />
-              <div className="grid h-16 place-items-center rounded-xl bg-brand-soft/20 text-brand-soft">
+            <div className="bg-foreground/35 rounded-full w-3/4 h-3" />
+            <div className="bg-foreground/20 rounded-full w-1/2 h-3" />
+            <div className="gap-2 grid grid-cols-3 pt-3">
+              <div className="bg-foreground/10 rounded-xl h-16" />
+              <div className="place-items-center grid bg-brand-soft/20 rounded-xl h-16 text-brand-soft">
                 <ImageIcon size={22} />
               </div>
-              <div className="h-16 rounded-xl bg-foreground/10" />
+              <div className="bg-foreground/10 rounded-xl h-16" />
             </div>
           </div>
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/30 via-transparent to-white/5" />
+      <div className="absolute inset-0 bg-linear-to-t from-background/30 via-transparent to-white/5 pointer-events-none" />
     </div>
   );
 }

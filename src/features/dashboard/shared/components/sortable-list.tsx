@@ -172,7 +172,7 @@ function DashboardSortableRow<TItem extends SortableItemBase>({
       ref={setActivatorNodeRef}
       type="button"
       variant="ghost"
-      className="h-full min-h-16 w-11 cursor-grab touch-none items-center justify-center self-stretch rounded-none border-r border-border/50 p-0 text-muted-foreground active:cursor-grabbing"
+      className="justify-center items-center self-stretch p-0 border-border/50 border-r rounded-none w-11 h-full min-h-16 text-muted-foreground touch-none cursor-grab active:cursor-grabbing"
       disabled={disabled}
       aria-label="Drag to reorder"
       {...attributes}
@@ -187,7 +187,7 @@ function DashboardSortableRow<TItem extends SortableItemBase>({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "grid h-full min-w-0",
+        "grid min-w-0 h-full",
         className,
         isDragging && "relative z-10 opacity-80",
       )}

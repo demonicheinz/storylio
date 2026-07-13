@@ -267,8 +267,8 @@ function EditDialog({
         {trigger}
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[calc(100vh-2rem)] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
-          <form onSubmit={submit} className="flex min-w-0 flex-col gap-5">
+        <DialogContent className="sm:max-w-2xl max-h-[calc(100vh-2rem)] overflow-x-hidden overflow-y-auto">
+          <form onSubmit={submit} className="flex flex-col gap-5 min-w-0">
             <DialogHeader>
               <DialogTitle>
                 {item ? "Edit" : "Add"} {config.title}
@@ -278,7 +278,7 @@ function EditDialog({
                 publicly.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
+            <div className="gap-4 grid sm:grid-cols-2 min-w-0">
               {config.fields.map((field) => (
                 <div key={field} className={getFieldClassName(field)}>
                   <Label htmlFor={`${kind}-${field}`}>{labels[field]}</Label>
@@ -344,7 +344,7 @@ function VisibilityBadge({ isVisible }: { isVisible: boolean }) {
     >
       <span
         className={cn(
-          "size-1.5 rounded-full",
+          "rounded-full size-1.5",
           isVisible ? "bg-emerald-300" : "bg-amber-300",
         )}
       />
@@ -355,7 +355,7 @@ function VisibilityBadge({ isVisible }: { isVisible: boolean }) {
 
 function SkillLevel({ value }: { value: string }) {
   return (
-    <span className="truncate text-sm text-muted-foreground">{value}</span>
+    <span className="text-muted-foreground text-sm truncate">{value}</span>
   );
 }
 
@@ -369,10 +369,10 @@ function SectionHeader({
   action: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-4">
       <div className="min-w-0">
-        <h2 className="font-heading text-xl font-semibold">{title}</h2>
-        <p className="text-sm leading-6 text-muted-foreground">{subtitle}</p>
+        <h2 className="font-heading font-semibold text-xl">{title}</h2>
+        <p className="text-muted-foreground text-sm leading-6">{subtitle}</p>
       </div>
       {action}
     </div>
@@ -457,7 +457,7 @@ function ManagedList({
     <div className={cn(dashboardStyles.listSurface, "rounded-3xl bg-card/55")}>
       <div
         className={cn(
-          "hidden px-4 tracking-[0.18em] lg:grid",
+          "hidden lg:grid px-4 tracking-[0.18em]",
           dashboardStyles.listHeader,
           kind === "skill"
             ? "grid-cols-[44px_minmax(0,1.5fr)_minmax(0,1fr)_minmax(8rem,0.8fr)_7rem]"
@@ -471,7 +471,7 @@ function ManagedList({
         <span className="text-right">Actions</span>
       </div>
       {items.length === 0 && (
-        <div className="m-4 rounded-2xl border border-dashed border-border/70 bg-background/30 px-4 py-5 text-sm text-muted-foreground">
+        <div className="bg-background/30 m-4 px-4 py-5 border border-border/70 border-dashed rounded-2xl text-muted-foreground text-sm">
           No CMS items yet. Public About continues using static fallback
           content.
         </div>
@@ -484,7 +484,7 @@ function ManagedList({
         renderItem={({ item, handle }) => (
           <div
             className={cn(
-              "grid min-w-0 items-center",
+              "items-center grid min-w-0",
               dashboardStyles.listRow,
               "hover:border-brand-soft/35",
               kind === "skill"
@@ -493,23 +493,23 @@ function ManagedList({
             )}
           >
             <div className="flex self-stretch">{handle}</div>
-            <div className="min-w-0 p-4 lg:py-3 lg:pr-4">
-              <p className="truncate font-heading font-semibold">
+            <div className="p-4 lg:py-3 lg:pr-4 min-w-0">
+              <p className="font-heading font-semibold truncate">
                 {title(item)}
               </p>
               {subtitle(item) && (
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs truncate">
                   {subtitle(item)}
                 </p>
               )}
               {kind !== "skill" && secondary(item) && (
-                <p className="mt-1 text-xs text-muted-foreground lg:hidden">
+                <p className="lg:hidden mt-1 text-muted-foreground text-xs">
                   {secondary(item)}
                 </p>
               )}
               {children?.(item)}
             </div>
-            <div className="hidden truncate text-sm text-muted-foreground lg:block">
+            <div className="hidden lg:block text-muted-foreground text-sm truncate">
               {kind === "skill"
                 ? (item as SkillItem).categoryName
                 : secondary(item)}
@@ -521,8 +521,8 @@ function ManagedList({
                 <VisibilityBadge isVisible={item.isVisible} />
               )}
             </div>
-            <div className="flex items-center justify-end gap-2 pr-4">
-              <div className="flex shrink-0 items-center lg:hidden">
+            <div className="flex justify-end items-center gap-2 pr-4">
+              <div className="lg:hidden flex items-center shrink-0">
                 {kind === "skill" ? (
                   <SkillLevel value={level(item)} />
                 ) : (
@@ -632,7 +632,7 @@ export function AboutStructuredManager({
             <EditDialog
               kind="experience"
               trigger={
-                <Button className="w-full rounded-2xl sm:w-auto">
+                <Button className="rounded-2xl w-full sm:w-auto">
                   <PlusIcon data-icon="inline-start" />
                   Add experience
                 </Button>
@@ -641,7 +641,7 @@ export function AboutStructuredManager({
           }
         />
         <ManagedList kind="experience" items={data.experiences} />
-        <Button asChild variant="link" className="w-fit px-0 text-brand-soft">
+        <Button asChild variant="link" className="px-0 w-fit text-brand-soft">
           <Link href="/about#work-experience" target="_blank">
             View on public page
             <ArrowSquareOutIcon data-icon="inline-end" />
@@ -661,7 +661,7 @@ export function AboutStructuredManager({
             <EditDialog
               kind="education"
               trigger={
-                <Button className="w-full rounded-2xl sm:w-auto">
+                <Button className="rounded-2xl w-full sm:w-auto">
                   <PlusIcon data-icon="inline-start" />
                   Add education
                 </Button>
@@ -670,7 +670,7 @@ export function AboutStructuredManager({
           }
         />
         <ManagedList kind="education" items={data.education} />
-        <Button asChild variant="link" className="w-fit px-0 text-brand-soft">
+        <Button asChild variant="link" className="px-0 w-fit text-brand-soft">
           <Link href="/about#education-history" target="_blank">
             View on public page
             <ArrowSquareOutIcon data-icon="inline-end" />
@@ -686,13 +686,13 @@ export function AboutStructuredManager({
         title="Skills"
         subtitle="Manage skill entries, categories, levels, and their public display order."
         action={
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex sm:flex-row flex-col gap-2">
             <EditDialog
               kind="category"
               trigger={
                 <Button
                   variant="outline"
-                  className="w-full rounded-2xl sm:w-auto"
+                  className="rounded-2xl w-full sm:w-auto"
                 >
                   <PlusIcon data-icon="inline-start" />
                   Add category
@@ -704,7 +704,7 @@ export function AboutStructuredManager({
                 kind="skill"
                 categoryId={firstCategory.id}
                 trigger={
-                  <Button className="w-full rounded-2xl sm:w-auto">
+                  <Button className="rounded-2xl w-full sm:w-auto">
                     <PlusIcon data-icon="inline-start" />
                     Add skill
                   </Button>
@@ -714,25 +714,25 @@ export function AboutStructuredManager({
           </div>
         }
       />
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex flex-col gap-3 min-w-0">
         <div className="min-w-0">
-          <h3 className="font-heading text-base font-semibold">Categories</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="font-heading font-semibold text-base">Categories</h3>
+          <p className="text-muted-foreground text-sm">
             Organize skill groups, descriptions, and category order.
           </p>
         </div>
         <ManagedList kind="category" items={data.categories} />
       </div>
-      <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex flex-col gap-3 min-w-0">
         <div className="min-w-0">
-          <h3 className="font-heading text-base font-semibold">Skills</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="font-heading font-semibold text-base">Skills</h3>
+          <p className="text-muted-foreground text-sm">
             Manage individual skills and their assigned category metadata.
           </p>
         </div>
         <ManagedList kind="skill" items={skillItems} />
       </div>
-      <Button asChild variant="link" className="w-fit px-0 text-brand-soft">
+      <Button asChild variant="link" className="px-0 w-fit text-brand-soft">
         <Link href="/about#technical-skills" target="_blank">
           View on public page
           <ArrowSquareOutIcon data-icon="inline-end" />

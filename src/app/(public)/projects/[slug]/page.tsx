@@ -205,11 +205,11 @@ export default async function ProjectDetailPage({
       <ViewCounter type="project" slug={project.slug} />
       <PublicBackground variant="projects" />
 
-      <article className="relative mx-auto flex w-full max-w-7xl flex-col px-4 pt-32 pb-24 sm:px-6 lg:px-8 lg:pt-40">
+      <article className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 pb-24 w-full max-w-7xl">
         <Button
           asChild
           variant="outline"
-          className="mb-8 w-fit rounded-full border-border/60 bg-surface/70 backdrop-blur"
+          className="bg-surface/70 backdrop-blur mb-8 border-border/60 rounded-full w-fit"
         >
           <Link href="/projects">
             <ArrowLeftIcon data-icon="inline-start" />
@@ -217,43 +217,43 @@ export default async function ProjectDetailPage({
           </Link>
         </Button>
 
-        <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
-          <div className="lg:sticky lg:top-28">
+        <div className="lg:items-start gap-6 md:gap-8 grid lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="lg:top-28 lg:sticky">
             <ProjectCover
               src={project.coverImage}
               alt={project.title}
-              className="aspect-video shadow-[0_0_80px_rgba(139,92,246,0.14)]"
+              className="shadow-[0_0_80px_rgba(139,92,246,0.14)] aspect-video"
               fetchPriority="high"
               loading="eager"
               sizes="(min-width: 1280px) 640px, (min-width: 1024px) 52vw, calc(100vw - 2rem)"
             />
           </div>
 
-          <div className="flex min-w-0 flex-col rounded-3xl border border-border/40 bg-surface/65 p-6 shadow-[0_0_64px_rgba(139,92,246,0.1)] backdrop-blur-xl md:p-8 lg:p-9">
-            <div className="mb-6 flex flex-wrap gap-1.5">
+          <div className="flex flex-col bg-surface/65 shadow-[0_0_64px_rgba(139,92,246,0.1)] backdrop-blur-xl p-6 md:p-8 lg:p-9 border border-border/40 rounded-3xl min-w-0">
+            <div className="flex flex-wrap gap-1.5 mb-6">
               {project.techStack.map((tech) => (
                 <Badge
                   key={`${project.id}-${tech}`}
                   variant="outline"
-                  className="rounded-full border-border/90 bg-background/35 text-foreground/85"
+                  className="bg-background/35 border-border/90 rounded-full text-foreground/85"
                 >
                   {tech}
                 </Badge>
               ))}
             </div>
 
-            <h1 className="font-heading text-4xl leading-[1.08] font-bold text-foreground md:text-5xl xl:text-6xl">
+            <h1 className="font-heading font-bold text-foreground text-4xl md:text-5xl xl:text-6xl leading-[1.08]">
               {project.title}
             </h1>
 
-            <p className="mt-6 text-base leading-8 text-muted-foreground md:text-lg">
+            <p className="mt-6 text-muted-foreground text-base md:text-lg leading-8">
               {project.description ??
                 "A selected project from Heinz's archive, focused on thoughtful implementation and polished interaction."}
             </p>
 
-            <div className="mt-8 border-y border-border/40 py-5 sm:hidden">
+            <div className="sm:hidden mt-8 py-5 border-border/40 border-y">
               <p className="font-medium text-foreground">{contribution}</p>
-              <p className="mt-1.5 text-sm text-muted-foreground">
+              <p className="mt-1.5 text-muted-foreground text-sm">
                 {formatDate(project.updatedAt)}
                 <span className="px-2 text-border" aria-hidden="true">
                   •
@@ -262,9 +262,9 @@ export default async function ProjectDetailPage({
               </p>
             </div>
 
-            <dl className="mt-9 hidden gap-4 border-y border-border/40 py-6 sm:grid sm:grid-cols-3">
+            <dl className="hidden gap-4 sm:grid sm:grid-cols-3 mt-9 py-6 border-border/40 border-y">
               <div>
-                <dt className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
+                <dt className="text-muted-foreground text-xs uppercase tracking-[0.24em]">
                   Contribution
                 </dt>
                 <dd className="mt-2 font-medium text-foreground">
@@ -272,7 +272,7 @@ export default async function ProjectDetailPage({
                 </dd>
               </div>
               <div>
-                <dt className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
+                <dt className="text-muted-foreground text-xs uppercase tracking-[0.24em]">
                   Updated
                 </dt>
                 <dd className="mt-2 font-medium text-foreground">
@@ -280,7 +280,7 @@ export default async function ProjectDetailPage({
                 </dd>
               </div>
               <div>
-                <dt className="text-xs tracking-[0.24em] text-muted-foreground uppercase">
+                <dt className="text-muted-foreground text-xs uppercase tracking-[0.24em]">
                   Read
                 </dt>
                 <dd className="mt-2 font-medium text-foreground">
@@ -289,7 +289,7 @@ export default async function ProjectDetailPage({
               </div>
             </dl>
 
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 mt-7">
               {project.liveUrl && (
                 <Button asChild className="rounded-full">
                   <Link href={project.liveUrl} target="_blank" rel="noreferrer">
@@ -303,7 +303,7 @@ export default async function ProjectDetailPage({
                 <Button
                   asChild
                   variant="outline"
-                  className="rounded-full border-border/60 bg-surface/70"
+                  className="bg-surface/70 border-border/60 rounded-full"
                 >
                   <Link
                     href={project.githubUrl}
@@ -322,20 +322,20 @@ export default async function ProjectDetailPage({
         {mdxContent && (
           <section aria-label="Project case study" className="mt-16 md:mt-24">
             <div className="mb-10 max-w-3xl">
-              <p className="text-xs font-semibold tracking-[0.28em] text-brand-soft uppercase">
+              <p className="font-semibold text-brand-soft text-xs uppercase tracking-[0.28em]">
                 Inside the project
               </p>
-              <h2 className="mt-3 font-heading text-3xl font-semibold text-foreground md:text-4xl">
+              <h2 className="mt-3 font-heading font-semibold text-foreground text-3xl md:text-4xl">
                 From intent to outcome
               </h2>
-              <p className="mt-4 max-w-2xl text-base leading-8 text-muted-foreground">
+              <p className="mt-4 max-w-2xl text-muted-foreground text-base leading-8">
                 A closer look at the thinking, implementation, and decisions
                 that shaped the final work.
               </p>
             </div>
 
-            <div className="grid items-start gap-10 xl:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="prose-invert flex max-w-4xl min-w-0 flex-col gap-6 border-l border-border/30 pl-5 sm:pl-8 lg:pl-10 [&>h2]:mt-20 [&>h2]:pt-2 [&>h2:first-child]:mt-0 [&>h2:first-child]:pt-0 [&>h3]:mt-12">
+            <div className="items-start gap-10 grid xl:grid-cols-[minmax(0,1fr)_280px]">
+              <div className="flex flex-col gap-6 prose-invert [&>h2:first-child]:mt-0 [&>h2]:mt-20 [&>h3]:mt-12 [&>h2:first-child]:pt-0 [&>h2]:pt-2 pl-5 sm:pl-8 lg:pl-10 border-border/30 border-l min-w-0 max-w-4xl">
                 {mdxContent}
               </div>
 

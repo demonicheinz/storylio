@@ -64,10 +64,10 @@ export function MagicButton({
 
   const inner = (
     <>
-      <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
+      <span className="absolute inset-[-1000%] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)] animate-[spin_2s_linear_infinite]" />
       <span
         className={cn(
-          "inline-flex h-full w-full items-center justify-center gap-2 rounded-full font-medium backdrop-blur-3xl transition-colors",
+          "inline-flex justify-center items-center gap-2 backdrop-blur-3xl rounded-full w-full h-full font-medium transition-colors",
           sizeClasses[size],
           variantClasses[variant],
         )}
@@ -90,7 +90,7 @@ export function MagicButton({
           <ArrowUpRightIcon
             size={iconSize}
             aria-hidden="true"
-            className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
           />
         ) : null}
         {showImage && imagePosition === "right" && imageSrc ? (

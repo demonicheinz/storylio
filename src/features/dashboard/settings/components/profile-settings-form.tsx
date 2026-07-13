@@ -144,13 +144,13 @@ function ProfileAvatarUpload({
   return (
     <div className="flex flex-col items-center gap-3 text-center">
       <div className="relative">
-        <Avatar className="size-30 border border-border/70 bg-background/60 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
+        <Avatar className="bg-background/60 shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-border/70 size-30">
           <AvatarImage src={image} alt={name || "Profile avatar"} />
           <AvatarFallback className="font-heading text-4xl">
             {getInitials(name)}
           </AvatarFallback>
         </Avatar>
-        <span className="absolute right-1 bottom-1 z-10 flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-card">
+        <span className="right-1 bottom-1 z-10 absolute flex justify-center items-center bg-primary shadow-lg rounded-full ring-4 ring-card size-10 text-primary-foreground">
           <UploadSimpleIcon className="size-5" />
         </span>
         <ImageUpload
@@ -159,13 +159,13 @@ function ProfileAvatarUpload({
           cropAspect={1}
           cropShape="round"
           cropLabel="Crop profile avatar"
-          className="absolute inset-0 z-20 opacity-0"
+          className="z-20 absolute inset-0 opacity-0"
           maxSizeBytes={2 * 1024 * 1024}
           maxSizeLabel="2MB"
           onChange={(url) => onChange(url)}
         />
       </div>
-      <p className="max-w-48 text-xs leading-5 text-muted-foreground">
+      <p className="max-w-48 text-muted-foreground text-xs leading-5">
         JPG, PNG, WebP or GIF. Max size 2MB.
       </p>
     </div>
@@ -177,7 +177,7 @@ function FieldError({ message }: { message?: string }) {
     return null;
   }
 
-  return <p className="text-sm text-destructive">{message}</p>;
+  return <p className="text-destructive text-sm">{message}</p>;
 }
 
 function IconInput({
@@ -189,7 +189,7 @@ function IconInput({
 }) {
   return (
     <div className="relative">
-      <Icon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Icon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
       <Input className={cn("pl-10", className)} {...props} />
     </div>
   );
@@ -244,19 +244,19 @@ function PasswordStrengthMeter({ password }: { password: string }) {
   const strength = getPasswordStrength(password);
 
   return (
-    <div className="grid gap-2">
+    <div className="gap-2 grid">
       <div className="flex items-center gap-1.5">
         {Array.from({ length: 5 }).map((_, index) => (
           <span
             key={index}
             className={cn(
-              "h-1.5 flex-1 rounded-full bg-muted transition-colors",
+              "flex-1 bg-muted rounded-full h-1.5 transition-colors",
               index < strength.score && strength.className,
             )}
           />
         ))}
       </div>
-      <p className={cn("text-xs font-medium", strength.textClassName)}>
+      <p className={cn("font-medium text-xs", strength.textClassName)}>
         {strength.label}
       </p>
     </div>
@@ -336,7 +336,7 @@ function ProfileSettingsForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-8 lg:grid-cols-[190px_minmax(0,1fr)]">
+          <div className="gap-8 grid lg:grid-cols-[190px_minmax(0,1fr)]">
             <ProfileAvatarUpload
               image={image}
               name={displayName}
@@ -349,8 +349,8 @@ function ProfileSettingsForm({
               }
             />
 
-            <div className="grid min-w-0 gap-4">
-              <div className="grid gap-4 md:grid-cols-2">
+            <div className="gap-4 grid min-w-0">
+              <div className="gap-4 grid md:grid-cols-2">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="name">Display Name</Label>
                   <Input
@@ -386,7 +386,7 @@ function ProfileSettingsForm({
                   className="min-h-32"
                   {...register("bio")}
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   This bio is used on the Home Hero and About dashboard page.
                 </p>
                 <FieldError message={errors.bio?.message} />
@@ -405,8 +405,8 @@ function ProfileSettingsForm({
             Add your social and professional links.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-4 lg:grid-cols-3">
+        <CardContent className="gap-4 grid">
+          <div className="gap-4 grid lg:grid-cols-3">
             <div className="flex flex-col gap-2">
               <Label htmlFor="github">GitHub</Label>
               <IconInput
@@ -450,7 +450,7 @@ function ProfileSettingsForm({
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="gap-4 grid lg:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="websiteUrl">Website URL</Label>
               <IconInput
@@ -476,7 +476,7 @@ function ProfileSettingsForm({
                 disabled={isPending}
                 {...register("publicEmail")}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 This email will be visible publicly.
               </p>
               <FieldError message={errors.publicEmail?.message} />
@@ -548,7 +548,7 @@ function ChangeEmailForm({ currentEmail }: { currentEmail: string }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <Label className="text-muted-foreground">Current login email</Label>
-        <p className="text-sm font-medium">{currentEmail}</p>
+        <p className="font-medium text-sm">{currentEmail}</p>
       </div>
 
       <form className="flex flex-col gap-4" onSubmit={onSubmit}>
@@ -562,12 +562,12 @@ function ChangeEmailForm({ currentEmail }: { currentEmail: string }) {
             disabled={isPending}
             {...register("newEmail")}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Changing your login email requires verification. A confirmation link
             will be sent to the new email address.
           </p>
           {errors.newEmail?.message && (
-            <p className="text-sm text-destructive">
+            <p className="text-destructive text-sm">
               {errors.newEmail.message}
             </p>
           )}
@@ -676,7 +676,7 @@ function AccountSettingsForm() {
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
+              className="top-1/2 right-1 absolute size-8 -translate-y-1/2"
               onClick={() => toggleVisibility("currentPassword")}
               disabled={isPending}
               aria-label={
@@ -689,7 +689,7 @@ function AccountSettingsForm() {
             </Button>
           </div>
           {errors.currentPassword?.message && (
-            <p className="text-sm text-destructive">
+            <p className="text-destructive text-sm">
               {errors.currentPassword.message}
             </p>
           )}
@@ -711,7 +711,7 @@ function AccountSettingsForm() {
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
+              className="top-1/2 right-1 absolute size-8 -translate-y-1/2"
               onClick={() => toggleVisibility("newPassword")}
               disabled={isPending}
               aria-label={
@@ -724,12 +724,12 @@ function AccountSettingsForm() {
             </Button>
           </div>
           {errors.newPassword?.message && (
-            <p className="text-sm text-destructive">
+            <p className="text-destructive text-sm">
               {errors.newPassword.message}
             </p>
           )}
           {isSameAsCurrent && (
-            <p className="text-sm text-destructive">
+            <p className="text-destructive text-sm">
               New password must be different from current password.
             </p>
           )}
@@ -752,7 +752,7 @@ function AccountSettingsForm() {
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute top-1/2 right-1 size-8 -translate-y-1/2"
+              className="top-1/2 right-1 absolute size-8 -translate-y-1/2"
               onClick={() => toggleVisibility("confirmPassword")}
               disabled={isPending}
               aria-label={
@@ -765,12 +765,12 @@ function AccountSettingsForm() {
             </Button>
           </div>
           {errors.confirmPassword?.message && (
-            <p className="text-sm text-destructive">
+            <p className="text-destructive text-sm">
               {errors.confirmPassword.message}
             </p>
           )}
           {hasConfirmMismatch && (
-            <p className="text-sm text-destructive">Passwords do not match.</p>
+            <p className="text-destructive text-sm">Passwords do not match.</p>
           )}
         </div>
 
@@ -800,13 +800,13 @@ function ConnectedProviders({
     <div className="flex flex-col gap-3">
       <div>
         <Label className="text-base">Connected providers</Label>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           External login providers linked to your account.
         </p>
       </div>
 
       {providers.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           No external providers connected.
         </p>
       ) : (
@@ -814,16 +814,16 @@ function ConnectedProviders({
           {providers.map((account) => (
             <div
               key={`${account.providerId}-${account.accountId}`}
-              className="flex items-center gap-3 rounded-lg border p-3"
+              className="flex items-center gap-3 p-3 border rounded-lg"
             >
               {account.providerId === "github" && (
                 <GithubLogoIcon className="size-5" weight="duotone" />
               )}
-              <div className="flex flex-1 flex-col">
-                <span className="text-sm font-medium capitalize">
+              <div className="flex flex-col flex-1">
+                <span className="font-medium text-sm capitalize">
                   {account.providerId}
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   Connected{" "}
                   {new Date(account.createdAt).toLocaleDateString("en-US", {
                     year: "numeric",
@@ -835,7 +835,7 @@ function ConnectedProviders({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                className="hover:bg-destructive/10 h-8 text-destructive hover:text-destructive"
                 disabled={isPending}
                 onClick={() => {
                   startTransition(async () => {
@@ -897,7 +897,7 @@ function PasskeySettings() {
   return (
     <div className="flex flex-col gap-4">
       {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-muted-foreground text-sm">
           <SpinnerIcon className="animate-spin" />
           Loading passkeys...
         </div>
@@ -906,14 +906,14 @@ function PasskeySettings() {
           {passkeys.map((passkey) => (
             <div
               key={passkey.id}
-              className="flex items-center gap-3 rounded-lg border p-3"
+              className="flex items-center gap-3 p-3 border rounded-lg"
             >
               <KeyIcon className="size-5 text-muted-foreground" />
-              <div className="flex flex-1 flex-col">
-                <span className="text-sm font-medium">
+              <div className="flex flex-col flex-1">
+                <span className="font-medium text-sm">
                   {passkey.name || "Unnamed Passkey"}
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   Added on{" "}
                   {new Date(passkey.createdAt).toLocaleDateString("en-US", {
                     year: "numeric",
@@ -927,7 +927,7 @@ function PasskeySettings() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  className="hover:bg-destructive/10 h-8 text-destructive hover:text-destructive"
                   disabled={isDeleting === passkey.id || isAdding}
                   onClick={async () => {
                     setIsDeleting(passkey.id);
@@ -954,7 +954,7 @@ function PasskeySettings() {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           No passkeys registered yet.
         </p>
       )}
@@ -1008,10 +1008,10 @@ function SessionSettings() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-3">
         <div>
           <Label className="text-base">Active sessions</Label>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-muted-foreground text-xs">
             Review every active dashboard session tied to this account.
           </p>
         </div>
@@ -1036,21 +1036,21 @@ function SessionSettings() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-muted-foreground text-sm">
           <SpinnerIcon className="animate-spin" />
           Loading sessions...
         </div>
       ) : sessions.length > 0 ? (
-        <div className="grid gap-3">
+        <div className="gap-3 grid">
           {sessions.map((session) => (
             <div
               key={session.id}
-              className="flex items-start gap-3 rounded-2xl border border-border/70 bg-background/35 p-4"
+              className="flex items-start gap-3 bg-background/35 p-4 border border-border/70 rounded-2xl"
             >
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <div className="flex justify-center items-center bg-primary/15 rounded-xl size-10 text-primary shrink-0">
                 <MonitorIcon className="size-5" />
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium">
                     {session.isCurrent
@@ -1061,10 +1061,10 @@ function SessionSettings() {
                     {session.isCurrent ? "Current" : "Active"}
                   </Badge>
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-muted-foreground text-sm">
                   {session.userAgent || "Unknown browser"}
                 </p>
-                <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                <div className="gap-2 grid sm:grid-cols-2 mt-3 text-muted-foreground text-xs">
                   <div>
                     <span className="block text-foreground/80">
                       Last active
@@ -1098,7 +1098,7 @@ function SessionSettings() {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           No active sessions are available.
         </p>
       )}
@@ -1268,26 +1268,26 @@ export function SettingsManager({
     <Tabs
       defaultValue="profile"
       orientation="vertical"
-      className="grid gap-5 lg:grid-cols-[200px_minmax(0,1fr)] lg:items-start"
+      className="lg:items-start gap-5 grid lg:grid-cols-[200px_minmax(0,1fr)]"
     >
-      <TabsList className="grid w-full grid-cols-3 rounded-3xl border border-border/70 bg-card/45 p-2 shadow-[0_18px_80px_rgba(0,0,0,0.16)] lg:sticky lg:top-24 lg:flex lg:grid-cols-none">
+      <TabsList className="lg:top-24 lg:sticky lg:flex grid grid-cols-3 lg:grid-cols-none bg-card/45 shadow-[0_18px_80px_rgba(0,0,0,0.16)] p-2 border border-border/70 rounded-3xl w-full">
         <TabsTrigger
           value="profile"
-          className="h-9 items-center justify-center! rounded-2xl px-2 text-xs sm:text-sm lg:h-11 lg:justify-start! lg:px-3 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+          className="justify-center! lg:justify-start! items-center data-active:bg-primary dark:data-active:bg-primary px-2 lg:px-3 rounded-2xl h-9 lg:h-11 data-active:text-primary-foreground dark:data-active:text-primary-foreground text-xs sm:text-sm"
         >
           <UserCircleIcon data-icon="inline-start" />
           Profile
         </TabsTrigger>
         <TabsTrigger
           value="account"
-          className="h-9 justify-center! rounded-2xl px-2 text-xs sm:text-sm lg:h-11 lg:justify-start! lg:px-3 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+          className="justify-center! lg:justify-start! data-active:bg-primary dark:data-active:bg-primary px-2 lg:px-3 rounded-2xl h-9 lg:h-11 data-active:text-primary-foreground dark:data-active:text-primary-foreground text-xs sm:text-sm"
         >
           <GearSixIcon data-icon="inline-start" />
           Account
         </TabsTrigger>
         <TabsTrigger
           value="security"
-          className="h-9 justify-center! rounded-2xl px-2 text-xs sm:text-sm lg:h-11 lg:justify-start! lg:px-3 data-active:bg-primary data-active:text-primary-foreground dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+          className="justify-center! lg:justify-start! data-active:bg-primary dark:data-active:bg-primary px-2 lg:px-3 rounded-2xl h-9 lg:h-11 data-active:text-primary-foreground dark:data-active:text-primary-foreground text-xs sm:text-sm"
         >
           <LockKeyIcon data-icon="inline-start" />
           Security
@@ -1298,8 +1298,8 @@ export function SettingsManager({
         <ProfileSettingsForm profile={profile} />
       </TabsContent>
 
-      <TabsContent value="account" className="mt-0 flex min-w-0 flex-col gap-5">
-        <div className="grid min-w-0 gap-5 xl:grid-cols-2">
+      <TabsContent value="account" className="flex flex-col gap-5 mt-0 min-w-0">
+        <div className="gap-5 grid xl:grid-cols-2 min-w-0">
           <Card>
             <CardHeader>
               <CardTitle>Email</CardTitle>
@@ -1341,7 +1341,7 @@ export function SettingsManager({
 
       <TabsContent
         value="security"
-        className="mt-0 flex min-w-0 flex-col gap-5"
+        className="flex flex-col gap-5 mt-0 min-w-0"
       >
         <Card>
           <CardHeader>

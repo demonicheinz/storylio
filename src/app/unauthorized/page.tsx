@@ -16,13 +16,13 @@ export default function UnauthorizedPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4 text-center">
+    <div className="flex flex-col justify-center items-center gap-6 bg-background px-4 min-h-screen text-center">
       <ShieldWarningIcon
         className="size-16 text-destructive"
         weight="duotone"
       />
       <div className="flex flex-col gap-2">
-        <h1 className="font-heading text-3xl font-bold">Access Denied</h1>
+        <h1 className="font-heading font-bold text-3xl">Access Denied</h1>
         <p className="max-w-md text-muted-foreground">
           This dashboard is restricted to the site owner. If you believe this is
           an error, sign in with the owner account.

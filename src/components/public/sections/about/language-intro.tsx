@@ -24,7 +24,7 @@ export function LanguageIntro({
 }) {
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex w-fit rounded-full border border-border/50 bg-surface/70 p-1 backdrop-blur">
+      <div className="flex bg-surface/70 backdrop-blur p-1 border border-border/50 rounded-full w-fit">
         {languages.map((item) => {
           const isActive = language === item.value;
 
@@ -34,7 +34,7 @@ export function LanguageIntro({
               variant={isActive ? "default" : "ghost"}
               size="sm"
               className={cn(
-                "h-8 rounded-full px-4",
+                "px-4 rounded-full h-8",
                 !isActive && "text-muted-foreground hover:text-foreground",
               )}
               asChild
@@ -46,7 +46,7 @@ export function LanguageIntro({
           );
         })}
       </div>
-      <p className="text-lg leading-8 text-muted-foreground">{intro}</p>
+      <p className="text-muted-foreground text-lg leading-8">{intro}</p>
     </div>
   );
 }

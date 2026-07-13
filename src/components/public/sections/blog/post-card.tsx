@@ -16,7 +16,7 @@ export function PostCard({ post }: PostCardProps) {
   const remainingTags = post.tags.length - visibleTags.length;
 
   return (
-    <article className="group/post grid overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-brand-soft/45 hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] md:grid-cols-[minmax(260px,0.62fr)_minmax(0,1fr)] md:items-center">
+    <article className="group/post md:items-center grid md:grid-cols-[minmax(260px,0.62fr)_minmax(0,1fr)] bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] backdrop-blur-xl p-3 border border-border/40 hover:border-brand-soft/45 rounded-3xl overflow-hidden transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 duration-300">
       <Link
         href={`/blog/${post.slug}`}
         aria-label={post.title}
@@ -30,8 +30,8 @@ export function PostCard({ post }: PostCardProps) {
         />
       </Link>
 
-      <div className="flex min-w-0 flex-col px-3 pt-4 pb-3 md:px-6 md:py-4">
-        <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <div className="flex flex-col px-3 md:px-6 md:py-4 pt-4 pb-3 min-w-0">
+        <div className="flex flex-wrap items-center gap-2 mb-3 text-muted-foreground text-xs">
           <span>{formatDate(publishedAt)}</span>
           <span className="text-border">/</span>
           <span>{calculateReadingTime(post.content)} min read</span>
@@ -41,22 +41,22 @@ export function PostCard({ post }: PostCardProps) {
 
         <Link
           href={`/blog/${post.slug}`}
-          className="w-fit rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+          className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60 w-fit"
         >
-          <h2 className="font-heading text-2xl leading-tight font-semibold text-foreground transition-colors group-hover/post:text-brand-soft">
+          <h2 className="font-heading font-semibold text-foreground group-hover/post:text-brand-soft text-2xl leading-tight transition-colors">
             {post.title}
           </h2>
         </Link>
-        <p className="mt-3 line-clamp-2 text-sm leading-6.5 text-muted-foreground">
+        <p className="mt-3 text-muted-foreground text-sm line-clamp-2 leading-6.5">
           {post.excerpt ?? "A note from the Storylio writing archive."}
         </p>
 
-        <div className="mt-4 flex max-w-full items-center gap-1.5 overflow-hidden">
+        <div className="flex items-center gap-1.5 mt-4 max-w-full overflow-hidden">
           {visibleTags.map((tag) => (
             <Badge
               key={tag.id}
               variant="outline"
-              className="rounded-full border-border/60 bg-background/35 text-foreground/85"
+              className="bg-background/35 border-border/60 rounded-full text-foreground/85"
             >
               {tag.name}
             </Badge>
@@ -64,7 +64,7 @@ export function PostCard({ post }: PostCardProps) {
           {remainingTags > 0 && (
             <Badge
               variant="outline"
-              className="shrink-0 rounded-full border-border/60 bg-background/35 text-foreground/85"
+              className="bg-background/35 border-border/60 rounded-full text-foreground/85 shrink-0"
               aria-label={`${remainingTags} more topics`}
             >
               +{remainingTags}

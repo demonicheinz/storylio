@@ -24,7 +24,7 @@ export default function DashboardError({
   }, [error]);
 
   return (
-    <div className="flex min-h-[calc(100vh-7.5rem)] items-center justify-center">
+    <div className="flex justify-center items-center min-h-[calc(100vh-7.5rem)]">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
           <CardTitle>Dashboard page unavailable</CardTitle>

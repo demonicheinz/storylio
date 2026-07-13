@@ -16,18 +16,18 @@ export function RelatedPosts({ posts }: RelatedPostsProps) {
 
   return (
     <section className="mt-16 md:mt-20">
-      <div className="mb-7 flex items-end justify-between gap-4 border-b border-border/30 pb-5">
+      <div className="flex justify-between items-end gap-4 mb-7 pb-5 border-border/30 border-b">
         <div>
-          <p className="text-xs font-semibold tracking-[0.28em] text-brand-soft uppercase">
+          <p className="font-semibold text-brand-soft text-xs uppercase tracking-[0.28em]">
             Continue reading
           </p>
-          <h2 className="mt-3 font-heading text-3xl font-semibold text-foreground">
+          <h2 className="mt-3 font-heading font-semibold text-foreground text-3xl">
             Related notes
           </h2>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="gap-4 grid md:grid-cols-3">
         {posts.map((post) => {
           const publishedAt = post.publishedAt ?? post.createdAt;
 
@@ -35,43 +35,43 @@ export function RelatedPosts({ posts }: RelatedPostsProps) {
             <Link
               key={post.id}
               href={`/blog/${post.slug}`}
-              className="group/post flex min-w-0 flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 outline-none hover:-translate-y-0.5 hover:border-brand-soft/45 hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+              className="group/post flex flex-col bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] backdrop-blur-xl p-3 border border-border/40 hover:border-brand-soft/45 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60 min-w-0 overflow-hidden transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 duration-300"
             >
               <BlogCover
                 src={post.coverImage}
                 alt={post.title}
-                className="aspect-video rounded-2xl"
+                className="rounded-2xl aspect-video"
                 sizes="(min-width: 1280px) 365px, (min-width: 768px) calc(33vw - 2rem), calc(100vw - 2rem)"
               />
 
-              <div className="flex flex-1 flex-col p-2 pt-4">
-                <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex flex-col flex-1 p-2 pt-4">
+                <div className="flex flex-wrap items-center gap-2 mb-3 text-muted-foreground text-xs">
                   <span>{formatDate(publishedAt)}</span>
                   <span className="text-border">/</span>
                   <span>{calculateReadingTime(post.content)} min</span>
                 </div>
 
-                <h3 className="font-heading text-xl leading-tight font-semibold text-foreground transition-colors group-hover/post:text-brand-soft">
+                <h3 className="font-heading font-semibold text-foreground group-hover/post:text-brand-soft text-xl leading-tight transition-colors">
                   {post.title}
                 </h3>
 
-                <p className="mt-3 line-clamp-2 text-sm leading-7 text-muted-foreground">
+                <p className="mt-3 text-muted-foreground text-sm line-clamp-2 leading-7">
                   {post.excerpt ?? "A note from the Storylio writing archive."}
                 </p>
 
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mt-5">
                   {post.tags.slice(0, 2).map((tag) => (
                     <Badge
                       key={tag.id}
                       variant="outline"
-                      className="rounded-full border-border/60 bg-background/35 text-foreground/85"
+                      className="bg-background/35 border-border/60 rounded-full text-foreground/85"
                     >
                       {tag.name}
                     </Badge>
                   ))}
                 </div>
 
-                <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-medium text-brand-soft">
+                <span className="inline-flex items-center gap-2 mt-auto pt-6 font-medium text-brand-soft text-sm">
                   Read article
                   <ArrowUpRightIcon size={16} />
                 </span>
