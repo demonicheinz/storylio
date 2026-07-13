@@ -28,7 +28,7 @@ export function BlogCover({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-border/40 bg-[radial-gradient(circle_at_18%_18%,rgba(168,85,247,0.24),transparent_34%),linear-gradient(135deg,rgba(14,12,26,0.96),rgba(38,33,66,0.62),rgba(10,10,20,0.98))]",
+        "relative bg-[radial-gradient(circle_at_18%_18%,rgba(168,85,247,0.24),transparent_34%),linear-gradient(135deg,rgba(14,12,26,0.96),rgba(38,33,66,0.62),rgba(10,10,20,0.98))] border border-border/40 rounded-3xl overflow-hidden",
         className,
       )}
     >
@@ -40,21 +40,21 @@ export function BlogCover({
           sizes={sizes}
           fetchPriority={fetchPriority}
           loading={loading}
-          className="object-cover transition-transform duration-500 group-hover/post:scale-105"
+          className="object-cover group-hover/post:scale-105 transition-transform duration-500"
           onError={() => setHasImageError(true)}
         />
       ) : (
-        <div className="flex h-full min-h-52 flex-col justify-between p-6">
+        <div className="flex flex-col justify-between p-6 h-full min-h-52">
           <div className="flex items-center gap-2">
-            <div className="size-2 rounded-full bg-brand-soft" />
-            <div className="h-px flex-1 bg-linear-to-r from-brand-soft/60 to-transparent" />
+            <div className="bg-brand-soft rounded-full size-2" />
+            <div className="flex-1 bg-linear-to-r from-brand-soft/60 to-transparent h-px" />
           </div>
           <div className="space-y-3">
-            <div className="h-4 w-4/5 rounded-full bg-foreground/30" />
-            <div className="h-4 w-3/5 rounded-full bg-foreground/20" />
-            <div className="mt-6 grid grid-cols-[1fr_0.6fr] gap-3">
-              <div className="h-24 rounded-2xl bg-foreground/10" />
-              <div className="grid h-24 place-items-center rounded-2xl bg-brand-soft/15 text-brand-soft">
+            <div className="bg-foreground/30 rounded-full w-4/5 h-4" />
+            <div className="bg-foreground/20 rounded-full w-3/5 h-4" />
+            <div className="gap-3 grid grid-cols-[1fr_0.6fr] mt-6">
+              <div className="bg-foreground/10 rounded-2xl h-24" />
+              <div className="place-items-center grid bg-brand-soft/15 rounded-2xl h-24 text-brand-soft">
                 <ImageIcon size={26} />
               </div>
             </div>
@@ -62,7 +62,7 @@ export function BlogCover({
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/45 via-transparent to-white/5" />
+      <div className="absolute inset-0 bg-linear-to-t from-background/45 via-transparent to-white/5 pointer-events-none" />
     </div>
   );
 }

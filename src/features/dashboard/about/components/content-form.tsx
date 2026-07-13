@@ -143,18 +143,18 @@ export function AboutContentForm({
   const whatIValueLength = (watchedValues[whatIValueName] ?? "").length;
 
   return (
-    <form className="flex min-w-0 flex-col gap-5" onSubmit={onSubmit}>
-      <Card className="border-border/70 bg-card/55 py-4">
-        <CardContent className="flex flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-brand-soft/15 text-brand-soft">
+    <form className="flex flex-col gap-5 min-w-0" onSubmit={onSubmit}>
+      <Card className="bg-card/55 py-4 border-border/70">
+        <CardContent className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 px-4">
+          <div className="flex gap-3 min-w-0">
+            <div className="flex justify-center items-center bg-brand-soft/15 rounded-2xl size-9 text-brand-soft shrink-0">
               <InfoIcon className="size-4" />
             </div>
             <div className="min-w-0">
               <p className="font-heading font-semibold">
                 Profile content lives in Settings
               </p>
-              <p className="text-sm leading-5 text-muted-foreground">
+              <p className="text-muted-foreground text-sm leading-5">
                 Display name, tagline, avatar, short bio, and social links are
                 managed from Profile Settings. This tab only controls the public
                 About page narrative.
@@ -164,7 +164,7 @@ export function AboutContentForm({
           <Button
             asChild
             variant="outline"
-            className="w-full shrink-0 rounded-2xl sm:w-auto"
+            className="rounded-2xl w-full sm:w-auto shrink-0"
           >
             <Link href="/dashboard/settings">
               Go to Profile Settings
@@ -177,28 +177,28 @@ export function AboutContentForm({
       <Card className={dashboardStyles.surface}>
         <CardContent className="flex flex-col gap-6 p-5 sm:p-6">
           {!content && (
-            <div className="rounded-2xl border border-dashed border-border/70 bg-background/30 p-4">
+            <div className="bg-background/30 p-4 border border-border/70 border-dashed rounded-2xl">
               <p className="font-medium text-foreground">
                 About content has not been created yet.
               </p>
-              <p className="text-sm leading-6 text-muted-foreground">
+              <p className="text-muted-foreground text-sm leading-6">
                 The public About page currently uses its static fallback. Your
                 first save will create the singleton CMS record.
               </p>
             </div>
           )}
 
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="flex md:flex-row flex-col md:justify-between md:items-end gap-3">
             <div className="min-w-0">
               <Label>Editing language</Label>
-              <div className="mt-2 flex w-full rounded-full border border-border/50 bg-background/40 p-1 sm:w-fit">
+              <div className="flex bg-background/40 mt-2 p-1 border border-border/50 rounded-full w-full sm:w-fit">
                 {(["en", "id"] as const).map((language) => (
                   <Button
                     key={language}
                     type="button"
                     size="sm"
                     variant={activeLanguage === language ? "default" : "ghost"}
-                    className="flex-1 rounded-full sm:flex-none"
+                    className="flex-1 sm:flex-none rounded-full"
                     disabled={isPending}
                     onClick={() => setActiveLanguage(language)}
                   >
@@ -212,14 +212,14 @@ export function AboutContentForm({
               control={control}
               name="defaultLanguage"
               render={({ field }) => (
-                <div className="flex min-w-0 flex-col gap-2 md:w-64">
+                <div className="flex flex-col gap-2 md:w-64 min-w-0">
                   <Label>Default public language</Label>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild disabled={isPending}>
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-full justify-between rounded-2xl bg-input/35"
+                        className="justify-between bg-input/35 rounded-2xl w-full"
                       >
                         {languageLabels[field.value ?? "en"]}
                         <span className="text-muted-foreground">Change</span>
@@ -246,18 +246,18 @@ export function AboutContentForm({
             />
           </div>
 
-          <div className="flex min-w-0 flex-col gap-2">
-            <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-2 min-w-0">
+            <div className="flex justify-between items-center gap-3">
               <Label htmlFor={introName}>
                 About Intro ({languageLabels[activeLanguage]})
               </Label>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 {introLength}/{introLimit}
               </span>
             </div>
             <Textarea
               id={introName}
-              className="field-sizing-fixed min-h-36 max-w-full scrollbar-none wrap-anywhere"
+              className="max-w-full min-h-36 field-sizing-fixed scrollbar-none wrap-anywhere"
               disabled={isPending}
               wrap="soft"
               placeholder="Introduction shown only on the About page."
@@ -265,14 +265,14 @@ export function AboutContentForm({
               {...register(introName)}
             />
             {errors[introName]?.message && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors[introName]?.message}
               </p>
             )}
           </div>
 
-          <div className="grid min-w-0 gap-5 xl:grid-cols-2">
-            <div className="flex min-w-0 flex-col gap-2">
+          <div className="gap-5 grid xl:grid-cols-2 min-w-0">
+            <div className="flex flex-col gap-2 min-w-0">
               <Label>How I Work ({languageLabels[activeLanguage]})</Label>
               <Controller
                 control={control}
@@ -286,12 +286,12 @@ export function AboutContentForm({
                   />
                 )}
               />
-              <p className="text-right text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs text-right">
                 {howIWorkLength}/{mdxLimit}
               </p>
             </div>
 
-            <div className="flex min-w-0 flex-col gap-2">
+            <div className="flex flex-col gap-2 min-w-0">
               <Label>What I Value ({languageLabels[activeLanguage]})</Label>
               <Controller
                 control={control}
@@ -305,7 +305,7 @@ export function AboutContentForm({
                   />
                 )}
               />
-              <p className="text-right text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs text-right">
                 {whatIValueLength}/{mdxLimit}
               </p>
             </div>
@@ -316,7 +316,7 @@ export function AboutContentForm({
       <div className="flex justify-end">
         <Button
           type="submit"
-          className="w-full rounded-2xl sm:w-fit"
+          className="rounded-2xl w-full sm:w-fit"
           disabled={isPending}
         >
           {isPending ? (

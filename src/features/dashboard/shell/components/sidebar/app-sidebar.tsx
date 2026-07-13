@@ -86,7 +86,7 @@ function AppSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg" tooltip="Storylio">
               <Link href="/dashboard">
-                <div className="flex aspect-square size-9 items-center justify-center rounded-xl">
+                <div className="flex justify-center items-center rounded-xl size-9 aspect-square">
                   <Image
                     src="/images/logo.png"
                     alt="Logo"
@@ -96,8 +96,8 @@ function AppSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     priority
                   />
                 </div>
-                <div className="grid flex-1 text-left leading-tight">
-                  <span className="truncate font-heading text-[15px] font-semibold">
+                <div className="flex-1 grid text-left leading-tight">
+                  <span className="font-heading font-semibold text-[15px] truncate">
                     Storylio
                   </span>
                 </div>

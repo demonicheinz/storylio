@@ -137,7 +137,7 @@ export function SignInForm({
   const anyLoading = isLoading || isGitHubLoading || isPasskeyLoading;
 
   return (
-    <Card className="w-full max-w-md border bg-card">
+    <Card className="bg-card border w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="font-heading text-2xl">Sign In</CardTitle>
         <CardDescription>
@@ -147,7 +147,7 @@ export function SignInForm({
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="bg-destructive/10 p-3 rounded-md text-destructive text-sm">
               {error}
             </div>
           )}
@@ -164,7 +164,7 @@ export function SignInForm({
               autoComplete="username webauthn"
             />
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <p className="text-destructive text-sm">{errors.email.message}</p>
             )}
           </div>
 
@@ -184,18 +184,18 @@ export function SignInForm({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="top-1/2 right-3 absolute text-muted-foreground hover:text-foreground -translate-y-1/2"
                 disabled={anyLoading}
               >
                 {showPassword ? (
-                  <EyeSlashIcon className="h-4 w-4" />
+                  <EyeSlashIcon className="w-4 h-4" />
                 ) : (
-                  <EyeIcon className="h-4 w-4" />
+                  <EyeIcon className="w-4 h-4" />
                 )}
               </button>
             </div>
             {errors.password && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.password.message}
               </p>
             )}
@@ -204,7 +204,7 @@ export function SignInForm({
           <Button type="submit" className="w-full" disabled={anyLoading}>
             {isLoading ? (
               <>
-                <CircleNotchIcon className="mr-2 h-4 w-4 animate-spin" />
+                <CircleNotchIcon className="mr-2 w-4 h-4 animate-spin" />
                 Signing in...
               </>
             ) : (
@@ -215,9 +215,9 @@ export function SignInForm({
 
         {githubEnabled && (
           <>
-            <div className="my-4 flex items-center gap-3">
+            <div className="flex items-center gap-3 my-4">
               <Separator className="flex-1" />
-              <span className="text-xs text-muted-foreground">or</span>
+              <span className="text-muted-foreground text-xs">or</span>
               <Separator className="flex-1" />
             </div>
 
@@ -229,9 +229,9 @@ export function SignInForm({
               onClick={handleGitHubSignIn}
             >
               {isGitHubLoading ? (
-                <CircleNotchIcon className="mr-2 h-4 w-4 animate-spin" />
+                <CircleNotchIcon className="mr-2 w-4 h-4 animate-spin" />
               ) : (
-                <GithubLogoIcon className="mr-2 h-4 w-4" weight="bold" />
+                <GithubLogoIcon className="mr-2 w-4 h-4" weight="bold" />
               )}
               {isGitHubLoading ? "Redirecting..." : "Continue with GitHub"}
             </Button>
@@ -240,9 +240,9 @@ export function SignInForm({
 
         <div className={githubEnabled ? "mt-3" : "mt-4 flex flex-col"}>
           {!githubEnabled && (
-            <div className="my-4 flex items-center gap-3">
+            <div className="flex items-center gap-3 my-4">
               <Separator className="flex-1" />
-              <span className="text-xs text-muted-foreground">or</span>
+              <span className="text-muted-foreground text-xs">or</span>
               <Separator className="flex-1" />
             </div>
           )}
@@ -254,9 +254,9 @@ export function SignInForm({
             onClick={handlePasskeySignIn}
           >
             {isPasskeyLoading ? (
-              <CircleNotchIcon className="mr-2 h-4 w-4 animate-spin" />
+              <CircleNotchIcon className="mr-2 w-4 h-4 animate-spin" />
             ) : (
-              <FingerprintIcon className="mr-2 h-4 w-4" />
+              <FingerprintIcon className="mr-2 w-4 h-4" />
             )}
             Sign in with Passkey
           </Button>

@@ -76,13 +76,13 @@ export function GalleryExperience({
 
   return (
     <section className="pb-14 md:pb-16">
-      <div className="-mx-4 border-y border-border/30 bg-background/65 px-4 py-3.5 backdrop-blur-xl sm:mx-0 sm:rounded-3xl sm:border sm:bg-surface/55 sm:px-5">
-        <div className="mb-2.5 flex items-center gap-2 text-xs font-semibold tracking-[0.24em] text-muted-foreground uppercase">
+      <div className="bg-background/65 sm:bg-surface/55 backdrop-blur-xl -mx-4 sm:mx-0 px-4 sm:px-5 py-3.5 sm:border border-border/30 border-y sm:rounded-3xl">
+        <div className="flex items-center gap-2 mb-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-[0.24em]">
           <ImagesIcon className="text-brand-soft" size={16} />
           Filter by category
         </div>
 
-        <div className="flex scrollbar-none gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+        <div className="[&::-webkit-scrollbar]:hidden flex gap-2 pb-1 overflow-x-auto scrollbar-none">
           {["All", ...categories].map((category) => {
             const isSelected = category === activeCategory;
 
@@ -92,7 +92,7 @@ export function GalleryExperience({
                 type="button"
                 variant={isSelected ? "default" : "outline"}
                 size="sm"
-                className="shrink-0 rounded-full"
+                className="rounded-full shrink-0"
                 onClick={() =>
                   updateFilter(category === "All" ? undefined : category)
                 }
@@ -104,12 +104,12 @@ export function GalleryExperience({
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 px-1 text-sm text-muted-foreground">
+      <div className="flex flex-wrap justify-between items-center gap-3 mt-4 px-1 text-muted-foreground text-sm">
         <p>{formatGallerySummary(filteredPhotos.length, activeCategory)}</p>
         {activeCategory !== "All" && (
           <button
             type="button"
-            className="text-brand-soft underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            className="text-brand-soft hover:text-foreground hover:underline underline-offset-4 transition-colors"
             onClick={() => updateFilter()}
           >
             Reset category
@@ -118,7 +118,7 @@ export function GalleryExperience({
       </div>
 
       {filteredPhotos.length > 0 ? (
-        <div className="w-full pt-8 md:pt-10">
+        <div className="pt-8 md:pt-10 w-full">
           <MasonryPhotoAlbum
             photos={filteredPhotos}
             columns={(containerWidth) => {
@@ -165,20 +165,20 @@ export function GalleryExperience({
         render={{
           slideFooter: () =>
             activePhoto ? (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 mx-auto flex max-w-3xl flex-col items-center gap-2 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-center sm:gap-3 sm:px-6 sm:pb-8">
-                <div className="max-w-[calc(100vw-2rem)] rounded-2xl border border-border/40 bg-background/75 px-4 py-3 shadow-[0_0_48px_rgba(139,92,246,0.14)] backdrop-blur-xl sm:max-w-2xl sm:px-5">
+              <div className="bottom-0 absolute inset-x-0 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col items-center gap-2 sm:gap-3 mx-auto px-4 sm:px-6 sm:pb-8 max-w-3xl text-center pointer-events-none">
+                <div className="bg-background/75 shadow-[0_0_48px_rgba(139,92,246,0.14)] backdrop-blur-xl px-4 sm:px-5 py-3 border border-border/40 rounded-2xl max-w-[calc(100vw-2rem)] sm:max-w-2xl">
                   {activePhoto.category && (
-                    <Badge className="mb-2 rounded-full bg-brand-soft/90 text-primary-foreground">
+                    <Badge className="bg-brand-soft/90 mb-2 rounded-full text-primary-foreground">
                       {activePhoto.category}
                     </Badge>
                   )}
                   {activePhoto.caption && (
-                    <p className="text-xs leading-5 text-foreground sm:text-sm sm:leading-6">
+                    <p className="text-foreground text-xs sm:text-sm leading-5 sm:leading-6">
                       {activePhoto.caption}
                     </p>
                   )}
                   {activePhoto.description && (
-                    <p className="mt-2 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
+                    <p className="mt-2 text-muted-foreground text-xs sm:text-sm leading-5 sm:leading-6">
                       {activePhoto.description}
                     </p>
                   )}
@@ -212,7 +212,7 @@ function GalleryPhotoCard({
     <button
       type="button"
       onClick={onClick}
-      className="group/photo relative block overflow-hidden rounded-3xl border border-border/40 bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] transition-[border-color,box-shadow,transform] duration-300 outline-none hover:-translate-y-0.5 hover:border-brand-soft/45 hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] focus-visible:ring-2 focus-visible:ring-brand-soft/60"
+      className="group/photo block relative bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] border border-border/40 hover:border-brand-soft/45 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60 overflow-hidden transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 duration-300"
       style={{ width, height }}
       aria-label={photo.caption ?? photo.alt}
     >
@@ -226,26 +226,26 @@ function GalleryPhotoCard({
           sizes="(min-width: 1280px) 360px, (min-width: 768px) 45vw, 100vw"
           fetchPriority={priority ? "high" : "auto"}
           loading={priority ? "eager" : "lazy"}
-          className="object-cover transition-transform duration-500 group-hover/photo:scale-105"
+          className="object-cover group-hover/photo:scale-105 transition-transform duration-500"
           placeholder={photo.blurDataUrl ? "blur" : "empty"}
           blurDataURL={photo.blurDataUrl ?? undefined}
           onError={() => setHasImageError(true)}
         />
       )}
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-background/85 via-background/8 to-transparent opacity-80 transition-opacity duration-300 group-hover/photo:opacity-95" />
-      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-4 text-left">
+      <div className="absolute inset-0 bg-linear-to-t from-background/85 via-background/8 to-transparent opacity-80 group-hover/photo:opacity-95 transition-opacity duration-300 pointer-events-none" />
+      <div className="bottom-0 absolute inset-x-0 flex flex-col gap-3 p-4 text-left">
         {photo.category && (
-          <Badge className="w-fit rounded-full bg-brand-soft/90 text-primary-foreground">
+          <Badge className="bg-brand-soft/90 rounded-full w-fit text-primary-foreground">
             {photo.category}
           </Badge>
         )}
         {photo.caption && (
-          <p className="max-w-sm text-sm leading-6 font-medium text-foreground">
+          <p className="max-w-sm font-medium text-foreground text-sm leading-6">
             {photo.caption}
           </p>
         )}
         {photo.description && (
-          <p className="line-clamp-2 max-w-sm text-xs leading-5 text-muted-foreground">
+          <p className="max-w-sm text-muted-foreground text-xs line-clamp-2 leading-5">
             {photo.description}
           </p>
         )}
@@ -256,11 +256,11 @@ function GalleryPhotoCard({
 
 function GalleryImageFallback({ caption }: { caption: string | null }) {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[radial-gradient(circle_at_30%_20%,rgba(139,92,246,0.26),transparent_36%),linear-gradient(135deg,rgba(14,12,26,0.96),rgba(31,26,54,0.78),rgba(10,10,20,0.98))] p-6 text-center">
-      <div className="flex size-14 items-center justify-center rounded-2xl border border-brand-soft/30 bg-brand-soft/10 text-brand-soft shadow-[0_0_36px_rgba(139,92,246,0.18)]">
+    <div className="absolute inset-0 flex flex-col justify-center items-center gap-4 bg-[radial-gradient(circle_at_30%_20%,rgba(139,92,246,0.26),transparent_36%),linear-gradient(135deg,rgba(14,12,26,0.96),rgba(31,26,54,0.78),rgba(10,10,20,0.98))] p-6 text-center">
+      <div className="flex justify-center items-center bg-brand-soft/10 shadow-[0_0_36px_rgba(139,92,246,0.18)] border border-brand-soft/30 rounded-2xl size-14 text-brand-soft">
         <ImageIcon size={24} />
       </div>
-      <p className="max-w-48 text-sm leading-6 text-muted-foreground">
+      <p className="max-w-48 text-muted-foreground text-sm leading-6">
         {caption ?? "This image could not be loaded."}
       </p>
     </div>
@@ -271,15 +271,15 @@ function GalleryEmptyState({ selectedCategory }: { selectedCategory: string }) {
   const isFiltered = selectedCategory !== "All";
 
   return (
-    <div className="mt-8 overflow-hidden rounded-3xl border border-dashed border-border/60 bg-surface/45 p-8 text-center shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl">
-      <div className="mx-auto flex min-h-80 max-w-lg flex-col items-center justify-center">
-        <div className="mb-6 grid size-24 place-items-center rounded-3xl border border-brand-soft/25 bg-brand-soft/10 shadow-[0_0_48px_rgba(139,92,246,0.14)]">
+    <div className="bg-surface/45 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl mt-8 p-8 border border-border/60 border-dashed rounded-3xl overflow-hidden text-center">
+      <div className="flex flex-col justify-center items-center mx-auto max-w-lg min-h-80">
+        <div className="place-items-center grid bg-brand-soft/10 shadow-[0_0_48px_rgba(139,92,246,0.14)] mb-6 border border-brand-soft/25 rounded-3xl size-24">
           <ImageIcon size={34} className="text-brand-soft" />
         </div>
-        <p className="font-heading text-3xl font-semibold text-foreground">
+        <p className="font-heading font-semibold text-foreground text-3xl">
           {isFiltered ? "No frames in this category" : "No frames here yet"}
         </p>
-        <p className="mt-3 max-w-md text-sm leading-7 text-muted-foreground">
+        <p className="mt-3 max-w-md text-muted-foreground text-sm leading-7">
           {isFiltered
             ? `There are no gallery items tagged ${selectedCategory} yet. Try another category or reset the filter.`
             : "Gallery items from Cloudinary will appear here once they are added to the database."}

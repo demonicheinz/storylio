@@ -7,10 +7,10 @@ type GalleryHeroProps = {
 
 export function GalleryHero({ totalItems, totalCategories }: GalleryHeroProps) {
   return (
-    <section className="flex flex-col gap-8 pt-32 pb-10 md:pt-40 md:pb-14">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+    <section className="flex flex-col gap-8 pt-32 md:pt-40 pb-10 md:pb-14">
+      <div className="flex lg:flex-row flex-col lg:justify-between lg:items-end gap-6">
         <div className="max-w-3xl">
-          <p className="mb-4 text-xs font-semibold tracking-[0.32em] text-brand-soft uppercase">
+          <p className="mb-4 font-semibold text-brand-soft text-xs uppercase tracking-[0.32em]">
             Gallery / visual notes / references
           </p>
           <Heading
@@ -22,24 +22,24 @@ export function GalleryHero({ totalItems, totalCategories }: GalleryHeroProps) {
             Visual notes from the <span className="text-brand-soft">build</span>
             .
           </Heading>
-          <p className="max-w-2xl text-base leading-8 text-muted-foreground md:text-lg">
+          <p className="max-w-2xl text-muted-foreground text-base md:text-lg leading-8">
             A small archive of interface details, work-in-progress fragments,
             places, and moments that shape Storylio&apos;s visual language.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:w-72">
-          <div className="rounded-3xl border border-border/40 bg-surface/65 p-4 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl">
-            <p className="text-3xl font-bold text-foreground">{totalItems}</p>
-            <p className="mt-1 text-xs tracking-widest text-muted-foreground uppercase">
+        <div className="gap-3 grid grid-cols-2 sm:w-72">
+          <div className="bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl p-4 border border-border/40 rounded-3xl">
+            <p className="font-bold text-foreground text-3xl">{totalItems}</p>
+            <p className="mt-1 text-muted-foreground text-xs uppercase tracking-widest">
               Frames
             </p>
           </div>
-          <div className="rounded-3xl border border-border/40 bg-surface/65 p-4 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl">
-            <p className="text-3xl font-bold text-foreground">
+          <div className="bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl p-4 border border-border/40 rounded-3xl">
+            <p className="font-bold text-foreground text-3xl">
               {totalCategories}
             </p>
-            <p className="mt-1 text-xs tracking-widest text-muted-foreground uppercase">
+            <p className="mt-1 text-muted-foreground text-xs uppercase tracking-widest">
               Categories
             </p>
           </div>

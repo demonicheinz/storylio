@@ -71,20 +71,20 @@ export async function Footer({
   return (
     <footer
       className={cn(
-        "w-full border-t bg-background/80 py-6 backdrop-blur-md md:py-8",
+        "bg-background/80 backdrop-blur-md py-6 md:py-8 border-t w-full",
         className,
       )}
     >
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-2 md:gap-6">
-          <div className="flex h-full items-center justify-center md:justify-start">
-            <p className="text-center text-sm text-muted-foreground md:text-left">
+      <div className="mx-auto px-4 max-w-6xl">
+        <div className="items-center gap-4 md:gap-6 grid grid-cols-1 md:grid-cols-2">
+          <div className="flex justify-center md:justify-start items-center h-full">
+            <p className="text-muted-foreground text-sm md:text-left text-center">
               &copy; {year} {copyrightName}. All rights reserved.
             </p>
           </div>
 
           {showSocialMedia && socialLinks.length > 0 && (
-            <div className="flex h-full items-center justify-center gap-3 md:justify-end">
+            <div className="flex justify-center md:justify-end items-center gap-3 h-full">
               {socialLinks.map((item) => (
                 <a
                   key={item.href}
@@ -92,7 +92,7 @@ export async function Footer({
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={item.label}
-                  className="cursor-pointer text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   <item.icon className="size-5" />
                 </a>

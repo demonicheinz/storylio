@@ -103,7 +103,7 @@ export function PublicBackground({
     <div
       aria-hidden="true"
       className={cn(
-        "pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-background",
+        "-z-10 fixed inset-0 bg-background overflow-hidden pointer-events-none",
         className,
       )}
     >

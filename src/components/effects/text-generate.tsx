@@ -45,7 +45,7 @@ export const TextGenerateEffect = ({
   }, [scope, animate, staggerDuration, animationDuration]);
 
   const content = (
-    <span className="block leading-tight tracking-wide text-white">
+    <span className="block text-white leading-tight tracking-wide">
       <motion.span
         ref={scope}
         className="flex flex-wrap justify-center gap-y-0"

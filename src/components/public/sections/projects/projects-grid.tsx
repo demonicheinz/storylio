@@ -8,7 +8,7 @@ type ProjectsGridProps = {
 
 export function ProjectsGrid({ projects }: ProjectsGridProps) {
   return (
-    <div className="grid items-stretch gap-5 md:grid-cols-2 lg:gap-6">
+    <div className="items-stretch gap-5 lg:gap-6 grid md:grid-cols-2">
       {projects.map((project, index) => (
         <ProjectReveal key={project.id} delay={Math.min(index * 0.06, 0.24)}>
           <ProjectCard project={project} />

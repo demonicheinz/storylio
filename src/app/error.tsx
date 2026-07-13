@@ -17,19 +17,19 @@ export default function RootError({
   }, [error]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-24 text-foreground">
-      <section className="w-full max-w-xl rounded-3xl border bg-card p-8 text-center shadow-lg md:p-10">
-        <p className="text-xs font-semibold tracking-[0.28em] text-destructive uppercase">
+    <main className="flex justify-center items-center bg-background px-4 py-24 min-h-screen text-foreground">
+      <section className="bg-card shadow-lg p-8 md:p-10 border rounded-3xl w-full max-w-xl text-center">
+        <p className="font-semibold text-destructive text-xs uppercase tracking-[0.28em]">
           Unexpected error
         </p>
-        <h1 className="mt-4 font-heading text-3xl font-bold">
+        <h1 className="mt-4 font-heading font-bold text-3xl">
           Storylio could not load this page.
         </h1>
-        <p className="mt-4 leading-7 text-muted-foreground">
+        <p className="mt-4 text-muted-foreground leading-7">
           The problem may be temporary. Try loading the page again, or return
           home.
         </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <div className="flex flex-wrap justify-center gap-3 mt-8">
           <Button type="button" onClick={() => unstable_retry()}>
             <ArrowClockwiseIcon />
             Try again

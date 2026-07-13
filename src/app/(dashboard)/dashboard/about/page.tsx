@@ -41,7 +41,7 @@ function AboutStatCard({
           <Icon className="size-5" />
         </div>
         <div className="min-w-0">
-          <p className="font-heading text-xl font-bold">{value}</p>
+          <p className="font-heading font-bold text-xl">{value}</p>
           <p className="text-[11px] text-muted-foreground">{label}</p>
           <p className="mt-0.5 text-[10px] text-muted-foreground/80">
             {description}
@@ -87,7 +87,7 @@ export default async function DashboardAboutPage() {
     <div className={dashboardStyles.page}>
       <div className={dashboardStyles.header}>
         <div className="min-w-0">
-          <h1 className="font-heading text-3xl font-bold">About</h1>
+          <h1 className="font-heading font-bold text-3xl">About</h1>
           <p className="mt-2 text-muted-foreground">
             Manage bilingual About content and its structured public sections.
           </p>
@@ -100,7 +100,7 @@ export default async function DashboardAboutPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="content" className="flex min-w-0 flex-col gap-5">
+      <Tabs defaultValue="content" className="flex flex-col gap-5 min-w-0">
         <div className={dashboardStyles.statGrid}>
           <AboutStatCard
             icon={ArticleIcon}
@@ -132,28 +132,28 @@ export default async function DashboardAboutPage() {
           />
         </div>
 
-        <TabsList className="grid h-auto min-h-12 w-full min-w-0 grid-cols-4 content-center rounded-2xl border border-border/60 bg-card/55 p-1.5 xl:w-fit xl:min-w-lg">
+        <TabsList className="content-center grid grid-cols-4 bg-card/55 p-1.5 border border-border/60 rounded-2xl w-full xl:w-fit min-w-0 xl:min-w-lg h-auto min-h-12">
           <TabsTrigger
             value="content"
-            className="min-h-9 min-w-0 rounded-xl px-2 py-2.5 text-xs leading-none sm:px-3 sm:text-sm"
+            className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
           >
             Content
           </TabsTrigger>
           <TabsTrigger
             value="experience"
-            className="min-h-9 min-w-0 rounded-xl px-2 py-2.5 text-xs leading-none sm:px-3 sm:text-sm"
+            className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
           >
             Experience
           </TabsTrigger>
           <TabsTrigger
             value="education"
-            className="min-h-9 min-w-0 rounded-xl px-2 py-2.5 text-xs leading-none sm:px-3 sm:text-sm"
+            className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
           >
             Education
           </TabsTrigger>
           <TabsTrigger
             value="skills"
-            className="min-h-9 min-w-0 rounded-xl px-2 py-2.5 text-xs leading-none sm:px-3 sm:text-sm"
+            className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
           >
             Skills
           </TabsTrigger>

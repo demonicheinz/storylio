@@ -205,12 +205,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <ArticleProgress />
       <PublicBackground variant="blog" />
 
-      <article className="relative mx-auto flex w-full max-w-7xl flex-col px-4 pt-32 pb-24 sm:px-6 lg:px-8 lg:pt-40">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
+      <article className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 pb-24 w-full max-w-7xl">
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-8">
           <Button
             asChild
             variant="outline"
-            className="rounded-full border-border/60 bg-surface/70 backdrop-blur"
+            className="bg-surface/70 backdrop-blur border-border/60 rounded-full"
           >
             <Link href="/blog">
               <ArrowLeftIcon data-icon="inline-start" />
@@ -223,12 +223,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         <ArticleHeader post={post} />
 
-        <div className="mt-16 grid items-start gap-10 md:mt-20 xl:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="items-start gap-10 grid xl:grid-cols-[minmax(0,1fr)_280px] mt-16 md:mt-20">
           <section
             aria-label="Article content"
-            className="min-w-0 border-l border-border/30 pl-5 sm:pl-8 lg:pl-10"
+            className="pl-5 sm:pl-8 lg:pl-10 border-border/30 border-l min-w-0"
           >
-            <div className="storylio-article-content prose-invert flex max-w-4xl min-w-0 flex-col gap-6 overflow-hidden [&>h2]:mt-20 [&>h2]:pt-2 [&>h2:first-child]:mt-0 [&>h2:first-child]:pt-0 [&>h3]:mt-12">
+            <div className="flex flex-col gap-6 prose-invert [&>h2:first-child]:mt-0 [&>h2]:mt-20 [&>h3]:mt-12 [&>h2:first-child]:pt-0 [&>h2]:pt-2 min-w-0 max-w-4xl overflow-hidden storylio-article-content">
               {mdxContent}
             </div>
           </section>

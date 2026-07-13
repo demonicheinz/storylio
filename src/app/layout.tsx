@@ -19,10 +19,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("dark h-full antialiased", fontVariables)}
+      className={cn("h-full antialiased dark", fontVariables)}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="flex flex-col min-h-full font-sans">{children}</body>
     </html>
   );
 }

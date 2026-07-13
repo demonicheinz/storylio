@@ -23,7 +23,7 @@ async function SignInContent() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="flex justify-center items-center bg-background px-4 min-h-screen">
       <SignInForm githubEnabled={isGitHubEnabled} />
     </div>
   );

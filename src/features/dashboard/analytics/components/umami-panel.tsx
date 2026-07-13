@@ -61,15 +61,15 @@ function UmamiStatCard({
   const isBad = inverseTrend ? isPositive : isNegative;
 
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/40 p-4">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-2 font-heading text-2xl font-semibold md:text-3xl">
+    <div className="bg-background/40 p-4 border border-border/70 rounded-2xl">
+      <p className="text-muted-foreground text-sm">{label}</p>
+      <p className="mt-2 font-heading font-semibold text-2xl md:text-3xl">
         {value}
       </p>
       {delta && (
         <p
           className={cn(
-            "mt-3 inline-flex rounded-full px-2 py-1 text-xs font-medium",
+            "inline-flex mt-3 px-2 py-1 rounded-full font-medium text-xs",
             isGood && "bg-emerald-500/15 text-emerald-300",
             isBad && "bg-destructive/15 text-destructive",
             !isGood && !isBad && "bg-muted text-muted-foreground",
@@ -92,26 +92,26 @@ function UmamiMetricList({
   title: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/40 p-4">
+    <div className="bg-background/40 p-4 border border-border/70 rounded-2xl">
       <h3 className="font-heading font-semibold">{title}</h3>
       {items.length > 0 ? (
         <div className="mt-3 divide-y divide-border/60">
           {items.map((item) => (
             <div
               key={item.name}
-              className="flex items-center justify-between gap-4 py-2 text-sm"
+              className="flex justify-between items-center gap-4 py-2 text-sm"
             >
-              <span className="truncate text-muted-foreground">
+              <span className="text-muted-foreground truncate">
                 {item.name}
               </span>
-              <span className="shrink-0 font-medium">
+              <span className="font-medium shrink-0">
                 {item.value.toLocaleString("en-US")}
               </span>
             </div>
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-sm text-muted-foreground">{emptyDescription}</p>
+        <p className="mt-3 text-muted-foreground text-sm">{emptyDescription}</p>
       )}
     </div>
   );
@@ -136,8 +136,8 @@ export function UmamiPanelClient({
 
   if (analytics.status !== "available") {
     return (
-      <Card className="border-border/70 bg-card/55 shadow-sm">
-        <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <Card className="bg-card/55 shadow-sm border-border/70">
+        <CardHeader className="sm:flex-row sm:justify-between sm:items-start gap-3">
           <div>
             <CardTitle>Traffic Analytics</CardTitle>
             <CardDescription>
@@ -148,7 +148,7 @@ export function UmamiPanelClient({
           <Button
             type="button"
             variant="outline"
-            className="w-fit rounded-2xl"
+            className="rounded-2xl w-fit"
             disabled={isPending}
             onClick={refreshAnalytics}
           >
@@ -160,13 +160,13 @@ export function UmamiPanelClient({
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="rounded-2xl border border-dashed bg-background/40 p-6">
+          <div className="bg-background/40 p-6 border border-dashed rounded-2xl">
             <p className="font-medium">
               {analytics.status === "error"
                 ? "Umami metrics are temporarily unavailable"
                 : "Umami API is not configured"}
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-2 text-muted-foreground text-sm">
               {analytics.status === "error"
                 ? `${analytics.error ?? "The API request failed."} Local analytics remain available.`
                 : "Configure UMAMI_API_URL, UMAMI_USERNAME, UMAMI_PASSWORD, and UMAMI_WEBSITE_ID to load optional self-hosted traffic metrics."}
@@ -211,8 +211,8 @@ export function UmamiPanelClient({
   ];
 
   return (
-    <Card className="border-border/70 bg-card/55 shadow-sm">
-      <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <Card className="bg-card/55 shadow-sm border-border/70">
+      <CardHeader className="sm:flex-row sm:justify-between sm:items-start gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <CardTitle>Umami Traffic Analytics</CardTitle>
@@ -246,12 +246,12 @@ export function UmamiPanelClient({
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="gap-3 grid md:grid-cols-2 xl:grid-cols-5">
           {statCards.map((item) => (
             <UmamiStatCard key={item.label} {...item} />
           ))}
         </div>
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="gap-4 grid xl:grid-cols-2">
           <UmamiMetricList
             title="Top Pages"
             items={analytics.topPages}
@@ -280,7 +280,7 @@ export function UmamiPanelClient({
 
 export function UmamiPanelSkeleton() {
   return (
-    <Card className="border-border/70 bg-card/55 shadow-sm">
+    <Card className="bg-card/55 shadow-sm border-border/70">
       <CardHeader>
         <CardTitle>Umami Traffic Analytics</CardTitle>
         <CardDescription>
@@ -288,32 +288,32 @@ export function UmamiPanelSkeleton() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="gap-3 grid md:grid-cols-2 xl:grid-cols-5">
           {["Visitors", "Visits", "Views", "Bounce rate", "Visit duration"].map(
             (label) => (
               <div
                 key={label}
-                className="rounded-2xl border border-border/70 bg-background/40 p-4"
+                className="bg-background/40 p-4 border border-border/70 rounded-2xl"
               >
-                <p className="text-sm text-muted-foreground">{label}</p>
-                <div className="mt-3 h-8 w-20 animate-pulse rounded-xl bg-muted" />
-                <div className="mt-3 h-6 w-14 animate-pulse rounded-full bg-muted" />
+                <p className="text-muted-foreground text-sm">{label}</p>
+                <div className="bg-muted mt-3 rounded-xl w-20 h-8 animate-pulse" />
+                <div className="bg-muted mt-3 rounded-full w-14 h-6 animate-pulse" />
               </div>
             ),
           )}
         </div>
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="gap-4 grid xl:grid-cols-2">
           {["Top Pages", "Top Referrers", "Environment", "Location"].map(
             (label) => (
               <div
                 key={label}
-                className="rounded-2xl border border-border/70 bg-background/40 p-4"
+                className="bg-background/40 p-4 border border-border/70 rounded-2xl"
               >
                 <h3 className="font-heading font-semibold">{label}</h3>
-                <div className="mt-4 grid gap-3">
-                  <div className="h-4 animate-pulse rounded bg-muted" />
-                  <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+                <div className="gap-3 grid mt-4">
+                  <div className="bg-muted rounded h-4 animate-pulse" />
+                  <div className="bg-muted rounded w-4/5 h-4 animate-pulse" />
+                  <div className="bg-muted rounded w-2/3 h-4 animate-pulse" />
                 </div>
               </div>
             ),

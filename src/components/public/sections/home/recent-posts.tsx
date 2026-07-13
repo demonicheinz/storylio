@@ -21,15 +21,15 @@ export type HomeRecentPost = {
 
 export function RecentPostsSection({ posts }: { posts: HomeRecentPost[] }) {
   return (
-    <section className="w-full py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <h2 className="heading text-left">
+    <section className="py-10 w-full">
+      <div className="flex flex-wrap justify-between items-end gap-4">
+        <h2 className="text-left heading">
           Latest
           <span className="text-brand-soft"> insights</span>
         </h2>
         <Link
           href="/blog"
-          className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-surface/60 px-4 py-2 text-sm font-medium text-brand-soft transition-colors hover:border-brand-soft/50 hover:text-foreground"
+          className="inline-flex items-center gap-2 bg-surface/60 px-4 py-2 border border-border/50 hover:border-brand-soft/50 rounded-full font-medium text-brand-soft hover:text-foreground text-sm transition-colors"
         >
           View all writing
           <ArrowUpRightIcon size={16} />
@@ -37,7 +37,7 @@ export function RecentPostsSection({ posts }: { posts: HomeRecentPost[] }) {
       </div>
 
       {posts.length > 0 ? (
-        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="gap-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 mt-10">
           {posts.map((post) => {
             const publishedAt = post.publishedAt ?? post.createdAt;
 
@@ -45,7 +45,7 @@ export function RecentPostsSection({ posts }: { posts: HomeRecentPost[] }) {
               <Link
                 href={`/blog/${post.slug}`}
                 key={post.id}
-                className="group/post flex h-full flex-col overflow-hidden rounded-3xl border border-border/40 bg-surface/65 p-3 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-[border-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-brand-soft/45 hover:shadow-[0_0_64px_rgba(139,92,246,0.14)]"
+                className="group/post flex flex-col bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] backdrop-blur-xl p-3 border border-border/40 hover:border-brand-soft/45 rounded-3xl h-full overflow-hidden transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 duration-300"
               >
                 <BlogCover
                   src={post.coverImage}
@@ -54,28 +54,28 @@ export function RecentPostsSection({ posts }: { posts: HomeRecentPost[] }) {
                   sizes="(min-width: 1280px) 438px, (min-width: 768px) calc(50vw - 2.5rem), calc(100vw - 2rem)"
                 />
 
-                <div className="flex flex-1 flex-col p-4">
-                  <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex flex-col flex-1 p-4">
+                  <div className="flex flex-wrap items-center gap-2 mb-4 text-muted-foreground text-xs">
                     <span>{formatDate(publishedAt)}</span>
                     <span className="text-border">/</span>
                     <span>{calculateReadingTime(post.content)} min read</span>
                   </div>
 
-                  <h3 className="font-heading text-2xl leading-tight font-semibold text-foreground transition-colors group-hover/post:text-brand-soft">
+                  <h3 className="font-heading font-semibold text-foreground group-hover/post:text-brand-soft text-2xl leading-tight transition-colors">
                     {post.title}
                   </h3>
-                  <p className="mt-3 line-clamp-2 text-sm leading-7 text-muted-foreground">
+                  <p className="mt-3 text-muted-foreground text-sm line-clamp-2 leading-7">
                     {post.excerpt ??
                       "A note from the Storylio writing archive."}
                   </p>
 
                   {post.tags.length > 0 && (
-                    <div className="mt-5 flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 mt-5">
                       {post.tags.slice(0, 3).map((tag) => (
                         <Badge
                           key={tag.id}
                           variant="outline"
-                          className="rounded-full border-border/60 bg-background/35 text-foreground/85"
+                          className="bg-background/35 border-border/60 rounded-full text-foreground/85"
                         >
                           {tag.name}
                         </Badge>
@@ -83,7 +83,7 @@ export function RecentPostsSection({ posts }: { posts: HomeRecentPost[] }) {
                     </div>
                   )}
 
-                  <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-medium text-brand-soft">
+                  <span className="inline-flex items-center gap-2 mt-auto pt-6 font-medium text-brand-soft text-sm">
                     Read article
                     <ArrowUpRightIcon size={16} />
                   </span>
@@ -93,7 +93,7 @@ export function RecentPostsSection({ posts }: { posts: HomeRecentPost[] }) {
           })}
         </div>
       ) : (
-        <div className="mt-10 rounded-3xl border border-dashed border-border/60 bg-surface/45 p-8 text-center text-sm leading-7 text-muted-foreground backdrop-blur-xl">
+        <div className="bg-surface/45 backdrop-blur-xl mt-10 p-8 border border-border/60 border-dashed rounded-3xl text-muted-foreground text-sm text-center leading-7">
           Published articles will appear here once they are added from the CMS.
         </div>
       )}
