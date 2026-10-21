@@ -136,6 +136,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 ### Prerequisites
 
 - [Bun](https://bun.sh)
+- Infisical CLI (validated with version 0.44.3) and access to the Storylio Cloud project
 - PostgreSQL database or [Neon](https://neon.tech) account
 - [Cloudinary](https://cloudinary.com) account
 - [Resend](https://resend.com) account
@@ -146,15 +147,15 @@ Storylio is a single-owner portfolio and content management system built with Ne
 # 1. Clone and install
 git clone https://github.com/demonicheinz/storylio.git
 cd storylio
-bun run install
+bun install
 
-# 2. Configure environment
-cp .env.example .env.local
-# Fill in all required variables (see Environment Variables below)
+# 2. Sign in to the Infisical Cloud project linked in .infisical.yaml
+infisical login
+# Use .env.example as a variable-name reference; do not copy it to .env.local.
 
 # 3. Set up the database
 bun run db:generate      # Generate Prisma client
-bun run db:migrate       # Review migration state
+bun run db:migrate       # Apply development migrations
 bun run db:seed          # Seed owner account and initial content
 
 # 4. Start development
@@ -166,6 +167,31 @@ The dashboard is at `/dashboard`. Sign in with the credentials from `OWNER_EMAIL
 ---
 
 ## Environment Variables
+
+Infisical Cloud is the source for local application and database commands.
+The committed `.infisical.yaml` contains project metadata, not secret values.
+Scripts explicitly select the environment and root secret path:
+
+| Script suffix | Infisical environment | Examples |
+| --- | --- | --- |
+| None | `dev` | `dev`, `build`, `db:status` |
+| `:preview` | `staging` | `build:preview`, `db:status:preview` |
+| `:production` | `prod` | `build:production`, `db:status:production` |
+
+Prisma client generation during `bun install` does not require secrets or a
+database connection. Prisma migration/status/Studio commands use `DIRECT_URL`;
+application queries, seeds, and backfills use `DATABASE_URL` from the selected
+Infisical environment.
+
+Keep old `.env.local`, `.env.preview`, and `.env.production` files out of the
+autoload locations after migration. Existing copies were preserved locally as
+`.env.local.pre-infisical`, `.env.preview.pre-infisical`, and
+`.env.production.pre-infisical`; these backups remain ignored by Git.
+Keeping an old autoload file would allow missing Infisical keys to fall back to
+stale local values. Keep `.env.example` as documentation only.
+
+See [INFISICAL_SETUP.md](docs/INFISICAL_SETUP.md) for CLI setup,
+GitHub OIDC configuration, and Vercel secret sync.
 
 ### Required
 
@@ -209,6 +235,9 @@ The dashboard is at `/dashboard`. Sign in with the credentials from `OWNER_EMAIL
 ```bash
 bun run dev              # Start dev server (Turbopack)
 bun run build            # Production build
+bun run build:preview    # Build using Infisical staging secrets
+bun run build:production # Build using Infisical prod secrets
+bun run build:hosted     # Build using environment already injected by CI/Vercel
 bun run typecheck        # TypeScript check (tsc --noEmit)
 bun run lint             # Biome lint + format check
 bun run test             # Run all Vitest unit and integration tests
@@ -311,11 +340,12 @@ bun run db:backfill-media -- --force
 
 ### Vercel (recommended)
 
-1. Set all required environment variables under **Settings → Environment Variables**.
-2. Set `NEXT_PUBLIC_SITE_URL` and `BETTER_AUTH_URL` to the production HTTPS origin before the first build.
-3. For Preview deployments, keep canonical URL variables pointing at production — BetterAuth safely derives the active `*.vercel.app` origin per request.
-4. Use a separate Neon branch for Preview database isolation.
-5. Run `bun run db:status` before applying migrations. Do not deploy while local and remote migration histories diverge.
+1. Configure Infisical secret sync: `dev` → Vercel Development, `staging` → Preview, `prod` → Production. See [INFISICAL_SETUP.md](docs/INFISICAL_SETUP.md).
+2. Set the Vercel Build Command to `bun run build:hosted`. It uses synced environment variables without requiring a CLI login on Vercel.
+3. Set `NEXT_PUBLIC_SITE_URL` and `BETTER_AUTH_URL` to the production HTTPS origin before the first build.
+4. For Preview deployments, keep canonical URL variables pointing at production — BetterAuth safely derives the active `*.vercel.app` origin per request.
+5. Use a separate Neon branch for Preview database isolation.
+6. Run the matching `db:status` command before applying migrations. Do not deploy while local and remote migration histories diverge.
 
 ### Pre-launch Checklist
 
