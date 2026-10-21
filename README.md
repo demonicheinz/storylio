@@ -32,7 +32,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 - **Projects** — filterable grid by category, featured projects section, and full detail page with MDX content and screenshots
 - **Blog** — MDX articles with syntax highlighting, sticky table of contents, reading time, view counter, tag filtering, and social share
 - **Gallery** — masonry grid with lightbox, category filter, captions, and drag-and-drop ordering
-- **SEO** — per-page metadata, dynamic OG image generation via `@vercel/og`, auto-generated `sitemap.xml` and `robots.txt`
+- **SEO** — per-page metadata, dynamic OG image generation via Next.js `ImageResponse` from `next/og`, auto-generated `sitemap.xml` and `robots.txt`
 
 ### Dashboard CMS
 
@@ -211,6 +211,9 @@ bun run dev              # Start dev server (Turbopack)
 bun run build            # Production build
 bun run typecheck        # TypeScript check (tsc --noEmit)
 bun run lint             # Biome lint + format check
+bun run test             # Run all Vitest unit and integration tests
+bun run test:watch       # Watch tests during development
+bun run test:security    # Auth boundaries, image processing, and OG regression checks
 
 bun run db:generate      # Generate Prisma client
 bun run db:status        # Review migration state
@@ -219,6 +222,43 @@ bun run db:studio        # Open Prisma Studio
 ```
 
 ---
+
+## Testing
+
+Use Vitest for unit and integration tests in `tests/**/*.test.ts`.
+`vitest.config.mts` runs them in Node and resolves the application `@/` alias.
+CI runs `bun run test` alongside type checking. Vitest stays on the maintained
+4.x line to support the project's current Node and TypeScript type ranges.
+
+The auth checks use dummy credentials and no live database. Their fixture
+enables production mode before importing Better Auth because Better Auth skips
+origin checks in test mode. Keep that guard active when extending these tests.
+
+Use the pinned Playwright CLI for browser flows and debugging. Install its
+Chromium once:
+
+```bash
+bun run browser:install
+```
+
+Start the app with `bun run dev` in a separate terminal. Then run:
+
+```bash
+bun run browser:open http://localhost:3000/sign-in
+bun run test:browser
+bun run browser snapshot
+bun run browser close
+```
+
+`playwright-cli.config.json` selects headless Chromium with an isolated profile.
+`tests/browser/security-smoke.js` checks the sign-in form, password visibility,
+dashboard protection, anonymous sessions, OG output, and browser runtime errors.
+It uses the origin opened in the CLI session, so it can also check a locally
+running production build. Conditional passkey challenges use a browser fixture;
+a real passkey sign-in needs a dedicated auth database and WebAuthn setup.
+Use a dedicated test session: the smoke check clears
+that session's cookies. Browser artifacts stay in the ignored `.playwright-cli/`
+directory. The browser flow is run separately from the automated Vitest CI step.
 
 ## Integrations
 

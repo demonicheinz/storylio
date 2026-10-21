@@ -52,6 +52,8 @@ const previewHeaders = [
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  // Preserve existing navigation behavior during the security upgrade.
+  partialPrefetching: false,
   async headers() {
     return [
       {
