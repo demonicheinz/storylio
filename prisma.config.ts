@@ -1,4 +1,4 @@
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -7,6 +7,7 @@ export default defineConfig({
     seed: "tsx prisma/seeds/index.ts",
   },
   datasource: {
-    url: env("DIRECT_URL"),
+    // Client generation during install does not require database credentials.
+    url: process.env.DIRECT_URL,
   },
 });
