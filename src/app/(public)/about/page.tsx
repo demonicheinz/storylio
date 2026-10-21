@@ -1,3 +1,4 @@
+import { and, asc, eq, inArray } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 import { Heading, MotionReveal, PublicBackground } from "@/components/common";
@@ -16,6 +17,7 @@ import {
 import type { AboutLanguage } from "@/components/public/sections/about/language-intro";
 import { getAboutContent } from "@/features/about/data";
 import { db } from "@/lib/db";
+import { skill } from "@/lib/db/schema";
 import { renderMDX } from "@/lib/mdx";
 import { cn } from "@/lib/utils";
 
@@ -65,21 +67,21 @@ async function getAboutProfile() {
   "use cache";
   cacheLife("hours");
 
-  return db.user.findFirst({
-    select: {
-      name: true,
-      publicEmail: true,
-      image: true,
-      tagline: true,
-      bio: true,
-      github: true,
-      instagram: true,
-      twitter: true,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-  });
+  return db.query.user
+    .findFirst({
+      columns: {
+        name: true,
+        publicEmail: true,
+        image: true,
+        tagline: true,
+        bio: true,
+        github: true,
+        instagram: true,
+        twitter: true,
+      },
+      orderBy: (table) => [asc(table.createdAt)],
+    })
+    .then((row) => row ?? null);
 }
 
 async function getStructuredAboutData() {
@@ -87,21 +89,39 @@ async function getStructuredAboutData() {
   cacheLife("hours");
 
   const [experiences, education, categories] = await Promise.all([
-    db.workExperience.findMany({
-      where: { isVisible: true },
-      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    db.query.workExperience
+      .findMany({
+        where: (table) => eq(table.isVisible, true),
+        orderBy: (table) => [asc(table.order), asc(table.createdAt)],
+      })
+      .then((rows) =>
+        rows.map((row) => ({
+          ...row,
+          highlightsEn: row.highlightsEn ?? [],
+          highlightsId: row.highlightsId ?? [],
+        })),
+      ),
+    db.query.education.findMany({
+      where: (table) => eq(table.isVisible, true),
+      orderBy: (table) => [asc(table.order), asc(table.createdAt)],
     }),
-    db.education.findMany({
-      where: { isVisible: true },
-      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-    }),
-    db.skillCategory.findMany({
-      where: { isVisible: true, skills: { some: { isVisible: true } } },
-      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-      include: {
+    db.query.skillCategory.findMany({
+      where: (table) =>
+        and(
+          eq(table.isVisible, true),
+          inArray(
+            table.id,
+            db
+              .select({ categoryId: skill.categoryId })
+              .from(skill)
+              .where(eq(skill.isVisible, true)),
+          ),
+        ),
+      orderBy: (table) => [asc(table.order), asc(table.createdAt)],
+      with: {
         skills: {
-          where: { isVisible: true },
-          orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+          where: (table) => eq(table.isVisible, true),
+          orderBy: (table) => [asc(table.order), asc(table.createdAt)],
         },
       },
     }),

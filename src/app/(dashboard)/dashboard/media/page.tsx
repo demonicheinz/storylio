@@ -1,12 +1,13 @@
+import { desc } from "drizzle-orm";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { MediaLibraryClient } from "@/features/dashboard/media/components/media-client";
 import { db } from "@/lib/db";
 
 async function getMedia() {
-  return db.media.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
+  return db.query.media.findMany({
+    orderBy: (table) => [desc(table.createdAt)],
+    columns: {
       id: true,
       url: true,
       publicId: true,

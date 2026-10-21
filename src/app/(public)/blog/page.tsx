@@ -1,3 +1,4 @@
+import { and, desc, eq, inArray, isNull, lte, or } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 import Link from "next/link";
@@ -11,8 +12,10 @@ import {
   FeaturedPost,
   PostList,
 } from "@/components/public/sections/blog";
-import { PostStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { PostStatus } from "@/lib/db/enums";
+import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
+import { post, postToTag, tag } from "@/lib/db/schema";
 
 type BlogPageProps = {
   searchParams: Promise<{
@@ -66,65 +69,74 @@ async function getBlogData(selectedTag?: string) {
   cacheLife("minutes");
 
   const now = new Date();
-  const publishedWhere = {
-    status: PostStatus.PUBLISHED,
-    OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],
-  };
+  const publishedWhere = and(
+    eq(post.status, PostStatus.PUBLISHED),
+    or(isNull(post.publishedAt), lte(post.publishedAt, now)),
+  );
 
   const [posts, allPublishedPosts] = await Promise.all([
-    db.post.findMany({
-      where: {
-        ...publishedWhere,
-        ...(selectedTag
-          ? {
-              tags: {
-                some: {
-                  name: selectedTag,
+    db.query.post
+      .findMany({
+        where: (table) =>
+          and(
+            publishedWhere,
+            selectedTag
+              ? inArray(
+                  table.id,
+                  db
+                    .select({ postId: postToTag.postId })
+                    .from(postToTag)
+                    .innerJoin(tag, eq(postToTag.tagId, tag.id))
+                    .where(eq(tag.name, selectedTag)),
+                )
+              : undefined,
+          ),
+        columns: {
+          id: true,
+          title: true,
+          slug: true,
+          excerpt: true,
+          content: true,
+          coverImage: true,
+          publishedAt: true,
+          createdAt: true,
+          viewCount: true,
+        },
+        orderBy: (table) => [desc(table.publishedAt), desc(table.createdAt)],
+        with: {
+          tags: {
+            columns: {},
+            with: {
+              tag: {
+                columns: {
+                  id: true,
+                  name: true,
                 },
               },
-            }
-          : {}),
-      },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        excerpt: true,
-        content: true,
-        coverImage: true,
-        publishedAt: true,
-        createdAt: true,
-        viewCount: true,
-        tags: {
-          select: {
-            id: true,
-            name: true,
-          },
-          orderBy: {
-            name: "asc",
+            },
+            orderBy: orderPostTagsByName,
           },
         },
-      },
-      orderBy: [
-        {
-          publishedAt: "desc",
-        },
-        {
-          createdAt: "desc",
-        },
-      ],
-    }),
-    db.post.findMany({
-      where: publishedWhere,
-      select: {
-        id: true,
-        tags: {
-          select: {
-            name: true,
+      })
+      .then((rows) => rows.map((row) => flattenPostTags(row))),
+    db.query.post
+      .findMany({
+        where: (table) => publishedWhere,
+        columns: { id: true },
+        with: {
+          tags: {
+            columns: {},
+            with: {
+              tag: {
+                columns: {
+                  name: true,
+                },
+              },
+            },
           },
         },
-      },
-    }),
+      })
+      .then((rows) => rows.map((row) => flattenPostTags(row))),
   ]);
 
   const tags = Array.from(

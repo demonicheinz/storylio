@@ -3,6 +3,7 @@ import {
   InstagramLogoIcon,
   XLogoIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { asc } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
@@ -19,16 +20,12 @@ async function getSocialProfile() {
   cacheLife("hours");
   cacheTag("public-profile");
 
-  return db.user.findFirst({
-    select: {
-      github: true,
-      instagram: true,
-      twitter: true,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-  });
+  return db.query.user
+    .findFirst({
+      columns: { github: true, instagram: true, twitter: true },
+      orderBy: (table) => [asc(table.createdAt)],
+    })
+    .then((row) => row ?? null);
 }
 
 async function getCurrentYear() {

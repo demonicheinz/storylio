@@ -28,3 +28,23 @@ Keep the explicit environment flags; these slugs are not NODE_ENV values.
 Use `bun run build:hosted` when CI/Vercel already injects the environment.
 Read `docs/INFISICAL_SETUP.md` for OIDC and Vercel setup. Do not print secret
 values or restore legacy `.env.*` files to autoload locations during migration.
+
+## Database and migrations
+
+Use native Drizzle queries and `src/lib/db/schema.ts`; shared client-safe enums
+live in `src/lib/db/enums.ts`. Do not recreate a Prisma-compatible query API.
+Read `docs/DRIZZLE_MIGRATION.md` before database administration. Existing
+databases require a reviewed baseline before `db:migrate` can run. The default
+baseline command is read-only; `--apply` writes the migration ledger and requires
+explicit authorization for external databases. Never replay the initial CREATE
+TABLE migration on an existing database or remove historical Prisma ledgers.
+
+`db:generate`, `db:check`, and `db:format` operate locally without Infisical.
+Integration fixtures use PGlite and the archived legacy SQL, never real secrets.
+
+## Work artifacts
+
+Keep reviewable task plans, reports, and non-secret evidence in `task/<task-name>/`.
+Keep temporary scripts and local diagnostics in `.tmp/<task-name>/`; `.tmp/` is
+ignored by Git and excluded from TypeScript checks. Durable setup and operating
+guides belong in `docs/`. Do not put new task artifacts in the legacy `.docs/`.

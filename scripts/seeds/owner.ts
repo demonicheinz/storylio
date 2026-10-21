@@ -1,7 +1,9 @@
 import { hashPassword } from "better-auth/crypto";
-import type { PrismaClient } from "@/generated/prisma";
+import { eq } from "drizzle-orm";
+import type { Database } from "@/lib/db";
+import { account, user } from "@/lib/db/schema";
 
-export async function seedOwner(db: PrismaClient) {
+export async function seedOwner(db: Database) {
   const ownerEmail = process.env.OWNER_EMAIL?.split(",")[0]
     ?.trim()
     .toLowerCase();
@@ -11,38 +13,42 @@ export async function seedOwner(db: PrismaClient) {
     throw new Error("OWNER_EMAIL and OWNER_PASSWORD must be set");
   }
 
-  let owner = await db.user.findUnique({
-    where: { email: ownerEmail },
+  let owner = await db.query.user.findFirst({
+    where: eq(user.email, ownerEmail),
   });
 
   if (!owner) {
     const now = new Date();
-    owner = await db.user.create({
-      data: {
-        email: ownerEmail,
-        name: "Ahmad Haizul Amany",
-        emailVerified: true,
+    const password = await hashPassword(ownerPassword);
+    owner = await db.transaction(async (tx) => {
+      const [createdOwner] = await tx
+        .insert(user)
+        .values({
+          email: ownerEmail,
+          name: "Ahmad Haizul Amany",
+          emailVerified: true,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning();
+      await tx.insert(account).values({
+        userId: createdOwner.id,
+        accountId: "",
+        providerId: "credential",
+        password,
         createdAt: now,
         updatedAt: now,
-        accounts: {
-          create: {
-            accountId: "",
-            providerId: "credential",
-            password: await hashPassword(ownerPassword),
-            createdAt: now,
-            updatedAt: now,
-          },
-        },
-      },
+      });
+      return createdOwner;
     });
     console.log("Created owner user with Better Auth:", ownerEmail);
   } else {
     console.log("Owner user already exists:", ownerEmail);
   }
 
-  await db.user.update({
-    where: { id: owner.id },
-    data: {
+  await db
+    .update(user)
+    .set({
       name: "Ahmad Haizul Amany",
       emailVerified: true,
       tagline: "Full Stack Developer",
@@ -52,8 +58,8 @@ export async function seedOwner(db: PrismaClient) {
       twitter: "https://x.com/chrysantastix",
       websiteUrl: "https://heinz.id",
       publicEmail: "hello@heinz.id",
-    },
-  });
+    })
+    .where(eq(user.id, owner.id));
 
   return owner;
 }

@@ -3,6 +3,7 @@ import {
   ArrowUpRightIcon,
   GithubLogoIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { and, asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 import Link from "next/link";
@@ -17,8 +18,8 @@ import {
 } from "@/components/public/sections/projects";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { ProjectStatus } from "@/lib/db/enums";
 import { renderMDX } from "@/lib/mdx";
 import { getProjectContribution } from "@/lib/project-contribution";
 import { calculateReadingTime, formatDate, slugify } from "@/lib/utils";
@@ -33,55 +34,55 @@ async function getProjectBySlug(slug: string) {
   "use cache";
   cacheLife("minutes");
 
-  return db.project.findFirst({
-    where: {
-      slug,
-      status: ProjectStatus.PUBLISHED,
-    },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      description: true,
-      contribution: true,
-      content: true,
-      coverImage: true,
-      thumbnailImageUrl: true,
-      ogImageUrl: true,
-      techStack: true,
-      liveUrl: true,
-      githubUrl: true,
-      order: true,
-      isFeatured: true,
-      isClosedSource: true,
-      updatedAt: true,
-      structuredScreenshots: {
-        orderBy: { order: "asc" },
-        select: {
-          id: true,
-          imageUrl: true,
-          caption: true,
-          altText: true,
-          width: true,
-          height: true,
-          aspectRatio: true,
-          blurDataUrl: true,
-          order: true,
+  return db.query.project
+    .findFirst({
+      where: (table) =>
+        and(eq(table.slug, slug), eq(table.status, ProjectStatus.PUBLISHED)),
+      columns: {
+        id: true,
+        title: true,
+        slug: true,
+        description: true,
+        contribution: true,
+        content: true,
+        coverImage: true,
+        thumbnailImageUrl: true,
+        ogImageUrl: true,
+        techStack: true,
+        liveUrl: true,
+        githubUrl: true,
+        order: true,
+        isFeatured: true,
+        isClosedSource: true,
+        updatedAt: true,
+      },
+      with: {
+        structuredScreenshots: {
+          orderBy: (table) => [asc(table.order)],
+          columns: {
+            id: true,
+            imageUrl: true,
+            caption: true,
+            altText: true,
+            width: true,
+            height: true,
+            aspectRatio: true,
+            blurDataUrl: true,
+            order: true,
+          },
         },
       },
-    },
-  });
+    })
+    .then((row) => (row ? { ...row, techStack: row.techStack ?? [] } : null));
 }
 
 async function getProjectNeighbors(projectId: string) {
   "use cache";
   cacheLife("minutes");
 
-  const projects = await db.project.findMany({
-    where: {
-      status: ProjectStatus.PUBLISHED,
-    },
-    select: {
+  const projects = await db.query.project.findMany({
+    where: (table) => eq(table.status, ProjectStatus.PUBLISHED),
+    columns: {
       id: true,
       title: true,
       slug: true,
@@ -89,14 +90,7 @@ async function getProjectNeighbors(projectId: string) {
       order: true,
       createdAt: true,
     },
-    orderBy: [
-      {
-        order: "asc",
-      },
-      {
-        createdAt: "desc",
-      },
-    ],
+    orderBy: (table) => [asc(table.order), desc(table.createdAt)],
   });
 
   const currentIndex = projects.findIndex(
