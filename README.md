@@ -4,7 +4,7 @@
 
 *A personal portfolio and CMS — built to last, not to scaffold.*
 
-Storylio is a single-owner portfolio and content management system built with Next.js 16, React 19, Prisma, PostgreSQL, BetterAuth, and Cloudinary. It ships with a full dashboard for managing posts, projects, gallery, testimonials, and site content — no code changes required for day-to-day publishing.
+Storylio is a single-owner portfolio and content management system built with Next.js 16, React 19, Drizzle ORM, PostgreSQL, BetterAuth, and Cloudinary. It ships with a full dashboard for managing posts, projects, gallery, testimonials, and site content — no code changes required for day-to-day publishing.
 
 [![Quality](https://img.shields.io/github/actions/workflow/status/demonicheinz/storylio/quality.yml?style=plastic&label=Quality&logo=github)](https://github.com/demonicheinz/storylio/actions/workflows/quality.yml)
 [![Security](https://img.shields.io/github/actions/workflow/status/demonicheinz/storylio/trivy.yml?style=plastic&label=Security&logo=github)](https://github.com/demonicheinz/storylio/actions/workflows/trivy.yml)
@@ -14,7 +14,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 [![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=plastic&logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=plastic&logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_v4-06B6D4?style=plastic&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=plastic&logo=prisma&logoColor=white)](https://prisma.io)
+[![Drizzle ORM](https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=plastic&logo=drizzle&logoColor=black)](https://orm.drizzle.team)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=plastic&logo=postgresql&logoColor=white)](https://postgresql.org)
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=plastic&logo=cloudinary&logoColor=white)](https://cloudinary.com)
 [![Vercel](https://img.shields.io/badge/Vercel-000000?style=plastic&logo=vercel&logoColor=white)](https://vercel.com)
@@ -61,7 +61,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 - **Biome** — single tool for linting and formatting (replaces ESLint + Prettier)
 - **`use cache`** — static public pages cached at the component level for instant navigation
 - **ISR** — blog and project pages revalidate every 60 seconds
-- **Custom Prisma output** — client generated to `src/generated/prisma` for better TypeScript integration
+- **Typed database schema** — Drizzle tables and relations in `src/lib/db/schema.ts`, with reviewed SQL migrations in `drizzle/`
 - **Signed Cloudinary uploads** — API secret never exposed to the client
 - **MDX hybrid** — static pages from filesystem (`@next/mdx`), dynamic content from database (`next-mdx-remote-client`)
 
@@ -84,7 +84,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 | Language | TypeScript |
 | Styling | Tailwind CSS v4 + shadcn/ui |
 | Database | PostgreSQL / Neon |
-| ORM | Prisma |
+| ORM | Drizzle ORM |
 | Auth | BetterAuth (single-owner) |
 | Media | Cloudinary |
 | Email | Resend |
@@ -153,16 +153,19 @@ bun install
 infisical login
 # Use .env.example as a variable-name reference; do not copy it to .env.local.
 
-# 3. Set up the database
-bun run db:generate      # Generate Prisma client
-bun run db:migrate       # Apply development migrations
-bun run db:seed          # Seed owner account and initial content
+# 3. Verify an existing database without changing it
+bun run db:baseline
 
 # 4. Start development
 bun run dev
 ```
 
 The dashboard is at `/dashboard`. Sign in with the credentials from `OWNER_EMAIL` and `OWNER_PASSWORD`.
+
+For a new, empty database, run `bun run db:migrate` followed by `bun run db:seed`
+instead of the baseline check. For an existing database, follow
+[DRIZZLE_MIGRATION.md](docs/DRIZZLE_MIGRATION.md) before adopting its migration
+ledger. No client-generation step is required.
 
 ---
 
@@ -178,8 +181,8 @@ Scripts explicitly select the environment and root secret path:
 | `:preview` | `staging` | `build:preview`, `db:status:preview` |
 | `:production` | `prod` | `build:production`, `db:status:production` |
 
-Prisma client generation during `bun install` does not require secrets or a
-database connection. Prisma migration/status/Studio commands use `DIRECT_URL`;
+Installing dependencies and generating migration files do not require secrets
+or a database connection. Migration/status/baseline/Studio commands use `DIRECT_URL`;
 application queries, seeds, and backfills use `DATABASE_URL` from the selected
 Infisical environment.
 
@@ -198,7 +201,7 @@ GitHub OIDC configuration, and Vercel secret sync.
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | Pooled database connection string |
-| `DIRECT_URL` | Direct connection string (used by Prisma migrations) |
+| `DIRECT_URL` | Direct connection string for schema inspection and database administration |
 | `BETTER_AUTH_SECRET` | Strong random secret for BetterAuth signing |
 | `BETTER_AUTH_URL` | Canonical production origin, e.g. `https://heinz.id` |
 | `NEXT_PUBLIC_SITE_URL` | Canonical public site origin used by metadata |
@@ -244,10 +247,13 @@ bun run test             # Run all Vitest unit and integration tests
 bun run test:watch       # Watch tests during development
 bun run test:security    # Auth boundaries, image processing, and OG regression checks
 
-bun run db:generate      # Generate Prisma client
-bun run db:status        # Review migration state
+bun run db:generate      # Generate SQL migration files; does not apply them
+bun run db:check         # Check local Drizzle migration history
+bun run db:baseline      # Verify an existing schema; read-only by default
+bun run db:status        # Report applied/pending migrations and baseline requirements
+bun run db:migrate       # Apply migrations to an empty or already-baselined database
 bun run db:seed          # Seed owner account and initial content
-bun run db:studio        # Open Prisma Studio
+bun run db:studio        # Open Drizzle Studio
 ```
 
 ---
@@ -258,6 +264,10 @@ Use Vitest for unit and integration tests in `tests/**/*.test.ts`.
 `vitest.config.mts` runs them in Node and resolves the application `@/` alias.
 CI runs `bun run test` alongside type checking. Vitest stays on the maintained
 4.x line to support the project's current Node and TypeScript type ranges.
+
+Database integration tests use in-memory PostgreSQL through PGlite. They replay
+the archived schema and verify Drizzle relations, transactions, auth compatibility,
+seed idempotence, and migration-baseline safety without live database credentials.
 
 The auth checks use dummy credentials and no live database. Their fixture
 enables production mode before importing Better Auth because Better Auth skips

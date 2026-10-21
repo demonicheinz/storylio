@@ -1,8 +1,10 @@
-import type { PrismaClient } from "@/generated/prisma";
-import { PostStatus } from "@/generated/prisma";
+import { eq } from "drizzle-orm";
+import type { Database } from "@/lib/db";
+import { PostStatus } from "@/lib/db/enums";
+import { post as postTable, postToTag, tag as tagTable } from "@/lib/db/schema";
 
 type SeedPostsOptions = {
-  db: PrismaClient;
+  db: Database;
   ownerId: string;
 };
 
@@ -98,52 +100,27 @@ const posts = [
 
 export async function seedPosts({ db, ownerId }: SeedPostsOptions) {
   for (const post of posts) {
-    await db.post.upsert({
-      where: {
-        slug: post.slug,
-      },
-      update: {
-        title: post.title,
-        excerpt: post.excerpt,
-        content: post.content,
-        coverImage: post.coverImage,
-        status: post.status,
-        publishedAt: post.publishedAt,
-        viewCount: post.viewCount,
-        authorId: ownerId,
-        tags: {
-          set: [],
-          connectOrCreate: post.tags.map((tag) => ({
-            where: {
-              name: tag,
-            },
-            create: {
-              name: tag,
-            },
-          })),
-        },
-      },
-      create: {
-        title: post.title,
-        slug: post.slug,
-        excerpt: post.excerpt,
-        content: post.content,
-        coverImage: post.coverImage,
-        status: post.status,
-        publishedAt: post.publishedAt,
-        viewCount: post.viewCount,
-        authorId: ownerId,
-        tags: {
-          connectOrCreate: post.tags.map((tag) => ({
-            where: {
-              name: tag,
-            },
-            create: {
-              name: tag,
-            },
-          })),
-        },
-      },
+    const { tags, ...postData } = post;
+    await db.transaction(async (tx) => {
+      const values = { ...postData, authorId: ownerId };
+      const [seededPost] = await tx
+        .insert(postTable)
+        .values(values)
+        .onConflictDoUpdate({ target: postTable.slug, set: values })
+        .returning({ id: postTable.id });
+
+      await tx.delete(postToTag).where(eq(postToTag.postId, seededPost.id));
+      for (const name of tags) {
+        const [seededTag] = await tx
+          .insert(tagTable)
+          .values({ name })
+          .onConflictDoUpdate({ target: tagTable.name, set: { name } })
+          .returning({ id: tagTable.id });
+        await tx
+          .insert(postToTag)
+          .values({ postId: seededPost.id, tagId: seededTag.id })
+          .onConflictDoNothing();
+      }
     });
   }
 

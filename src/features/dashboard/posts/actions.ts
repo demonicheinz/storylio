@@ -1,5 +1,6 @@
 "use server";
 
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
@@ -8,12 +9,16 @@ import {
   postActionSchema,
 } from "@/features/dashboard/posts/validations";
 import { flattenFieldErrors } from "@/features/dashboard/shared/utils/flatten-field-errors";
-import { PostStatus } from "@/generated/prisma";
 import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { PostStatus } from "@/lib/db/enums";
+import { post as postTable, postToTag, tag as tagTable } from "@/lib/db/schema";
+
 import { getMdxSafetyError } from "@/lib/mdx-safety";
+
+type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 type PostActionData = {
   id: string;
@@ -104,9 +109,9 @@ function revalidatePostSlugs(slugs: string[]) {
 }
 
 async function ensureUniqueSlug(slug: string, postId?: string) {
-  const existingPost = await db.post.findUnique({
-    where: { slug },
-    select: { id: true },
+  const existingPost = await db.query.post.findFirst({
+    where: eq(postTable.slug, slug),
+    columns: { id: true },
   });
 
   if (existingPost && existingPost.id !== postId) {
@@ -118,11 +123,26 @@ async function ensureUniqueSlug(slug: string, postId?: string) {
   return undefined;
 }
 
-function tagsToConnectOrCreate(tags: string[]) {
-  return tags.map((name) => ({
-    where: { name },
-    create: { name },
-  }));
+async function replacePostTags(
+  tx: Transaction,
+  postId: string,
+  names: string[],
+) {
+  await tx.delete(postToTag).where(eq(postToTag.postId, postId));
+  const uniqueNames = [...new Set(names)];
+  if (uniqueNames.length === 0) return;
+
+  await tx
+    .insert(tagTable)
+    .values(uniqueNames.map((name) => ({ name })))
+    .onConflictDoNothing({ target: tagTable.name });
+  const tags = await tx.query.tag.findMany({
+    where: inArray(tagTable.name, uniqueNames),
+    columns: { id: true },
+  });
+  await tx
+    .insert(postToTag)
+    .values(tags.map((tag) => ({ postId, tagId: tag.id })));
 }
 
 export async function actionCreatePost(
@@ -154,25 +174,27 @@ export async function actionCreatePost(
       return duplicateSlug;
     }
 
-    const post = await db.post.create({
-      data: {
-        title: parsed.data.title,
-        slug: parsed.data.slug,
-        excerpt: parsed.data.excerpt || null,
-        content: parsed.data.content,
-        coverImage: parsed.data.coverImage ?? null,
-        status: toPostStatus(parsed.data.status),
-        publishedAt: toPublishedAt(parsed.data),
-        authorId: session.user.id,
-        tags: {
-          connectOrCreate: tagsToConnectOrCreate(parsed.data.tags),
-        },
-      },
-      select: {
-        id: true,
-        slug: true,
-        status: true,
-      },
+    const post = await db.transaction(async (tx) => {
+      const [savedPost] = await tx
+        .insert(postTable)
+        .values({
+          title: parsed.data.title,
+          slug: parsed.data.slug,
+          excerpt: parsed.data.excerpt || null,
+          content: parsed.data.content,
+          coverImage: parsed.data.coverImage ?? null,
+          status: toPostStatus(parsed.data.status),
+          publishedAt: toPublishedAt(parsed.data),
+          authorId: session.user.id,
+        })
+        .returning({
+          id: postTable.id,
+          slug: postTable.slug,
+          status: postTable.status,
+        });
+      if (!savedPost) throw new Error("Post not found.");
+      await replacePostTags(tx, savedPost.id, parsed.data.tags);
+      return savedPost;
     });
 
     revalidatePostPaths(post.slug);
@@ -214,9 +236,9 @@ export async function actionUpdatePost(
   }
 
   try {
-    const existingPost = await db.post.findUnique({
-      where: { id: postId },
-      select: {
+    const existingPost = await db.query.post.findFirst({
+      where: eq(postTable.id, postId),
+      columns: {
         id: true,
         slug: true,
         publishedAt: true,
@@ -232,26 +254,27 @@ export async function actionUpdatePost(
       return duplicateSlug;
     }
 
-    const post = await db.post.update({
-      where: { id: postId },
-      data: {
-        title: parsed.data.title,
-        slug: parsed.data.slug,
-        excerpt: parsed.data.excerpt || null,
-        content: parsed.data.content,
-        coverImage: parsed.data.coverImage ?? null,
-        status: toPostStatus(parsed.data.status),
-        publishedAt: toPublishedAt(parsed.data, existingPost.publishedAt),
-        tags: {
-          set: [],
-          connectOrCreate: tagsToConnectOrCreate(parsed.data.tags),
-        },
-      },
-      select: {
-        id: true,
-        slug: true,
-        status: true,
-      },
+    const post = await db.transaction(async (tx) => {
+      const [savedPost] = await tx
+        .update(postTable)
+        .set({
+          title: parsed.data.title,
+          slug: parsed.data.slug,
+          excerpt: parsed.data.excerpt || null,
+          content: parsed.data.content,
+          coverImage: parsed.data.coverImage ?? null,
+          status: toPostStatus(parsed.data.status),
+          publishedAt: toPublishedAt(parsed.data, existingPost.publishedAt),
+        })
+        .where(eq(postTable.id, postId))
+        .returning({
+          id: postTable.id,
+          slug: postTable.slug,
+          status: postTable.status,
+        });
+      if (!savedPost) throw new Error("Post not found.");
+      await replacePostTags(tx, savedPost.id, parsed.data.tags);
+      return savedPost;
     });
 
     revalidatePostPaths(post.slug, existingPost.slug);
@@ -278,18 +301,16 @@ export async function actionDeletePost(postId: string): Promise<ActionResult> {
   }
 
   try {
-    const post = await db.post.findUnique({
-      where: { id: postId },
-      select: { slug: true },
+    const post = await db.query.post.findFirst({
+      where: eq(postTable.id, postId),
+      columns: { slug: true },
     });
 
     if (!post) {
       return actionError("Post not found.");
     }
 
-    await db.post.delete({
-      where: { id: postId },
-    });
+    await db.delete(postTable).where(eq(postTable.id, postId));
 
     revalidatePostPaths(post.slug);
 
@@ -325,29 +346,32 @@ export async function actionPublishPosts(
   }
 
   try {
-    const posts = await db.post.findMany({
-      where: { id: { in: parsedIds } },
-      select: { slug: true },
+    const posts = await db.query.post.findMany({
+      where: inArray(postTable.id, parsedIds),
+      columns: { slug: true },
     });
 
-    const result = await db.post.updateMany({
-      where: {
-        id: { in: parsedIds },
-        status: PostStatus.DRAFT,
-      },
-      data: {
+    const result = await db
+      .update(postTable)
+      .set({
         status: PostStatus.PUBLISHED,
         publishedAt: new Date(),
-      },
-    });
+      })
+      .where(
+        and(
+          inArray(postTable.id, parsedIds),
+          eq(postTable.status, PostStatus.DRAFT),
+        ),
+      )
+      .returning({ id: postTable.id });
 
     revalidatePostSlugs(posts.map((post) => post.slug));
 
     return actionSuccess(
-      { count: result.count },
-      result.count === 1
+      { count: result.length },
+      result.length === 1
         ? "Post published."
-        : `${result.count} posts published.`,
+        : `${result.length} posts published.`,
     );
   } catch (error) {
     console.error("Publish posts failed:", error);
@@ -370,29 +394,32 @@ export async function actionMovePostsToDraft(
   }
 
   try {
-    const posts = await db.post.findMany({
-      where: { id: { in: parsedIds } },
-      select: { slug: true },
+    const posts = await db.query.post.findMany({
+      where: inArray(postTable.id, parsedIds),
+      columns: { slug: true },
     });
 
-    const result = await db.post.updateMany({
-      where: {
-        id: { in: parsedIds },
-        status: PostStatus.PUBLISHED,
-      },
-      data: {
+    const result = await db
+      .update(postTable)
+      .set({
         status: PostStatus.DRAFT,
         publishedAt: null,
-      },
-    });
+      })
+      .where(
+        and(
+          inArray(postTable.id, parsedIds),
+          eq(postTable.status, PostStatus.PUBLISHED),
+        ),
+      )
+      .returning({ id: postTable.id });
 
     revalidatePostSlugs(posts.map((post) => post.slug));
 
     return actionSuccess(
-      { count: result.count },
-      result.count === 1
+      { count: result.length },
+      result.length === 1
         ? "Post moved to draft."
-        : `${result.count} posts moved to draft.`,
+        : `${result.length} posts moved to draft.`,
     );
   } catch (error) {
     console.error("Move posts to draft failed:", error);
@@ -415,22 +442,21 @@ export async function actionDeletePosts(
   }
 
   try {
-    const posts = await db.post.findMany({
-      where: { id: { in: parsedIds } },
-      select: { slug: true },
+    const posts = await db.query.post.findMany({
+      where: inArray(postTable.id, parsedIds),
+      columns: { slug: true },
     });
 
-    const result = await db.post.deleteMany({
-      where: {
-        id: { in: parsedIds },
-      },
-    });
+    const result = await db
+      .delete(postTable)
+      .where(inArray(postTable.id, parsedIds))
+      .returning({ id: postTable.id });
 
     revalidatePostSlugs(posts.map((post) => post.slug));
 
     return actionSuccess(
-      { count: result.count },
-      result.count === 1 ? "Post deleted." : `${result.count} posts deleted.`,
+      { count: result.length },
+      result.length === 1 ? "Post deleted." : `${result.length} posts deleted.`,
     );
   } catch (error) {
     console.error("Delete posts failed:", error);

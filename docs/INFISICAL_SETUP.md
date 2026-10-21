@@ -27,7 +27,7 @@ production mode according to the command.
    use the corresponding region consistently in login, CI, and sync.
 3. Keep `.infisical.yaml` in the repository: its project ID is metadata.
    Personal login state, access tokens, and secret values stay outside Git.
-4. Run `bun install`. Its Prisma generate step works without database secrets.
+4. Run `bun install`. Drizzle requires no client generation or database secrets at install time.
 5. Use the existing application/database scripts:
 
    ```powershell
@@ -143,15 +143,20 @@ Local checks:
 
 ```powershell
 bun run db:generate
+bun run db:check
 bun run build
 bun run typecheck
 bun run lint
 bun run test
 ```
 
-Database status commands are read-only, but migrate, seed, push, reset, and
-backfill commands retain their existing write behavior. Their explicit
-environment suffix determines which database they affect.
+Database status commands are read-only, but migrate, seed, push, and
+backfill commands must be reviewed before running against an existing database.
+The old automatic reset command is retired. `db:baseline` is read-only unless
+`--apply` is explicitly passed; it then writes only migration metadata.
+See [DRIZZLE_MIGRATION.md](DRIZZLE_MIGRATION.md). Environment suffixes determine
+which database an administrative command affects; `db:generate` and its aliases
+operate only on local schema/migration files.
 
 The CLI was able to read all previous variable names in each environment before
 the legacy files were archived: 24 keys in dev, 24 in staging, and 22 in prod.

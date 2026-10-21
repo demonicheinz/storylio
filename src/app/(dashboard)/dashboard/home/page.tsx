@@ -1,12 +1,13 @@
+import { asc, desc } from "drizzle-orm";
 import { connection } from "next/server";
 import { HomeContentManager } from "@/features/dashboard/home/components/home-section-form";
-import { HomeSectionType } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { HomeSectionType } from "@/lib/db/enums";
 
 async function getHomeSections() {
-  return db.homeSection.findMany({
-    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    select: {
+  return db.query.homeSection.findMany({
+    orderBy: (table) => [asc(table.order), desc(table.createdAt)],
+    columns: {
       id: true,
       type: true,
       label: true,
@@ -19,9 +20,9 @@ async function getHomeSections() {
 }
 
 async function getTestimonials() {
-  return db.testimonial.findMany({
-    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    select: {
+  return db.query.testimonial.findMany({
+    orderBy: (table) => [asc(table.order), desc(table.createdAt)],
+    columns: {
       id: true,
       name: true,
       role: true,

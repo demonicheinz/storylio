@@ -1,35 +1,34 @@
+import { eq } from "drizzle-orm";
 import { connection } from "next/server";
 import { SettingsManager } from "@/features/dashboard/settings/components/profile-settings-form";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 
 async function getProfile(userId: string) {
-  return db.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      image: true,
-      tagline: true,
-      bio: true,
-      github: true,
-      instagram: true,
-      twitter: true,
-      websiteUrl: true,
-      publicEmail: true,
-    },
-  });
+  return db.query.user
+    .findFirst({
+      where: (table) => eq(table.id, userId),
+      columns: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        tagline: true,
+        bio: true,
+        github: true,
+        instagram: true,
+        twitter: true,
+        websiteUrl: true,
+        publicEmail: true,
+      },
+    })
+    .then((row) => row ?? null);
 }
 
 async function getLinkedAccounts(userId: string) {
-  return db.account.findMany({
-    where: { userId },
-    select: {
-      providerId: true,
-      accountId: true,
-      createdAt: true,
-    },
+  return db.query.account.findMany({
+    where: (table) => eq(table.userId, userId),
+    columns: { providerId: true, accountId: true, createdAt: true },
   });
 }
 

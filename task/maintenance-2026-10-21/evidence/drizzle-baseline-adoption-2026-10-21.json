@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-21",
+  "timezone": "Asia/Bangkok",
+  "authorization": "Explicit user approval for dev, staging and prod baseline adoption",
+  "writeScope": "Drizzle migration ledger schema, table and initial migration record only",
+  "applicationSchemaChanged": false,
+  "applicationDataChanged": false,
+  "environments": [
+    {
+      "environment": "dev",
+      "applyCommand": "bun run db:baseline -- --apply",
+      "applyExitCode": 0,
+      "statusCommand": "bun run db:status",
+      "statusExitCode": 0,
+      "statusCheckedAt": "2026-10-21T22:37:08+07:00",
+      "status": { "applied": 1, "pending": 0, "requiresBaseline": false }
+    },
+    {
+      "environment": "staging",
+      "applyCommand": "bun run db:baseline:preview -- --apply",
+      "applyExitCode": 0,
+      "statusCommand": "bun run db:status:preview",
+      "statusExitCode": 0,
+      "statusCheckedAt": "2026-10-21T22:37:39+07:00",
+      "status": { "applied": 1, "pending": 0, "requiresBaseline": false }
+    },
+    {
+      "environment": "prod",
+      "applyCommand": "bun run db:baseline:production -- --apply",
+      "applyExitCode": 0,
+      "statusCommand": "bun run db:status:production",
+      "statusExitCode": 0,
+      "statusCheckedAt": "2026-10-21T22:38:29+07:00",
+      "status": { "applied": 1, "pending": 0, "requiresBaseline": false }
+    }
+  ]
+}

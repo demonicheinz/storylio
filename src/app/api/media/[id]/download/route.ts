@@ -1,6 +1,8 @@
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { media as mediaTable } from "@/lib/db/schema";
 import { isOwnerEmail } from "@/lib/owner-guard";
 
 function getDownloadFilename(filename: string, format: string) {
@@ -26,9 +28,9 @@ export async function GET(
   }
 
   const { id } = await params;
-  const media = await db.media.findUnique({
-    where: { id },
-    select: {
+  const media = await db.query.media.findFirst({
+    where: eq(mediaTable.id, id),
+    columns: {
       url: true,
       filename: true,
       format: true,

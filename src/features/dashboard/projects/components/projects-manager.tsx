@@ -87,8 +87,8 @@ import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
-import { ProjectStatus } from "@/generated/prisma";
 import type { ActionResult } from "@/lib/action-result";
+import { ProjectStatus } from "@/lib/db/enums";
 import {
   getDefaultItemsPerPage,
   getItemsPerPageOptions,

@@ -1,3 +1,4 @@
+import { and, asc, desc, eq, isNull, lte, or } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 import { MotionReveal, PublicBackground } from "@/components/common";
@@ -8,8 +9,9 @@ import {
   RecentPostsSection,
   RecentProjectsSection,
 } from "@/components/public/sections/home";
-import { PostStatus, ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { PostStatus, ProjectStatus } from "@/lib/db/enums";
+import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
 
 export const metadata: Metadata = {
   title: "Heinz — Full Stack Developer | Storylio",
@@ -38,50 +40,25 @@ async function getHomeData() {
   const now = new Date();
   const [owner, phases, logos, testimonials, recentProjects, recentPosts] =
     await Promise.all([
-      db.user.findFirst({
-        select: {
-          name: true,
-          image: true,
-          tagline: true,
-          bio: true,
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
+      db.query.user
+        .findFirst({
+          columns: { name: true, image: true, tagline: true, bio: true },
+          orderBy: (table) => [asc(table.createdAt)],
+        })
+        .then((row) => row ?? null),
+      db.query.homeSection.findMany({
+        where: (table) => eq(table.type, "PHASE"),
+        columns: { id: true, label: true, content: true, order: true },
+        orderBy: (table) => [asc(table.order)],
       }),
-      db.homeSection.findMany({
-        where: {
-          type: "PHASE",
-        },
-        select: {
-          id: true,
-          label: true,
-          content: true,
-          order: true,
-        },
-        orderBy: {
-          order: "asc",
-        },
+      db.query.homeSection.findMany({
+        where: (table) => eq(table.type, "LOGO"),
+        columns: { id: true, label: true, imageUrl: true, order: true },
+        orderBy: (table) => [asc(table.order)],
       }),
-      db.homeSection.findMany({
-        where: {
-          type: "LOGO",
-        },
-        select: {
-          id: true,
-          label: true,
-          imageUrl: true,
-          order: true,
-        },
-        orderBy: {
-          order: "asc",
-        },
-      }),
-      db.testimonial.findMany({
-        where: {
-          isVisible: true,
-        },
-        select: {
+      db.query.testimonial.findMany({
+        where: (table) => eq(table.isVisible, true),
+        columns: {
           id: true,
           name: true,
           role: true,
@@ -90,74 +67,69 @@ async function getHomeData() {
           content: true,
           order: true,
         },
-        orderBy: {
-          order: "asc",
-        },
+        orderBy: (table) => [asc(table.order)],
       }),
-      db.project.findMany({
-        where: {
-          status: ProjectStatus.PUBLISHED,
-        },
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          description: true,
-          coverImage: true,
-          thumbnailImageUrl: true,
-          isFeatured: true,
-          isClosedSource: true,
-          techStack: true,
-          order: true,
-          createdAt: true,
-        },
-        orderBy: [
-          {
-            isFeatured: "desc",
+      db.query.project
+        .findMany({
+          where: (table) => eq(table.status, ProjectStatus.PUBLISHED),
+          columns: {
+            id: true,
+            title: true,
+            slug: true,
+            description: true,
+            coverImage: true,
+            thumbnailImageUrl: true,
+            isFeatured: true,
+            isClosedSource: true,
+            techStack: true,
+            order: true,
+            createdAt: true,
           },
-          {
-            order: "asc",
+          orderBy: (table) => [
+            desc(table.isFeatured),
+            asc(table.order),
+            desc(table.createdAt),
+          ],
+          limit: 4,
+        })
+        .then((rows) =>
+          rows.map((row) => ({ ...row, techStack: row.techStack ?? [] })),
+        ),
+      db.query.post
+        .findMany({
+          where: (table) =>
+            and(
+              eq(table.status, PostStatus.PUBLISHED),
+              or(isNull(table.publishedAt), lte(table.publishedAt, now)),
+            ),
+          columns: {
+            id: true,
+            title: true,
+            slug: true,
+            excerpt: true,
+            content: true,
+            coverImage: true,
+            publishedAt: true,
+            createdAt: true,
           },
-          {
-            createdAt: "desc",
-          },
-        ],
-        take: 4,
-      }),
-      db.post.findMany({
-        where: {
-          status: PostStatus.PUBLISHED,
-          OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],
-        },
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          excerpt: true,
-          content: true,
-          coverImage: true,
-          publishedAt: true,
-          createdAt: true,
-          tags: {
-            select: {
-              id: true,
-              name: true,
+          orderBy: (table) => [desc(table.publishedAt), desc(table.createdAt)],
+          limit: 3,
+          with: {
+            tags: {
+              columns: {},
+              with: {
+                tag: {
+                  columns: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+              orderBy: orderPostTagsByName,
             },
-            orderBy: {
-              name: "asc",
-            },
           },
-        },
-        orderBy: [
-          {
-            publishedAt: "desc",
-          },
-          {
-            createdAt: "desc",
-          },
-        ],
-        take: 3,
-      }),
+        })
+        .then((rows) => rows.map((row) => flattenPostTags(row))),
     ]);
 
   return {

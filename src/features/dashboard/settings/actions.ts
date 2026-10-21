@@ -1,5 +1,6 @@
 "use server";
 
+import { and, desc, eq, ne } from "drizzle-orm";
 import { revalidatePath, updateTag } from "next/cache";
 import { headers } from "next/headers";
 import {
@@ -16,6 +17,7 @@ import { actionError, actionSuccess } from "@/lib/action-result";
 import { auth } from "@/lib/auth";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { session as sessionTable, user as userTable } from "@/lib/db/schema";
 import { isOwnerEmail } from "@/lib/owner-guard";
 
 type ProfileSettingsActionData = {
@@ -55,10 +57,10 @@ export async function actionListDashboardSessions(): Promise<
   }
 
   try {
-    const sessions = await db.session.findMany({
-      where: { userId: session.user.id },
-      orderBy: { updatedAt: "desc" },
-      select: {
+    const sessions = await db.query.session.findMany({
+      where: eq(sessionTable.userId, session.user.id),
+      orderBy: desc(sessionTable.updatedAt),
+      columns: {
         id: true,
         token: true,
         createdAt: true,
@@ -96,12 +98,14 @@ export async function actionRevokeOtherDashboardSessions(): Promise<ActionResult
   }
 
   try {
-    await db.session.deleteMany({
-      where: {
-        userId: session.user.id,
-        token: { not: session.session.token },
-      },
-    });
+    await db
+      .delete(sessionTable)
+      .where(
+        and(
+          eq(sessionTable.userId, session.user.id),
+          ne(sessionTable.token, session.session.token),
+        ),
+      );
 
     revalidatePath("/dashboard/settings");
 
@@ -132,9 +136,9 @@ export async function actionUpdateProfileSettings(
   }
 
   try {
-    const user = await db.user.update({
-      where: { id: session.user.id },
-      data: {
+    const [user] = await db
+      .update(userTable)
+      .set({
         name: parsed.data.name,
         image: parsed.data.image ?? null,
         tagline: parsed.data.tagline || null,
@@ -144,14 +148,16 @@ export async function actionUpdateProfileSettings(
         twitter: parsed.data.twitter ?? null,
         websiteUrl: parsed.data.websiteUrl ?? null,
         publicEmail: parsed.data.publicEmail ?? null,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .where(eq(userTable.id, session.user.id))
+      .returning({
+        id: userTable.id,
+        name: userTable.name,
+        email: userTable.email,
+        image: userTable.image,
+      });
+    if (!user) throw new Error("User not found");
 
     revalidateSettingsPaths();
 

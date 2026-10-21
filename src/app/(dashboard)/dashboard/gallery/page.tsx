@@ -1,11 +1,12 @@
+import { asc, desc, inArray } from "drizzle-orm";
 import { connection } from "next/server";
 import { GalleryManager } from "@/features/dashboard/gallery/components/gallery-item-form";
 import { db } from "@/lib/db";
 
 async function getGalleryItems() {
-  const galleryItems = await db.galleryItem.findMany({
-    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    select: {
+  const galleryItems = await db.query.galleryItem.findMany({
+    orderBy: (table) => [asc(table.order), desc(table.createdAt)],
+    columns: {
       id: true,
       imageUrl: true,
       caption: true,
@@ -26,16 +27,13 @@ async function getGalleryItems() {
 
   const mediaSizeByUrl = new Map<string, number | null>();
   if (itemsWithoutSize.length > 0) {
-    const mediaItems = await db.media.findMany({
-      where: {
-        url: {
-          in: itemsWithoutSize.map((item) => item.imageUrl),
-        },
-      },
-      select: {
-        url: true,
-        size: true,
-      },
+    const mediaItems = await db.query.media.findMany({
+      where: (table) =>
+        inArray(
+          table.url,
+          itemsWithoutSize.map((item) => item.imageUrl),
+        ),
+      columns: { url: true, size: true },
     });
     for (const media of mediaItems) {
       mediaSizeByUrl.set(media.url, media.size);

@@ -1,5 +1,6 @@
 "use server";
 
+import { and, desc, eq, gt, gte, inArray, lt, lte, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
@@ -10,12 +11,16 @@ import {
   type ScreenshotItemValues,
 } from "@/features/dashboard/projects/validations";
 import { flattenFieldErrors } from "@/features/dashboard/shared/utils/flatten-field-errors";
-import { ProjectStatus } from "@/generated/prisma";
 import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { ProjectStatus } from "@/lib/db/enums";
+import { projectScreenshot, project as projectTable } from "@/lib/db/schema";
+
 import { getMdxSafetyError } from "@/lib/mdx-safety";
+
+type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 type ProjectActionData = {
   id: string;
@@ -76,9 +81,9 @@ function revalidateProjectSlugs(slugs: string[]) {
 }
 
 async function ensureUniqueSlug(slug: string, projectId?: string) {
-  const existingProject = await db.project.findUnique({
-    where: { slug },
-    select: { id: true },
+  const existingProject = await db.query.project.findFirst({
+    where: eq(projectTable.slug, slug),
+    columns: { id: true },
   });
 
   if (existingProject && existingProject.id !== projectId) {
@@ -90,61 +95,53 @@ async function ensureUniqueSlug(slug: string, projectId?: string) {
   return undefined;
 }
 
-async function getNextProjectOrder() {
-  const lastProject = await db.project.findFirst({
-    orderBy: { order: "desc" },
-    select: { order: true },
+async function getNextProjectOrder(tx: Transaction) {
+  const lastItem = await tx.query.project.findFirst({
+    orderBy: desc(projectTable.order),
+    columns: { order: true },
   });
-
-  return (lastProject?.order ?? -1) + 1;
+  return (lastItem?.order ?? -1) + 1;
 }
 
-async function prepareProjectCreateOrder(order: number) {
-  if (order <= 0) {
-    return getNextProjectOrder();
-  }
-
-  await db.project.updateMany({
-    where: { order: { gte: order } },
-    data: { order: { increment: 1 } },
-  });
-
+async function prepareProjectCreateOrder(tx: Transaction, order: number) {
+  if (order <= 0) return getNextProjectOrder(tx);
+  await tx
+    .update(projectTable)
+    .set({ order: sql`${projectTable.order} + 1` })
+    .where(gte(projectTable.order, order));
   return order;
 }
 
 async function moveProjectOrder(
+  tx: Transaction,
   projectId: string,
   fromOrder: number,
   toOrder: number,
 ) {
-  if (fromOrder === toOrder) {
-    return;
-  }
-
+  if (fromOrder === toOrder) return;
   if (toOrder < fromOrder) {
-    await db.project.updateMany({
-      where: {
-        id: { not: projectId },
-        order: {
-          gte: toOrder,
-          lt: fromOrder,
-        },
-      },
-      data: { order: { increment: 1 } },
-    });
+    await tx
+      .update(projectTable)
+      .set({ order: sql`${projectTable.order} + 1` })
+      .where(
+        and(
+          ne(projectTable.id, projectId),
+          gte(projectTable.order, toOrder),
+          lt(projectTable.order, fromOrder),
+        ),
+      );
     return;
   }
-
-  await db.project.updateMany({
-    where: {
-      id: { not: projectId },
-      order: {
-        gt: fromOrder,
-        lte: toOrder,
-      },
-    },
-    data: { order: { decrement: 1 } },
-  });
+  await tx
+    .update(projectTable)
+    .set({ order: sql`${projectTable.order} - 1` })
+    .where(
+      and(
+        ne(projectTable.id, projectId),
+        gt(projectTable.order, fromOrder),
+        lte(projectTable.order, toOrder),
+      ),
+    );
 }
 
 function getProjectData(values: ProjectActionValues) {
@@ -157,7 +154,7 @@ function getProjectData(values: ProjectActionValues) {
     coverImage: values.coverImage ?? null,
     thumbnailImageUrl: values.thumbnailImageUrl ?? null,
     ogImageUrl: values.ogImageUrl ?? null,
-    techStack: values.techStack,
+    techStack: values.techStack ?? [],
     liveUrl: values.liveUrl ?? null,
     githubUrl: values.githubUrl ?? null,
     order: values.order,
@@ -209,26 +206,32 @@ export async function actionCreateProject(
       return duplicateSlug;
     }
 
-    const finalOrder = await prepareProjectCreateOrder(parsed.data.order);
-    const screenshots = parsed.data.structuredScreenshots ?? [];
-
-    const project = await db.project.create({
-      data: {
-        ...getProjectData(parsed.data),
-        order: finalOrder,
-        authorId: session.user.id,
-        structuredScreenshots: {
-          create: screenshots.map((s, i) => ({
+    const project = await db.transaction(async (tx) => {
+      const finalOrder = await prepareProjectCreateOrder(tx, parsed.data.order);
+      const [savedProject] = await tx
+        .insert(projectTable)
+        .values({
+          ...getProjectData(parsed.data),
+          order: finalOrder,
+          authorId: session.user.id,
+        })
+        .returning({
+          id: projectTable.id,
+          slug: projectTable.slug,
+          status: projectTable.status,
+        });
+      if (!savedProject) throw new Error("Project not found.");
+      const screenshots = parsed.data.structuredScreenshots ?? [];
+      if (screenshots.length > 0) {
+        await tx.insert(projectScreenshot).values(
+          screenshots.map((s, i) => ({
             ...getScreenshotData(s),
+            projectId: savedProject.id,
             order: s.order ?? i,
           })),
-        },
-      },
-      select: {
-        id: true,
-        slug: true,
-        status: true,
-      },
+        );
+      }
+      return savedProject;
     });
 
     revalidateProjectPaths(project.slug);
@@ -273,9 +276,9 @@ export async function actionUpdateProject(
   }
 
   try {
-    const existingProject = await db.project.findUnique({
-      where: { id: projectId },
-      select: {
+    const existingProject = await db.query.project.findFirst({
+      where: eq(projectTable.id, projectId),
+      columns: {
         id: true,
         slug: true,
         order: true,
@@ -291,37 +294,38 @@ export async function actionUpdateProject(
       return duplicateSlug;
     }
 
-    await moveProjectOrder(projectId, existingProject.order, parsed.data.order);
-
-    const screenshots = parsed.data.structuredScreenshots ?? [];
-
-    const project = await db.$transaction(async (tx) => {
-      // Delete all existing screenshots, then recreate
-      await tx.projectScreenshot.deleteMany({
-        where: { projectId },
-      });
-
-      // Create new screenshots
+    const project = await db.transaction(async (tx) => {
+      await moveProjectOrder(
+        tx,
+        projectId,
+        existingProject.order,
+        parsed.data.order,
+      );
+      // Delete all existing screenshots, then recreate.
+      await tx
+        .delete(projectScreenshot)
+        .where(eq(projectScreenshot.projectId, projectId));
+      const screenshots = parsed.data.structuredScreenshots ?? [];
       if (screenshots.length > 0) {
-        await tx.projectScreenshot.createMany({
-          data: screenshots.map((s, i) => ({
+        await tx.insert(projectScreenshot).values(
+          screenshots.map((s, i) => ({
             ...getScreenshotData(s),
             projectId,
             order: s.order ?? i,
           })),
-        });
+        );
       }
-
-      // Update the project itself
-      return tx.project.update({
-        where: { id: projectId },
-        data: getProjectData(parsed.data),
-        select: {
-          id: true,
-          slug: true,
-          status: true,
-        },
-      });
+      const [savedProject] = await tx
+        .update(projectTable)
+        .set(getProjectData(parsed.data))
+        .where(eq(projectTable.id, projectId))
+        .returning({
+          id: projectTable.id,
+          slug: projectTable.slug,
+          status: projectTable.status,
+        });
+      if (!savedProject) throw new Error("Project not found.");
+      return savedProject;
     });
 
     revalidateProjectPaths(project.slug, existingProject.slug);
@@ -353,18 +357,16 @@ export async function actionDeleteProject(
   }
 
   try {
-    const project = await db.project.findUnique({
-      where: { id: projectId },
-      select: { slug: true },
+    const project = await db.query.project.findFirst({
+      where: eq(projectTable.id, projectId),
+      columns: { slug: true },
     });
 
     if (!project) {
       return actionError("Project not found.");
     }
 
-    await db.project.delete({
-      where: { id: projectId },
-    });
+    await db.delete(projectTable).where(eq(projectTable.id, projectId));
 
     revalidateProjectPaths(project.slug);
 
@@ -400,28 +402,31 @@ export async function actionPublishProjects(
   }
 
   try {
-    const projects = await db.project.findMany({
-      where: { id: { in: parsedIds } },
-      select: { slug: true },
+    const projects = await db.query.project.findMany({
+      where: inArray(projectTable.id, parsedIds),
+      columns: { slug: true },
     });
 
-    const result = await db.project.updateMany({
-      where: {
-        id: { in: parsedIds },
-        status: ProjectStatus.DRAFT,
-      },
-      data: {
+    const result = await db
+      .update(projectTable)
+      .set({
         status: ProjectStatus.PUBLISHED,
-      },
-    });
+      })
+      .where(
+        and(
+          inArray(projectTable.id, parsedIds),
+          eq(projectTable.status, ProjectStatus.DRAFT),
+        ),
+      )
+      .returning({ id: projectTable.id });
 
     revalidateProjectSlugs(projects.map((project) => project.slug));
 
     return actionSuccess(
-      { count: result.count },
-      result.count === 1
+      { count: result.length },
+      result.length === 1
         ? "Project published."
-        : `${result.count} projects published.`,
+        : `${result.length} projects published.`,
     );
   } catch (error) {
     console.error("Publish projects failed:", error);
@@ -444,28 +449,31 @@ export async function actionMoveProjectsToDraft(
   }
 
   try {
-    const projects = await db.project.findMany({
-      where: { id: { in: parsedIds } },
-      select: { slug: true },
+    const projects = await db.query.project.findMany({
+      where: inArray(projectTable.id, parsedIds),
+      columns: { slug: true },
     });
 
-    const result = await db.project.updateMany({
-      where: {
-        id: { in: parsedIds },
-        status: ProjectStatus.PUBLISHED,
-      },
-      data: {
+    const result = await db
+      .update(projectTable)
+      .set({
         status: ProjectStatus.DRAFT,
-      },
-    });
+      })
+      .where(
+        and(
+          inArray(projectTable.id, parsedIds),
+          eq(projectTable.status, ProjectStatus.PUBLISHED),
+        ),
+      )
+      .returning({ id: projectTable.id });
 
     revalidateProjectSlugs(projects.map((project) => project.slug));
 
     return actionSuccess(
-      { count: result.count },
-      result.count === 1
+      { count: result.length },
+      result.length === 1
         ? "Project moved to draft."
-        : `${result.count} projects moved to draft.`,
+        : `${result.length} projects moved to draft.`,
     );
   } catch (error) {
     console.error("Move projects to draft failed:", error);
@@ -488,24 +496,23 @@ export async function actionDeleteProjects(
   }
 
   try {
-    const projects = await db.project.findMany({
-      where: { id: { in: parsedIds } },
-      select: { slug: true },
+    const projects = await db.query.project.findMany({
+      where: inArray(projectTable.id, parsedIds),
+      columns: { slug: true },
     });
 
-    const result = await db.project.deleteMany({
-      where: {
-        id: { in: parsedIds },
-      },
-    });
+    const result = await db
+      .delete(projectTable)
+      .where(inArray(projectTable.id, parsedIds))
+      .returning({ id: projectTable.id });
 
     revalidateProjectSlugs(projects.map((project) => project.slug));
 
     return actionSuccess(
-      { count: result.count },
-      result.count === 1
+      { count: result.length },
+      result.length === 1
         ? "Project deleted."
-        : `${result.count} projects deleted.`,
+        : `${result.length} projects deleted.`,
     );
   } catch (error) {
     console.error("Delete projects failed:", error);
@@ -560,15 +567,19 @@ export async function actionReorderProjects(
   }
 
   try {
-    const projects = await db.$transaction(
-      parsed.data.map((item) =>
-        db.project.update({
-          where: { id: item.id },
-          data: { order: item.order },
-          select: { slug: true },
-        }),
-      ),
-    );
+    const projects = await db.transaction(async (tx) => {
+      const updatedProjects: { slug: string }[] = [];
+      for (const item of parsed.data) {
+        const [updatedProject] = await tx
+          .update(projectTable)
+          .set({ order: item.order })
+          .where(eq(projectTable.id, item.id))
+          .returning({ slug: projectTable.slug });
+        if (!updatedProject) throw new Error("Project not found.");
+        updatedProjects.push(updatedProject);
+      }
+      return updatedProjects;
+    });
 
     revalidatePath("/dashboard/projects");
     revalidatePath("/dashboard");
