@@ -6,6 +6,13 @@
     "lint": "biome check --no-errors-on-unmatched",
     "format": "biome check --write --no-errors-on-unmatched",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:security": "vitest run tests/security",
+    "browser": "playwright-cli -s=storylio-security",
+    "browser:install": "playwright-cli install-browser chromium",
+    "browser:open": "playwright-cli -s=storylio-security open --config=playwright-cli.config.json",
+    "test:browser": "playwright-cli -s=storylio-security run-code --filename=tests/browser/security-smoke.js",
     "prepare": "husky",
     "commitlint": "commitlint --edit",
     "lint-staged": "lint-staged",
@@ -42,7 +49,7 @@
     "db:backfill-images": "bun run db:backfill-media && bun run db:backfill-gallery"
   },
   "dependencies": {
-    "@better-auth/passkey": "^1.6.14",
+    "@better-auth/passkey": "~1.6.33",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -51,20 +58,19 @@
     "@mdxeditor/editor": "^4.0.2",
     "@neondatabase/serverless": "^1.1.0",
     "@phosphor-icons/react": "^2.1.10",
-    "@prisma/adapter-neon": "^7.8.0",
-    "@prisma/client": "^7.8.0",
+    "@prisma/adapter-neon": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "@react-three/fiber": "^9.6.1",
-    "@vercel/og": "^0.11.1",
-    "better-auth": "^1.6.13",
+    "better-auth": "~1.6.33",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.10.0",
     "clsx": "^2.1.1",
     "mdast-util-highlight-mark": "^1.2.2",
     "micromark-extension-highlight-mark": "^1.2.0",
     "motion": "^12.40.0",
-    "next": "16.2.6",
+    "next": "16.4.2",
     "next-mdx-remote-client": "^2",
-    "prisma": "^7.8.0",
+    "prisma": "^7.10.1",
     "radix-ui": "^1.4.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -77,8 +83,8 @@
     "remark-directive": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.12.4",
-    "shadcn": "^4.11.0",
-    "sharp": "^0.34.5",
+    "shadcn": "^4.22.1",
+    "sharp": "^0.35.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "three": "0.182",
@@ -93,7 +99,8 @@
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@dotenvx/dotenvx": "^1.69.2",
-    "@tailwindcss/postcss": "^4.3.0",
+    "@playwright/cli": "0.1.22",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -101,9 +108,10 @@
     "@types/ws": "^8.18.1",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
-    "tailwindcss": "^4.3.0",
+    "tailwindcss": "^4.3.3",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "~4.1.12"
   },
   "ignoreScripts": [
     "sharp",
@@ -119,7 +127,7 @@
     ]
   },
   "resolutions": {
-    "js-yaml": "^4.2.0",
-    "@hono/node-server": "^1.19.13"
+    "js-yaml": "^4.3.2",
+    "@hono/node-server": "^1.19.15"
   }
 }

@@ -29,6 +29,24 @@ Please include as much detail as possible:
 
 You can expect an initial acknowledgement within **72 hours**. Confirmed vulnerabilities will be addressed as soon as possible depending on severity. You will be credited in the fix unless you prefer to remain anonymous.
 
+## Dependency Maintenance
+
+Run `bun audit`, `bun run test`, `bun run typecheck`, and
+`bun run build` when updating security-sensitive dependencies. The regression
+checks use dummy auth configuration and generated images; they do not require
+a live database or email credentials. The production build uses the configured
+application environment. Run the Playwright CLI browser flow documented in
+README when changing auth UI, route protection, or the Next.js runtime.
+
+As of October 21, 2026, one dependency advisory remains:
+
+| Package | Advisory | Status |
+| --- | --- | --- |
+| `braces@3.0.3` | `GHSA-vfj7-8cjw-p6xm` (high: stack exhaustion on deeply nested patterns) | The npm registry has no patched release. It is reached through `micromatch` → `fast-glob` in shadcn/ts-morph tooling; no direct application-source import was found. Track the upstream fix and reassess when that dependency chain changes. |
+
+This remaining match is not suppressed. Dependency scan results alone do not
+establish whether an advisory is exploitable through a deployed Storylio route.
+
 ## Scope
 
 The following are considered in scope:
