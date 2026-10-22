@@ -1,0 +1,1816 @@
+{
+  "migration": {
+    "hash": "8affe92180c039c515f7770dcadab62026e7fd4a450b80b7bb7f4662d1dbc1e0",
+    "folderMillis": 1792593701880
+  },
+  "schema": {
+    "tables": [
+      {
+        "name": "AboutContent"
+      },
+      {
+        "name": "Account"
+      },
+      {
+        "name": "Education"
+      },
+      {
+        "name": "GalleryItem"
+      },
+      {
+        "name": "HomeSection"
+      },
+      {
+        "name": "Media"
+      },
+      {
+        "name": "Passkey"
+      },
+      {
+        "name": "Post"
+      },
+      {
+        "name": "Project"
+      },
+      {
+        "name": "ProjectScreenshot"
+      },
+      {
+        "name": "Session"
+      },
+      {
+        "name": "Skill"
+      },
+      {
+        "name": "SkillCategory"
+      },
+      {
+        "name": "Tag"
+      },
+      {
+        "name": "Testimonial"
+      },
+      {
+        "name": "User"
+      },
+      {
+        "name": "Verification"
+      },
+      {
+        "name": "ViewEvent"
+      },
+      {
+        "name": "WorkExperience"
+      },
+      {
+        "name": "_PostToTag"
+      }
+    ],
+    "columns": [
+      {
+        "table_name": "AboutContent",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "AboutContent",
+        "name": "defaultLanguage",
+        "type": "text",
+        "not_null": true,
+        "default_expression": "'en'::text"
+      },
+      {
+        "table_name": "AboutContent",
+        "name": "howIWorkEn",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "AboutContent",
+        "name": "howIWorkId",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "AboutContent",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "AboutContent",
+        "name": "introEn",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "AboutContent",
+        "name": "introId",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "AboutContent",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "AboutContent",
+        "name": "whatIValueEn",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "AboutContent",
+        "name": "whatIValueId",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "accessToken",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "accessTokenExpiresAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "accountId",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "Account",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "idToken",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "password",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "providerId",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "refreshToken",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "refreshTokenExpiresAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "scope",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Account",
+        "name": "userId",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Education",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "Education",
+        "name": "degree",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Education",
+        "name": "descriptionEn",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Education",
+        "name": "descriptionId",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Education",
+        "name": "endYear",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Education",
+        "name": "field",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Education",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Education",
+        "name": "institution",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Education",
+        "name": "isVisible",
+        "type": "boolean",
+        "not_null": true,
+        "default_expression": "true"
+      },
+      {
+        "table_name": "Education",
+        "name": "location",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Education",
+        "name": "order",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": "0"
+      },
+      {
+        "table_name": "Education",
+        "name": "startYear",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Education",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "altText",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "aspectRatio",
+        "type": "double precision",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "blurDataUrl",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "caption",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "category",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "description",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "height",
+        "type": "integer",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "imageUrl",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "isVisible",
+        "type": "boolean",
+        "not_null": true,
+        "default_expression": "true"
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "order",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": "0"
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "size",
+        "type": "integer",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "width",
+        "type": "integer",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "HomeSection",
+        "name": "content",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "HomeSection",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "HomeSection",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "HomeSection",
+        "name": "imageUrl",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "HomeSection",
+        "name": "label",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "HomeSection",
+        "name": "order",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": "0"
+      },
+      {
+        "table_name": "HomeSection",
+        "name": "type",
+        "type": "\"HomeSectionType\"",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Media",
+        "name": "aspectRatio",
+        "type": "double precision",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Media",
+        "name": "blurDataUrl",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Media",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "Media",
+        "name": "filename",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Media",
+        "name": "format",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Media",
+        "name": "height",
+        "type": "integer",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Media",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Media",
+        "name": "publicId",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Media",
+        "name": "size",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Media",
+        "name": "url",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Media",
+        "name": "width",
+        "type": "integer",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Passkey",
+        "name": "aaguid",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Passkey",
+        "name": "backedUp",
+        "type": "boolean",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Passkey",
+        "name": "counter",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Passkey",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Passkey",
+        "name": "credentialID",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Passkey",
+        "name": "deviceType",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Passkey",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Passkey",
+        "name": "name",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Passkey",
+        "name": "publicKey",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Passkey",
+        "name": "transports",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Passkey",
+        "name": "userId",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Post",
+        "name": "authorId",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Post",
+        "name": "content",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Post",
+        "name": "coverImage",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Post",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "Post",
+        "name": "excerpt",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Post",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Post",
+        "name": "publishedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Post",
+        "name": "slug",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Post",
+        "name": "status",
+        "type": "\"PostStatus\"",
+        "not_null": true,
+        "default_expression": "'DRAFT'::\"PostStatus\""
+      },
+      {
+        "table_name": "Post",
+        "name": "title",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Post",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Post",
+        "name": "viewCount",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": "0"
+      },
+      {
+        "table_name": "Project",
+        "name": "authorId",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "content",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "contribution",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "coverImage",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "Project",
+        "name": "description",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "githubUrl",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "isClosedSource",
+        "type": "boolean",
+        "not_null": true,
+        "default_expression": "false"
+      },
+      {
+        "table_name": "Project",
+        "name": "isFeatured",
+        "type": "boolean",
+        "not_null": true,
+        "default_expression": "false"
+      },
+      {
+        "table_name": "Project",
+        "name": "liveUrl",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "ogImageUrl",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "order",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": "0"
+      },
+      {
+        "table_name": "Project",
+        "name": "slug",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "status",
+        "type": "\"ProjectStatus\"",
+        "not_null": true,
+        "default_expression": "'DRAFT'::\"ProjectStatus\""
+      },
+      {
+        "table_name": "Project",
+        "name": "techStack",
+        "type": "text[]",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "thumbnailImageUrl",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "title",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Project",
+        "name": "viewCount",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": "0"
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "altText",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "aspectRatio",
+        "type": "double precision",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "blurDataUrl",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "caption",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "height",
+        "type": "integer",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "imageUrl",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "order",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": "0"
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "projectId",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "width",
+        "type": "integer",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Session",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "Session",
+        "name": "expiresAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Session",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Session",
+        "name": "ipAddress",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Session",
+        "name": "token",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Session",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Session",
+        "name": "userAgent",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Session",
+        "name": "userId",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Skill",
+        "name": "categoryId",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Skill",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "Skill",
+        "name": "icon",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Skill",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Skill",
+        "name": "isVisible",
+        "type": "boolean",
+        "not_null": true,
+        "default_expression": "true"
+      },
+      {
+        "table_name": "Skill",
+        "name": "level",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Skill",
+        "name": "name",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Skill",
+        "name": "order",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": "0"
+      },
+      {
+        "table_name": "Skill",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "SkillCategory",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "SkillCategory",
+        "name": "descriptionEn",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "SkillCategory",
+        "name": "descriptionId",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "SkillCategory",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "SkillCategory",
+        "name": "isVisible",
+        "type": "boolean",
+        "not_null": true,
+        "default_expression": "true"
+      },
+      {
+        "table_name": "SkillCategory",
+        "name": "name",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "SkillCategory",
+        "name": "order",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": "0"
+      },
+      {
+        "table_name": "SkillCategory",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Tag",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Tag",
+        "name": "name",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Testimonial",
+        "name": "avatar",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Testimonial",
+        "name": "company",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Testimonial",
+        "name": "content",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Testimonial",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "Testimonial",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Testimonial",
+        "name": "isVisible",
+        "type": "boolean",
+        "not_null": true,
+        "default_expression": "true"
+      },
+      {
+        "table_name": "Testimonial",
+        "name": "name",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Testimonial",
+        "name": "order",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": "0"
+      },
+      {
+        "table_name": "Testimonial",
+        "name": "role",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "bio",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "User",
+        "name": "email",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "emailVerified",
+        "type": "boolean",
+        "not_null": true,
+        "default_expression": "false"
+      },
+      {
+        "table_name": "User",
+        "name": "github",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "image",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "instagram",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "name",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "publicEmail",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "tagline",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "twitter",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "User",
+        "name": "websiteUrl",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Verification",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": false,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "Verification",
+        "name": "expiresAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Verification",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Verification",
+        "name": "identifier",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "Verification",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "Verification",
+        "name": "value",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "ViewEvent",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "ViewEvent",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "ViewEvent",
+        "name": "slug",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "ViewEvent",
+        "name": "type",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "company",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "createdAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": "now()"
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "descriptionEn",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "descriptionId",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "endDate",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "highlightsEn",
+        "type": "text[]",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "highlightsId",
+        "type": "text[]",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "id",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "isCurrent",
+        "type": "boolean",
+        "not_null": true,
+        "default_expression": "false"
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "isVisible",
+        "type": "boolean",
+        "not_null": true,
+        "default_expression": "true"
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "location",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "order",
+        "type": "integer",
+        "not_null": true,
+        "default_expression": "0"
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "startDate",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "title",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "type",
+        "type": "text",
+        "not_null": false,
+        "default_expression": null
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "updatedAt",
+        "type": "timestamp(3) without time zone",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "_PostToTag",
+        "name": "A",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      },
+      {
+        "table_name": "_PostToTag",
+        "name": "B",
+        "type": "text",
+        "not_null": true,
+        "default_expression": null
+      }
+    ],
+    "constraints": [
+      {
+        "table_name": "AboutContent",
+        "name": "AboutContent_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "Account",
+        "name": "Account_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "Account",
+        "name": "Account_userId_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (\"userId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+      },
+      {
+        "table_name": "Education",
+        "name": "Education_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "GalleryItem_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "HomeSection",
+        "name": "HomeSection_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "Media",
+        "name": "Media_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "Passkey",
+        "name": "Passkey_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "Passkey",
+        "name": "Passkey_userId_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (\"userId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+      },
+      {
+        "table_name": "Post",
+        "name": "Post_authorId_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (\"authorId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+      },
+      {
+        "table_name": "Post",
+        "name": "Post_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "Project",
+        "name": "Project_authorId_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (\"authorId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+      },
+      {
+        "table_name": "Project",
+        "name": "Project_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "ProjectScreenshot_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "ProjectScreenshot_projectId_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (\"projectId\") REFERENCES \"Project\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+      },
+      {
+        "table_name": "Session",
+        "name": "Session_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "Session",
+        "name": "Session_userId_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (\"userId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+      },
+      {
+        "table_name": "Skill",
+        "name": "Skill_categoryId_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (\"categoryId\") REFERENCES \"SkillCategory\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+      },
+      {
+        "table_name": "Skill",
+        "name": "Skill_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "SkillCategory",
+        "name": "SkillCategory_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "Tag",
+        "name": "Tag_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "Testimonial",
+        "name": "Testimonial_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "User",
+        "name": "User_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "Verification",
+        "name": "Verification_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "ViewEvent",
+        "name": "ViewEvent_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "WorkExperience_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "table_name": "_PostToTag",
+        "name": "_PostToTag_AB_pkey",
+        "type": "p",
+        "definition": "PRIMARY KEY (\"A\", \"B\")"
+      },
+      {
+        "table_name": "_PostToTag",
+        "name": "_PostToTag_A_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (\"A\") REFERENCES \"Post\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+      },
+      {
+        "table_name": "_PostToTag",
+        "name": "_PostToTag_B_fkey",
+        "type": "f",
+        "definition": "FOREIGN KEY (\"B\") REFERENCES \"Tag\"(id) ON UPDATE CASCADE ON DELETE CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "table_name": "AboutContent",
+        "name": "AboutContent_pkey",
+        "definition": "CREATE UNIQUE INDEX \"AboutContent_pkey\" ON public.\"AboutContent\" USING btree (id)"
+      },
+      {
+        "table_name": "Account",
+        "name": "Account_pkey",
+        "definition": "CREATE UNIQUE INDEX \"Account_pkey\" ON public.\"Account\" USING btree (id)"
+      },
+      {
+        "table_name": "Education",
+        "name": "Education_pkey",
+        "definition": "CREATE UNIQUE INDEX \"Education_pkey\" ON public.\"Education\" USING btree (id)"
+      },
+      {
+        "table_name": "GalleryItem",
+        "name": "GalleryItem_pkey",
+        "definition": "CREATE UNIQUE INDEX \"GalleryItem_pkey\" ON public.\"GalleryItem\" USING btree (id)"
+      },
+      {
+        "table_name": "HomeSection",
+        "name": "HomeSection_pkey",
+        "definition": "CREATE UNIQUE INDEX \"HomeSection_pkey\" ON public.\"HomeSection\" USING btree (id)"
+      },
+      {
+        "table_name": "Media",
+        "name": "Media_pkey",
+        "definition": "CREATE UNIQUE INDEX \"Media_pkey\" ON public.\"Media\" USING btree (id)"
+      },
+      {
+        "table_name": "Passkey",
+        "name": "Passkey_pkey",
+        "definition": "CREATE UNIQUE INDEX \"Passkey_pkey\" ON public.\"Passkey\" USING btree (id)"
+      },
+      {
+        "table_name": "Post",
+        "name": "Post_pkey",
+        "definition": "CREATE UNIQUE INDEX \"Post_pkey\" ON public.\"Post\" USING btree (id)"
+      },
+      {
+        "table_name": "Post",
+        "name": "Post_slug_key",
+        "definition": "CREATE UNIQUE INDEX \"Post_slug_key\" ON public.\"Post\" USING btree (slug)"
+      },
+      {
+        "table_name": "Project",
+        "name": "Project_pkey",
+        "definition": "CREATE UNIQUE INDEX \"Project_pkey\" ON public.\"Project\" USING btree (id)"
+      },
+      {
+        "table_name": "Project",
+        "name": "Project_slug_key",
+        "definition": "CREATE UNIQUE INDEX \"Project_slug_key\" ON public.\"Project\" USING btree (slug)"
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "ProjectScreenshot_pkey",
+        "definition": "CREATE UNIQUE INDEX \"ProjectScreenshot_pkey\" ON public.\"ProjectScreenshot\" USING btree (id)"
+      },
+      {
+        "table_name": "ProjectScreenshot",
+        "name": "ProjectScreenshot_projectId_idx",
+        "definition": "CREATE INDEX \"ProjectScreenshot_projectId_idx\" ON public.\"ProjectScreenshot\" USING btree (\"projectId\")"
+      },
+      {
+        "table_name": "Session",
+        "name": "Session_pkey",
+        "definition": "CREATE UNIQUE INDEX \"Session_pkey\" ON public.\"Session\" USING btree (id)"
+      },
+      {
+        "table_name": "Session",
+        "name": "Session_token_key",
+        "definition": "CREATE UNIQUE INDEX \"Session_token_key\" ON public.\"Session\" USING btree (token)"
+      },
+      {
+        "table_name": "Skill",
+        "name": "Skill_pkey",
+        "definition": "CREATE UNIQUE INDEX \"Skill_pkey\" ON public.\"Skill\" USING btree (id)"
+      },
+      {
+        "table_name": "SkillCategory",
+        "name": "SkillCategory_pkey",
+        "definition": "CREATE UNIQUE INDEX \"SkillCategory_pkey\" ON public.\"SkillCategory\" USING btree (id)"
+      },
+      {
+        "table_name": "Tag",
+        "name": "Tag_name_key",
+        "definition": "CREATE UNIQUE INDEX \"Tag_name_key\" ON public.\"Tag\" USING btree (name)"
+      },
+      {
+        "table_name": "Tag",
+        "name": "Tag_pkey",
+        "definition": "CREATE UNIQUE INDEX \"Tag_pkey\" ON public.\"Tag\" USING btree (id)"
+      },
+      {
+        "table_name": "Testimonial",
+        "name": "Testimonial_pkey",
+        "definition": "CREATE UNIQUE INDEX \"Testimonial_pkey\" ON public.\"Testimonial\" USING btree (id)"
+      },
+      {
+        "table_name": "User",
+        "name": "User_email_key",
+        "definition": "CREATE UNIQUE INDEX \"User_email_key\" ON public.\"User\" USING btree (email)"
+      },
+      {
+        "table_name": "User",
+        "name": "User_pkey",
+        "definition": "CREATE UNIQUE INDEX \"User_pkey\" ON public.\"User\" USING btree (id)"
+      },
+      {
+        "table_name": "Verification",
+        "name": "Verification_pkey",
+        "definition": "CREATE UNIQUE INDEX \"Verification_pkey\" ON public.\"Verification\" USING btree (id)"
+      },
+      {
+        "table_name": "ViewEvent",
+        "name": "ViewEvent_createdAt_idx",
+        "definition": "CREATE INDEX \"ViewEvent_createdAt_idx\" ON public.\"ViewEvent\" USING btree (\"createdAt\")"
+      },
+      {
+        "table_name": "ViewEvent",
+        "name": "ViewEvent_pkey",
+        "definition": "CREATE UNIQUE INDEX \"ViewEvent_pkey\" ON public.\"ViewEvent\" USING btree (id)"
+      },
+      {
+        "table_name": "ViewEvent",
+        "name": "ViewEvent_type_slug_createdAt_idx",
+        "definition": "CREATE INDEX \"ViewEvent_type_slug_createdAt_idx\" ON public.\"ViewEvent\" USING btree (type, slug, \"createdAt\")"
+      },
+      {
+        "table_name": "WorkExperience",
+        "name": "WorkExperience_pkey",
+        "definition": "CREATE UNIQUE INDEX \"WorkExperience_pkey\" ON public.\"WorkExperience\" USING btree (id)"
+      },
+      {
+        "table_name": "_PostToTag",
+        "name": "_PostToTag_AB_pkey",
+        "definition": "CREATE UNIQUE INDEX \"_PostToTag_AB_pkey\" ON public.\"_PostToTag\" USING btree (\"A\", \"B\")"
+      },
+      {
+        "table_name": "_PostToTag",
+        "name": "_PostToTag_B_index",
+        "definition": "CREATE INDEX \"_PostToTag_B_index\" ON public.\"_PostToTag\" USING btree (\"B\")"
+      }
+    ],
+    "enums": [
+      {
+        "name": "HomeSectionType",
+        "values": ["PHASE", "LOGO"]
+      },
+      {
+        "name": "PostStatus",
+        "values": ["DRAFT", "PUBLISHED"]
+      },
+      {
+        "name": "ProjectStatus",
+        "values": ["DRAFT", "PUBLISHED"]
+      }
+    ]
+  }
+}

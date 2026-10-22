@@ -1,6 +1,7 @@
+import { and, asc, desc, eq, isNull, lte, or } from "drizzle-orm";
 import type { MetadataRoute } from "next";
-import { PostStatus, ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { PostStatus, ProjectStatus } from "@/lib/db/enums";
 
 const siteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
@@ -8,41 +9,19 @@ const siteUrl = (
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [posts, projects] = await Promise.all([
-    db.post.findMany({
-      where: {
-        status: PostStatus.PUBLISHED,
-        OR: [{ publishedAt: null }, { publishedAt: { lte: new Date() } }],
-      },
-      select: {
-        slug: true,
-        publishedAt: true,
-        updatedAt: true,
-      },
-      orderBy: [
-        {
-          publishedAt: "desc",
-        },
-        {
-          createdAt: "desc",
-        },
-      ],
+    db.query.post.findMany({
+      where: (table) =>
+        and(
+          eq(table.status, PostStatus.PUBLISHED),
+          or(isNull(table.publishedAt), lte(table.publishedAt, new Date())),
+        ),
+      columns: { slug: true, publishedAt: true, updatedAt: true },
+      orderBy: (table) => [desc(table.publishedAt), desc(table.createdAt)],
     }),
-    db.project.findMany({
-      where: {
-        status: ProjectStatus.PUBLISHED,
-      },
-      select: {
-        slug: true,
-        updatedAt: true,
-      },
-      orderBy: [
-        {
-          order: "asc",
-        },
-        {
-          createdAt: "desc",
-        },
-      ],
+    db.query.project.findMany({
+      where: (table) => eq(table.status, ProjectStatus.PUBLISHED),
+      columns: { slug: true, updatedAt: true },
+      orderBy: (table) => [asc(table.order), desc(table.createdAt)],
     }),
   ]);
 

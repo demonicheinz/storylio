@@ -1,0 +1,39 @@
+{
+  "workflowsParsed": 2,
+  "rulesetsParsed": 2,
+  "checks": [
+    "Build",
+    "Dependency Vulnerability Scan",
+    "Lint",
+    "Misconfiguration Scan",
+    "Secret Detection",
+    "Type Check"
+  ],
+  "jobsUnchanged": true,
+  "oidcScope": "main pushes only; unchanged",
+  "eventMatrix": [
+    {
+      "branch": "main",
+      "qualityPR": true,
+      "trivyPR": true,
+      "qualityPush": true,
+      "trivyPush": true
+    },
+    {
+      "branch": "staging",
+      "qualityPR": true,
+      "trivyPR": true,
+      "qualityPush": false,
+      "trivyPush": true
+    },
+    {
+      "branch": "feature/example",
+      "qualityPR": false,
+      "trivyPR": false,
+      "qualityPush": false,
+      "trivyPush": false
+    }
+  ],
+  "remoteExecution": "not run",
+  "githubRulesetsApplied": false
+}

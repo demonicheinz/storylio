@@ -1,10 +1,8 @@
 "use server";
 
+import { asc, desc, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import {
-  ABOUT_CONTENT_SINGLETON_ID,
-  aboutContentOrderBy,
-} from "@/features/about/data";
+import { ABOUT_CONTENT_SINGLETON_ID } from "@/features/about/data";
 import {
   type AboutContentActionInput,
   aboutContentActionSchema,
@@ -14,6 +12,7 @@ import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { aboutContent as aboutContentTable } from "@/lib/db/schema";
 import { getMdxSafetyError } from "@/lib/mdx-safety";
 
 export async function actionUpdateAboutContent(
@@ -60,27 +59,31 @@ export async function actionUpdateAboutContent(
       whatIValueId: parsed.data.whatIValueId || null,
       defaultLanguage: parsed.data.defaultLanguage,
     };
-    const aboutContent = await db.$transaction(async (tx) => {
-      const existing = await tx.aboutContent.findMany({
-        orderBy: aboutContentOrderBy,
-        select: { id: true },
+    const aboutContent = await db.transaction(async (tx) => {
+      const existing = await tx.query.aboutContent.findMany({
+        orderBy: [desc(aboutContentTable.updatedAt), asc(aboutContentTable.id)],
+        columns: { id: true },
       });
       const primary = existing[0];
-      const saved = primary
-        ? await tx.aboutContent.update({
-            where: { id: primary.id },
-            data,
-            select: { id: true },
-          })
-        : await tx.aboutContent.create({
-            data: { id: ABOUT_CONTENT_SINGLETON_ID, ...data },
-            select: { id: true },
-          });
+      const [saved] = primary
+        ? await tx
+            .update(aboutContentTable)
+            .set({ ...data, updatedAt: new Date() })
+            .where(eq(aboutContentTable.id, primary.id))
+            .returning({ id: aboutContentTable.id })
+        : await tx
+            .insert(aboutContentTable)
+            .values({ id: ABOUT_CONTENT_SINGLETON_ID, ...data })
+            .returning({ id: aboutContentTable.id });
+      if (!saved) throw new Error("About content not found");
 
       if (existing.length > 1) {
-        await tx.aboutContent.deleteMany({
-          where: { id: { in: existing.slice(1).map(({ id }) => id) } },
-        });
+        await tx.delete(aboutContentTable).where(
+          inArray(
+            aboutContentTable.id,
+            existing.slice(1).map(({ id }) => id),
+          ),
+        );
       }
       return saved;
     });

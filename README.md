@@ -4,7 +4,7 @@
 
 *A personal portfolio and CMS — built to last, not to scaffold.*
 
-Storylio is a single-owner portfolio and content management system built with Next.js 16, React 19, Prisma, PostgreSQL, BetterAuth, and Cloudinary. It ships with a full dashboard for managing posts, projects, gallery, testimonials, and site content — no code changes required for day-to-day publishing.
+Storylio is a single-owner portfolio and content management system built with Next.js 16, React 19, Drizzle ORM, PostgreSQL, BetterAuth, and Cloudinary. It ships with a full dashboard for managing posts, projects, gallery, testimonials, and site content — no code changes required for day-to-day publishing.
 
 [![Quality](https://img.shields.io/github/actions/workflow/status/demonicheinz/storylio/quality.yml?style=plastic&label=Quality&logo=github)](https://github.com/demonicheinz/storylio/actions/workflows/quality.yml)
 [![Security](https://img.shields.io/github/actions/workflow/status/demonicheinz/storylio/trivy.yml?style=plastic&label=Security&logo=github)](https://github.com/demonicheinz/storylio/actions/workflows/trivy.yml)
@@ -14,7 +14,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 [![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=plastic&logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=plastic&logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_v4-06B6D4?style=plastic&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=plastic&logo=prisma&logoColor=white)](https://prisma.io)
+[![Drizzle ORM](https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=plastic&logo=drizzle&logoColor=black)](https://orm.drizzle.team)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=plastic&logo=postgresql&logoColor=white)](https://postgresql.org)
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=plastic&logo=cloudinary&logoColor=white)](https://cloudinary.com)
 [![Vercel](https://img.shields.io/badge/Vercel-000000?style=plastic&logo=vercel&logoColor=white)](https://vercel.com)
@@ -32,7 +32,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 - **Projects** — filterable grid by category, featured projects section, and full detail page with MDX content and screenshots
 - **Blog** — MDX articles with syntax highlighting, sticky table of contents, reading time, view counter, tag filtering, and social share
 - **Gallery** — masonry grid with lightbox, category filter, captions, and drag-and-drop ordering
-- **SEO** — per-page metadata, dynamic OG image generation via `@vercel/og`, auto-generated `sitemap.xml` and `robots.txt`
+- **SEO** — per-page metadata, dynamic OG image generation via Next.js `ImageResponse` from `next/og`, auto-generated `sitemap.xml` and `robots.txt`
 
 ### Dashboard CMS
 
@@ -61,7 +61,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 - **Biome** — single tool for linting and formatting (replaces ESLint + Prettier)
 - **`use cache`** — static public pages cached at the component level for instant navigation
 - **ISR** — blog and project pages revalidate every 60 seconds
-- **Custom Prisma output** — client generated to `src/generated/prisma` for better TypeScript integration
+- **Typed database schema** — Drizzle tables and relations in `src/lib/db/schema.ts`, with reviewed SQL migrations in `drizzle/`
 - **Signed Cloudinary uploads** — API secret never exposed to the client
 - **MDX hybrid** — static pages from filesystem (`@next/mdx`), dynamic content from database (`next-mdx-remote-client`)
 
@@ -84,7 +84,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 | Language | TypeScript |
 | Styling | Tailwind CSS v4 + shadcn/ui |
 | Database | PostgreSQL / Neon |
-| ORM | Prisma |
+| ORM | Drizzle ORM |
 | Auth | BetterAuth (single-owner) |
 | Media | Cloudinary |
 | Email | Resend |
@@ -136,6 +136,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 ### Prerequisites
 
 - [Bun](https://bun.sh)
+- Infisical CLI (validated with version 0.44.3) and access to the Storylio Cloud project
 - PostgreSQL database or [Neon](https://neon.tech) account
 - [Cloudinary](https://cloudinary.com) account
 - [Resend](https://resend.com) account
@@ -146,16 +147,14 @@ Storylio is a single-owner portfolio and content management system built with Ne
 # 1. Clone and install
 git clone https://github.com/demonicheinz/storylio.git
 cd storylio
-bun run install
+bun install
 
-# 2. Configure environment
-cp .env.example .env.local
-# Fill in all required variables (see Environment Variables below)
+# 2. Sign in to the Infisical Cloud project linked in .infisical.yaml
+infisical login
+# Use .env.example as a variable-name reference; do not copy it to .env.local.
 
-# 3. Set up the database
-bun run db:generate      # Generate Prisma client
-bun run db:migrate       # Review migration state
-bun run db:seed          # Seed owner account and initial content
+# 3. Verify an existing database without changing it
+bun run db:baseline
 
 # 4. Start development
 bun run dev
@@ -163,16 +162,46 @@ bun run dev
 
 The dashboard is at `/dashboard`. Sign in with the credentials from `OWNER_EMAIL` and `OWNER_PASSWORD`.
 
+For a new, empty database, run `bun run db:migrate` followed by `bun run db:seed`
+instead of the baseline check. For an existing database, follow
+[DRIZZLE_MIGRATION.md](docs/DRIZZLE_MIGRATION.md) before adopting its migration
+ledger. No client-generation step is required.
+
 ---
 
 ## Environment Variables
+
+Infisical Cloud is the source for local application and database commands.
+The committed `.infisical.yaml` contains project metadata, not secret values.
+Scripts explicitly select the environment and root secret path:
+
+| Script suffix | Infisical environment | Examples |
+| --- | --- | --- |
+| None | `dev` | `dev`, `build`, `db:status` |
+| `:preview` | `staging` | `build:preview`, `db:status:preview` |
+| `:production` | `prod` | `build:production`, `db:status:production` |
+
+Installing dependencies and generating migration files do not require secrets
+or a database connection. Migration/status/baseline/Studio commands use `DIRECT_URL`;
+application queries, seeds, and backfills use `DATABASE_URL` from the selected
+Infisical environment.
+
+Keep old `.env.local`, `.env.preview`, and `.env.production` files out of the
+autoload locations after migration. Existing copies were preserved locally as
+`.env.local.pre-infisical`, `.env.preview.pre-infisical`, and
+`.env.production.pre-infisical`; these backups remain ignored by Git.
+Keeping an old autoload file would allow missing Infisical keys to fall back to
+stale local values. Keep `.env.example` as documentation only.
+
+See [INFISICAL_SETUP.md](docs/INFISICAL_SETUP.md) for CLI setup,
+GitHub OIDC configuration, and Vercel secret sync.
 
 ### Required
 
 | Variable | Description |
 |----------|-------------|
 | `DATABASE_URL` | Pooled database connection string |
-| `DIRECT_URL` | Direct connection string (used by Prisma migrations) |
+| `DIRECT_URL` | Direct connection string for schema inspection and database administration |
 | `BETTER_AUTH_SECRET` | Strong random secret for BetterAuth signing |
 | `BETTER_AUTH_URL` | Canonical production origin, e.g. `https://heinz.id` |
 | `NEXT_PUBLIC_SITE_URL` | Canonical public site origin used by metadata |
@@ -209,16 +238,107 @@ The dashboard is at `/dashboard`. Sign in with the credentials from `OWNER_EMAIL
 ```bash
 bun run dev              # Start dev server (Turbopack)
 bun run build            # Production build
+bun run build:preview    # Build using Infisical staging secrets
+bun run build:production # Build using Infisical prod secrets
+bun run build:hosted     # Build using environment already injected by CI/Vercel
 bun run typecheck        # TypeScript check (tsc --noEmit)
 bun run lint             # Biome lint + format check
+bun run test             # Run all Vitest unit and integration tests
+bun run test:watch       # Watch tests during development
+bun run test:security    # Auth boundaries, image processing, and OG regression checks
 
-bun run db:generate      # Generate Prisma client
-bun run db:status        # Review migration state
+bun run db:generate      # Generate SQL migration files; does not apply them
+bun run db:check         # Check local Drizzle migration history
+bun run db:baseline      # Verify an existing schema; read-only by default
+bun run db:status        # Report applied/pending migrations and baseline requirements
+bun run db:migrate       # Apply migrations to an empty or already-baselined database
 bun run db:seed          # Seed owner account and initial content
-bun run db:studio        # Open Prisma Studio
+bun run db:studio        # Open Drizzle Studio
 ```
 
 ---
+
+## Testing
+
+Use Vitest for unit and integration tests in `tests/**/*.test.ts`.
+`vitest.config.mts` runs them in Node and resolves the application `@/` alias.
+CI runs `bun run test` alongside type checking. Vitest stays on the maintained
+4.x line to support the project's current Node and TypeScript type ranges.
+
+Database integration tests use in-memory PostgreSQL through PGlite. They replay
+the archived schema and verify Drizzle relations, transactions, auth compatibility,
+seed idempotence, and migration-baseline safety without live database credentials.
+
+The auth checks use dummy credentials and no live database. Their fixture
+enables production mode before importing Better Auth because Better Auth skips
+origin checks in test mode. Keep that guard active when extending these tests.
+
+Use the pinned Playwright CLI for browser flows and debugging. Install its
+Chromium once:
+
+```bash
+bun run browser:install
+```
+
+Start the app with `bun run dev` in a separate terminal. Then run:
+
+```bash
+bun run browser:open http://localhost:3000/sign-in
+bun run test:browser
+bun run browser snapshot
+bun run browser close
+```
+
+`playwright-cli.config.json` selects headless Chromium with an isolated profile.
+`tests/browser/security-smoke.js` checks the sign-in form, password visibility,
+dashboard protection, anonymous sessions, OG output, and browser runtime errors.
+It uses the origin opened in the CLI session, so it can also check a locally
+running production build. Conditional passkey challenges use a browser fixture;
+a real passkey sign-in needs a dedicated auth database and WebAuthn setup.
+Use a dedicated test session: the smoke check clears
+that session's cookies. Browser artifacts stay in the ignored `.playwright-cli/`
+directory. The browser flow is run separately from the automated Vitest CI step.
+
+To check public navigation caching, use a production build: automatic link
+prefetching is disabled in development. Start `bun run build` and `bun run start`,
+then run this in another terminal:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-navigation open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:navigation
+bunx --no-install playwright-cli -s=storylio-navigation close
+```
+
+This check visits the five navbar destinations twice with delayed RSC requests.
+The second round must reuse each visited route without showing the route skeleton
+or issuing a blocking navigation request. An initial visit may show the skeleton
+if the prefetch has not completed. Run it against public test content.
+
+For About language switching, open a separate session against the same production
+server and run:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-about-language open http://localhost:3000/about --config=playwright-cli.config.json
+bun run test:browser:about-language
+bunx --no-install playwright-cli -s=storylio-about-language close
+```
+
+The language check waits for the Indonesian prefetch, adds 800 ms to RSC requests,
+and verifies English/Indonesian content, active links, query parameters and scroll
+position. Prefetched language switches must not issue a navigation request.
+
+To check stack/topic filters, open a production browser session and run:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-filters open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:filters
+bunx --no-install playwright-cli -s=storylio-filters close
+```
+
+This check needs published projects and posts with at least two stacks/topics.
+It verifies that filter variants are not prefetched on page load, hover/focus
+warms the selected destination without navigating, clicking reuses that prefetch,
+and resetting to All preserves unrelated query parameters.
 
 ## Integrations
 
@@ -271,11 +391,12 @@ bun run db:backfill-media -- --force
 
 ### Vercel (recommended)
 
-1. Set all required environment variables under **Settings → Environment Variables**.
-2. Set `NEXT_PUBLIC_SITE_URL` and `BETTER_AUTH_URL` to the production HTTPS origin before the first build.
-3. For Preview deployments, keep canonical URL variables pointing at production — BetterAuth safely derives the active `*.vercel.app` origin per request.
-4. Use a separate Neon branch for Preview database isolation.
-5. Run `bun run db:status` before applying migrations. Do not deploy while local and remote migration histories diverge.
+1. Configure Infisical secret sync: `dev` → Vercel Development, `staging` → Preview, `prod` → Production. See [INFISICAL_SETUP.md](docs/INFISICAL_SETUP.md).
+2. Set the Vercel Build Command to `bun run build:hosted`. It uses synced environment variables without requiring a CLI login on Vercel.
+3. Set `NEXT_PUBLIC_SITE_URL` and `BETTER_AUTH_URL` to the production HTTPS origin before the first build.
+4. For Preview deployments, keep canonical URL variables pointing at production — BetterAuth safely derives the active `*.vercel.app` origin per request.
+5. Use a separate Neon branch for Preview database isolation.
+6. Run the matching `db:status` command before applying migrations. Do not deploy while local and remote migration histories diverge.
 
 ### Pre-launch Checklist
 

@@ -1,10 +1,8 @@
 "use client";
 
 import { FunnelSimpleIcon } from "@phosphor-icons/react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { usePathname, useSearchParams } from "next/navigation";
+import { FilterLink } from "@/components/public/filter-link";
 
 type ProjectFiltersProps = {
   technologies: string[];
@@ -16,11 +14,9 @@ export function ProjectFilters({
   selectedTech,
 }: ProjectFiltersProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
 
-  const updateFilter = (tech?: string) => {
+  const getFilterHref = (tech?: string) => {
     const params = new URLSearchParams(searchParams.toString());
 
     if (tech) {
@@ -31,11 +27,7 @@ export function ProjectFilters({
 
     const query = params.toString();
 
-    startTransition(() => {
-      router.push(query ? `${pathname}?${query}` : pathname, {
-        scroll: false,
-      });
-    });
+    return query ? `${pathname}?${query}` : pathname;
   };
 
   return (
@@ -45,35 +37,17 @@ export function ProjectFilters({
         Filter by stack
       </div>
 
-      <div
-        className={cn(
-          "[&::-webkit-scrollbar]:hidden flex gap-2 pb-1 overflow-x-auto scrollbar-none",
-          isPending && "opacity-70",
-        )}
-      >
-        <Button
-          type="button"
-          size="sm"
-          variant={!selectedTech ? "default" : "outline"}
-          className="rounded-full shrink-0"
-          onClick={() => updateFilter()}
-        >
+      <div className="[&::-webkit-scrollbar]:hidden flex gap-2 pb-1 overflow-x-auto scrollbar-none">
+        <FilterLink href={getFilterHref()} active={!selectedTech}>
           All
-        </Button>
+        </FilterLink>
         {technologies.map((tech) => {
           const isActive = selectedTech === tech;
 
           return (
-            <Button
-              key={tech}
-              type="button"
-              size="sm"
-              variant={isActive ? "default" : "outline"}
-              className="rounded-full shrink-0"
-              onClick={() => updateFilter(tech)}
-            >
+            <FilterLink key={tech} href={getFilterHref(tech)} active={isActive}>
               {tech}
-            </Button>
+            </FilterLink>
           );
         })}
       </div>

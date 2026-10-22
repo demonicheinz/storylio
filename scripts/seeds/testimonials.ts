@@ -1,4 +1,5 @@
-import type { PrismaClient } from "@/generated/prisma";
+import type { Database } from "@/lib/db";
+import { testimonial } from "@/lib/db/schema";
 
 const testimonials = [
   {
@@ -30,12 +31,12 @@ const testimonials = [
   },
 ];
 
-export async function seedTestimonials(db: PrismaClient) {
-  if ((await db.testimonial.count()) > 0) {
+export async function seedTestimonials(db: Database) {
+  if (await db.query.testimonial.findFirst({ columns: { id: true } })) {
     console.log("Testimonials already exist");
     return;
   }
 
-  await db.testimonial.createMany({ data: testimonials });
+  await db.insert(testimonial).values(testimonials);
   console.log("Created sample testimonials");
 }

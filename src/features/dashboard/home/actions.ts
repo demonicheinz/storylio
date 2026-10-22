@@ -1,5 +1,6 @@
 "use server";
 
+import { and, desc, eq, gt, gte, lt, lte, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import {
   type HomeSectionActionInput,
@@ -10,16 +11,18 @@ import {
   testimonialActionSchema,
 } from "@/features/dashboard/home/validations";
 import { flattenFieldErrors } from "@/features/dashboard/shared/utils/flatten-field-errors";
-import { HomeSectionType } from "@/generated/prisma";
 import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { HomeSectionType } from "@/lib/db/enums";
+import {
+  homeSection as homeSectionTable,
+  testimonial as testimonialTable,
+} from "@/lib/db/schema";
 
 type EntityActionData = { id: string };
-type TestimonialOrderClient = {
-  testimonial: Pick<typeof db.testimonial, "updateMany">;
-};
+type OrderTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 async function requireSession(): Promise<ActionResult | null> {
   try {
@@ -62,51 +65,55 @@ function parseInput<T>(
   return { success: true, data: parsed.data };
 }
 
-async function getNextTestimonialOrder() {
-  const last = await db.testimonial.findFirst({
-    orderBy: { order: "desc" },
-    select: { order: true },
-  });
-  return (last?.order ?? -1) + 1;
-}
+async function prepareTestimonialCreateOrder(
+  tx: OrderTransaction,
+  order: number,
+) {
+  if (order <= 0) {
+    const last = await tx.query.testimonial.findFirst({
+      orderBy: desc(testimonialTable.order),
+      columns: { order: true },
+    });
+    return (last?.order ?? -1) + 1;
+  }
 
-async function prepareTestimonialCreateOrder(order: number) {
-  if (order <= 0) return getNextTestimonialOrder();
-
-  await db.testimonial.updateMany({
-    where: { order: { gte: order } },
-    data: { order: { increment: 1 } },
-  });
-
+  await tx
+    .update(testimonialTable)
+    .set({ order: sql`${testimonialTable.order} + 1` })
+    .where(gte(testimonialTable.order, order));
   return order;
 }
 
 async function moveTestimonialOrder(
-  client: TestimonialOrderClient,
+  tx: OrderTransaction,
   testimonialId: string,
   fromOrder: number,
   toOrder: number,
 ) {
   if (fromOrder === toOrder) return;
 
-  if (toOrder < fromOrder) {
-    await client.testimonial.updateMany({
-      where: {
-        id: { not: testimonialId },
-        order: { gte: toOrder, lt: fromOrder },
-      },
-      data: { order: { increment: 1 } },
-    });
-    return;
-  }
-
-  await client.testimonial.updateMany({
-    where: {
-      id: { not: testimonialId },
-      order: { gt: fromOrder, lte: toOrder },
-    },
-    data: { order: { decrement: 1 } },
-  });
+  const movingEarlier = toOrder < fromOrder;
+  await tx
+    .update(testimonialTable)
+    .set({
+      order: movingEarlier
+        ? sql`${testimonialTable.order} + 1`
+        : sql`${testimonialTable.order} - 1`,
+    })
+    .where(
+      and(
+        ne(testimonialTable.id, testimonialId),
+        movingEarlier
+          ? and(
+              gte(testimonialTable.order, toOrder),
+              lt(testimonialTable.order, fromOrder),
+            )
+          : and(
+              gt(testimonialTable.order, fromOrder),
+              lte(testimonialTable.order, toOrder),
+            ),
+      ),
+    );
 }
 
 function toHomeSectionType(type: HomeSectionActionValues["type"]) {
@@ -123,80 +130,96 @@ function getHomeSectionData(values: HomeSectionActionValues) {
   };
 }
 
-async function getNextHomeSectionOrder(type: HomeSectionActionValues["type"]) {
-  const last = await db.homeSection.findFirst({
-    where: { type: toHomeSectionType(type) },
-    orderBy: { order: "desc" },
-    select: { order: true },
-  });
-  return (last?.order ?? -1) + 1;
-}
-
 async function prepareHomeSectionCreateOrder(
+  tx: OrderTransaction,
   type: HomeSectionActionValues["type"],
   order: number,
 ) {
-  if (order <= 0) return getNextHomeSectionOrder(type);
+  if (order <= 0) {
+    const last = await tx.query.homeSection.findFirst({
+      where: eq(homeSectionTable.type, toHomeSectionType(type)),
+      orderBy: desc(homeSectionTable.order),
+      columns: { order: true },
+    });
+    return (last?.order ?? -1) + 1;
+  }
 
-  await db.homeSection.updateMany({
-    where: { type: toHomeSectionType(type), order: { gte: order } },
-    data: { order: { increment: 1 } },
-  });
-
+  await tx
+    .update(homeSectionTable)
+    .set({ order: sql`${homeSectionTable.order} + 1` })
+    .where(
+      and(
+        eq(homeSectionTable.type, toHomeSectionType(type)),
+        gte(homeSectionTable.order, order),
+      ),
+    );
   return order;
 }
 
-async function moveHomeSectionOrder({
-  sectionId,
-  fromType,
-  toType,
-  fromOrder,
-  toOrder,
-}: {
-  sectionId: string;
-  fromType: HomeSectionType;
-  toType: HomeSectionType;
-  fromOrder: number;
-  toOrder: number;
-}) {
+async function moveHomeSectionOrder(
+  tx: OrderTransaction,
+  {
+    sectionId,
+    fromType,
+    toType,
+    fromOrder,
+    toOrder,
+  }: {
+    sectionId: string;
+    fromType: HomeSectionType;
+    toType: HomeSectionType;
+    fromOrder: number;
+    toOrder: number;
+  },
+) {
   if (fromType !== toType) {
-    await db.homeSection.updateMany({
-      where: {
-        type: fromType,
-        id: { not: sectionId },
-        order: { gt: fromOrder },
-      },
-      data: { order: { decrement: 1 } },
-    });
-    await db.homeSection.updateMany({
-      where: { type: toType, id: { not: sectionId }, order: { gte: toOrder } },
-      data: { order: { increment: 1 } },
-    });
+    await tx
+      .update(homeSectionTable)
+      .set({ order: sql`${homeSectionTable.order} - 1` })
+      .where(
+        and(
+          eq(homeSectionTable.type, fromType),
+          ne(homeSectionTable.id, sectionId),
+          gt(homeSectionTable.order, fromOrder),
+        ),
+      );
+    await tx
+      .update(homeSectionTable)
+      .set({ order: sql`${homeSectionTable.order} + 1` })
+      .where(
+        and(
+          eq(homeSectionTable.type, toType),
+          ne(homeSectionTable.id, sectionId),
+          gte(homeSectionTable.order, toOrder),
+        ),
+      );
     return;
   }
 
   if (fromOrder === toOrder) return;
-
-  if (toOrder < fromOrder) {
-    await db.homeSection.updateMany({
-      where: {
-        type: toType,
-        id: { not: sectionId },
-        order: { gte: toOrder, lt: fromOrder },
-      },
-      data: { order: { increment: 1 } },
-    });
-    return;
-  }
-
-  await db.homeSection.updateMany({
-    where: {
-      type: toType,
-      id: { not: sectionId },
-      order: { gt: fromOrder, lte: toOrder },
-    },
-    data: { order: { decrement: 1 } },
-  });
+  const movingEarlier = toOrder < fromOrder;
+  await tx
+    .update(homeSectionTable)
+    .set({
+      order: movingEarlier
+        ? sql`${homeSectionTable.order} + 1`
+        : sql`${homeSectionTable.order} - 1`,
+    })
+    .where(
+      and(
+        eq(homeSectionTable.type, toType),
+        ne(homeSectionTable.id, sectionId),
+        movingEarlier
+          ? and(
+              gte(homeSectionTable.order, toOrder),
+              lt(homeSectionTable.order, fromOrder),
+            )
+          : and(
+              gt(homeSectionTable.order, fromOrder),
+              lte(homeSectionTable.order, toOrder),
+            ),
+      ),
+    );
 }
 
 export async function actionCreateTestimonial(
@@ -209,17 +232,21 @@ export async function actionCreateTestimonial(
   if (!parsed.success) return parsed.result;
 
   try {
-    const testimonial = await db.testimonial.create({
-      data: {
-        name: parsed.data.name,
-        role: parsed.data.role || null,
-        company: parsed.data.company || null,
-        avatar: parsed.data.avatar ?? null,
-        content: parsed.data.content,
-        isVisible: parsed.data.isVisible,
-        order: await prepareTestimonialCreateOrder(parsed.data.order),
-      },
-      select: { id: true },
+    const testimonial = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(testimonialTable)
+        .values({
+          name: parsed.data.name,
+          role: parsed.data.role || null,
+          company: parsed.data.company || null,
+          avatar: parsed.data.avatar ?? null,
+          content: parsed.data.content,
+          isVisible: parsed.data.isVisible,
+          order: await prepareTestimonialCreateOrder(tx, parsed.data.order),
+        })
+        .returning({ id: testimonialTable.id });
+      if (!created) throw new Error("Item was not created");
+      return created;
     });
 
     revalidateHomePaths();
@@ -241,14 +268,14 @@ export async function actionUpdateTestimonial(
   if (!parsed.success) return parsed.result;
 
   try {
-    const existing = await db.testimonial.findUnique({
-      where: { id: testimonialId },
-      select: { id: true, order: true },
+    const existing = await db.query.testimonial.findFirst({
+      where: eq(testimonialTable.id, testimonialId),
+      columns: { id: true, order: true },
     });
 
     if (!existing) return actionError("Testimonial not found.");
 
-    const testimonial = await db.$transaction(async (tx) => {
+    const testimonial = await db.transaction(async (tx) => {
       await moveTestimonialOrder(
         tx,
         testimonialId,
@@ -256,9 +283,9 @@ export async function actionUpdateTestimonial(
         parsed.data.order,
       );
 
-      return tx.testimonial.update({
-        where: { id: testimonialId },
-        data: {
+      const [updated] = await tx
+        .update(testimonialTable)
+        .set({
           name: parsed.data.name,
           role: parsed.data.role || null,
           company: parsed.data.company || null,
@@ -266,9 +293,11 @@ export async function actionUpdateTestimonial(
           content: parsed.data.content,
           isVisible: parsed.data.isVisible,
           order: parsed.data.order,
-        },
-        select: { id: true },
-      });
+        })
+        .where(eq(testimonialTable.id, testimonialId))
+        .returning({ id: testimonialTable.id });
+      if (!updated) throw new Error("Testimonial not found");
+      return updated;
     });
 
     revalidateHomePaths();
@@ -286,14 +315,18 @@ export async function actionDeleteTestimonial(
   if (authError) return authError;
 
   try {
-    const existing = await db.testimonial.findUnique({
-      where: { id: testimonialId },
-      select: { id: true },
+    const existing = await db.query.testimonial.findFirst({
+      where: eq(testimonialTable.id, testimonialId),
+      columns: { id: true },
     });
 
     if (!existing) return actionError("Testimonial not found.");
 
-    await db.testimonial.delete({ where: { id: testimonialId } });
+    const deleted = await db
+      .delete(testimonialTable)
+      .where(eq(testimonialTable.id, testimonialId))
+      .returning({ id: testimonialTable.id });
+    if (deleted.length === 0) throw new Error("Item not found");
 
     revalidateHomePaths();
     return actionSuccess(undefined, "Testimonial deleted.");
@@ -313,14 +346,16 @@ export async function actionReorderTestimonials(
   if (!parsed.success) return actionError("Invalid testimonial order.");
 
   try {
-    await db.$transaction(
-      parsed.data.map((item) =>
-        db.testimonial.update({
-          where: { id: item.id },
-          data: { order: item.order },
-        }),
-      ),
-    );
+    await db.transaction(async (tx) => {
+      for (const item of parsed.data) {
+        const updated = await tx
+          .update(testimonialTable)
+          .set({ order: item.order })
+          .where(eq(testimonialTable.id, item.id))
+          .returning({ id: testimonialTable.id });
+        if (updated.length === 0) throw new Error("Item not found");
+      }
+    });
 
     revalidateHomePaths();
     return actionSuccess(undefined, "Testimonial order updated.");
@@ -340,15 +375,20 @@ export async function actionCreateHomeSection(
   if (!parsed.success) return parsed.result;
 
   try {
-    const section = await db.homeSection.create({
-      data: {
-        ...getHomeSectionData(parsed.data),
-        order: await prepareHomeSectionCreateOrder(
-          parsed.data.type,
-          parsed.data.order,
-        ),
-      },
-      select: { id: true },
+    const section = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(homeSectionTable)
+        .values({
+          ...getHomeSectionData(parsed.data),
+          order: await prepareHomeSectionCreateOrder(
+            tx,
+            parsed.data.type,
+            parsed.data.order,
+          ),
+        })
+        .returning({ id: homeSectionTable.id });
+      if (!created) throw new Error("Item was not created");
+      return created;
     });
 
     revalidateHomePaths();
@@ -371,25 +411,28 @@ export async function actionUpdateHomeSection(
   if (!parsed.success) return parsed.result;
 
   try {
-    const existing = await db.homeSection.findUnique({
-      where: { id: sectionId },
-      select: { id: true, order: true, type: true },
+    const existing = await db.query.homeSection.findFirst({
+      where: eq(homeSectionTable.id, sectionId),
+      columns: { id: true, order: true, type: true },
     });
 
     if (!existing) return actionError("Home section not found.");
 
-    await moveHomeSectionOrder({
-      sectionId,
-      fromType: existing.type,
-      toType: toHomeSectionType(parsed.data.type),
-      fromOrder: existing.order,
-      toOrder: parsed.data.order,
-    });
-
-    const section = await db.homeSection.update({
-      where: { id: sectionId },
-      data: getHomeSectionData(parsed.data),
-      select: { id: true },
+    const section = await db.transaction(async (tx) => {
+      await moveHomeSectionOrder(tx, {
+        sectionId,
+        fromType: existing.type,
+        toType: toHomeSectionType(parsed.data.type),
+        fromOrder: existing.order,
+        toOrder: parsed.data.order,
+      });
+      const [updated] = await tx
+        .update(homeSectionTable)
+        .set(getHomeSectionData(parsed.data))
+        .where(eq(homeSectionTable.id, sectionId))
+        .returning({ id: homeSectionTable.id });
+      if (!updated) throw new Error("Home section not found");
+      return updated;
     });
 
     revalidateHomePaths();
@@ -408,14 +451,18 @@ export async function actionDeleteHomeSection(
   if (authError) return authError;
 
   try {
-    const existing = await db.homeSection.findUnique({
-      where: { id: sectionId },
-      select: { id: true },
+    const existing = await db.query.homeSection.findFirst({
+      where: eq(homeSectionTable.id, sectionId),
+      columns: { id: true },
     });
 
     if (!existing) return actionError("Home section not found.");
 
-    await db.homeSection.delete({ where: { id: sectionId } });
+    const deleted = await db
+      .delete(homeSectionTable)
+      .where(eq(homeSectionTable.id, sectionId))
+      .returning({ id: homeSectionTable.id });
+    if (deleted.length === 0) throw new Error("Item not found");
 
     revalidateHomePaths();
     return actionSuccess(undefined, "Home section deleted.");
@@ -435,14 +482,16 @@ export async function actionReorderHomeSections(
   if (!parsed.success) return actionError("Invalid home section order.");
 
   try {
-    await db.$transaction(
-      parsed.data.map((item) =>
-        db.homeSection.update({
-          where: { id: item.id },
-          data: { order: item.order },
-        }),
-      ),
-    );
+    await db.transaction(async (tx) => {
+      for (const item of parsed.data) {
+        const updated = await tx
+          .update(homeSectionTable)
+          .set({ order: item.order })
+          .where(eq(homeSectionTable.id, item.id))
+          .returning({ id: homeSectionTable.id });
+        if (updated.length === 0) throw new Error("Item not found");
+      }
+    });
 
     revalidateHomePaths();
     return actionSuccess(undefined, "Home content order updated.");

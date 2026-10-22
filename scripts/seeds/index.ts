@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { closeDb, db } from "@/lib/db";
 import { seedAboutContent } from "./about";
 import { seedGallery } from "./gallery";
 import { seedHomeSections } from "./home-sections";
@@ -34,8 +34,8 @@ async function main() {
 main()
   .catch((error) => {
     console.error(error);
-    process.exit(1);
+    process.exitCode = 1;
   })
   .finally(async () => {
-    await db.$disconnect();
+    await closeDb();
   });

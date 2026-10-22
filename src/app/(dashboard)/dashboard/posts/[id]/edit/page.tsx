@@ -1,8 +1,10 @@
+import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { PostEditor } from "@/features/dashboard/posts/components/post-editor";
-import { PostStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { PostStatus } from "@/lib/db/enums";
+import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
 
 type EditPostPageProps = {
   params: Promise<{
@@ -11,27 +13,34 @@ type EditPostPageProps = {
 };
 
 async function getPost(id: string) {
-  return db.post.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      excerpt: true,
-      content: true,
-      coverImage: true,
-      status: true,
-      publishedAt: true,
-      tags: {
-        select: {
-          name: true,
-        },
-        orderBy: {
-          name: "asc",
+  return db.query.post
+    .findFirst({
+      where: (table) => eq(table.id, id),
+      columns: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        content: true,
+        coverImage: true,
+        status: true,
+        publishedAt: true,
+      },
+      with: {
+        tags: {
+          columns: {},
+          with: {
+            tag: {
+              columns: {
+                name: true,
+              },
+            },
+          },
+          orderBy: orderPostTagsByName,
         },
       },
-    },
-  });
+    })
+    .then((row) => (row ? flattenPostTags(row) : null));
 }
 
 export default async function EditPostPage({ params }: EditPostPageProps) {

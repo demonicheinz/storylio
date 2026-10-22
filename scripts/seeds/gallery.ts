@@ -1,7 +1,8 @@
-import type { PrismaClient } from "@/generated/prisma";
+import type { Database } from "@/lib/db";
+import { galleryItem } from "@/lib/db/schema";
 
 type SeedGalleryOptions = {
-  db: PrismaClient;
+  db: Database;
 };
 
 const galleryItems = [
@@ -72,16 +73,16 @@ const galleryItems = [
 ];
 
 export async function seedGallery({ db }: SeedGalleryOptions) {
-  const galleryCount = await db.galleryItem.count();
+  const existing = await db.query.galleryItem.findFirst({
+    columns: { id: true },
+  });
 
-  if (galleryCount > 0) {
+  if (existing) {
     console.log("Gallery items already exist");
     return;
   }
 
-  await db.galleryItem.createMany({
-    data: galleryItems,
-  });
+  await db.insert(galleryItem).values(galleryItems);
 
   console.log("Created sample gallery items");
 }

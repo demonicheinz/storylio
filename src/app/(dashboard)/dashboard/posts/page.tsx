@@ -1,33 +1,42 @@
+import { desc } from "drizzle-orm";
 import { connection } from "next/server";
 import {
   type DashboardPost,
   PostsManager,
 } from "@/features/dashboard/posts/components/posts-manager";
 import { db } from "@/lib/db";
+import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
 
 async function getPosts(): Promise<DashboardPost[]> {
-  const posts = await db.post.findMany({
-    orderBy: [{ createdAt: "desc" }],
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      status: true,
-      coverImage: true,
-      createdAt: true,
-      updatedAt: true,
-      publishedAt: true,
-      viewCount: true,
-      tags: {
-        select: {
-          name: true,
-        },
-        orderBy: {
-          name: "asc",
+  const posts = await db.query.post
+    .findMany({
+      orderBy: (table) => [desc(table.createdAt)],
+      columns: {
+        id: true,
+        title: true,
+        slug: true,
+        status: true,
+        coverImage: true,
+        createdAt: true,
+        updatedAt: true,
+        publishedAt: true,
+        viewCount: true,
+      },
+      with: {
+        tags: {
+          columns: {},
+          with: {
+            tag: {
+              columns: {
+                name: true,
+              },
+            },
+          },
+          orderBy: orderPostTagsByName,
         },
       },
-    },
-  });
+    })
+    .then((rows) => rows.map((row) => flattenPostTags(row)));
 
   return posts.map((post) => ({
     ...post,

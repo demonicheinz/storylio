@@ -1,4 +1,5 @@
 import { ArrowLeftIcon } from "@phosphor-icons/react/dist/ssr";
+import { and, desc, eq, isNull, lte, or } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 import Link from "next/link";
@@ -13,8 +14,9 @@ import {
   ShareButton,
 } from "@/components/public/sections/blog";
 import { Button } from "@/components/ui/button";
-import { PostStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { PostStatus } from "@/lib/db/enums";
+import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
 import { renderMDX } from "@/lib/mdx";
 import { slugify } from "@/lib/utils";
 
@@ -28,73 +30,82 @@ async function getPostBySlug(slug: string) {
   "use cache";
   cacheLife("minutes");
 
-  return db.post.findFirst({
-    where: {
-      slug,
-      status: PostStatus.PUBLISHED,
-      OR: [{ publishedAt: null }, { publishedAt: { lte: new Date() } }],
-    },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      excerpt: true,
-      content: true,
-      coverImage: true,
-      publishedAt: true,
-      createdAt: true,
-      viewCount: true,
-      tags: {
-        select: {
-          id: true,
-          name: true,
-        },
-        orderBy: {
-          name: "asc",
+  return db.query.post
+    .findFirst({
+      where: (table) =>
+        and(
+          eq(table.slug, slug),
+          eq(table.status, PostStatus.PUBLISHED),
+          or(isNull(table.publishedAt), lte(table.publishedAt, new Date())),
+        ),
+      columns: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        content: true,
+        coverImage: true,
+        publishedAt: true,
+        createdAt: true,
+        viewCount: true,
+      },
+      with: {
+        tags: {
+          columns: {},
+          with: {
+            tag: {
+              columns: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: orderPostTagsByName,
         },
       },
-    },
-  });
+    })
+    .then((row) => (row ? flattenPostTags(row) : null));
 }
 
 async function getArticleCompanions(currentPostId: string, tagNames: string[]) {
   "use cache";
   cacheLife("minutes");
 
-  const posts = await db.post.findMany({
-    where: {
-      status: PostStatus.PUBLISHED,
-      OR: [{ publishedAt: null }, { publishedAt: { lte: new Date() } }],
-    },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      excerpt: true,
-      content: true,
-      coverImage: true,
-      publishedAt: true,
-      createdAt: true,
-      viewCount: true,
-      tags: {
-        select: {
-          id: true,
-          name: true,
+  const posts = await db.query.post
+    .findMany({
+      where: (table) =>
+        and(
+          eq(table.status, PostStatus.PUBLISHED),
+          or(isNull(table.publishedAt), lte(table.publishedAt, new Date())),
+        ),
+      columns: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        content: true,
+        coverImage: true,
+        publishedAt: true,
+        createdAt: true,
+        viewCount: true,
+      },
+      orderBy: (table) => [desc(table.publishedAt), desc(table.createdAt)],
+      with: {
+        tags: {
+          columns: {},
+          with: {
+            tag: {
+              columns: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: orderPostTagsByName,
         },
-        orderBy: {
-          name: "asc",
-        },
       },
-    },
-    orderBy: [
-      {
-        publishedAt: "desc",
-      },
-      {
-        createdAt: "desc",
-      },
-    ],
-  });
+    })
+    .then((rows) => rows.map((row) => flattenPostTags(row)));
 
   const sortedPosts = posts.toSorted((a, b) => {
     const aDate = a.publishedAt ?? a.createdAt;
