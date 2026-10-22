@@ -63,10 +63,15 @@ The Quality Checks workflow is prepared for OIDC but remains compatible with the
 existing GitHub `DATABASE_URL` secret until the machine identity is configured.
 No Infisical client secret or personal login token is needed for the OIDC flow.
 
-The new path is limited to pushes to `main`. Pull requests keep the existing
+The new path is limited to pushes to `main`. Quality checks run on pull requests
+targeting either `main` or `staging`. Both targets keep the existing
 GitHub database-secret build path; they do not receive an Infisical token or
 secrets through the new action. Lint, typecheck, and Vitest do not need Cloud
 secrets.
+
+Quality Checks does not run on pushes to `staging`; merged feature changes are
+checked through their pull requests. Trivy also scans pushes to `staging`.
+Adding the PR target does not require broadening the Infisical OIDC subject.
 
 ### Configure in Infisical
 
