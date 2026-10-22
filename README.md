@@ -299,6 +299,21 @@ Use a dedicated test session: the smoke check clears
 that session's cookies. Browser artifacts stay in the ignored `.playwright-cli/`
 directory. The browser flow is run separately from the automated Vitest CI step.
 
+To check public navigation caching, use a production build: automatic link
+prefetching is disabled in development. Start `bun run build` and `bun run start`,
+then run this in another terminal:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-navigation open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:navigation
+bunx --no-install playwright-cli -s=storylio-navigation close
+```
+
+This check visits the five navbar destinations twice with delayed RSC requests.
+The second round must reuse each visited route without showing the route skeleton
+or issuing a blocking navigation request. An initial visit may show the skeleton
+if the prefetch has not completed. Run it against public test content.
+
 ## Integrations
 
 ### Cloudinary
