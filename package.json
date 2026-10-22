@@ -13,6 +13,7 @@
     "browser:install": "playwright-cli install-browser chromium",
     "browser:open": "playwright-cli -s=storylio-security open --config=playwright-cli.config.json",
     "test:browser": "playwright-cli -s=storylio-security run-code --filename=tests/browser/security-smoke.js",
+    "test:browser:navigation": "playwright-cli -s=storylio-navigation run-code --filename=tests/browser/public-navigation.js",
     "prepare": "husky",
     "commitlint": "commitlint --edit",
     "lint-staged": "lint-staged",

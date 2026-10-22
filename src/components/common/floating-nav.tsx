@@ -76,6 +76,7 @@ export const FloatingNav = ({
                 <Link
                   key={navItem.link}
                   href={navItem.link}
+                  prefetch={true}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "relative flex items-center gap-1 px-3 py-2 rounded-2xl font-bold text-foreground text-sm transition-all duration-200",
