@@ -1,5 +1,7 @@
 # Skeleton berulang pada navigasi public
 
+Pembaruan layout detail: [skeleton Project/Blog](detail-skeleton.md).
+
 ## Penyebab yang terverifikasi
 
 Build produksi Next.js 16.4.2 mereproduksi masalah: navigasi navbar ke About,

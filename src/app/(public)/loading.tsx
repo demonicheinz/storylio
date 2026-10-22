@@ -11,7 +11,11 @@ function RouteSkeleton() {
       ? "about"
       : pathname === "/gallery"
         ? "gallery"
-        : "collection";
+        : pathname.startsWith("/projects/")
+          ? "project-detail"
+          : pathname.startsWith("/blog/")
+            ? "post-detail"
+            : "collection";
 
   return <PublicPageSkeleton variant={variant} />;
 }
