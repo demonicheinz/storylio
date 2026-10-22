@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, staging]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,8 +17,6 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    env:
-      DIRECT_URL: postgresql://user:password@localhost:5432/storylio
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -37,8 +35,6 @@ jobs:
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
-    env:
-      DIRECT_URL: postgresql://user:password@localhost:5432/storylio
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -54,12 +50,16 @@ jobs:
       - name: Run TypeScript
         run: bun run typecheck
 
+      - name: Run unit and integration tests
+        run: bun run test
+
   build:
     name: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      DIRECT_URL: ${{ secrets.DATABASE_URL }}
       BETTER_AUTH_SECRET: ci-only-secret-at-least-32-characters
       BETTER_AUTH_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
@@ -82,5 +82,26 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build
-        run: bun run next build
+      - name: Read staging database from Infisical
+        if: github.event_name == 'push' && vars.INFISICAL_IDENTITY_ID != ''
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          oidc-audience: infisical
+          identity-id: ${{ vars.INFISICAL_IDENTITY_ID }}
+          project-id: ${{ vars.INFISICAL_PROJECT_ID }}
+          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          env-slug: staging
+          secret-path: /
+          secret-name: DATABASE_URL
+          export-type: env
+
+      - name: Build with Infisical
+        if: github.event_name == 'push' && vars.INFISICAL_IDENTITY_ID != ''
+        run: bun run build:hosted
+
+      - name: Build with existing GitHub database secret
+        if: github.event_name != 'push' || vars.INFISICAL_IDENTITY_ID == ''
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: bun run build:hosted

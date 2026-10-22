@@ -1,4 +1,3 @@
-import type { Prisma } from "@/generated/prisma";
 import {
   extractCloudinaryPublicId,
   getCloudinaryImageMetadata,
@@ -99,8 +98,8 @@ export function buildImageUpdate(
   current: ImageFields,
   resolved: Partial<ImageFields>,
   force: boolean,
-): Prisma.MediaUpdateInput {
-  const update: Prisma.MediaUpdateInput = {};
+): Partial<ImageFields> {
+  const update: Partial<ImageFields> = {};
   for (const key of [
     "width",
     "height",
@@ -108,7 +107,9 @@ export function buildImageUpdate(
     "blurDataUrl",
   ] as const) {
     const value = resolved[key];
-    if (value != null && (force || current[key] == null)) update[key] = value;
+    if (value != null && (force || current[key] == null)) {
+      Object.assign(update, { [key]: value });
+    }
   }
   return update;
 }

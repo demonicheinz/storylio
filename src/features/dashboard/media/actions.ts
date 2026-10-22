@@ -1,11 +1,23 @@
 "use server";
 
+import { eq, inArray, like } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
 import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { db } from "@/lib/db";
+import { containsPattern } from "@/lib/db/query-utils";
+import {
+  galleryItem,
+  homeSection,
+  media as mediaTable,
+  post,
+  project,
+  projectScreenshot,
+  testimonial,
+  user,
+} from "@/lib/db/schema";
 
 export type MediaUsageItem = {
   id: string;
@@ -32,17 +44,17 @@ async function getMediaReferences(url: string) {
     testimonials,
     homeSections,
   ] = await Promise.all([
-    db.user.count({ where: { image: url } }),
-    db.post.count({ where: { coverImage: url } }),
-    db.post.count({ where: { content: { contains: url } } }),
-    db.project.count({ where: { coverImage: url } }),
-    db.project.count({ where: { thumbnailImageUrl: url } }),
-    db.project.count({ where: { ogImageUrl: url } }),
-    db.project.count({ where: { content: { contains: url } } }),
-    db.projectScreenshot.count({ where: { imageUrl: url } }),
-    db.galleryItem.count({ where: { imageUrl: url } }),
-    db.testimonial.count({ where: { avatar: url } }),
-    db.homeSection.count({ where: { imageUrl: url } }),
+    db.$count(user, eq(user.image, url)),
+    db.$count(post, eq(post.coverImage, url)),
+    db.$count(post, like(post.content, containsPattern(url))),
+    db.$count(project, eq(project.coverImage, url)),
+    db.$count(project, eq(project.thumbnailImageUrl, url)),
+    db.$count(project, eq(project.ogImageUrl, url)),
+    db.$count(project, like(project.content, containsPattern(url))),
+    db.$count(projectScreenshot, eq(projectScreenshot.imageUrl, url)),
+    db.$count(galleryItem, eq(galleryItem.imageUrl, url)),
+    db.$count(testimonial, eq(testimonial.avatar, url)),
+    db.$count(homeSection, eq(homeSection.imageUrl, url)),
   ]);
 
   const references: [string, number][] = [
@@ -101,9 +113,9 @@ async function getUsagePreview(mediaIds: string[]): Promise<MediaUsagePreview> {
     return { canDelete: [], blocked: [] };
   }
 
-  const mediaItems = await db.media.findMany({
-    where: { id: { in: uniqueIds } },
-    select: {
+  const mediaItems = await db.query.media.findMany({
+    where: inArray(mediaTable.id, uniqueIds),
+    columns: {
       id: true,
       filename: true,
       url: true,
@@ -148,20 +160,21 @@ export async function actionRenameMedia(
   }
 
   try {
-    const existing = await db.media.findUnique({
-      where: { id: mediaId },
-      select: { id: true },
+    const existing = await db.query.media.findFirst({
+      where: eq(mediaTable.id, mediaId),
+      columns: { id: true },
     });
 
     if (!existing) {
       return actionError("Media not found");
     }
 
-    const media = await db.media.update({
-      where: { id: mediaId },
-      data: { filename: normalizedFilename },
-      select: { id: true, filename: true },
-    });
+    const [media] = await db
+      .update(mediaTable)
+      .set({ filename: normalizedFilename })
+      .where(eq(mediaTable.id, mediaId))
+      .returning({ id: mediaTable.id, filename: mediaTable.filename });
+    if (!media) throw new Error("Media not found");
 
     revalidatePath("/dashboard/media");
     return actionSuccess(media);
@@ -199,8 +212,8 @@ export async function actionDeleteMedia(
   }
 
   try {
-    const media = await db.media.findUnique({
-      where: { id: mediaId },
+    const media = await db.query.media.findFirst({
+      where: eq(mediaTable.id, mediaId),
     });
 
     if (!media) {
@@ -217,9 +230,11 @@ export async function actionDeleteMedia(
     }
 
     await deleteFromCloudinary(media.publicId);
-    await db.media.delete({
-      where: { id: mediaId },
-    });
+    const deleted = await db
+      .delete(mediaTable)
+      .where(eq(mediaTable.id, mediaId))
+      .returning({ id: mediaTable.id });
+    if (deleted.length === 0) throw new Error("Media not found");
 
     revalidatePath("/dashboard/media");
     return actionSuccess(undefined);
@@ -259,9 +274,9 @@ export async function actionDeleteMediaBatch(
       return actionError("No media selected for deletion");
     }
 
-    const mediaItems = await db.media.findMany({
-      where: { id: { in: deleteIds } },
-      select: {
+    const mediaItems = await db.query.media.findMany({
+      where: inArray(mediaTable.id, deleteIds),
+      columns: {
         id: true,
         publicId: true,
       },
@@ -271,9 +286,7 @@ export async function actionDeleteMediaBatch(
       mediaItems.map((media) => deleteFromCloudinary(media.publicId)),
     );
 
-    await db.media.deleteMany({
-      where: { id: { in: deleteIds } },
-    });
+    await db.delete(mediaTable).where(inArray(mediaTable.id, deleteIds));
 
     revalidatePath("/dashboard/media");
     return actionSuccess({ deletedIds: deleteIds });

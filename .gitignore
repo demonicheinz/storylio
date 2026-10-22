@@ -47,10 +47,11 @@ next-env.d.ts
 
 # docs
 /.docs/
+/.tmp/
 /.claude/
 /.agents/
 /graphify-out/
 CLAUDE.md
 
-# prisma generated client
+# generated artifacts (including legacy ORM caches)
 src/generated/

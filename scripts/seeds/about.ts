@@ -1,4 +1,6 @@
-import type { PrismaClient } from "@/generated/prisma";
+import { asc, desc } from "drizzle-orm";
+import type { Database } from "@/lib/db";
+import { aboutContent as aboutContentTable } from "@/lib/db/schema";
 
 const aboutContent = {
   introEn:
@@ -13,10 +15,10 @@ const aboutContent = {
 };
 const ABOUT_CONTENT_SINGLETON_ID = "about-content";
 
-export async function seedAboutContent(db: PrismaClient) {
-  const existing = await db.aboutContent.findFirst({
-    orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
-    select: { id: true },
+export async function seedAboutContent(db: Database) {
+  const existing = await db.query.aboutContent.findFirst({
+    orderBy: [desc(aboutContentTable.updatedAt), asc(aboutContentTable.id)],
+    columns: { id: true },
   });
 
   if (existing) {
@@ -24,13 +26,12 @@ export async function seedAboutContent(db: PrismaClient) {
     return;
   }
 
-  await db.aboutContent.upsert({
-    where: { id: ABOUT_CONTENT_SINGLETON_ID },
-    update: {},
-    create: {
+  await db
+    .insert(aboutContentTable)
+    .values({
       id: ABOUT_CONTENT_SINGLETON_ID,
       ...aboutContent,
-    },
-  });
+    })
+    .onConflictDoNothing({ target: aboutContentTable.id });
   console.log("Created initial About content");
 }

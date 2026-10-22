@@ -6,6 +6,7 @@ import {
   ImagesIcon,
   QuotesIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { desc, eq, gte, sum } from "drizzle-orm";
 import { connection } from "next/server";
 import { type ReactNode, Suspense } from "react";
 import {
@@ -24,8 +25,15 @@ import {
   UmamiPanelSkeleton,
 } from "@/features/dashboard/analytics/components/umami-panel";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
-import { PostStatus, ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { PostStatus, ProjectStatus } from "@/lib/db/enums";
+import {
+  galleryItem,
+  post,
+  project,
+  testimonial,
+  viewEvent,
+} from "@/lib/db/schema";
 import { getUmamiAnalytics } from "@/lib/umami";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -93,20 +101,26 @@ async function getAnalyticsData() {
     timelineEvents,
     recentViews,
   ] = await Promise.all([
-    db.post.count(),
-    db.post.count({ where: { status: PostStatus.PUBLISHED } }),
-    db.post.count({ where: { status: PostStatus.DRAFT } }),
-    db.project.count(),
-    db.project.count({ where: { status: ProjectStatus.PUBLISHED } }),
-    db.galleryItem.count(),
-    db.testimonial.count(),
-    db.post.aggregate({ _sum: { viewCount: true } }),
-    db.project.aggregate({ _sum: { viewCount: true } }),
-    db.viewEvent.count(),
-    db.post.findMany({
-      orderBy: [{ viewCount: "desc" }, { createdAt: "desc" }],
-      take: 5,
-      select: {
+    db.$count(post),
+    db.$count(post, eq(post.status, PostStatus.PUBLISHED)),
+    db.$count(post, eq(post.status, PostStatus.DRAFT)),
+    db.$count(project),
+    db.$count(project, eq(project.status, ProjectStatus.PUBLISHED)),
+    db.$count(galleryItem),
+    db.$count(testimonial),
+    db
+      .select({ viewCount: sum(post.viewCount).mapWith(Number) })
+      .from(post)
+      .then(([row]) => row?.viewCount ?? 0),
+    db
+      .select({ viewCount: sum(project.viewCount).mapWith(Number) })
+      .from(project)
+      .then(([row]) => row?.viewCount ?? 0),
+    db.$count(viewEvent),
+    db.query.post.findMany({
+      orderBy: (table) => [desc(table.viewCount), desc(table.createdAt)],
+      limit: 5,
+      columns: {
         id: true,
         title: true,
         slug: true,
@@ -114,10 +128,10 @@ async function getAnalyticsData() {
         viewCount: true,
       },
     }),
-    db.project.findMany({
-      orderBy: [{ viewCount: "desc" }, { createdAt: "desc" }],
-      take: 5,
-      select: {
+    db.query.project.findMany({
+      orderBy: (table) => [desc(table.viewCount), desc(table.createdAt)],
+      limit: 5,
+      columns: {
         id: true,
         title: true,
         slug: true,
@@ -125,27 +139,22 @@ async function getAnalyticsData() {
         viewCount: true,
       },
     }),
-    db.viewEvent.findMany({
-      where: { createdAt: { gte: timelineStart } },
-      select: { createdAt: true },
+    db.query.viewEvent.findMany({
+      where: (table) => gte(table.createdAt, timelineStart),
+      columns: { createdAt: true },
     }),
-    db.viewEvent.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        type: true,
-        slug: true,
-        createdAt: true,
-      },
+    db.query.viewEvent.findMany({
+      orderBy: (table) => [desc(table.createdAt)],
+      limit: 5,
+      columns: { id: true, type: true, slug: true, createdAt: true },
     }),
   ]);
 
   return {
     draftPosts,
     galleryItems,
-    postViews: postViews._sum.viewCount ?? 0,
-    projectViews: projectViews._sum.viewCount ?? 0,
+    postViews: postViews,
+    projectViews: projectViews,
     publishedPosts,
     publishedProjects,
     recentViews,

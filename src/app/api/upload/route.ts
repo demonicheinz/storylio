@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { db } from "@/lib/db";
+import { media as mediaTable } from "@/lib/db/schema";
 import { generateBlurDataUrl } from "@/lib/image-metadata";
 import { isOwnerEmail } from "@/lib/owner-guard";
 
@@ -55,8 +56,9 @@ export async function POST(request: Request) {
         : null;
 
     // Save media record to DB
-    const media = await db.media.create({
-      data: {
+    const [media] = await db
+      .insert(mediaTable)
+      .values({
         url: result.url,
         publicId: result.publicId,
         filename: file.name,
@@ -66,8 +68,9 @@ export async function POST(request: Request) {
         height: result.height || null,
         aspectRatio,
         blurDataUrl,
-      },
-    });
+      })
+      .returning();
+    if (!media) throw new Error("Media record was not created");
 
     revalidatePath("/dashboard/media");
 

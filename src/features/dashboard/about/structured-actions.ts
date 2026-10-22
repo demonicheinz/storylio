@@ -1,5 +1,6 @@
 "use server";
 
+import { desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import {
   aboutReorderSchema,
@@ -16,8 +17,15 @@ import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import {
+  education,
+  skill,
+  skillCategory,
+  workExperience,
+} from "@/lib/db/schema";
 
-type Model = "workExperience" | "education" | "skillCategory" | "skill";
+const tables = { workExperience, education, skillCategory, skill };
+type Model = keyof typeof tables;
 
 function revalidateAbout() {
   revalidatePath("/dashboard/about");
@@ -41,12 +49,17 @@ function lines(value: string) {
 }
 
 async function nextOrder(model: Model, categoryId?: string) {
-  const where = model === "skill" ? { categoryId } : undefined;
-  const item = await (db[model] as typeof db.skill).findFirst({
-    where,
-    orderBy: { order: "desc" },
-    select: { order: true },
-  });
+  const table = tables[model];
+  const [item] = await db
+    .select({ order: table.order })
+    .from(table)
+    .where(
+      model === "skill" && categoryId !== undefined
+        ? eq(skill.categoryId, categoryId)
+        : undefined,
+    )
+    .orderBy(desc(table.order))
+    .limit(1);
   return (item?.order ?? -1) + 1;
 }
 
@@ -55,14 +68,17 @@ async function reorder(model: Model, input: unknown): Promise<ActionResult> {
   const parsed = aboutReorderSchema.safeParse(input);
   if (!parsed.success) return actionError("Invalid order.");
   try {
-    await db.$transaction(
-      parsed.data.map(({ id, order }) =>
-        (db[model] as typeof db.skill).update({
-          where: { id },
-          data: { order },
-        }),
-      ),
-    );
+    const table = tables[model];
+    await db.transaction(async (tx) => {
+      for (const { id, order } of parsed.data) {
+        const updated = await tx
+          .update(table)
+          .set({ order, updatedAt: new Date() })
+          .where(eq(table.id, id))
+          .returning({ id: table.id });
+        if (updated.length === 0) throw new Error("Item not found");
+      }
+    });
     revalidateAbout();
     return actionSuccess(undefined, "Order updated.");
   } catch (error) {
@@ -74,7 +90,12 @@ async function reorder(model: Model, input: unknown): Promise<ActionResult> {
 async function remove(model: Model, id: string): Promise<ActionResult> {
   if (!(await authorized())) return actionError("Unauthorized");
   try {
-    await (db[model] as typeof db.skill).delete({ where: { id } });
+    const table = tables[model];
+    const deleted = await db
+      .delete(table)
+      .where(eq(table.id, id))
+      .returning({ id: table.id });
+    if (deleted.length === 0) throw new Error("Item not found");
     revalidateAbout();
     return actionSuccess(undefined, "Item deleted.");
   } catch (error) {
@@ -88,8 +109,9 @@ export async function actionCreateWorkExperience(input: WorkExperienceInput) {
   const parsed = workExperienceSchema.safeParse(input);
   if (!parsed.success) return actionError("Please fix the highlighted fields.");
   try {
-    const item = await db.workExperience.create({
-      data: {
+    const [item] = await db
+      .insert(workExperience)
+      .values({
         ...parsed.data,
         company: parsed.data.company || null,
         location: parsed.data.location || null,
@@ -101,9 +123,9 @@ export async function actionCreateWorkExperience(input: WorkExperienceInput) {
         highlightsEn: lines(parsed.data.highlightsEn),
         highlightsId: lines(parsed.data.highlightsId),
         order: parsed.data.order || (await nextOrder("workExperience")),
-      },
-      select: { id: true },
-    });
+      })
+      .returning({ id: workExperience.id });
+    if (!item) throw new Error("Item was not created");
     revalidateAbout();
     return actionSuccess(item, "Work experience created.");
   } catch (error) {
@@ -120,9 +142,9 @@ export async function actionUpdateWorkExperience(
   const parsed = workExperienceSchema.safeParse(input);
   if (!parsed.success) return actionError("Please fix the highlighted fields.");
   try {
-    await db.workExperience.update({
-      where: { id },
-      data: {
+    const updated = await db
+      .update(workExperience)
+      .set({
         ...parsed.data,
         company: parsed.data.company || null,
         location: parsed.data.location || null,
@@ -133,8 +155,11 @@ export async function actionUpdateWorkExperience(
         descriptionId: parsed.data.descriptionId || null,
         highlightsEn: lines(parsed.data.highlightsEn),
         highlightsId: lines(parsed.data.highlightsId),
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .where(eq(workExperience.id, id))
+      .returning({ id: workExperience.id });
+    if (updated.length === 0) throw new Error("Item not found");
     revalidateAbout();
     return actionSuccess({ id }, "Work experience updated.");
   } catch (error) {
@@ -155,8 +180,9 @@ export async function actionCreateEducation(input: EducationInput) {
   const parsed = educationSchema.safeParse(input);
   if (!parsed.success) return actionError("Please fix the highlighted fields.");
   try {
-    const item = await db.education.create({
-      data: {
+    const [item] = await db
+      .insert(education)
+      .values({
         ...parsed.data,
         degree: parsed.data.degree || null,
         field: parsed.data.field || null,
@@ -166,9 +192,9 @@ export async function actionCreateEducation(input: EducationInput) {
         descriptionEn: parsed.data.descriptionEn || null,
         descriptionId: parsed.data.descriptionId || null,
         order: parsed.data.order || (await nextOrder("education")),
-      },
-      select: { id: true },
-    });
+      })
+      .returning({ id: education.id });
+    if (!item) throw new Error("Item was not created");
     revalidateAbout();
     return actionSuccess(item, "Education item created.");
   } catch (error) {
@@ -182,9 +208,9 @@ export async function actionUpdateEducation(id: string, input: EducationInput) {
   const parsed = educationSchema.safeParse(input);
   if (!parsed.success) return actionError("Please fix the highlighted fields.");
   try {
-    await db.education.update({
-      where: { id },
-      data: {
+    const updated = await db
+      .update(education)
+      .set({
         ...parsed.data,
         degree: parsed.data.degree || null,
         field: parsed.data.field || null,
@@ -193,8 +219,11 @@ export async function actionUpdateEducation(id: string, input: EducationInput) {
         endYear: parsed.data.endYear || null,
         descriptionEn: parsed.data.descriptionEn || null,
         descriptionId: parsed.data.descriptionId || null,
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .where(eq(education.id, id))
+      .returning({ id: education.id });
+    if (updated.length === 0) throw new Error("Item not found");
     revalidateAbout();
     return actionSuccess({ id }, "Education item updated.");
   } catch (error) {
@@ -215,15 +244,16 @@ export async function actionCreateSkillCategory(input: SkillCategoryInput) {
   const parsed = skillCategorySchema.safeParse(input);
   if (!parsed.success) return actionError("Please fix the highlighted fields.");
   try {
-    const item = await db.skillCategory.create({
-      data: {
+    const [item] = await db
+      .insert(skillCategory)
+      .values({
         ...parsed.data,
         descriptionEn: parsed.data.descriptionEn || null,
         descriptionId: parsed.data.descriptionId || null,
         order: parsed.data.order || (await nextOrder("skillCategory")),
-      },
-      select: { id: true },
-    });
+      })
+      .returning({ id: skillCategory.id });
+    if (!item) throw new Error("Item was not created");
     revalidateAbout();
     return actionSuccess(item, "Skill category created.");
   } catch (error) {
@@ -240,14 +270,17 @@ export async function actionUpdateSkillCategory(
   const parsed = skillCategorySchema.safeParse(input);
   if (!parsed.success) return actionError("Please fix the highlighted fields.");
   try {
-    await db.skillCategory.update({
-      where: { id },
-      data: {
+    const updated = await db
+      .update(skillCategory)
+      .set({
         ...parsed.data,
         descriptionEn: parsed.data.descriptionEn || null,
         descriptionId: parsed.data.descriptionId || null,
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .where(eq(skillCategory.id, id))
+      .returning({ id: skillCategory.id });
+    if (updated.length === 0) throw new Error("Item not found");
     revalidateAbout();
     return actionSuccess({ id }, "Skill category updated.");
   } catch (error) {
@@ -268,17 +301,18 @@ export async function actionCreateSkill(input: SkillInput) {
   const parsed = skillSchema.safeParse(input);
   if (!parsed.success) return actionError("Please fix the highlighted fields.");
   try {
-    const item = await db.skill.create({
-      data: {
+    const [item] = await db
+      .insert(skill)
+      .values({
         ...parsed.data,
         level: parsed.data.level || null,
         icon: parsed.data.icon || null,
         order:
           parsed.data.order ||
           (await nextOrder("skill", parsed.data.categoryId)),
-      },
-      select: { id: true },
-    });
+      })
+      .returning({ id: skill.id });
+    if (!item) throw new Error("Item was not created");
     revalidateAbout();
     return actionSuccess(item, "Skill created.");
   } catch (error) {
@@ -292,14 +326,17 @@ export async function actionUpdateSkill(id: string, input: SkillInput) {
   const parsed = skillSchema.safeParse(input);
   if (!parsed.success) return actionError("Please fix the highlighted fields.");
   try {
-    await db.skill.update({
-      where: { id },
-      data: {
+    const updated = await db
+      .update(skill)
+      .set({
         ...parsed.data,
         level: parsed.data.level || null,
         icon: parsed.data.icon || null,
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .where(eq(skill.id, id))
+      .returning({ id: skill.id });
+    if (updated.length === 0) throw new Error("Item not found");
     revalidateAbout();
     return actionSuccess({ id }, "Skill updated.");
   } catch (error) {

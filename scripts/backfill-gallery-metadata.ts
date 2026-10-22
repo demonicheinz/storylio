@@ -1,4 +1,6 @@
-import { db } from "@/lib/db";
+import { asc, eq, isNull, or } from "drizzle-orm";
+import { closeDb, db } from "@/lib/db";
+import { galleryItem } from "@/lib/db/schema";
 import {
   assertBackfillEnvironment,
   buildImageUpdate,
@@ -12,22 +14,20 @@ async function main() {
   assertBackfillEnvironment();
   const options = parseBackfillOptions(process.argv.slice(2));
   const [records, media] = await Promise.all([
-    db.galleryItem.findMany({
+    db.query.galleryItem.findMany({
       where: options.force
         ? undefined
-        : {
-            OR: [
-              { width: null },
-              { height: null },
-              { aspectRatio: null },
-              { blurDataUrl: null },
-            ],
-          },
-      orderBy: { createdAt: "asc" },
-      take: options.limit,
+        : or(
+            isNull(galleryItem.width),
+            isNull(galleryItem.height),
+            isNull(galleryItem.aspectRatio),
+            isNull(galleryItem.blurDataUrl),
+          ),
+      orderBy: [asc(galleryItem.createdAt)],
+      limit: options.limit,
     }),
-    db.media.findMany({
-      select: {
+    db.query.media.findMany({
+      columns: {
         url: true,
         publicId: true,
         width: true,
@@ -82,7 +82,10 @@ async function main() {
         continue;
       }
       if (!options.dryRun)
-        await db.galleryItem.update({ where: { id: record.id }, data: update });
+        await db
+          .update(galleryItem)
+          .set(update)
+          .where(eq(galleryItem.id, record.id));
       summary.updated++;
       console.log(
         `${label} ${options.dryRun ? "would update" : "updated"}: ${Object.keys(update).join(", ")}`,
@@ -102,4 +105,4 @@ main()
     console.error(error instanceof Error ? error.message : error);
     process.exitCode = 1;
   })
-  .finally(() => db.$disconnect());
+  .finally(() => closeDb());

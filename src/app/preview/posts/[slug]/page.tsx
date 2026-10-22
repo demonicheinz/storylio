@@ -1,4 +1,5 @@
 import { ArrowLeftIcon, EyeSlashIcon } from "@phosphor-icons/react/dist/ssr";
+import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -7,9 +8,10 @@ import { ArticleProgress, ArticleToc } from "@/components/public/sections/blog";
 import { BlogCover } from "@/components/public/sections/blog/blog-cover";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PostStatus } from "@/generated/prisma";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { PostStatus } from "@/lib/db/enums";
+import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
 import { renderMDX } from "@/lib/mdx";
 import { calculateReadingTime, formatDate, slugify } from "@/lib/utils";
 
@@ -36,29 +38,36 @@ async function requirePreviewSession() {
 }
 
 async function getPreviewPost(slug: string) {
-  return db.post.findFirst({
-    where: { slug },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      excerpt: true,
-      content: true,
-      coverImage: true,
-      publishedAt: true,
-      createdAt: true,
-      status: true,
-      tags: {
-        select: {
-          id: true,
-          name: true,
-        },
-        orderBy: {
-          name: "asc",
+  return db.query.post
+    .findFirst({
+      where: (table) => eq(table.slug, slug),
+      columns: {
+        id: true,
+        title: true,
+        slug: true,
+        excerpt: true,
+        content: true,
+        coverImage: true,
+        publishedAt: true,
+        createdAt: true,
+        status: true,
+      },
+      with: {
+        tags: {
+          columns: {},
+          with: {
+            tag: {
+              columns: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: orderPostTagsByName,
         },
       },
-    },
-  });
+    })
+    .then((row) => (row ? flattenPostTags(row) : null));
 }
 
 function getTocItems(content: string) {

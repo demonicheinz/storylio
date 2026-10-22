@@ -1,3 +1,4 @@
+import { asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 import { PublicBackground } from "@/components/common";
@@ -48,11 +49,9 @@ async function getGalleryData() {
   "use cache";
   cacheLife("hours");
 
-  const items = await db.galleryItem.findMany({
-    where: {
-      isVisible: true,
-    },
-    select: {
+  const items = await db.query.galleryItem.findMany({
+    where: (table) => eq(table.isVisible, true),
+    columns: {
       id: true,
       imageUrl: true,
       caption: true,
@@ -67,14 +66,7 @@ async function getGalleryData() {
       order: true,
       createdAt: true,
     },
-    orderBy: [
-      {
-        order: "asc",
-      },
-      {
-        createdAt: "desc",
-      },
-    ],
+    orderBy: (table) => [asc(table.order), desc(table.createdAt)],
   });
 
   const photos: GalleryPhoto[] = items.map((item, index) => {

@@ -1,0 +1,11 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "isolated": true,
+    "launchOptions": {
+      "channel": "chromium",
+      "headless": true
+    }
+  },
+  "outputDir": ".playwright-cli"
+}

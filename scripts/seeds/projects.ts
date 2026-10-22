@@ -1,8 +1,10 @@
-import type { PrismaClient } from "@/generated/prisma";
-import { ProjectStatus } from "@/generated/prisma";
+import { eq } from "drizzle-orm";
+import type { Database } from "@/lib/db";
+import { ProjectStatus } from "@/lib/db/enums";
+import { projectScreenshot, project as projectTable } from "@/lib/db/schema";
 
 type SeedProjectsOptions = {
-  db: PrismaClient;
+  db: Database;
   ownerId: string;
 };
 
@@ -153,34 +155,29 @@ const projects = [
 export async function seedProjects({ db, ownerId }: SeedProjectsOptions) {
   for (const project of projects) {
     const { screenshots, ...projectData } = project;
-    const seededProject = await db.project.upsert({
-      where: {
-        slug: project.slug,
-      },
-      update: {
-        ...projectData,
-        authorId: ownerId,
-      },
-      create: {
-        ...projectData,
-        authorId: ownerId,
-      },
-      select: { id: true },
-    });
+    await db.transaction(async (tx) => {
+      const values = { ...projectData, authorId: ownerId };
+      const [seededProject] = await tx
+        .insert(projectTable)
+        .values(values)
+        .onConflictDoUpdate({ target: projectTable.slug, set: values })
+        .returning({ id: projectTable.id });
 
-    const screenshotCount = await db.projectScreenshot.count({
-      where: { projectId: seededProject.id },
-    });
-    if (screenshotCount === 0 && screenshots.length > 0) {
-      await db.projectScreenshot.createMany({
-        data: screenshots.map((imageUrl, index) => ({
-          projectId: seededProject.id,
-          imageUrl,
-          altText: `${project.title} screenshot ${index + 1}`,
-          order: index,
-        })),
+      const existingScreenshot = await tx.query.projectScreenshot.findFirst({
+        where: eq(projectScreenshot.projectId, seededProject.id),
+        columns: { id: true },
       });
-    }
+      if (!existingScreenshot && screenshots.length > 0) {
+        await tx.insert(projectScreenshot).values(
+          screenshots.map((imageUrl, index) => ({
+            projectId: seededProject.id,
+            imageUrl,
+            altText: `${project.title} screenshot ${index + 1}`,
+            order: index,
+          })),
+        );
+      }
+    });
   }
 
   console.log(`Seeded ${projects.length} sample projects`);

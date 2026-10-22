@@ -1,8 +1,9 @@
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import { db } from "@/lib/db";
+import * as schema from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email";
 
 const productionAuthUrl =
@@ -29,10 +30,10 @@ export const auth = betterAuth({
     protocol: process.env.NODE_ENV === "development" ? "auto" : "https",
   },
   secret: process.env.BETTER_AUTH_SECRET,
-  database: prismaAdapter(db, { provider: "postgresql" }),
+  database: drizzleAdapter(db, { provider: "pg", schema }),
 
   // Blokir semua pembuatan user baru via auth flow.
-  // Seed via Prisma langsung tidak melewati hook ini, jadi owner tetap bisa di-seed.
+  // Seed database langsung tidak melewati hook ini, jadi owner tetap bisa di-seed.
   databaseHooks: {
     user: {
       create: {

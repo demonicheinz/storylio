@@ -1,3 +1,4 @@
+import { and, arrayContains, asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife } from "next/cache";
 import Link from "next/link";
@@ -11,8 +12,8 @@ import {
   ProjectsGrid,
   ProjectsHero,
 } from "@/components/public/sections/projects";
-import { ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { ProjectStatus } from "@/lib/db/enums";
 
 type ProjectsPageProps = {
   searchParams: Promise<{
@@ -66,51 +67,44 @@ async function getProjectsData(selectedTech?: string) {
   cacheLife("minutes");
 
   const [projects, allPublishedProjects] = await Promise.all([
-    db.project.findMany({
-      where: {
-        status: ProjectStatus.PUBLISHED,
-        ...(selectedTech
-          ? {
-              techStack: {
-                has: selectedTech,
-              },
-            }
-          : {}),
-      },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        description: true,
-        contribution: true,
-        coverImage: true,
-        thumbnailImageUrl: true,
-        isFeatured: true,
-        isClosedSource: true,
-        techStack: true,
-        liveUrl: true,
-        githubUrl: true,
-        order: true,
-      },
-      orderBy: [
-        {
-          order: "asc",
+    db.query.project
+      .findMany({
+        where: (table) =>
+          and(
+            eq(table.status, ProjectStatus.PUBLISHED),
+            selectedTech
+              ? arrayContains(table.techStack, [selectedTech])
+              : undefined,
+          ),
+        columns: {
+          id: true,
+          title: true,
+          slug: true,
+          description: true,
+          contribution: true,
+          coverImage: true,
+          thumbnailImageUrl: true,
+          isFeatured: true,
+          isClosedSource: true,
+          techStack: true,
+          liveUrl: true,
+          githubUrl: true,
+          order: true,
         },
-        {
-          createdAt: "desc",
-        },
-      ],
-    }),
-    db.project.findMany({
-      where: {
-        status: ProjectStatus.PUBLISHED,
-      },
-      select: {
-        id: true,
-        techStack: true,
-      },
-      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-    }),
+        orderBy: (table) => [asc(table.order), desc(table.createdAt)],
+      })
+      .then((rows) =>
+        rows.map((row) => ({ ...row, techStack: row.techStack ?? [] })),
+      ),
+    db.query.project
+      .findMany({
+        where: (table) => eq(table.status, ProjectStatus.PUBLISHED),
+        columns: { id: true, techStack: true },
+        orderBy: (table) => [asc(table.order), desc(table.createdAt)],
+      })
+      .then((rows) =>
+        rows.map((row) => ({ ...row, techStack: row.techStack ?? [] })),
+      ),
   ]);
 
   const technologies = Array.from(

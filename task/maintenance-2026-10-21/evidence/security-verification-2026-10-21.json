@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-21",
+  "timezone": "Asia/Bangkok",
+  "before": {
+    "packages": 25,
+    "advisories": 85
+  },
+  "after": {
+    "packages": 1,
+    "advisories": 1,
+    "critical": 0,
+    "high": 1,
+    "packagesDetail": {
+      "braces": [
+        {
+          "id": 1240992,
+          "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+          "title": "braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
+          "severity": "high",
+          "vulnerable_versions": "<=3.0.3",
+          "cwe": ["CWE-674"],
+          "cvss": {
+            "score": 7.5,
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+          }
+        }
+      ]
+    }
+  },
+  "tests": {
+    "vitest": {
+      "version": "4.1.12",
+      "files": 2,
+      "passed": 8,
+      "failed": 0
+    },
+    "playwrightCLI": {
+      "version": "0.1.22",
+      "checksPassed": 6,
+      "failed": 0,
+      "passkeyChallenge": "browser fixture; real WebAuthn ceremony not tested"
+    }
+  },
+  "build": "passed, Next.js 16.4.2, 35/35 static pages",
+  "typecheck": "passed",
+  "lint": "passed, 236 files",
+  "frozenInstall": "passed, no changes",
+  "ci": "workflow updated; remote GitHub Actions not run",
+  "databaseMigrations": "not run",
+  "deployment": "not performed"
+}

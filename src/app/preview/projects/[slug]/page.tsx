@@ -4,6 +4,7 @@ import {
   EyeSlashIcon,
   GithubLogoIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { asc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -15,9 +16,9 @@ import {
 } from "@/components/public/sections/projects";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ProjectStatus } from "@/generated/prisma";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
+import { ProjectStatus } from "@/lib/db/enums";
 import { renderMDX } from "@/lib/mdx";
 import { getProjectContribution } from "@/lib/project-contribution";
 import { calculateReadingTime, formatDate, slugify } from "@/lib/utils";
@@ -45,38 +46,42 @@ async function requirePreviewSession() {
 }
 
 async function getPreviewProject(slug: string) {
-  return db.project.findFirst({
-    where: { slug },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      description: true,
-      contribution: true,
-      content: true,
-      coverImage: true,
-      techStack: true,
-      liveUrl: true,
-      githubUrl: true,
-      isClosedSource: true,
-      status: true,
-      updatedAt: true,
-      structuredScreenshots: {
-        orderBy: { order: "asc" },
-        select: {
-          id: true,
-          imageUrl: true,
-          caption: true,
-          altText: true,
-          width: true,
-          height: true,
-          aspectRatio: true,
-          blurDataUrl: true,
-          order: true,
+  return db.query.project
+    .findFirst({
+      where: (table) => eq(table.slug, slug),
+      columns: {
+        id: true,
+        title: true,
+        slug: true,
+        description: true,
+        contribution: true,
+        content: true,
+        coverImage: true,
+        techStack: true,
+        liveUrl: true,
+        githubUrl: true,
+        isClosedSource: true,
+        status: true,
+        updatedAt: true,
+      },
+      with: {
+        structuredScreenshots: {
+          orderBy: (table) => [asc(table.order)],
+          columns: {
+            id: true,
+            imageUrl: true,
+            caption: true,
+            altText: true,
+            width: true,
+            height: true,
+            aspectRatio: true,
+            blurDataUrl: true,
+            order: true,
+          },
         },
       },
-    },
-  });
+    })
+    .then((row) => (row ? { ...row, techStack: row.techStack ?? [] } : null));
 }
 
 function getProjectTocItems(content: string) {

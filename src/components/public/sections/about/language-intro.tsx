@@ -39,7 +39,12 @@ export function LanguageIntro({
               )}
               asChild
             >
-              <Link href={`/about?lang=${item.value}`} scroll={false}>
+              <Link
+                href={`/about?lang=${item.value}`}
+                prefetch={true}
+                scroll={false}
+                aria-current={isActive ? "page" : undefined}
+              >
                 {item.label}
               </Link>
             </Button>

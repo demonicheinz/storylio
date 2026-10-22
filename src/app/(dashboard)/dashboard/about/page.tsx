@@ -5,6 +5,7 @@ import {
   FolderOpenIcon,
   ImageIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { asc } from "drizzle-orm";
 import Link from "next/link";
 import { connection } from "next/server";
 import type { ComponentType } from "react";
@@ -58,16 +59,26 @@ export default async function DashboardAboutPage() {
 
   const [aboutContent, experiences, education, categories] = await Promise.all([
     getAboutContent(),
-    db.workExperience.findMany({
-      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    db.query.workExperience
+      .findMany({
+        orderBy: (table) => [asc(table.order), asc(table.createdAt)],
+      })
+      .then((rows) =>
+        rows.map((row) => ({
+          ...row,
+          highlightsEn: row.highlightsEn ?? [],
+          highlightsId: row.highlightsId ?? [],
+        })),
+      ),
+    db.query.education.findMany({
+      orderBy: (table) => [asc(table.order), asc(table.createdAt)],
     }),
-    db.education.findMany({
-      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-    }),
-    db.skillCategory.findMany({
-      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-      include: {
-        skills: { orderBy: [{ order: "asc" }, { createdAt: "asc" }] },
+    db.query.skillCategory.findMany({
+      orderBy: (table) => [asc(table.order), asc(table.createdAt)],
+      with: {
+        skills: {
+          orderBy: (table) => [asc(table.order), asc(table.createdAt)],
+        },
       },
     }),
   ]);

@@ -1,7 +1,13 @@
 import { createHash } from "node:crypto";
+import { and, eq, isNull, lte, or, sql } from "drizzle-orm";
 import { type NextRequest, NextResponse } from "next/server";
-import { PostStatus, ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { PostStatus, ProjectStatus } from "@/lib/db/enums";
+import {
+  post as postTable,
+  project as projectTable,
+  viewEvent,
+} from "@/lib/db/schema";
 
 type ViewRouteContext = {
   params: Promise<{
@@ -56,13 +62,16 @@ export async function POST(request: NextRequest, { params }: ViewRouteContext) {
   }
 
   if (type === "post") {
-    const post = await db.post.findFirst({
-      where: {
-        slug,
-        status: PostStatus.PUBLISHED,
-        OR: [{ publishedAt: null }, { publishedAt: { lte: new Date() } }],
-      },
-      select: {
+    const post = await db.query.post.findFirst({
+      where: and(
+        eq(postTable.slug, slug),
+        eq(postTable.status, PostStatus.PUBLISHED),
+        or(
+          isNull(postTable.publishedAt),
+          lte(postTable.publishedAt, new Date()),
+        ),
+      ),
+      columns: {
         id: true,
         viewCount: true,
       },
@@ -77,26 +86,26 @@ export async function POST(request: NextRequest, { params }: ViewRouteContext) {
       return viewResponse(request, cookieName, post.viewCount, true);
     }
 
-    const [updatedPost] = await db.$transaction([
-      db.post.update({
-        where: { id: post.id },
-        data: { viewCount: { increment: 1 } },
-        select: { viewCount: true },
-      }),
-      db.viewEvent.create({
-        data: { type, slug },
-      }),
-    ]);
+    const updatedPost = await db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(postTable)
+        .set({ viewCount: sql`${postTable.viewCount} + 1` })
+        .where(eq(postTable.id, post.id))
+        .returning({ viewCount: postTable.viewCount });
+      if (!updated) throw new Error("Post not found");
+      await tx.insert(viewEvent).values({ type, slug });
+      return updated;
+    });
 
     return viewResponse(request, cookieName, updatedPost.viewCount, false);
   }
 
-  const project = await db.project.findFirst({
-    where: {
-      slug,
-      status: ProjectStatus.PUBLISHED,
-    },
-    select: {
+  const project = await db.query.project.findFirst({
+    where: and(
+      eq(projectTable.slug, slug),
+      eq(projectTable.status, ProjectStatus.PUBLISHED),
+    ),
+    columns: {
       id: true,
       viewCount: true,
     },
@@ -111,16 +120,16 @@ export async function POST(request: NextRequest, { params }: ViewRouteContext) {
     return viewResponse(request, cookieName, project.viewCount, true);
   }
 
-  const [updatedProject] = await db.$transaction([
-    db.project.update({
-      where: { id: project.id },
-      data: { viewCount: { increment: 1 } },
-      select: { viewCount: true },
-    }),
-    db.viewEvent.create({
-      data: { type, slug },
-    }),
-  ]);
+  const updatedProject = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(projectTable)
+      .set({ viewCount: sql`${projectTable.viewCount} + 1` })
+      .where(eq(projectTable.id, project.id))
+      .returning({ viewCount: projectTable.viewCount });
+    if (!updated) throw new Error("Project not found");
+    await tx.insert(viewEvent).values({ type, slug });
+    return updated;
+  });
 
   return viewResponse(request, cookieName, updatedProject.viewCount, false);
 }

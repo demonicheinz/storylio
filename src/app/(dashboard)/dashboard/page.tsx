@@ -9,6 +9,7 @@ import {
   PencilSimpleIcon,
   PlusIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { and, desc, eq, isNull, sum } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -25,8 +26,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
-import { ProjectStatus } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { ProjectStatus } from "@/lib/db/enums";
+import { galleryItem, post, project, testimonial } from "@/lib/db/schema";
 import { cn, formatDate } from "@/lib/utils";
 
 type StatCardProps = {
@@ -85,31 +87,35 @@ async function getOverviewData() {
     recentPosts,
     recentProjects,
   ] = await Promise.all([
-    db.post.count(),
-    db.post.count({ where: { status: "PUBLISHED" } }),
-    db.post.count({ where: { status: "DRAFT" } }),
-    db.post.count({ where: { coverImage: null } }),
-    db.post.aggregate({ _sum: { viewCount: true } }),
-    db.project.count(),
-    db.project.count({ where: { status: ProjectStatus.PUBLISHED } }),
-    db.project.count({ where: { status: ProjectStatus.DRAFT } }),
-    db.project.count({ where: { isFeatured: true } }),
-    db.project.count({
-      where: {
-        coverImage: null,
-        thumbnailImageUrl: null,
-      },
-    }),
-    db.project.aggregate({ _sum: { viewCount: true } }),
-    db.galleryItem.count(),
-    db.galleryItem.count({ where: { isVisible: true } }),
-    db.galleryItem.count({ where: { isVisible: false } }),
-    db.testimonial.count(),
-    db.testimonial.count({ where: { isVisible: true } }),
-    db.post.findMany({
-      take: 5,
-      orderBy: { updatedAt: "desc" },
-      select: {
+    db.$count(post),
+    db.$count(post, eq(post.status, "PUBLISHED")),
+    db.$count(post, eq(post.status, "DRAFT")),
+    db.$count(post, isNull(post.coverImage)),
+    db
+      .select({ viewCount: sum(post.viewCount).mapWith(Number) })
+      .from(post)
+      .then(([row]) => row?.viewCount ?? 0),
+    db.$count(project),
+    db.$count(project, eq(project.status, ProjectStatus.PUBLISHED)),
+    db.$count(project, eq(project.status, ProjectStatus.DRAFT)),
+    db.$count(project, eq(project.isFeatured, true)),
+    db.$count(
+      project,
+      and(isNull(project.coverImage), isNull(project.thumbnailImageUrl)),
+    ),
+    db
+      .select({ viewCount: sum(project.viewCount).mapWith(Number) })
+      .from(project)
+      .then(([row]) => row?.viewCount ?? 0),
+    db.$count(galleryItem),
+    db.$count(galleryItem, eq(galleryItem.isVisible, true)),
+    db.$count(galleryItem, eq(galleryItem.isVisible, false)),
+    db.$count(testimonial),
+    db.$count(testimonial, eq(testimonial.isVisible, true)),
+    db.query.post.findMany({
+      limit: 5,
+      orderBy: (table) => [desc(table.updatedAt)],
+      columns: {
         id: true,
         title: true,
         slug: true,
@@ -119,10 +125,10 @@ async function getOverviewData() {
         updatedAt: true,
       },
     }),
-    db.project.findMany({
-      take: 5,
-      orderBy: { updatedAt: "desc" },
-      select: {
+    db.query.project.findMany({
+      limit: 5,
+      orderBy: (table) => [desc(table.updatedAt)],
+      columns: {
         id: true,
         title: true,
         slug: true,
@@ -179,8 +185,7 @@ async function getOverviewData() {
         total: totalGalleryItems,
         visible: visibleGalleryItems,
       },
-      views:
-        (postViews._sum.viewCount ?? 0) + (projectViews._sum.viewCount ?? 0),
+      views: postViews + projectViews,
       testimonials: {
         total: totalTestimonials,
         visible: visibleTestimonials,
