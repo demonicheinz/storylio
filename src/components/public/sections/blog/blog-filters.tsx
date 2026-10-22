@@ -1,10 +1,8 @@
 "use client";
 
 import { TagIcon } from "@phosphor-icons/react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { usePathname, useSearchParams } from "next/navigation";
+import { FilterLink } from "@/components/public/filter-link";
 
 type BlogFiltersProps = {
   tags: string[];
@@ -13,11 +11,9 @@ type BlogFiltersProps = {
 
 export function BlogFilters({ tags, selectedTag }: BlogFiltersProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
 
-  const updateFilter = (tag?: string) => {
+  const getFilterHref = (tag?: string) => {
     const params = new URLSearchParams(searchParams.toString());
 
     if (tag) {
@@ -28,11 +24,7 @@ export function BlogFilters({ tags, selectedTag }: BlogFiltersProps) {
 
     const query = params.toString();
 
-    startTransition(() => {
-      router.push(query ? `${pathname}?${query}` : pathname, {
-        scroll: false,
-      });
-    });
+    return query ? `${pathname}?${query}` : pathname;
   };
 
   return (
@@ -42,35 +34,17 @@ export function BlogFilters({ tags, selectedTag }: BlogFiltersProps) {
         Filter by topic
       </div>
 
-      <div
-        className={cn(
-          "[&::-webkit-scrollbar]:hidden flex gap-2 pb-1 overflow-x-auto scrollbar-none",
-          isPending && "opacity-70",
-        )}
-      >
-        <Button
-          type="button"
-          size="sm"
-          variant={!selectedTag ? "default" : "outline"}
-          className="rounded-full shrink-0"
-          onClick={() => updateFilter()}
-        >
+      <div className="[&::-webkit-scrollbar]:hidden flex gap-2 pb-1 overflow-x-auto scrollbar-none">
+        <FilterLink href={getFilterHref()} active={!selectedTag}>
           All
-        </Button>
+        </FilterLink>
         {tags.map((tag) => {
           const isActive = selectedTag === tag;
 
           return (
-            <Button
-              key={tag}
-              type="button"
-              size="sm"
-              variant={isActive ? "default" : "outline"}
-              className="rounded-full shrink-0"
-              onClick={() => updateFilter(tag)}
-            >
+            <FilterLink key={tag} href={getFilterHref(tag)} active={isActive}>
               {tag}
-            </Button>
+            </FilterLink>
           );
         })}
       </div>

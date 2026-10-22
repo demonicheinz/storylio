@@ -314,6 +314,32 @@ The second round must reuse each visited route without showing the route skeleto
 or issuing a blocking navigation request. An initial visit may show the skeleton
 if the prefetch has not completed. Run it against public test content.
 
+For About language switching, open a separate session against the same production
+server and run:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-about-language open http://localhost:3000/about --config=playwright-cli.config.json
+bun run test:browser:about-language
+bunx --no-install playwright-cli -s=storylio-about-language close
+```
+
+The language check waits for the Indonesian prefetch, adds 800 ms to RSC requests,
+and verifies English/Indonesian content, active links, query parameters and scroll
+position. Prefetched language switches must not issue a navigation request.
+
+To check stack/topic filters, open a production browser session and run:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-filters open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:filters
+bunx --no-install playwright-cli -s=storylio-filters close
+```
+
+This check needs published projects and posts with at least two stacks/topics.
+It verifies that filter variants are not prefetched on page load, hover/focus
+warms the selected destination without navigating, clicking reuses that prefetch,
+and resetting to All preserves unrelated query parameters.
+
 ## Integrations
 
 ### Cloudinary
