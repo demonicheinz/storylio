@@ -9,6 +9,12 @@
   "files.trimFinalNewlines": true,
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
+  "[sql]": {
+    "editor.formatOnSave": false,
+    "files.insertFinalNewline": false,
+    "files.trimFinalNewlines": false,
+    "files.trimTrailingWhitespace": false
+  },
   "[javascript]": {
     "editor.defaultFormatter": "biomejs.biome"
   },

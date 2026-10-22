@@ -10,3 +10,8 @@ trim_trailing_whitespace = true
 
 [*.md]
 trim_trailing_whitespace = false
+
+# Drizzle hashes generated SQL bytes; preserve migration file endings.
+[drizzle/*.sql]
+insert_final_newline = false
+trim_trailing_whitespace = false
