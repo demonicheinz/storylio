@@ -9,6 +9,15 @@
   "files.trimFinalNewlines": true,
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
+  "[markdown]": {
+    "editor.defaultFormatter": null,
+    "editor.formatOnSave": false,
+    "editor.formatOnPaste": false,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.biome": "never",
+      "source.organizeImports.biome": "never"
+    }
+  },
   "[sql]": {
     "editor.formatOnSave": false,
     "files.insertFinalNewline": false,
