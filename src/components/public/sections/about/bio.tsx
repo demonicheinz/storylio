@@ -78,16 +78,18 @@ export function BioSection({
 
             return (
               <Button
+                role="link"
                 key={item.name}
                 variant="outline"
                 size="sm"
                 className="bg-surface/70 backdrop-blur border-border/60 rounded-full"
-                asChild
+                render={
+                  <Link href={item.link} target="_blank" rel="noreferrer" />
+                }
+                nativeButton={false}
               >
-                <Link href={item.link} target="_blank" rel="noreferrer">
-                  <Icon data-icon="inline-start" />
-                  <span>{item.name}</span>
-                </Link>
+                <Icon data-icon="inline-start" />
+                <span>{item.name}</span>
               </Button>
             );
           })}

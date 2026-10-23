@@ -201,14 +201,14 @@ export default async function ProjectDetailPage({
 
       <article className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 pb-24 w-full max-w-7xl">
         <Button
-          asChild
+          role="link"
+          render={<Link href="/projects" />}
+          nativeButton={false}
           variant="outline"
           className="bg-surface/70 backdrop-blur mb-8 border-border/60 rounded-full w-fit"
         >
-          <Link href="/projects">
-            <ArrowLeftIcon data-icon="inline-start" />
-            Back to projects
-          </Link>
+          <ArrowLeftIcon data-icon="inline-start" />
+          Back to projects
         </Button>
 
         <div className="lg:items-start gap-6 md:gap-8 grid lg:grid-cols-[1.08fr_0.92fr]">
@@ -285,28 +285,39 @@ export default async function ProjectDetailPage({
 
             <div className="flex flex-wrap gap-3 mt-7">
               {project.liveUrl && (
-                <Button asChild className="rounded-full">
-                  <Link href={project.liveUrl} target="_blank" rel="noreferrer">
-                    Live site
-                    <ArrowUpRightIcon data-icon="inline-end" />
-                  </Link>
+                <Button
+                  role="link"
+                  render={
+                    <Link
+                      href={project.liveUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    />
+                  }
+                  nativeButton={false}
+                  className="rounded-full"
+                >
+                  Live site
+                  <ArrowUpRightIcon data-icon="inline-end" />
                 </Button>
               )}
 
               {!project.isClosedSource && project.githubUrl && (
                 <Button
-                  asChild
+                  role="link"
+                  render={
+                    <Link
+                      href={project.githubUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    />
+                  }
+                  nativeButton={false}
                   variant="outline"
                   className="bg-surface/70 border-border/60 rounded-full"
                 >
-                  <Link
-                    href={project.githubUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    GitHub
-                    <GithubLogoIcon data-icon="inline-end" />
-                  </Link>
+                  GitHub
+                  <GithubLogoIcon data-icon="inline-end" />
                 </Button>
               )}
             </div>

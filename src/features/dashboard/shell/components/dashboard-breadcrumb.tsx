@@ -132,8 +132,8 @@ export function DashboardBreadcrumb() {
           {items.length === 1 && items[0]?.href === "/dashboard" ? (
             <BreadcrumbPage>Dashboard</BreadcrumbPage>
           ) : (
-            <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
+            <BreadcrumbLink render={<Link href="/dashboard" />}>
+              Dashboard
             </BreadcrumbLink>
           )}
         </BreadcrumbItem>
@@ -158,8 +158,8 @@ export function DashboardBreadcrumb() {
                     {item.label}
                   </BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink asChild>
-                    <Link href={item.href}>{item.label}</Link>
+                  <BreadcrumbLink render={<Link href={item.href} />}>
+                    {item.label}
                   </BreadcrumbLink>
                 )}
               </BreadcrumbItem>

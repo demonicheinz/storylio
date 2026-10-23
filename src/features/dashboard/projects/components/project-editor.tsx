@@ -14,7 +14,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import {
   actionPublishProject,
   actionSaveProjectDraft,
@@ -389,7 +389,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
           result.message ??
           (nextStatus === "published" ? "Project published." : "Draft saved.");
 
-        toast.success(message);
+        toast.add({ title: message, type: "success" });
 
         if (result.data) {
           setValue("status", result.data.status);
@@ -406,7 +406,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
         }
       } else {
         applyFieldErrors(result.fieldErrors);
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
 
       setPendingAction(null);
@@ -414,7 +414,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
 
   const handlePreview = () => {
     if (!slug) {
-      toast.error("Add a slug before previewing.");
+      toast.add({ title: "Add a slug before previewing.", type: "error" });
       return;
     }
 
@@ -425,11 +425,15 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
     <form className="flex flex-col gap-6">
       <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
         <div className="flex flex-col gap-2">
-          <Button asChild variant="ghost" className="w-fit">
-            <Link href="/dashboard/projects">
-              <ArrowLeftIcon data-icon="inline-start" />
-              Projects
-            </Link>
+          <Button
+            role="link"
+            render={<Link href="/dashboard/projects" />}
+            nativeButton={false}
+            variant="ghost"
+            className="w-fit"
+          >
+            <ArrowLeftIcon data-icon="inline-start" />
+            Projects
           </Button>
           <div className="min-w-0">
             <h1 className="font-heading font-bold text-3xl wrap-break-word">
@@ -650,16 +654,19 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                   name="status"
                   render={({ field }) => (
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild disabled={isPending}>
-                        <Button
-                          id="status"
-                          type="button"
-                          variant="outline"
-                          className="justify-between bg-input/50 px-3 rounded-3xl w-full h-9 font-normal"
-                        >
-                          <ProjectStatusBadge status={field.value} compact />
-                          <CaretDownIcon data-icon="inline-end" />
-                        </Button>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            id="status"
+                            type="button"
+                            variant="outline"
+                            className="justify-between bg-input/50 px-3 rounded-3xl w-full h-9 font-normal"
+                          />
+                        }
+                        disabled={isPending}
+                      >
+                        <ProjectStatusBadge status={field.value} compact />
+                        <CaretDownIcon data-icon="inline-end" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
                         <DropdownMenuRadioGroup

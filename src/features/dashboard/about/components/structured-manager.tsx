@@ -11,7 +11,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +34,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -44,6 +44,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import {
   actionCreateEducation,
   actionCreateSkill,
@@ -254,10 +255,10 @@ function EditDialog({
                 ? await actionUpdateSkill(item.id, data as never)
                 : await actionCreateSkill(data as never);
       if (result.success) {
-        toast.success(result.message);
+        toast.add({ title: result.message, type: "success" });
         setOpen(false);
         router.refresh();
-      } else toast.error(result.error);
+      } else toast.add({ title: result.error, type: "error" });
     });
   };
 
@@ -422,8 +423,9 @@ function ManagedList({
         next.map((item, order) => ({ id: item.id, order })),
       );
       result.success
-        ? (toast.success(result.message), router.refresh())
-        : toast.error(result.error);
+        ? (toast.add({ title: result.message, type: "success" }),
+          router.refresh())
+        : toast.add({ title: result.error, type: "error" });
     });
   };
   const title = (item: Item) => String(item[titleKey] ?? "Untitled");
@@ -530,41 +532,43 @@ function ManagedList({
                 )}
               </div>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    aria-label={`Open actions for ${title(item)}`}
-                  >
-                    <DotsThreeVerticalIcon />
-                  </Button>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label={`Open actions for ${title(item)}`}
+                    />
+                  }
+                >
+                  <DotsThreeVerticalIcon />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
-                  <DropdownMenuLabel>{configs[kind].title}</DropdownMenuLabel>
-                  <EditDialog
-                    kind={kind}
-                    item={item}
-                    categoryId={(item as SkillItem).categoryId ?? categoryId}
-                    trigger={
-                      <DropdownMenuItem
-                        onSelect={(event) => event.preventDefault()}
-                      >
-                        <PencilSimpleIcon data-icon="inline-start" />
-                        Edit
-                      </DropdownMenuItem>
-                    }
-                  />
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onSelect={(event) => {
-                      event.preventDefault();
-                      setDeleting(item);
-                    }}
-                  >
-                    <TrashIcon data-icon="inline-start" />
-                    Delete
-                  </DropdownMenuItem>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>{configs[kind].title}</DropdownMenuLabel>
+                    <EditDialog
+                      kind={kind}
+                      item={item}
+                      categoryId={(item as SkillItem).categoryId ?? categoryId}
+                      trigger={
+                        <DropdownMenuItem closeOnClick={false}>
+                          <PencilSimpleIcon data-icon="inline-start" />
+                          Edit
+                        </DropdownMenuItem>
+                      }
+                    />
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      closeOnClick={false}
+                      onClick={() => {
+                        setDeleting(item);
+                      }}
+                    >
+                      <TrashIcon data-icon="inline-start" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -591,8 +595,9 @@ function ManagedList({
                 startTransition(async () => {
                   const result = await deleteAction(deleting.id);
                   result.success
-                    ? (toast.success(result.message), router.refresh())
-                    : toast.error(result.error);
+                    ? (toast.add({ title: result.message, type: "success" }),
+                      router.refresh())
+                    : toast.add({ title: result.error, type: "error" });
                   setDeleting(null);
                 })
               }
@@ -641,11 +646,15 @@ export function AboutStructuredManager({
           }
         />
         <ManagedList kind="experience" items={data.experiences} />
-        <Button asChild variant="link" className="px-0 w-fit text-brand-soft">
-          <Link href="/about#work-experience" target="_blank">
-            View on public page
-            <ArrowSquareOutIcon data-icon="inline-end" />
-          </Link>
+        <Button
+          role="link"
+          render={<Link href="/about#work-experience" target="_blank" />}
+          nativeButton={false}
+          variant="link"
+          className="px-0 w-fit text-brand-soft"
+        >
+          View on public page
+          <ArrowSquareOutIcon data-icon="inline-end" />
         </Button>
       </div>
     );
@@ -670,11 +679,15 @@ export function AboutStructuredManager({
           }
         />
         <ManagedList kind="education" items={data.education} />
-        <Button asChild variant="link" className="px-0 w-fit text-brand-soft">
-          <Link href="/about#education-history" target="_blank">
-            View on public page
-            <ArrowSquareOutIcon data-icon="inline-end" />
-          </Link>
+        <Button
+          role="link"
+          render={<Link href="/about#education-history" target="_blank" />}
+          nativeButton={false}
+          variant="link"
+          className="px-0 w-fit text-brand-soft"
+        >
+          View on public page
+          <ArrowSquareOutIcon data-icon="inline-end" />
         </Button>
       </div>
     );
@@ -732,11 +745,15 @@ export function AboutStructuredManager({
         </div>
         <ManagedList kind="skill" items={skillItems} />
       </div>
-      <Button asChild variant="link" className="px-0 w-fit text-brand-soft">
-        <Link href="/about#technical-skills" target="_blank">
-          View on public page
-          <ArrowSquareOutIcon data-icon="inline-end" />
-        </Link>
+      <Button
+        role="link"
+        render={<Link href="/about#technical-skills" target="_blank" />}
+        nativeButton={false}
+        variant="link"
+        className="px-0 w-fit text-brand-soft"
+      >
+        View on public page
+        <ArrowSquareOutIcon data-icon="inline-end" />
       </Button>
     </div>
   );

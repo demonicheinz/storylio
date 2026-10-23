@@ -34,11 +34,14 @@ export default function PublicError({
             <ArrowClockwiseIcon />
             Try again
           </Button>
-          <Button asChild variant="outline">
-            <Link href="/">
-              <HouseIcon />
-              Home
-            </Link>
+          <Button
+            role="link"
+            render={<Link href="/" />}
+            nativeButton={false}
+            variant="outline"
+          >
+            <HouseIcon />
+            Home
           </Button>
         </div>
       </section>

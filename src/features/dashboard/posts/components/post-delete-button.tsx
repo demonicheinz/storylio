@@ -2,9 +2,8 @@
 
 import { TrashIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,18 +16,21 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import { actionDeletePost } from "@/features/dashboard/posts/actions";
 
 type PostDeleteButtonProps = {
   postId: string;
   title: string;
-  trigger?: ReactNode;
+  trigger?: ReactElement;
+  triggerNativeButton?: boolean;
 };
 
 export function PostDeleteButton({
   postId,
   title,
   trigger,
+  triggerNativeButton = true,
 }: PostDeleteButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -39,25 +41,31 @@ export function PostDeleteButton({
       const result = await actionDeletePost(postId);
 
       if (result.success) {
-        toast.success(result.message ?? "Post deleted.");
+        toast.add({
+          title: result.message ?? "Post deleted.",
+          type: "success",
+        });
         setOpen(false);
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   };
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        {trigger ?? (
-          <Button type="button" size="sm" variant="destructive">
-            <TrashIcon data-icon="inline-start" />
-            Delete
-          </Button>
-        )}
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        nativeButton={triggerNativeButton}
+        render={
+          trigger ?? (
+            <Button type="button" size="sm" variant="destructive">
+              <TrashIcon data-icon="inline-start" />
+              Delete
+            </Button>
+          )
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete post?</AlertDialogTitle>

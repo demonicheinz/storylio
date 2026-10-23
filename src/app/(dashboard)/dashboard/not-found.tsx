@@ -25,11 +25,13 @@ export default function DashboardNotFound() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center">
-          <Button asChild>
-            <Link href="/dashboard">
-              <ArrowLeftIcon />
-              Dashboard overview
-            </Link>
+          <Button
+            role="link"
+            render={<Link href="/dashboard" />}
+            nativeButton={false}
+          >
+            <ArrowLeftIcon />
+            Dashboard overview
           </Button>
         </CardContent>
       </Card>
