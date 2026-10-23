@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -313,41 +314,45 @@ function RecentActions({ item }: { item: RecentItem }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
-          aria-label={`Open actions for ${item.title}`}
-        >
-          <DotsThreeVerticalIcon />
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
+            aria-label={`Open actions for ${item.title}`}
+          />
+        }
+      >
+        <DotsThreeVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuLabel>{item.type}</DropdownMenuLabel>
-        {canPreview && (
-          <DropdownMenuItem asChild>
-            <Link href={item.publicHref} target="_blank">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{item.type}</DropdownMenuLabel>
+          {canPreview && (
+            <DropdownMenuItem
+              render={<Link href={item.publicHref} target="_blank" />}
+            >
               <EyeIcon data-icon="inline-start" />
               Preview
-            </Link>
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem asChild>
-          <Link href={item.href}>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem render={<Link href={item.href} />}>
             <PencilSimpleIcon data-icon="inline-start" />
             Edit {label}
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link
-            href={`/dashboard/${item.type === "Post" ? "posts" : "projects"}`}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            render={
+              <Link
+                href={`/dashboard/${item.type === "Post" ? "posts" : "projects"}`}
+              />
+            }
           >
             View all
-          </Link>
-        </DropdownMenuItem>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -409,15 +414,15 @@ function RecentItemsCard({
         <div className="flex justify-between items-start gap-4">
           <SectionHeading title={title} subtitle={subtitle} />
           <Button
-            asChild
+            role="link"
+            render={<Link href={viewAllHref} />}
+            nativeButton={false}
             variant="ghost"
             size="sm"
             className="text-brand-soft hover:text-brand-soft shrink-0"
           >
-            <Link href={viewAllHref}>
-              {viewAllLabel}
-              <ArrowRightIcon data-icon="inline-end" />
-            </Link>
+            {viewAllLabel}
+            <ArrowRightIcon data-icon="inline-end" />
           </Button>
         </div>
       </CardHeader>
@@ -485,15 +490,15 @@ function QuickActions() {
     <div className="md:flex md:flex-wrap gap-2 grid grid-cols-2">
       {actions.map((action, index) => (
         <Button
+          role="link"
           key={action.href}
-          asChild
+          render={<Link href={action.href} />}
+          nativeButton={false}
           variant={index === 0 ? "default" : "outline"}
           className="rounded-2xl"
         >
-          <Link href={action.href}>
-            {action.icon}
-            {action.label}
-          </Link>
+          {action.icon}
+          {action.label}
         </Button>
       ))}
     </div>

@@ -28,7 +28,7 @@ export default function DashboardLayout({
             <SidebarTrigger className="-ml-1" />
             <Separator
               orientation="vertical"
-              className="self-center data-vertical:self-center h-4 data-vertical:h-4"
+              className="data-[orientation=vertical]:self-center h-4"
             />
             <Suspense fallback={null}>
               <DashboardBreadcrumb />

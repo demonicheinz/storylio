@@ -119,14 +119,14 @@ export default async function PreviewPostPage({
       <article className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 pb-24 w-full max-w-7xl">
         <div className="flex flex-wrap justify-between items-center gap-3 mb-8">
           <Button
-            asChild
+            role="link"
+            render={<Link href={`/dashboard/posts/${post.id}/edit`} />}
+            nativeButton={false}
             variant="outline"
             className="bg-surface/70 backdrop-blur border-border/60 rounded-full"
           >
-            <Link href={`/dashboard/posts/${post.id}/edit`}>
-              <ArrowLeftIcon data-icon="inline-start" />
-              Back to editor
-            </Link>
+            <ArrowLeftIcon data-icon="inline-start" />
+            Back to editor
           </Button>
 
           <div className="inline-flex items-center gap-2 bg-brand-soft/10 px-3 py-1.5 border border-brand-soft/30 rounded-full font-medium text-brand-soft text-xs">

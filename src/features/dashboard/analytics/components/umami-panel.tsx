@@ -237,10 +237,14 @@ export function UmamiPanelClient({
             {isPending ? "Refreshing..." : "Refresh"}
           </Button>
           {shareUrl && (
-            <Button asChild className="rounded-2xl" variant="outline">
-              <Link href={shareUrl} target="_blank">
-                Open Umami
-              </Link>
+            <Button
+              role="link"
+              render={<Link href={shareUrl} target="_blank" />}
+              nativeButton={false}
+              className="rounded-2xl"
+              variant="outline"
+            >
+              Open Umami
             </Button>
           )}
         </div>

@@ -136,14 +136,14 @@ export default async function PreviewProjectPage({
       <article className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 pb-24 w-full max-w-7xl">
         <div className="flex flex-wrap justify-between items-center gap-3 mb-8">
           <Button
-            asChild
+            role="link"
+            render={<Link href={`/dashboard/projects/${project.id}/edit`} />}
+            nativeButton={false}
             variant="outline"
             className="bg-surface/70 backdrop-blur border-border/60 rounded-full"
           >
-            <Link href={`/dashboard/projects/${project.id}/edit`}>
-              <ArrowLeftIcon data-icon="inline-start" />
-              Back to editor
-            </Link>
+            <ArrowLeftIcon data-icon="inline-start" />
+            Back to editor
           </Button>
 
           <div className="inline-flex items-center gap-2 bg-brand-soft/10 px-3 py-1.5 border border-brand-soft/30 rounded-full font-medium text-brand-soft text-xs">
@@ -230,28 +230,39 @@ export default async function PreviewProjectPage({
 
             <div className="flex flex-wrap gap-3 mt-7">
               {project.liveUrl && (
-                <Button asChild className="rounded-full">
-                  <Link href={project.liveUrl} target="_blank" rel="noreferrer">
-                    Live site
-                    <ArrowUpRightIcon data-icon="inline-end" />
-                  </Link>
+                <Button
+                  role="link"
+                  render={
+                    <Link
+                      href={project.liveUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    />
+                  }
+                  nativeButton={false}
+                  className="rounded-full"
+                >
+                  Live site
+                  <ArrowUpRightIcon data-icon="inline-end" />
                 </Button>
               )}
 
               {!project.isClosedSource && project.githubUrl && (
                 <Button
-                  asChild
+                  role="link"
+                  render={
+                    <Link
+                      href={project.githubUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    />
+                  }
+                  nativeButton={false}
                   variant="outline"
                   className="bg-surface/70 border-border/60 rounded-full"
                 >
-                  <Link
-                    href={project.githubUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    GitHub
-                    <GithubLogoIcon data-icon="inline-end" />
-                  </Link>
+                  GitHub
+                  <GithubLogoIcon data-icon="inline-end" />
                 </Button>
               )}
             </div>

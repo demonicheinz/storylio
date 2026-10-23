@@ -20,11 +20,14 @@ export default function ArticleNotFound() {
           the writing archive to browse published notes.
         </p>
 
-        <Button asChild className="mt-8 rounded-full">
-          <Link href="/blog">
-            <ArrowLeftIcon data-icon="inline-start" />
-            Back to writing
-          </Link>
+        <Button
+          role="link"
+          render={<Link href="/blog" />}
+          nativeButton={false}
+          className="mt-8 rounded-full"
+        >
+          <ArrowLeftIcon data-icon="inline-start" />
+          Back to writing
         </Button>
       </section>
     </main>

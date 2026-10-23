@@ -28,24 +28,26 @@ export function FilterLink({
 
   return (
     <Button
-      asChild
+      role="link"
+      render={
+        <Link
+          href={href}
+          prefetch={!active && intent}
+          scroll={false}
+          aria-current={active ? "page" : undefined}
+          onMouseEnter={() => setIntent(true)}
+          onFocus={() => setIntent(true)}
+          onNavigate={(event) => {
+            if (active) event.preventDefault();
+          }}
+        />
+      }
+      nativeButton={false}
       size="sm"
       variant={active ? "default" : "outline"}
       className="rounded-full shrink-0"
     >
-      <Link
-        href={href}
-        prefetch={!active && intent}
-        scroll={false}
-        aria-current={active ? "page" : undefined}
-        onMouseEnter={() => setIntent(true)}
-        onFocus={() => setIntent(true)}
-        onNavigate={(event) => {
-          if (active) event.preventDefault();
-        }}
-      >
-        <FilterLabel>{children}</FilterLabel>
-      </Link>
+      <FilterLabel>{children}</FilterLabel>
     </Button>
   );
 }

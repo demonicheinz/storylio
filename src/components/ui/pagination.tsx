@@ -1,10 +1,12 @@
+"use client";
+
 import {
   CaretLeftIcon,
   CaretRightIcon,
   DotsThreeIcon,
 } from "@phosphor-icons/react";
 import * as React from "react";
-import { Button } from "@/components/ui/button";
+import { type Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
@@ -48,19 +50,16 @@ function PaginationLink({
   ...props
 }: PaginationLinkProps) {
   return (
-    <Button
-      asChild
-      variant={isActive ? "outline" : "ghost"}
-      size={size}
-      className={cn(className)}
-    >
-      <a
-        aria-current={isActive ? "page" : undefined}
-        data-slot="pagination-link"
-        data-active={isActive}
-        {...props}
-      />
-    </Button>
+    <a
+      className={cn(
+        buttonVariants({ variant: isActive ? "outline" : "ghost", size }),
+        className,
+      )}
+      aria-current={isActive ? "page" : undefined}
+      data-slot="pagination-link"
+      data-active={isActive}
+      {...props}
+    />
   );
 }
 

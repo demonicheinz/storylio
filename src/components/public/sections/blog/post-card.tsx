@@ -73,11 +73,15 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         <div className="mt-auto pt-5">
-          <Button asChild size="sm" className="rounded-full">
-            <Link href={`/blog/${post.slug}`}>
-              Read article
-              <ArrowUpRightIcon data-icon="inline-end" />
-            </Link>
+          <Button
+            role="link"
+            render={<Link href={`/blog/${post.slug}`} />}
+            nativeButton={false}
+            size="sm"
+            className="rounded-full"
+          >
+            Read article
+            <ArrowUpRightIcon data-icon="inline-end" />
           </Button>
         </div>
       </div>

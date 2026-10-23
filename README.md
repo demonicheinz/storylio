@@ -82,7 +82,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 |-------|-----------|
 | Framework | Next.js 16 (App Router, Turbopack) |
 | Language | TypeScript |
-| Styling | Tailwind CSS v4 + shadcn/ui |
+| Styling | Tailwind CSS v4 + shadcn/ui (Base UI, Luma) |
 | Database | PostgreSQL / Neon |
 | ORM | Drizzle ORM |
 | Auth | BetterAuth (single-owner) |
@@ -341,6 +341,25 @@ warms the selected destination without navigating, clicking reuses that prefetch
 and resetting to All preserves unrelated query parameters.
 
 ## Integrations
+
+### UI primitives
+
+The shadcn components use Base UI with the `base-luma` registry style and the
+existing Storylio customizations. Polymorphic components use `render` rather than
+`asChild`. Link-rendered Buttons set `nativeButton={false}` and preserve link roles.
+Tabs use manual keyboard activation (arrows focus; Enter/Space select); menu
+checkbox/radio items stay open after selection unless explicitly configured.
+Drawer and Toast also use native Base UI primitives. Notifications use the shared
+`toast.add({ title, type })` manager from `@/components/ui/toast`; the provider
+wraps application children. No application wrapper imports Radix directly.
+
+For an isolated UI interaction check, temporarily copy
+`tests/fixtures/base-ui/page.tsx` to `src/app/ui-migration-check/page.tsx`, start
+the local development server, and open that route with the Playwright CLI.
+Run `tests/browser/base-ui-smoke.js` via `run-code --filename=...`. The fixture
+uses no database/auth credentials or application mutations; remove the temporary
+route before a production build. Component migration reports are under
+`task/base-ui-migration-2026-10-23/`.
 
 ### Cloudinary
 

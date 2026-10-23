@@ -21,11 +21,14 @@ export default function NotFound() {
           to continue exploring Storylio.
         </p>
 
-        <Button asChild className="mt-8 rounded-full">
-          <Link href="/">
-            <ArrowLeftIcon data-icon="inline-start" />
-            Back to home
-          </Link>
+        <Button
+          role="link"
+          render={<Link href="/" />}
+          nativeButton={false}
+          className="mt-8 rounded-full"
+        >
+          <ArrowLeftIcon data-icon="inline-start" />
+          Back to home
         </Button>
       </section>
     </main>

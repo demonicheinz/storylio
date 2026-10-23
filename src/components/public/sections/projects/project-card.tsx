@@ -72,46 +72,54 @@ export function ProjectCard({ project }: ProjectCardProps) {
         </p>
 
         <div className="flex flex-wrap items-center gap-2 mt-auto pt-5">
-          <Button asChild size="sm" className="rounded-full">
-            <Link href={`/projects/${project.slug}`}>
-              View case
-              <ArrowUpRightIcon data-icon="inline-end" />
-            </Link>
+          <Button
+            role="link"
+            render={<Link href={`/projects/${project.slug}`} />}
+            nativeButton={false}
+            size="sm"
+            className="rounded-full"
+          >
+            View case
+            <ArrowUpRightIcon data-icon="inline-end" />
           </Button>
 
           {project.liveUrl && (
             <Button
-              asChild
+              role="link"
+              render={
+                <Link
+                  href={project.liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open ${project.title} live site`}
+                />
+              }
+              nativeButton={false}
               size="icon"
               variant="outline"
               className="bg-surface/70 border-border/60 rounded-full"
             >
-              <Link
-                href={project.liveUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`Open ${project.title} live site`}
-              >
-                <ArrowUpRightIcon />
-              </Link>
+              <ArrowUpRightIcon />
             </Button>
           )}
 
           {!project.isClosedSource && project.githubUrl && (
             <Button
-              asChild
+              role="link"
+              render={
+                <Link
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open ${project.title} GitHub repository`}
+                />
+              }
+              nativeButton={false}
               size="icon"
               variant="outline"
               className="bg-surface/70 border-border/60 rounded-full"
             >
-              <Link
-                href={project.githubUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`Open ${project.title} GitHub repository`}
-              >
-                <GithubLogoIcon />
-              </Link>
+              <GithubLogoIcon />
             </Button>
           )}
         </div>

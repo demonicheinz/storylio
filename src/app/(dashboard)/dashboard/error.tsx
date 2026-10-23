@@ -38,11 +38,14 @@ export default function DashboardError({
             <ArrowClockwiseIcon />
             Try again
           </Button>
-          <Button asChild variant="outline">
-            <Link href="/dashboard">
-              <HouseIcon />
-              Dashboard overview
-            </Link>
+          <Button
+            role="link"
+            render={<Link href="/dashboard" />}
+            nativeButton={false}
+            variant="outline"
+          >
+            <HouseIcon />
+            Dashboard overview
           </Button>
         </CardContent>
       </Card>
