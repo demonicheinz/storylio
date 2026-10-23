@@ -103,11 +103,15 @@ export default async function DashboardAboutPage() {
             Manage bilingual About content and its structured public sections.
           </p>
         </div>
-        <Button asChild variant="outline" className="rounded-2xl">
-          <Link href="/about" target="_blank">
-            <EyeIcon data-icon="inline-start" />
-            Preview About Page
-          </Link>
+        <Button
+          role="link"
+          render={<Link href="/about" target="_blank" />}
+          nativeButton={false}
+          variant="outline"
+          className="rounded-2xl"
+        >
+          <EyeIcon data-icon="inline-start" />
+          Preview About Page
         </Button>
       </div>
 

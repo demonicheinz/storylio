@@ -22,7 +22,6 @@ import {
 import { useRouter } from "next/navigation";
 import { type ComponentType, useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,6 +46,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import {
   actionChangeEmail,
   actionChangePassword,
@@ -308,7 +308,10 @@ function ProfileSettingsForm({
       const result = await actionUpdateProfileSettings(values);
 
       if (result.success) {
-        toast.success(result.message ?? "Profile settings updated.");
+        toast.add({
+          title: result.message ?? "Profile settings updated.",
+          type: "success",
+        });
         window.dispatchEvent(
           new CustomEvent("dashboard-user-updated", {
             detail: {
@@ -321,7 +324,7 @@ function ProfileSettingsForm({
         router.refresh();
       } else {
         applyFieldErrors(result.fieldErrors);
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   });
@@ -527,9 +530,10 @@ function ChangeEmailForm({ currentEmail }: { currentEmail: string }) {
       const result = await actionChangeEmail(values);
 
       if (result.success) {
-        toast.success(
-          result.message ?? "Check your new email for confirmation.",
-        );
+        toast.add({
+          title: result.message ?? "Check your new email for confirmation.",
+          type: "success",
+        });
         reset();
         router.refresh();
       } else {
@@ -539,7 +543,7 @@ function ChangeEmailForm({ currentEmail }: { currentEmail: string }) {
             type: "server",
           });
         }
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   });
@@ -627,11 +631,14 @@ function AccountSettingsForm() {
       const result = await actionChangePassword(values);
 
       if (result.success) {
-        toast.success(result.message ?? "Password changed.");
+        toast.add({
+          title: result.message ?? "Password changed.",
+          type: "success",
+        });
         reset();
       } else {
         applyFieldErrors(result.fieldErrors);
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   });
@@ -843,11 +850,15 @@ function ConnectedProviders({
                       await authClient.unlinkAccount({
                         providerId: account.providerId,
                       });
-                      toast.success(
-                        `${account.providerId} unlinked successfully. Please refresh the page.`,
-                      );
+                      toast.add({
+                        title: `${account.providerId} unlinked successfully. Please refresh the page.`,
+                        type: "success",
+                      });
                     } catch {
-                      toast.error(`Failed to unlink ${account.providerId}.`);
+                      toast.add({
+                        title: `Failed to unlink ${account.providerId}.`,
+                        type: "error",
+                      });
                     }
                   });
                 }}
@@ -872,7 +883,10 @@ function ConnectedProviders({
                   callbackURL: "/dashboard/settings",
                 });
               } catch {
-                toast.error("Failed to initiate GitHub linking.");
+                toast.add({
+                  title: "Failed to initiate GitHub linking.",
+                  type: "error",
+                });
               }
             });
           }}
@@ -935,9 +949,15 @@ function PasskeySettings() {
                       await authClient.passkey.deletePasskey({
                         id: passkey.id,
                       });
-                      toast.success("Passkey deleted successfully.");
+                      toast.add({
+                        title: "Passkey deleted successfully.",
+                        type: "success",
+                      });
                     } catch {
-                      toast.error("Failed to delete passkey.");
+                      toast.add({
+                        title: "Failed to delete passkey.",
+                        type: "error",
+                      });
                     } finally {
                       setIsDeleting(null);
                     }
@@ -980,7 +1000,7 @@ function SessionSettings() {
       if (result.success) {
         setSessions(result.data ?? []);
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
 
       setIsLoading(false);
@@ -996,12 +1016,15 @@ function SessionSettings() {
       const result = await actionRevokeOtherDashboardSessions();
 
       if (result.success) {
-        toast.success(result.message ?? "Other sessions revoked.");
+        toast.add({
+          title: result.message ?? "Other sessions revoked.",
+          type: "success",
+        });
         setSessions((current) =>
           current.filter((session) => session.isCurrent),
         );
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   };
@@ -1123,11 +1146,14 @@ function AddPasskeyDialog({
       await authClient.passkey.addPasskey({
         name: name.trim() || `Passkey ${new Date().toLocaleDateString()}`,
       });
-      toast.success("Passkey added successfully.");
+      toast.add({ title: "Passkey added successfully.", type: "success" });
       setOpen(false);
       setName("");
     } catch (err: any) {
-      toast.error(err.message || "Failed to add passkey.");
+      toast.add({
+        title: err.message || "Failed to add passkey.",
+        type: "error",
+      });
     } finally {
       setIsAdding(false);
     }
@@ -1135,15 +1161,21 @@ function AddPasskeyDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="mt-2 w-fit" disabled={isAdding}>
-          {isAdding ? (
-            <SpinnerIcon data-icon="inline-start" className="animate-spin" />
-          ) : (
-            <KeyIcon data-icon="inline-start" className="size-4" />
-          )}
-          Add Passkey
-        </Button>
+      <DialogTrigger
+        render={
+          <Button
+            variant="outline"
+            className="mt-2 w-fit"
+            disabled={isAdding}
+          />
+        }
+      >
+        {isAdding ? (
+          <SpinnerIcon data-icon="inline-start" className="animate-spin" />
+        ) : (
+          <KeyIcon data-icon="inline-start" className="size-4" />
+        )}
+        Add Passkey
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleAdd}>
@@ -1200,10 +1232,10 @@ function EditPasskeyDialog({ passkey }: { passkey: any }) {
         id: passkey.id,
         name: name.trim(),
       });
-      toast.success("Passkey renamed successfully.");
+      toast.add({ title: "Passkey renamed successfully.", type: "success" });
       setOpen(false);
     } catch {
-      toast.error("Failed to rename passkey.");
+      toast.add({ title: "Failed to rename passkey.", type: "error" });
     } finally {
       setIsUpdating(false);
     }
@@ -1211,15 +1243,17 @@ function EditPasskeyDialog({ passkey }: { passkey: any }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8"
-          onClick={() => setName(passkey.name || "")}
-        >
-          Edit
-        </Button>
+      <DialogTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8"
+            onClick={() => setName(passkey.name || "")}
+          />
+        }
+      >
+        Edit
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleUpdate}>

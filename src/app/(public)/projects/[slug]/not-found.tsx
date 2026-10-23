@@ -20,11 +20,14 @@ export default function ProjectNotFound() {
           the projects archive to browse the published work.
         </p>
 
-        <Button asChild className="mt-8 rounded-full">
-          <Link href="/projects">
-            <ArrowLeftIcon data-icon="inline-start" />
-            Back to projects
-          </Link>
+        <Button
+          role="link"
+          render={<Link href="/projects" />}
+          nativeButton={false}
+          className="mt-8 rounded-full"
+        >
+          <ArrowLeftIcon data-icon="inline-start" />
+          Back to projects
         </Button>
       </section>
     </main>

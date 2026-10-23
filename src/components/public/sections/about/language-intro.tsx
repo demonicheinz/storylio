@@ -30,6 +30,7 @@ export function LanguageIntro({
 
           return (
             <Button
+              role="link"
               key={item.value}
               variant={isActive ? "default" : "ghost"}
               size="sm"
@@ -37,16 +38,17 @@ export function LanguageIntro({
                 "px-4 rounded-full h-8",
                 !isActive && "text-muted-foreground hover:text-foreground",
               )}
-              asChild
+              render={
+                <Link
+                  href={`/about?lang=${item.value}`}
+                  prefetch={true}
+                  scroll={false}
+                  aria-current={isActive ? "page" : undefined}
+                />
+              }
+              nativeButton={false}
             >
-              <Link
-                href={`/about?lang=${item.value}`}
-                prefetch={true}
-                scroll={false}
-                aria-current={isActive ? "page" : undefined}
-              >
-                {item.label}
-              </Link>
+              {item.label}
             </Button>
           );
         })}

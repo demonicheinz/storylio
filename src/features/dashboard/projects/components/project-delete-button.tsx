@@ -2,9 +2,8 @@
 
 import { TrashIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 import { useState, useTransition } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,18 +16,21 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import { actionDeleteProject } from "@/features/dashboard/projects/actions";
 
 type ProjectDeleteButtonProps = {
   projectId: string;
   title: string;
-  trigger?: ReactNode;
+  trigger?: ReactElement;
+  triggerNativeButton?: boolean;
 };
 
 export function ProjectDeleteButton({
   projectId,
   title,
   trigger,
+  triggerNativeButton = true,
 }: ProjectDeleteButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -39,25 +41,31 @@ export function ProjectDeleteButton({
       const result = await actionDeleteProject(projectId);
 
       if (result.success) {
-        toast.success(result.message ?? "Project deleted.");
+        toast.add({
+          title: result.message ?? "Project deleted.",
+          type: "success",
+        });
         setOpen(false);
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   };
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        {trigger ?? (
-          <Button type="button" size="sm" variant="destructive">
-            <TrashIcon data-icon="inline-start" />
-            Delete
-          </Button>
-        )}
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        nativeButton={triggerNativeButton}
+        render={
+          trigger ?? (
+            <Button type="button" size="sm" variant="destructive">
+              <TrashIcon data-icon="inline-start" />
+              Delete
+            </Button>
+          )
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete project?</AlertDialogTitle>

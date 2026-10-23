@@ -14,7 +14,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,6 +33,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import {
   actionPublishPost,
   actionSavePostDraft,
@@ -350,7 +350,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
           result.message ??
           (nextStatus === "published" ? "Post published." : "Draft saved.");
 
-        toast.success(message);
+        toast.add({ title: message, type: "success" });
 
         if (result.data) {
           setValue("status", result.data.status);
@@ -367,7 +367,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
         }
       } else {
         applyFieldErrors(result.fieldErrors);
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
 
       setPendingAction(null);
@@ -375,7 +375,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
 
   const handlePreview = () => {
     if (!slug) {
-      toast.error("Add a slug before previewing.");
+      toast.add({ title: "Add a slug before previewing.", type: "error" });
       return;
     }
 
@@ -386,11 +386,15 @@ export function PostEditor({ mode, post }: PostEditorProps) {
     <form className="flex flex-col gap-6 min-w-0 overflow-x-clip">
       <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4 min-w-0">
         <div className="flex flex-col gap-2 min-w-0">
-          <Button asChild variant="ghost" className="w-fit">
-            <Link href="/dashboard/posts">
-              <ArrowLeftIcon data-icon="inline-start" />
-              Back to Posts
-            </Link>
+          <Button
+            role="link"
+            render={<Link href="/dashboard/posts" />}
+            nativeButton={false}
+            variant="ghost"
+            className="w-fit"
+          >
+            <ArrowLeftIcon data-icon="inline-start" />
+            Back to Posts
           </Button>
           <div className="min-w-0">
             <h1 className="font-heading font-bold text-3xl wrap-break-word">
@@ -575,16 +579,19 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                   name="status"
                   render={({ field }) => (
                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild disabled={isPending}>
-                        <Button
-                          id="status"
-                          type="button"
-                          variant="outline"
-                          className="justify-between bg-input/50 px-3 rounded-3xl w-full h-9 font-normal"
-                        >
-                          <PostStatusBadge status={field.value} compact />
-                          <CaretDownIcon data-icon="inline-end" />
-                        </Button>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            id="status"
+                            type="button"
+                            variant="outline"
+                            className="justify-between bg-input/50 px-3 rounded-3xl w-full h-9 font-normal"
+                          />
+                        }
+                        disabled={isPending}
+                      >
+                        <PostStatusBadge status={field.value} compact />
+                        <CaretDownIcon data-icon="inline-end" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
                         <DropdownMenuRadioGroup

@@ -12,7 +12,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import { actionUpdateAboutContent } from "@/features/dashboard/about/actions";
 import {
   type AboutContentActionInput,
@@ -124,13 +124,16 @@ export function AboutContentForm({
       const result = await actionUpdateAboutContent(values);
 
       if (result.success) {
-        toast.success(result.message ?? "About content updated.");
+        toast.add({
+          title: result.message ?? "About content updated.",
+          type: "success",
+        });
         router.refresh();
         return;
       }
 
       applyFieldErrors(result.fieldErrors);
-      toast.error(result.error);
+      toast.add({ title: result.error, type: "error" });
     });
   });
 
@@ -162,14 +165,14 @@ export function AboutContentForm({
             </div>
           </div>
           <Button
-            asChild
+            role="link"
+            render={<Link href="/dashboard/settings" />}
+            nativeButton={false}
             variant="outline"
             className="rounded-2xl w-full sm:w-auto shrink-0"
           >
-            <Link href="/dashboard/settings">
-              Go to Profile Settings
-              <ArrowSquareOutIcon data-icon="inline-end" />
-            </Link>
+            Go to Profile Settings
+            <ArrowSquareOutIcon data-icon="inline-end" />
           </Button>
         </CardContent>
       </Card>
@@ -215,15 +218,18 @@ export function AboutContentForm({
                 <div className="flex flex-col gap-2 md:w-64 min-w-0">
                   <Label>Default public language</Label>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild disabled={isPending}>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="justify-between bg-input/35 rounded-2xl w-full"
-                      >
-                        {languageLabels[field.value ?? "en"]}
-                        <span className="text-muted-foreground">Change</span>
-                      </Button>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="justify-between bg-input/35 rounded-2xl w-full"
+                        />
+                      }
+                      disabled={isPending}
+                    >
+                      {languageLabels[field.value ?? "en"]}
+                      <span className="text-muted-foreground">Change</span>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-64">
                       <DropdownMenuRadioGroup

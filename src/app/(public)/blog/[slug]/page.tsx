@@ -219,14 +219,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <article className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 pb-24 w-full max-w-7xl">
         <div className="flex flex-wrap justify-between items-center gap-3 mb-8">
           <Button
-            asChild
+            role="link"
+            render={<Link href="/blog" />}
+            nativeButton={false}
             variant="outline"
             className="bg-surface/70 backdrop-blur border-border/60 rounded-full"
           >
-            <Link href="/blog">
-              <ArrowLeftIcon data-icon="inline-start" />
-              Back to writing
-            </Link>
+            <ArrowLeftIcon data-icon="inline-start" />
+            Back to writing
           </Button>
 
           <ShareButton title={post.title} />

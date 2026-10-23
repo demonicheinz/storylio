@@ -89,11 +89,14 @@ export function FeaturedPost({ post }: FeaturedPostProps) {
           </div>
 
           <div className="mt-5">
-            <Button asChild className="rounded-full w-fit">
-              <Link href={`/blog/${post.slug}`}>
-                Read article
-                <ArrowUpRightIcon data-icon="inline-end" />
-              </Link>
+            <Button
+              role="link"
+              render={<Link href={`/blog/${post.slug}`} />}
+              nativeButton={false}
+              className="rounded-full w-fit"
+            >
+              Read article
+              <ArrowUpRightIcon data-icon="inline-end" />
             </Button>
           </div>
         </div>

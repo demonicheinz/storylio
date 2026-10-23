@@ -25,10 +25,9 @@ import {
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,6 +63,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
@@ -76,6 +76,7 @@ import { Kbd } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import {
   actionCreateGalleryItem,
   actionDeleteGalleryItem,
@@ -128,7 +129,8 @@ type GalleryManagerProps = {
 
 type GalleryItemDialogProps = {
   item?: DashboardGalleryItem;
-  trigger: ReactNode;
+  trigger: ReactElement;
+  triggerNativeButton?: boolean;
 };
 
 type ViewMode = "grid" | "list";
@@ -289,47 +291,54 @@ function GalleryItemActions({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
-          aria-label={`Open actions for ${getItemTitle(item)}`}
-        >
-          <DotsThreeVerticalIcon />
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
+            aria-label={`Open actions for ${getItemTitle(item)}`}
+          />
+        }
+      >
+        <DotsThreeVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="w-44">
-        <DropdownMenuLabel>Gallery item</DropdownMenuLabel>
-        <GalleryItemDialog
-          item={item}
-          trigger={
-            <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
-              <PencilSimpleIcon data-icon="inline-start" />
-              Edit item
-            </DropdownMenuItem>
-          }
-        />
-        <DropdownMenuSeparator />
-        <GalleryDeleteButton
-          item={item}
-          trigger={
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={(event) => event.preventDefault()}
-            >
-              <TrashIcon data-icon="inline-start" />
-              Delete item
-            </DropdownMenuItem>
-          }
-        />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Gallery item</DropdownMenuLabel>
+          <GalleryItemDialog
+            triggerNativeButton={false}
+            item={item}
+            trigger={
+              <DropdownMenuItem closeOnClick={false}>
+                <PencilSimpleIcon data-icon="inline-start" />
+                Edit item
+              </DropdownMenuItem>
+            }
+          />
+          <DropdownMenuSeparator />
+          <GalleryDeleteButton
+            triggerNativeButton={false}
+            item={item}
+            trigger={
+              <DropdownMenuItem variant="destructive" closeOnClick={false}>
+                <TrashIcon data-icon="inline-start" />
+                Delete item
+              </DropdownMenuItem>
+            }
+          />
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
 
-function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
+function GalleryItemDialog({
+  item,
+  trigger,
+  triggerNativeButton = true,
+}: GalleryItemDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -380,22 +389,24 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
           : await actionCreateGalleryItem(values);
 
       if (result.success) {
-        toast.success(
-          result.message ??
+        toast.add({
+          title:
+            result.message ??
             (isEdit ? "Gallery item updated." : "Gallery item created."),
-        );
+          type: "success",
+        });
         setOpen(false);
         router.refresh();
       } else {
         applyFieldErrors(result.fieldErrors);
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   });
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger nativeButton={triggerNativeButton} render={trigger} />
       <DialogContent className="sm:max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-none">
         <form className="flex flex-col gap-5" onSubmit={onSubmit}>
           <DialogHeader>
@@ -588,9 +599,11 @@ function GalleryItemDialog({ item, trigger }: GalleryItemDialogProps) {
 function GalleryDeleteButton({
   item,
   trigger,
+  triggerNativeButton = true,
 }: {
   item: DashboardGalleryItem;
-  trigger?: ReactNode;
+  trigger?: ReactElement;
+  triggerNativeButton?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -602,25 +615,31 @@ function GalleryDeleteButton({
       const result = await actionDeleteGalleryItem(item.id);
 
       if (result.success) {
-        toast.success(result.message ?? "Gallery item deleted.");
+        toast.add({
+          title: result.message ?? "Gallery item deleted.",
+          type: "success",
+        });
         setOpen(false);
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   };
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        {trigger ?? (
-          <Button type="button" size="sm" variant="destructive">
-            <TrashIcon data-icon="inline-start" />
-            Delete
-          </Button>
-        )}
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        nativeButton={triggerNativeButton}
+        render={
+          trigger ?? (
+            <Button type="button" size="sm" variant="destructive">
+              <TrashIcon data-icon="inline-start" />
+              Delete
+            </Button>
+          )
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete gallery item?</AlertDialogTitle>
@@ -690,22 +709,24 @@ function FilterDropdown({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
-        >
-          <span className="min-w-0 text-left">
-            <span className="block text-[10px] text-muted-foreground leading-none">
-              {label}
-            </span>
-            <span className="block mt-1 font-medium text-xs truncate">
-              {displayValue}
-            </span>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
+          />
+        }
+      >
+        <span className="min-w-0 text-left">
+          <span className="block text-[10px] text-muted-foreground leading-none">
+            {label}
           </span>
-          <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-        </Button>
+          <span className="block mt-1 font-medium text-xs truncate">
+            {displayValue}
+          </span>
+        </span>
+        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
@@ -735,16 +756,18 @@ function CompactFilterDropdown({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="flex-1 justify-between bg-input/35 px-3 rounded-xl min-w-0"
-        >
-          <span className="text-xs truncate">{displayValue || label}</span>
-          <CaretDownIcon className="size-3.5 text-muted-foreground shrink-0" />
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="flex-1 justify-between bg-input/35 px-3 rounded-xl min-w-0"
+          />
+        }
+      >
+        <span className="text-xs truncate">{displayValue || label}</span>
+        <CaretDownIcon className="size-3.5 text-muted-foreground shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
@@ -1054,16 +1077,18 @@ function ItemsPerPageDropdown({
         <span className="text-muted-foreground text-sm">Items per page</span>
       )}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="bg-input/35 rounded-xl"
-          >
-            {value}
-            <CaretDownIcon className="size-3.5" />
-          </Button>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="bg-input/35 rounded-xl"
+            />
+          }
+        >
+          {value}
+          <CaretDownIcon className="size-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-24">
           <DropdownMenuRadioGroup
@@ -1130,17 +1155,19 @@ function GalleryBatchActionsBar({
           Hide
         </Button>
         <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              className="rounded-xl"
-              disabled={isPending || selectedCount === 0}
-            >
-              <TrashIcon data-icon="inline-start" />
-              Delete
-            </Button>
+          <AlertDialogTrigger
+            render={
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                className="rounded-xl"
+                disabled={isPending || selectedCount === 0}
+              />
+            }
+          >
+            <TrashIcon data-icon="inline-start" />
+            Delete
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -1186,14 +1213,14 @@ function GalleryDetailDrawer({
   onClose,
 }: {
   item: DashboardGalleryItem;
-  direction: "bottom" | "right";
+  direction: "down" | "right";
   onClose: () => void;
 }) {
   const aspectRatio = getGalleryAspectRatio(item);
 
   const handleCopyImageUrl = () => {
     navigator.clipboard.writeText(item.imageUrl);
-    toast.success("Image URL copied.");
+    toast.add({ title: "Image URL copied.", type: "success" });
   };
 
   const metadata = [
@@ -1214,7 +1241,8 @@ function GalleryDetailDrawer({
   return (
     <Drawer
       open
-      direction={direction}
+      swipeDirection={direction}
+      showSwipeHandle
       onOpenChange={(open) => !open && onClose()}
     >
       <DrawerContent
@@ -1298,11 +1326,17 @@ function GalleryDetailDrawer({
                 <CopyIcon data-icon="inline-start" />
                 Copy URL
               </Button>
-              <Button type="button" variant="outline" asChild>
-                <a href={item.imageUrl} target="_blank" rel="noreferrer">
-                  <ArrowSquareOutIcon data-icon="inline-start" />
-                  View
-                </a>
+              <Button
+                role="link"
+                type="button"
+                variant="outline"
+                render={
+                  <a href={item.imageUrl} target="_blank" rel="noreferrer" />
+                }
+                nativeButton={false}
+              >
+                <ArrowSquareOutIcon data-icon="inline-start" />
+                View
               </Button>
             </div>
             <GalleryDeleteButton
@@ -1339,8 +1373,8 @@ export function GalleryManager({ items }: GalleryManagerProps) {
   const [selectedItem, setSelectedItem] = useState<DashboardGalleryItem | null>(
     null,
   );
-  const [drawerDirection, setDrawerDirection] = useState<"bottom" | "right">(
-    "bottom",
+  const [drawerDirection, setDrawerDirection] = useState<"down" | "right">(
+    "down",
   );
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
@@ -1434,7 +1468,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
     const mediaQuery = window.matchMedia("(min-width: 768px)");
 
     const syncDrawerDirection = () => {
-      setDrawerDirection(mediaQuery.matches ? "right" : "bottom");
+      setDrawerDirection(mediaQuery.matches ? "right" : "down");
     };
 
     syncDrawerDirection();
@@ -1515,13 +1549,16 @@ export function GalleryManager({ items }: GalleryManagerProps) {
       const result = await action(itemIds);
 
       if (result.success) {
-        toast.success(result.message ?? fallbackMessage);
+        toast.add({
+          title: result.message ?? fallbackMessage,
+          type: "success",
+        });
         clearSelection();
         router.refresh();
         return;
       }
 
-      toast.error(result.error);
+      toast.add({ title: result.error, type: "error" });
     });
   };
 
@@ -1535,10 +1572,13 @@ export function GalleryManager({ items }: GalleryManagerProps) {
       );
 
       if (result.success) {
-        toast.success(result.message ?? "Gallery order updated.");
+        toast.add({
+          title: result.message ?? "Gallery order updated.",
+          type: "success",
+        });
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   };

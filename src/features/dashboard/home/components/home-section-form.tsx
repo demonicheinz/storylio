@@ -14,10 +14,9 @@ import {
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +50,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -61,6 +61,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import {
   actionCreateHomeSection,
   actionCreateTestimonial,
@@ -193,10 +194,12 @@ function HomeSectionDialog({
   section,
   type,
   trigger,
+  triggerNativeButton = true,
 }: {
   section?: DashboardHomeSection;
   type: HomeSectionTypeValue;
-  trigger: ReactNode;
+  trigger: ReactElement;
+  triggerNativeButton?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -233,22 +236,24 @@ function HomeSectionDialog({
           : await actionCreateHomeSection(payload);
 
       if (result.success) {
-        toast.success(
-          result.message ??
+        toast.add({
+          title:
+            result.message ??
             (isEdit ? "Home section updated." : "Home section created."),
-        );
+          type: "success",
+        });
         setOpen(false);
         router.refresh();
       } else {
         applyFieldErrors<HomeSectionActionValues>(result.fieldErrors, setError);
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   });
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger nativeButton={triggerNativeButton} render={trigger} />
       <DialogContent className="sm:max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto">
         <form className="flex flex-col gap-5" onSubmit={onSubmit}>
           <DialogHeader>
@@ -390,9 +395,11 @@ function HomeSectionDialog({
 function HomeSectionDeleteButton({
   section,
   trigger,
+  triggerNativeButton = true,
 }: {
   section: DashboardHomeSection;
-  trigger?: ReactNode;
+  trigger?: ReactElement;
+  triggerNativeButton?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -402,25 +409,31 @@ function HomeSectionDeleteButton({
     startTransition(async () => {
       const result = await actionDeleteHomeSection(section.id);
       if (result.success) {
-        toast.success(result.message ?? "Home section deleted.");
+        toast.add({
+          title: result.message ?? "Home section deleted.",
+          type: "success",
+        });
         setOpen(false);
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   };
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        {trigger ?? (
-          <Button type="button" size="sm" variant="destructive">
-            <TrashIcon data-icon="inline-start" />
-            Delete
-          </Button>
-        )}
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        nativeButton={triggerNativeButton}
+        render={
+          trigger ?? (
+            <Button type="button" size="sm" variant="destructive">
+              <TrashIcon data-icon="inline-start" />
+              Delete
+            </Button>
+          )
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete home content?</AlertDialogTitle>
@@ -454,42 +467,45 @@ function HomeSectionActions({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
-          aria-label={`Open actions for ${section.label}`}
-        >
-          <DotsThreeVerticalIcon />
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
+            aria-label={`Open actions for ${section.label}`}
+          />
+        }
+      >
+        <DotsThreeVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuLabel>{getTypeLabel(type)}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <HomeSectionDialog
-          section={section}
-          type={type}
-          trigger={
-            <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
-              <PencilSimpleIcon data-icon="inline-start" />
-              Edit
-            </DropdownMenuItem>
-          }
-        />
-        <HomeSectionDeleteButton
-          section={section}
-          trigger={
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={(event) => event.preventDefault()}
-            >
-              <TrashIcon data-icon="inline-start" />
-              Delete
-            </DropdownMenuItem>
-          }
-        />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{getTypeLabel(type)}</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <HomeSectionDialog
+            triggerNativeButton={false}
+            section={section}
+            type={type}
+            trigger={
+              <DropdownMenuItem closeOnClick={false}>
+                <PencilSimpleIcon data-icon="inline-start" />
+                Edit
+              </DropdownMenuItem>
+            }
+          />
+          <HomeSectionDeleteButton
+            triggerNativeButton={false}
+            section={section}
+            trigger={
+              <DropdownMenuItem variant="destructive" closeOnClick={false}>
+                <TrashIcon data-icon="inline-start" />
+                Delete
+              </DropdownMenuItem>
+            }
+          />
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -515,10 +531,13 @@ function HomeContentList({
         nextItems.map((item, index) => ({ id: item.id, order: index })),
       );
       if (result.success) {
-        toast.success(result.message ?? "Home content order updated.");
+        toast.add({
+          title: result.message ?? "Home content order updated.",
+          type: "success",
+        });
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   };
@@ -665,9 +684,11 @@ function getTestimonialTitle(testimonial: DashboardTestimonial) {
 function TestimonialDialog({
   testimonial,
   trigger,
+  triggerNativeButton = true,
 }: {
   testimonial?: DashboardTestimonial;
-  trigger: ReactNode;
+  trigger: ReactElement;
+  triggerNativeButton?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -702,22 +723,24 @@ function TestimonialDialog({
           : await actionCreateTestimonial(values);
 
       if (result.success) {
-        toast.success(
-          result.message ??
+        toast.add({
+          title:
+            result.message ??
             (isEdit ? "Testimonial updated." : "Testimonial created."),
-        );
+          type: "success",
+        });
         setOpen(false);
         router.refresh();
       } else {
         applyFieldErrors<TestimonialActionValues>(result.fieldErrors, setError);
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   });
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger nativeButton={triggerNativeButton} render={trigger} />
       <DialogContent className="sm:max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto">
         <form className="flex flex-col gap-5" onSubmit={onSubmit}>
           <DialogHeader>
@@ -909,9 +932,11 @@ function TestimonialDialog({
 function TestimonialDeleteButton({
   testimonial,
   trigger,
+  triggerNativeButton = true,
 }: {
   testimonial: DashboardTestimonial;
-  trigger?: ReactNode;
+  trigger?: ReactElement;
+  triggerNativeButton?: boolean;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -921,25 +946,31 @@ function TestimonialDeleteButton({
     startTransition(async () => {
       const result = await actionDeleteTestimonial(testimonial.id);
       if (result.success) {
-        toast.success(result.message ?? "Testimonial deleted.");
+        toast.add({
+          title: result.message ?? "Testimonial deleted.",
+          type: "success",
+        });
         setOpen(false);
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   };
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        {trigger ?? (
-          <Button type="button" size="sm" variant="destructive">
-            <TrashIcon data-icon="inline-start" />
-            Delete
-          </Button>
-        )}
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        nativeButton={triggerNativeButton}
+        render={
+          trigger ?? (
+            <Button type="button" size="sm" variant="destructive">
+              <TrashIcon data-icon="inline-start" />
+              Delete
+            </Button>
+          )
+        }
+      />
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete testimonial?</AlertDialogTitle>
@@ -975,41 +1006,44 @@ function TestimonialActions({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
-          aria-label={`Open actions for ${testimonial.name}`}
-        >
-          <DotsThreeVerticalIcon />
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
+            aria-label={`Open actions for ${testimonial.name}`}
+          />
+        }
+      >
+        <DotsThreeVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="w-44">
-        <DropdownMenuLabel>Testimonial</DropdownMenuLabel>
-        <TestimonialDialog
-          testimonial={testimonial}
-          trigger={
-            <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
-              <PencilSimpleIcon data-icon="inline-start" />
-              Edit
-            </DropdownMenuItem>
-          }
-        />
-        <DropdownMenuSeparator />
-        <TestimonialDeleteButton
-          testimonial={testimonial}
-          trigger={
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={(event) => event.preventDefault()}
-            >
-              <TrashIcon data-icon="inline-start" />
-              Delete
-            </DropdownMenuItem>
-          }
-        />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Testimonial</DropdownMenuLabel>
+          <TestimonialDialog
+            triggerNativeButton={false}
+            testimonial={testimonial}
+            trigger={
+              <DropdownMenuItem closeOnClick={false}>
+                <PencilSimpleIcon data-icon="inline-start" />
+                Edit
+              </DropdownMenuItem>
+            }
+          />
+          <DropdownMenuSeparator />
+          <TestimonialDeleteButton
+            triggerNativeButton={false}
+            testimonial={testimonial}
+            trigger={
+              <DropdownMenuItem variant="destructive" closeOnClick={false}>
+                <TrashIcon data-icon="inline-start" />
+                Delete
+              </DropdownMenuItem>
+            }
+          />
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -1029,10 +1063,13 @@ function TestimonialList({
         nextTestimonials.map((t, index) => ({ id: t.id, order: index })),
       );
       if (result.success) {
-        toast.success(result.message ?? "Testimonial order updated.");
+        toast.add({
+          title: result.message ?? "Testimonial order updated.",
+          type: "success",
+        });
         router.refresh();
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   };

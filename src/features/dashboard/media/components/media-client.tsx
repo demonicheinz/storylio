@@ -29,7 +29,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,6 +71,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/toast";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { uploadFile as uploadImageFile } from "@/features/dashboard/shared/utils/upload";
 import {
@@ -209,47 +209,47 @@ function MediaActionsMenu({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className="size-8 rounded-xl bg-background/70 text-foreground backdrop-blur hover:bg-background"
-          aria-label={`Open actions for ${item.filename}`}
-        >
-          <DotsThreeVerticalIcon />
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
+            aria-label={`Open actions for ${item.filename}`}
+          />
+        }
+      >
+        <DotsThreeVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuItem onSelect={() => onSelect(item)}>
+        <DropdownMenuItem onClick={() => onSelect(item)}>
           <ImageIcon data-icon="inline-start" />
           Details
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onRename(item)}>
+        <DropdownMenuItem onClick={() => onRename(item)}>
           <PencilSimpleIcon data-icon="inline-start" />
           Rename
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onCopy(item.url)}>
+        <DropdownMenuItem onClick={() => onCopy(item.url)}>
           <CopyIcon data-icon="inline-start" />
           Copy URL
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href={item.url} target="_blank" rel="noreferrer">
-            <ArrowSquareOutIcon data-icon="inline-start" />
-            View
-          </a>
+        <DropdownMenuItem
+          render={<a href={item.url} target="_blank" rel="noreferrer" />}
+        >
+          <ArrowSquareOutIcon data-icon="inline-start" />
+          View
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href={getMediaDownloadUrl(item)}>
-            <DownloadSimpleIcon data-icon="inline-start" />
-            Download
-          </a>
+        <DropdownMenuItem render={<a href={getMediaDownloadUrl(item)} />}>
+          <DownloadSimpleIcon data-icon="inline-start" />
+          Download
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"
           disabled={isPending}
-          onSelect={() => onDelete(item)}
+          onClick={() => onDelete(item)}
         >
           <TrashIcon data-icon="inline-start" />
           Delete
@@ -279,7 +279,7 @@ function MediaStatCard({
           {icon}
         </div>
         <div className="min-w-0">
-          <p className="font-heading text-xl font-bold">{value}</p>
+          <p className="font-heading font-bold text-xl">{value}</p>
           <p className="text-[11px] text-muted-foreground">{label}</p>
           <p className="mt-0.5 text-[10px] text-muted-foreground/80">
             {description}
@@ -305,22 +305,24 @@ function FilterDropdown<T extends string>({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="h-11 w-full min-w-0 justify-between rounded-2xl bg-input/35 px-3"
-        >
-          <span className="min-w-0 text-left">
-            <span className="block text-[10px] leading-none text-muted-foreground">
-              {label}
-            </span>
-            <span className="mt-1 block truncate text-xs font-medium">
-              {displayValue}
-            </span>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            className="justify-between bg-input/35 px-3 rounded-2xl w-full min-w-0 h-11"
+          />
+        }
+      >
+        <span className="min-w-0 text-left">
+          <span className="block text-[10px] text-muted-foreground leading-none">
+            {label}
           </span>
-          <CaretDownIcon className="ml-2 size-3.5 shrink-0 text-muted-foreground" />
-        </Button>
+          <span className="block mt-1 font-medium text-xs truncate">
+            {displayValue}
+          </span>
+        </span>
+        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuRadioGroup
@@ -346,12 +348,12 @@ function ViewToggle({
   onViewModeChange: (mode: ViewMode) => void;
 }) {
   return (
-    <div className="grid w-fit shrink-0 grid-cols-2 justify-self-end rounded-xl border border-border/60 bg-background/35 p-1">
+    <div className="justify-self-end grid grid-cols-2 bg-background/35 p-1 border border-border/60 rounded-xl w-fit shrink-0">
       <Button
         type="button"
         size="icon"
         variant={viewMode === "grid" ? "default" : "ghost"}
-        className="size-8 rounded-lg"
+        className="rounded-lg size-8"
         onClick={() => onViewModeChange("grid")}
         aria-label="Grid view"
         aria-pressed={viewMode === "grid"}
@@ -362,7 +364,7 @@ function ViewToggle({
         type="button"
         size="icon"
         variant={viewMode === "list" ? "default" : "ghost"}
-        className="size-8 rounded-lg"
+        className="rounded-lg size-8"
         onClick={() => onViewModeChange("list")}
         aria-label="List view"
         aria-pressed={viewMode === "list"}
@@ -374,6 +376,7 @@ function ViewToggle({
 }
 
 function MediaDetailDrawer({
+  children,
   item,
   direction,
   isPending,
@@ -382,8 +385,9 @@ function MediaDetailDrawer({
   onCopy,
   onDelete,
 }: {
+  children?: ReactNode;
   item: MediaItem | null;
-  direction: "bottom" | "right";
+  direction: "down" | "right";
   isPending: boolean;
   onClose: () => void;
   onRename: (item: MediaItem) => void;
@@ -403,7 +407,8 @@ function MediaDetailDrawer({
   return (
     <Drawer
       open={!!item}
-      direction={direction}
+      swipeDirection={direction}
+      showSwipeHandle
       onOpenChange={(open) => {
         if (!open) {
           onClose();
@@ -412,7 +417,7 @@ function MediaDetailDrawer({
     >
       <DrawerContent
         className={cn(
-          "overflow-hidden p-0",
+          "p-0 overflow-hidden",
           direction === "right"
             ? "h-dvh before:inset-y-0! before:right-0! before:left-0! before:rounded-l-4xl! before:rounded-r-none!"
             : "max-h-[86vh] before:inset-x-0! before:top-2! before:bottom-0! before:rounded-b-none!",
@@ -427,10 +432,10 @@ function MediaDetailDrawer({
         </DrawerHeader>
 
         {item && (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <div className="min-h-0 flex-1 scrollbar-none overflow-y-auto px-4 pt-7 pb-4">
+          <div className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 px-4 pt-7 pb-4 min-h-0 overflow-y-auto scrollbar-none">
               <div
-                className="relative w-full overflow-hidden rounded-2xl border border-border bg-muted/35"
+                className="relative bg-muted/35 border border-border rounded-2xl w-full overflow-hidden"
                 style={{ aspectRatio }}
               >
                 <Image
@@ -447,20 +452,20 @@ function MediaDetailDrawer({
               </div>
 
               <h2
-                className="mt-4 truncate font-heading text-xl leading-tight font-semibold"
+                className="mt-4 font-heading font-semibold text-xl truncate leading-tight"
                 title={item.filename}
               >
                 {item.filename}
               </h2>
-              <p className="mt-1 truncate text-sm text-muted-foreground">
+              <p className="mt-1 text-muted-foreground text-sm truncate">
                 {item.publicId}
               </p>
 
-              <div className="mt-4 grid gap-3 rounded-2xl border border-border/70 bg-card/50 p-3">
+              <div className="gap-3 grid bg-card/50 mt-4 p-3 border border-border/70 rounded-2xl">
                 {metadata.map((row) => (
                   <div
                     key={row.label}
-                    className="grid grid-cols-[96px_minmax(0,1fr)] gap-3 text-sm"
+                    className="gap-3 grid grid-cols-[96px_minmax(0,1fr)] text-sm"
                   >
                     <span className="text-muted-foreground">{row.label}</span>
                     <span className="font-medium wrap-anywhere">
@@ -472,7 +477,7 @@ function MediaDetailDrawer({
             </div>
 
             <DrawerFooter className="gap-2 px-4 pb-4">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="gap-2 grid grid-cols-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -481,11 +486,15 @@ function MediaDetailDrawer({
                   <PencilSimpleIcon data-icon="inline-start" />
                   Rename
                 </Button>
-                <Button type="button" variant="outline" asChild>
-                  <a href={getMediaDownloadUrl(item)}>
-                    <DownloadSimpleIcon data-icon="inline-start" />
-                    Download
-                  </a>
+                <Button
+                  role="link"
+                  type="button"
+                  variant="outline"
+                  render={<a href={getMediaDownloadUrl(item)} />}
+                  nativeButton={false}
+                >
+                  <DownloadSimpleIcon data-icon="inline-start" />
+                  Download
                 </Button>
               </div>
               <Button
@@ -498,15 +507,15 @@ function MediaDetailDrawer({
                 Copy URL
               </Button>
               <Button
+                role="link"
                 type="button"
                 variant="outline"
                 className="w-full"
-                asChild
+                render={<a href={item.url} target="_blank" rel="noreferrer" />}
+                nativeButton={false}
               >
-                <a href={item.url} target="_blank" rel="noreferrer">
-                  <ArrowSquareOutIcon data-icon="inline-start" />
-                  View
-                </a>
+                <ArrowSquareOutIcon data-icon="inline-start" />
+                View
               </Button>
               <Button
                 type="button"
@@ -522,6 +531,7 @@ function MediaDetailDrawer({
           </div>
         )}
       </DrawerContent>
+      {children}
     </Drawer>
   );
 }
@@ -550,7 +560,7 @@ function MediaCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl border bg-background/45 transition-colors hover:border-brand-soft/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30",
+        "group relative bg-background/45 border hover:border-brand-soft/40 focus-visible:border-ring rounded-2xl focus-visible:ring-3 focus-visible:ring-ring/30 overflow-hidden transition-colors",
         isSelectionMode ? "cursor-pointer" : "cursor-zoom-in",
         isSelected ? "border-primary/70" : "border-border/70",
       )}
@@ -577,7 +587,7 @@ function MediaCard({
         }
       }}
     >
-      <div className="relative aspect-square overflow-hidden bg-muted/35">
+      <div className="relative bg-muted/35 aspect-square overflow-hidden">
         <Image
           src={item.url}
           alt={item.filename}
@@ -587,7 +597,7 @@ function MediaCard({
         />
         <div
           className={cn(
-            "absolute top-3 left-3 transition-opacity",
+            "top-3 left-3 absolute transition-opacity",
             isSelectionMode || isSelected
               ? "opacity-100"
               : "opacity-0 group-hover:opacity-100",
@@ -598,11 +608,11 @@ function MediaCard({
             checked={isSelected}
             onCheckedChange={() => onToggleSelection(item)}
             aria-label={`Select ${item.filename}`}
-            className="border-border/70 bg-background/80 backdrop-blur"
+            className="bg-background/80 backdrop-blur border-border/70"
           />
         </div>
         <div
-          className="absolute top-3 right-3 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+          className="top-3 right-3 absolute opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity"
           onClick={(event) => event.stopPropagation()}
         >
           <MediaActionsMenu
@@ -617,10 +627,10 @@ function MediaCard({
       </div>
 
       <div className="space-y-1 p-3">
-        <p className="truncate text-xs font-medium" title={item.filename}>
+        <p className="font-medium text-xs truncate" title={item.filename}>
           {item.filename}
         </p>
-        <div className="flex min-w-0 items-center gap-1.5 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-1.5 min-w-0 text-[10px] text-muted-foreground">
           <FormatBadge format={item.format} />
           <span className="shrink-0">{formatBytes(item.size)}</span>
           <span aria-hidden="true">·</span>
@@ -659,7 +669,7 @@ function MediaListRow({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/20 xl:grid xl:items-center",
+        "flex flex-col xl:items-center gap-3 xl:grid hover:bg-muted/20 px-3 py-3 min-w-0 text-left transition-colors",
         isSelectionMode
           ? "xl:grid-cols-[24px_minmax(0,1fr)_110px_120px_130px_92px]"
           : "xl:grid-cols-[minmax(0,1fr)_110px_120px_130px_92px]",
@@ -690,7 +700,7 @@ function MediaListRow({
     >
       {isSelectionMode && (
         <div
-          className="flex items-center xl:justify-center"
+          className="flex xl:justify-center items-center"
           onClick={(event) => event.stopPropagation()}
         >
           <Checkbox
@@ -700,8 +710,8 @@ function MediaListRow({
           />
         </div>
       )}
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-xl border border-border/50 bg-muted/35">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="relative bg-muted/35 border border-border/50 rounded-xl w-20 h-14 overflow-hidden shrink-0">
           <Image
             src={item.url}
             alt={item.filename}
@@ -711,10 +721,10 @@ function MediaListRow({
           />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium" title={item.filename}>
+          <p className="font-medium text-sm truncate" title={item.filename}>
             {item.filename}
           </p>
-          <p className="mt-1 truncate text-xs text-muted-foreground">
+          <p className="mt-1 text-muted-foreground text-xs truncate">
             {item.publicId}
           </p>
         </div>
@@ -722,14 +732,14 @@ function MediaListRow({
       <div className="hidden xl:block">
         <FormatBadge format={item.format} />
       </div>
-      <div className="hidden text-sm text-muted-foreground xl:block">
+      <div className="hidden xl:block text-muted-foreground text-sm">
         {formatBytes(item.size)}
       </div>
-      <div className="hidden text-sm text-muted-foreground xl:block">
+      <div className="hidden xl:block text-muted-foreground text-sm">
         {getDimensions(item)}
       </div>
-      <div className="flex min-w-0 items-center justify-between gap-3 xl:hidden">
-        <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <div className="xl:hidden flex justify-between items-center gap-3 min-w-0">
+        <div className="flex flex-wrap items-center gap-2 min-w-0 text-muted-foreground text-xs">
           <FormatBadge format={item.format} />
           <span className="shrink-0">{formatBytes(item.size)}</span>
           <span aria-hidden="true">·</span>
@@ -747,7 +757,7 @@ function MediaListRow({
         </div>
       </div>
       <div
-        className="hidden justify-end gap-1 xl:flex xl:justify-end"
+        className="hidden xl:flex justify-end xl:justify-end gap-1"
         onClick={(e) => e.stopPropagation()}
       >
         <MediaActionsMenu
@@ -785,12 +795,12 @@ function MediaPagination({
   onItemsPerPageChange: (value: number) => void;
 }) {
   const pageControls = (
-    <div className="flex items-center justify-center gap-1">
+    <div className="flex justify-center items-center gap-1">
       <Button
         type="button"
         size="icon"
         variant="outline"
-        className="size-8 rounded-xl"
+        className="rounded-xl size-8"
         disabled={page <= 1}
         onClick={() => onPageChange(Math.max(1, page - 1))}
         aria-label="Previous page"
@@ -806,7 +816,7 @@ function MediaPagination({
             type="button"
             size="icon"
             variant={pageNumber === page ? "default" : "outline"}
-            className="size-8 rounded-xl"
+            className="rounded-xl size-8"
             onClick={() => onPageChange(pageNumber)}
             aria-current={pageNumber === page ? "page" : undefined}
           >
@@ -818,7 +828,7 @@ function MediaPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="size-8 rounded-xl"
+        className="rounded-xl size-8"
         disabled={page >= pageCount}
         onClick={() => onPageChange(Math.min(pageCount, page + 1))}
         aria-label="Next page"
@@ -829,8 +839,8 @@ function MediaPagination({
   );
 
   return (
-    <div className="mt-4 grid gap-3 text-sm text-muted-foreground md:grid-cols-[1fr_auto_1fr] md:items-center">
-      <div className="flex items-center justify-between md:contents">
+    <div className="md:items-center gap-3 grid md:grid-cols-[1fr_auto_1fr] mt-4 text-muted-foreground text-sm">
+      <div className="md:contents flex justify-between items-center">
         <p className="md:hidden">
           {firstIndex}-{lastIndex} of {total}
         </p>
@@ -847,7 +857,7 @@ function MediaPagination({
         </div>
       </div>
       <div className="md:col-start-2">{pageControls}</div>
-      <div className="hidden justify-end md:flex">
+      <div className="hidden md:flex justify-end">
         <MediaItemsPerPageDropdown
           value={itemsPerPage}
           options={itemsPerPageOptions}
@@ -873,19 +883,21 @@ function MediaItemsPerPageDropdown({
   return (
     <div className="flex items-center gap-2">
       {showLabel && (
-        <span className="text-sm text-muted-foreground">Items per page</span>
+        <span className="text-muted-foreground text-sm">Items per page</span>
       )}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="rounded-xl bg-input/35"
-          >
-            {value}
-            <CaretDownIcon className="size-3.5" />
-          </Button>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="bg-input/35 rounded-xl"
+            />
+          }
+        >
+          {value}
+          <CaretDownIcon className="size-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-24">
           <DropdownMenuRadioGroup
@@ -926,8 +938,8 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
     null,
   );
   const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false);
-  const [drawerDirection, setDrawerDirection] = useState<"bottom" | "right">(
-    "bottom",
+  const [drawerDirection, setDrawerDirection] = useState<"down" | "right">(
+    "down",
   );
   const [isPending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -937,7 +949,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
     const mediaQuery = window.matchMedia("(min-width: 768px)");
 
     const syncDrawerDirection = () => {
-      setDrawerDirection(mediaQuery.matches ? "right" : "bottom");
+      setDrawerDirection(mediaQuery.matches ? "right" : "down");
     };
 
     syncDrawerDirection();
@@ -966,12 +978,15 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
 
   const uploadFile = useCallback(async (file: File) => {
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      toast.error("Invalid file type. Use jpg, png, webp, or gif.");
+      toast.add({
+        title: "Invalid file type. Use jpg, png, webp, or gif.",
+        type: "error",
+      });
       return;
     }
 
     if (file.size > MAX_SIZE) {
-      toast.error("File too large. Maximum 10MB.");
+      toast.add({ title: "File too large. Maximum 10MB.", type: "error" });
       return;
     }
 
@@ -994,9 +1009,12 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
         },
         ...prev,
       ]);
-      toast.success("Image uploaded successfully");
+      toast.add({ title: "Image uploaded successfully", type: "success" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
+      toast.add({
+        title: err instanceof Error ? err.message : "Upload failed",
+        type: "error",
+      });
     } finally {
       setIsUploading(false);
     }
@@ -1040,15 +1058,10 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
 
   const handleCopyUrl = useCallback((url: string) => {
     navigator.clipboard.writeText(url);
-    toast.success("URL copied to clipboard");
+    toast.add({ title: "URL copied to clipboard", type: "success" });
   }, []);
 
-  const blurActiveElementBeforeOpen = useCallback((open: () => void) => {
-    const activeElement = document.activeElement;
-    if (activeElement instanceof HTMLElement) {
-      activeElement.blur();
-    }
-
+  const scheduleOverlayOpen = useCallback((open: () => void) => {
     const schedule =
       typeof requestAnimationFrame === "function"
         ? requestAnimationFrame
@@ -1059,26 +1072,26 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
 
   const openMediaDetails = useCallback(
     (item: MediaItem) => {
-      blurActiveElementBeforeOpen(() => setSelectedMedia(item));
+      scheduleOverlayOpen(() => setSelectedMedia(item));
     },
-    [blurActiveElementBeforeOpen],
+    [scheduleOverlayOpen],
   );
 
   const openDeleteDialog = useCallback(
     (item: MediaItem) => {
-      blurActiveElementBeforeOpen(() => setDeleteTarget(item));
+      scheduleOverlayOpen(() => setDeleteTarget(item));
     },
-    [blurActiveElementBeforeOpen],
+    [scheduleOverlayOpen],
   );
 
   const openRenameDialog = useCallback(
     (item: MediaItem) => {
-      blurActiveElementBeforeOpen(() => {
+      scheduleOverlayOpen(() => {
         setRenameTarget(item);
         setRenameValue(item.filename);
       });
     },
-    [blurActiveElementBeforeOpen],
+    [scheduleOverlayOpen],
   );
 
   const closeRenameDialog = useCallback(() => {
@@ -1115,9 +1128,9 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
             current?.id === mediaId ? { ...current, filename } : current,
           );
           closeRenameDialog();
-          toast.success("Media renamed");
+          toast.add({ title: "Media renamed", type: "success" });
         } else {
-          toast.error(result.error);
+          toast.add({ title: result.error, type: "error" });
         }
       });
     },
@@ -1154,7 +1167,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
     const ids = Array.from(selectedIds);
 
     if (ids.length === 0) {
-      toast.error("Select media to delete first");
+      toast.add({ title: "Select media to delete first", type: "error" });
       return;
     }
 
@@ -1165,7 +1178,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
         setBatchPreview(result.data ?? { canDelete: [], blocked: [] });
         setIsBatchDialogOpen(true);
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   }, [selectedIds]);
@@ -1196,9 +1209,12 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
         setBatchPreview(null);
         setIsBatchDialogOpen(false);
         setIsSelectionMode(false);
-        toast.success(`${deletedIds.size} media deleted`);
+        toast.add({
+          title: `${deletedIds.size} media deleted`,
+          type: "success",
+        });
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
     });
   }, [batchPreview]);
@@ -1222,9 +1238,9 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
         setSelectedMedia((current) =>
           current?.id === targetId ? null : current,
         );
-        toast.success("Media deleted");
+        toast.add({ title: "Media deleted", type: "success" });
       } else {
-        toast.error(result.error);
+        toast.add({ title: result.error, type: "error" });
       }
       setDeleteTarget(null);
     });
@@ -1330,10 +1346,10 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
 
   return (
     <div className={dashboardStyles.page}>
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex justify-between items-start gap-4">
         <div className="min-w-0">
-          <h1 className="font-heading text-3xl font-bold">Media Library</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+          <h1 className="font-heading font-bold text-3xl">Media Library</h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
             Upload, inspect, copy, and manage image assets used across Storylio.
           </p>
         </div>
@@ -1341,7 +1357,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
           onClick={() => inputRef.current?.click()}
           disabled={isUploading}
           size="icon"
-          className="size-10 shrink-0 rounded-full md:h-9 md:w-auto md:rounded-3xl md:px-4"
+          className="md:px-4 rounded-full md:rounded-3xl md:w-auto md:h-9 size-10 shrink-0"
         >
           <CloudArrowUpIcon data-icon="inline-start" />
           <span className="sr-only md:not-sr-only">Upload</span>
@@ -1390,22 +1406,22 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
 
       <Card className={dashboardStyles.toolbarCard}>
         <CardContent className={dashboardStyles.toolbarContent}>
-          <div className="grid gap-3 xl:grid-cols-[minmax(240px,1fr)_auto] xl:items-center">
+          <div className="xl:items-center gap-3 grid xl:grid-cols-[minmax(240px,1fr)_auto]">
             <div className="relative min-w-0">
-              <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
               <Input
                 ref={searchInputRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search media..."
-                className="h-11 rounded-2xl bg-input/45 pr-14 pl-9"
+                className="bg-input/45 pr-14 pl-9 rounded-2xl h-11"
                 aria-label="Search media"
               />
-              <Kbd className="absolute top-1/2 right-2 -translate-y-1/2 border border-border/50 bg-background/60">
+              <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
                 ⌘ K
               </Kbd>
             </div>
-            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2">
+            <div className="items-center gap-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] min-w-0">
               <div className="min-w-0">
                 <FilterDropdown
                   label="Format"
@@ -1453,7 +1469,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
               }
             }}
             className={cn(
-              "mb-4 hidden cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed p-5 transition-all duration-200 md:flex",
+              "hidden md:flex flex-col justify-center items-center gap-2 mb-4 p-5 border border-dashed rounded-2xl transition-all duration-200 cursor-pointer",
               isDragging
                 ? "border-primary bg-primary/5 shadow-[0_0_24px_-4px] shadow-primary/20"
                 : "border-border hover:border-primary/50 hover:bg-muted/20",
@@ -1464,17 +1480,17 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
           >
             {isUploading ? (
               <>
-                <CloudArrowUpIcon className="size-8 animate-pulse text-primary" />
-                <p className="text-sm text-muted-foreground">Uploading...</p>
+                <CloudArrowUpIcon className="size-8 text-primary animate-pulse" />
+                <p className="text-muted-foreground text-sm">Uploading...</p>
               </>
             ) : (
               <>
                 <ImageIcon className="size-8 text-muted-foreground" />
                 <div className="text-center">
-                  <p className="text-sm font-medium">
+                  <p className="font-medium text-sm">
                     Drop an image here or click to upload
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-muted-foreground text-xs">
                     JPG, PNG, WebP, GIF — max 10MB
                   </p>
                 </div>
@@ -1483,14 +1499,14 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
           </div>
 
           {media.length > 0 && (
-            <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-border/70 bg-background/35 p-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex md:flex-row flex-col md:justify-between md:items-center gap-3 bg-background/35 mb-4 p-3 border border-border/70 rounded-2xl">
               <div className="min-w-0">
-                <p className="text-sm font-medium">
+                <p className="font-medium text-sm">
                   {isSelectionMode
                     ? `${selectedCount} selected`
                     : "Batch actions"}
                 </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 text-muted-foreground text-xs">
                   Select media first. Delete checks usage before removing files.
                 </p>
               </div>
@@ -1544,7 +1560,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
             <div className={dashboardStyles.emptyState}>
               <ImageIcon className="size-16 text-muted-foreground/40" />
               <p className="font-medium">No media uploaded yet</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Upload your first image to get started.
               </p>
             </div>
@@ -1552,12 +1568,12 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
             <div className={dashboardStyles.emptyState}>
               <MagnifyingGlassIcon className="size-12 text-muted-foreground/50" />
               <p className="font-medium">No media found</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Adjust search or format filters.
               </p>
             </div>
           ) : viewMode === "grid" ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="gap-4 grid sm:grid-cols-2 xl:grid-cols-4">
               {paginatedMedia.map((item) => (
                 <MediaCard
                   key={item.id}
@@ -1634,160 +1650,163 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
         onRename={openRenameDialog}
         onCopy={handleCopyUrl}
         onDelete={openDeleteDialog}
-      />
-
-      <Dialog
-        open={!!renameTarget}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeRenameDialog();
-          }
-        }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename media</DialogTitle>
-            <DialogDescription>
-              Update the library file name. This does not rename the Cloudinary
-              asset or change the image URL.
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            id="media-rename-form"
-            className="space-y-2"
-            onSubmit={handleRename}
-          >
-            <Label htmlFor="media-filename">File name</Label>
-            <Input
-              id="media-filename"
-              value={renameValue}
-              onChange={(event) => setRenameValue(event.target.value)}
-              maxLength={160}
-              autoFocus
-            />
-          </form>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={closeRenameDialog}
-              disabled={isPending}
+        <Dialog
+          open={!!renameTarget}
+          onOpenChange={(open) => {
+            if (!open) {
+              closeRenameDialog();
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rename media</DialogTitle>
+              <DialogDescription>
+                Update the library file name. This does not rename the
+                Cloudinary asset or change the image URL.
+              </DialogDescription>
+            </DialogHeader>
+            <form
+              id="media-rename-form"
+              className="space-y-2"
+              onSubmit={handleRename}
             >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              form="media-rename-form"
-              disabled={isPending || renameValue.trim().length === 0}
-            >
-              {isPending ? "Saving..." : "Save name"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <Label htmlFor="media-filename">File name</Label>
+              <Input
+                id="media-filename"
+                value={renameValue}
+                onChange={(event) => setRenameValue(event.target.value)}
+                maxLength={160}
+                autoFocus
+              />
+            </form>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={closeRenameDialog}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                form="media-rename-form"
+                disabled={isPending || renameValue.trim().length === 0}
+              >
+                {isPending ? "Saving..." : "Save name"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      <AlertDialog
-        open={isBatchDialogOpen}
-        onOpenChange={(open: boolean) => {
-          setIsBatchDialogOpen(open);
-          if (!open) {
-            setBatchPreview(null);
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete selected media?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Storylio checked where each selected image is used. Media still
-              referenced by content will be skipped until those references are
-              removed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+        <AlertDialog
+          open={isBatchDialogOpen}
+          onOpenChange={(open: boolean) => {
+            setIsBatchDialogOpen(open);
+            if (!open) {
+              setBatchPreview(null);
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete selected media?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Storylio checked where each selected image is used. Media still
+                referenced by content will be skipped until those references are
+                removed.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
 
-          {batchPreview && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3">
-                  <p className="font-heading text-2xl font-bold text-emerald-300">
-                    {canDeleteCount}
-                  </p>
-                  <p className="text-xs text-emerald-100/80">Can delete</p>
+            {batchPreview && (
+              <div className="space-y-4">
+                <div className="gap-3 grid grid-cols-2">
+                  <div className="bg-emerald-500/10 p-3 border border-emerald-500/20 rounded-2xl">
+                    <p className="font-heading font-bold text-emerald-300 text-2xl">
+                      {canDeleteCount}
+                    </p>
+                    <p className="text-emerald-100/80 text-xs">Can delete</p>
+                  </div>
+                  <div className="bg-amber-500/10 p-3 border border-amber-500/20 rounded-2xl">
+                    <p className="font-heading font-bold text-amber-300 text-2xl">
+                      {blockedCount}
+                    </p>
+                    <p className="text-amber-100/80 text-xs">Still in use</p>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3">
-                  <p className="font-heading text-2xl font-bold text-amber-300">
-                    {blockedCount}
-                  </p>
-                  <p className="text-xs text-amber-100/80">Still in use</p>
-                </div>
+
+                {batchPreview.blocked.length > 0 && (
+                  <div className="space-y-2 bg-background/35 p-3 border border-border/70 rounded-2xl max-h-48 overflow-y-auto scrollbar-none">
+                    {batchPreview.blocked.map((item) => (
+                      <div key={item.id} className="min-w-0 text-sm">
+                        <p
+                          className="font-medium truncate"
+                          title={item.filename}
+                        >
+                          {item.filename}
+                        </p>
+                        <p className="mt-1 text-muted-foreground text-xs">
+                          Used by {formatReferenceSummary(item.references)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
+            )}
 
-              {batchPreview.blocked.length > 0 && (
-                <div className="max-h-48 scrollbar-none space-y-2 overflow-y-auto rounded-2xl border border-border/70 bg-background/35 p-3">
-                  {batchPreview.blocked.map((item) => (
-                    <div key={item.id} className="min-w-0 text-sm">
-                      <p className="truncate font-medium" title={item.filename}>
-                        {item.filename}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Used by {formatReferenceSummary(item.references)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleBatchDelete}
+                disabled={isPending || canDeleteCount === 0}
+                variant="destructive"
+              >
+                {isPending
+                  ? "Deleting..."
+                  : canDeleteCount > 0
+                    ? `Delete ${canDeleteCount} media`
+                    : "Nothing to delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBatchDelete}
-              disabled={isPending || canDeleteCount === 0}
-              variant="destructive"
-            >
-              {isPending
-                ? "Deleting..."
-                : canDeleteCount > 0
-                  ? `Delete ${canDeleteCount} media`
-                  : "Nothing to delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(open: boolean) => {
-          if (!open) setDeleteTarget(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete media?</AlertDialogTitle>
-            <AlertDialogDescription>
-              If this image is not used by CMS content, this will permanently
-              delete{" "}
-              <span className="font-medium text-foreground">
-                {deleteTarget?.filename}
-              </span>{" "}
-              from Cloudinary and the database. Images still in use cannot be
-              deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isPending}
-              variant="destructive"
-            >
-              {isPending ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog
+          open={!!deleteTarget}
+          onOpenChange={(open: boolean) => {
+            if (!open) setDeleteTarget(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete media?</AlertDialogTitle>
+              <AlertDialogDescription>
+                If this image is not used by CMS content, this will permanently
+                delete{" "}
+                <span className="font-medium text-foreground">
+                  {deleteTarget?.filename}
+                </span>{" "}
+                from Cloudinary and the database. Images still in use cannot be
+                deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                disabled={isPending}
+                variant="destructive"
+              >
+                {isPending ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </MediaDetailDrawer>
     </div>
   );
 }

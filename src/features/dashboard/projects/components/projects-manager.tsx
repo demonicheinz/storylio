@@ -48,7 +48,6 @@ import {
   useState,
   useTransition,
 } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -76,6 +75,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
@@ -85,6 +85,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
+import { toast } from "@/components/ui/toast";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
 import type { ActionResult } from "@/lib/action-result";
@@ -278,22 +279,24 @@ function FilterDropdown<T extends string>({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
-        >
-          <span className="min-w-0 text-left">
-            <span className="block text-[10px] text-muted-foreground leading-none">
-              {label}
-            </span>
-            <span className="block mt-1 font-medium text-xs truncate">
-              {displayValue}
-            </span>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
+          />
+        }
+      >
+        <span className="min-w-0 text-left">
+          <span className="block text-[10px] text-muted-foreground leading-none">
+            {label}
           </span>
-          <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-        </Button>
+          <span className="block mt-1 font-medium text-xs truncate">
+            {displayValue}
+          </span>
+        </span>
+        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuRadioGroup
@@ -324,43 +327,47 @@ function TechStackDropdown({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
-        >
-          <span className="min-w-0 text-left">
-            <span className="block text-[10px] text-muted-foreground leading-none">
-              Tech stack
-            </span>
-            <span className="block mt-1 font-medium text-xs truncate">
-              {selectedTechStacks.length === 0
-                ? "All Tech"
-                : `${selectedTechStacks.length} selected`}
-            </span>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
+          />
+        }
+      >
+        <span className="min-w-0 text-left">
+          <span className="block text-[10px] text-muted-foreground leading-none">
+            Tech stack
           </span>
-          <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-        </Button>
+          <span className="block mt-1 font-medium text-xs truncate">
+            {selectedTechStacks.length === 0
+              ? "All Tech"
+              : `${selectedTechStacks.length} selected`}
+          </span>
+        </span>
+        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-60">
-        <DropdownMenuLabel>Filter by tech stack</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={onClear}>All Tech</DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {techStacks.length === 0 ? (
-          <DropdownMenuItem disabled>No tech stack yet</DropdownMenuItem>
-        ) : (
-          techStacks.map((techStack) => (
-            <DropdownMenuCheckboxItem
-              key={techStack}
-              checked={selectedTechStacks.includes(techStack)}
-              onCheckedChange={() => onToggleTechStack(techStack)}
-              onSelect={(event) => event.preventDefault()}
-            >
-              {techStack}
-            </DropdownMenuCheckboxItem>
-          ))
-        )}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Filter by tech stack</DropdownMenuLabel>
+          <DropdownMenuItem onClick={onClear}>All Tech</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {techStacks.length === 0 ? (
+            <DropdownMenuItem disabled>No tech stack yet</DropdownMenuItem>
+          ) : (
+            techStacks.map((techStack) => (
+              <DropdownMenuCheckboxItem
+                key={techStack}
+                checked={selectedTechStacks.includes(techStack)}
+                onCheckedChange={() => onToggleTechStack(techStack)}
+                closeOnClick={false}
+              >
+                {techStack}
+              </DropdownMenuCheckboxItem>
+            ))
+          )}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -442,47 +449,51 @@ function ProjectActions({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
-          aria-label={`Open actions for ${project.title}`}
-        >
-          <DotsThreeVerticalIcon />
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
+            aria-label={`Open actions for ${project.title}`}
+          />
+        }
+      >
+        <DotsThreeVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="w-44">
-        <DropdownMenuLabel>Project</DropdownMenuLabel>
-        {isPublished(project) && (
-          <DropdownMenuItem asChild>
-            <Link href={`/projects/${project.slug}`} target="_blank">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Project</DropdownMenuLabel>
+          {isPublished(project) && (
+            <DropdownMenuItem
+              render={
+                <Link href={`/projects/${project.slug}`} target="_blank" />
+              }
+            >
               <ArrowSquareOutIcon data-icon="inline-start" />
               Preview
-            </Link>
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem asChild>
-          <Link href={`/dashboard/projects/${project.id}/edit`}>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            render={<Link href={`/dashboard/projects/${project.id}/edit`} />}
+          >
             <PencilSimpleIcon data-icon="inline-start" />
             Edit
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <ProjectDeleteButton
-          projectId={project.id}
-          title={project.title}
-          trigger={
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={(event) => event.preventDefault()}
-            >
-              <TrashIcon data-icon="inline-start" />
-              Delete
-            </DropdownMenuItem>
-          }
-        />
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <ProjectDeleteButton
+            triggerNativeButton={false}
+            projectId={project.id}
+            title={project.title}
+            trigger={
+              <DropdownMenuItem variant="destructive" closeOnClick={false}>
+                <TrashIcon data-icon="inline-start" />
+                Delete
+              </DropdownMenuItem>
+            }
+          />
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -807,13 +818,16 @@ function ProjectsList({
       );
 
       if (result.success) {
-        toast.success(result.message ?? "Project order updated.");
+        toast.add({
+          title: result.message ?? "Project order updated.",
+          type: "success",
+        });
         router.refresh();
         return;
       }
 
       onReorder(projects);
-      toast.error(result.error);
+      toast.add({ title: result.error, type: "error" });
     });
   };
 
@@ -1006,16 +1020,18 @@ function ItemsPerPageDropdown({
         <span className="text-muted-foreground text-sm">Items per page</span>
       )}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="bg-input/35 rounded-xl"
-          >
-            {value}
-            <CaretDownIcon className="size-3.5" />
-          </Button>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="bg-input/35 rounded-xl"
+            />
+          }
+        >
+          {value}
+          <CaretDownIcon className="size-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-24">
           <DropdownMenuRadioGroup
@@ -1082,17 +1098,19 @@ function ProjectsBatchActionsBar({
           Move to draft
         </Button>
         <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              className="rounded-xl"
-              disabled={isPending || selectedCount === 0}
-            >
-              <TrashIcon data-icon="inline-start" />
-              Delete
-            </Button>
+          <AlertDialogTrigger
+            render={
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                className="rounded-xl"
+                disabled={isPending || selectedCount === 0}
+              />
+            }
+          >
+            <TrashIcon data-icon="inline-start" />
+            Delete
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -1400,13 +1418,16 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
       const result = await action(projectIds);
 
       if (result.success) {
-        toast.success(result.message ?? fallbackMessage);
+        toast.add({
+          title: result.message ?? fallbackMessage,
+          type: "success",
+        });
         clearSelection();
         router.refresh();
         return;
       }
 
-      toast.error(result.error);
+      toast.add({ title: result.error, type: "error" });
     });
   };
 
@@ -1444,14 +1465,14 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
           </p>
         </div>
         <Button
-          asChild
+          role="link"
+          render={<Link href="/dashboard/projects/new" />}
+          nativeButton={false}
           size="icon"
           className="md:px-4 rounded-full md:rounded-3xl md:w-auto md:h-9 size-10 shrink-0"
         >
-          <Link href="/dashboard/projects/new">
-            <PlusIcon data-icon="inline-start" />
-            <span className="sr-only md:not-sr-only">New Project</span>
-          </Link>
+          <PlusIcon data-icon="inline-start" />
+          <span className="sr-only md:not-sr-only">New Project</span>
         </Button>
       </div>
 
@@ -1656,11 +1677,13 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               Adjust the filters or create a new portfolio entry.
             </p>
           </div>
-          <Button asChild>
-            <Link href="/dashboard/projects/new">
-              <PlusIcon data-icon="inline-start" />
-              New Project
-            </Link>
+          <Button
+            role="link"
+            render={<Link href="/dashboard/projects/new" />}
+            nativeButton={false}
+          >
+            <PlusIcon data-icon="inline-start" />
+            New Project
           </Button>
         </div>
       ) : (
@@ -1714,7 +1737,8 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
       <Drawer
         open={filtersOpen}
         onOpenChange={handleFiltersOpenChange}
-        direction="bottom"
+        swipeDirection="down"
+        showSwipeHandle
       >
         <DrawerContent className="before:top-2 before:bottom-0 before:inset-x-0 p-0 before:rounded-t-4xl before:rounded-b-none">
           <DrawerHeader>
