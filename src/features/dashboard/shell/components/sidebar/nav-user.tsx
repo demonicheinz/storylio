@@ -87,25 +87,27 @@ export function NavUser({ user }: { user: User }) {
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="rounded-xl">
-                <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                <AvatarFallback className="rounded-xl">
-                  {currentUser.name?.slice(0, 2).toUpperCase() || "US"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 grid text-sm text-left leading-tight">
-                <span className="font-medium truncate">{currentUser.name}</span>
-                <span className="text-sidebar-foreground/70 text-xs truncate">
-                  {currentUser.email}
-                </span>
-              </div>
-              <CaretUpDownIcon className="ml-auto" />
-            </SidebarMenuButton>
+          <DropdownMenuTrigger
+            render={
+              <SidebarMenuButton
+                size="lg"
+                className="data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
+              />
+            }
+          >
+            <Avatar className="rounded-xl">
+              <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+              <AvatarFallback className="rounded-xl">
+                {currentUser.name?.slice(0, 2).toUpperCase() || "US"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 grid text-sm text-left leading-tight">
+              <span className="font-medium truncate">{currentUser.name}</span>
+              <span className="text-sidebar-foreground/70 text-xs truncate">
+                {currentUser.email}
+              </span>
+            </div>
+            <CaretUpDownIcon className="ml-auto" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="rounded-lg min-w-56"
@@ -113,47 +115,43 @@ export function NavUser({ user }: { user: User }) {
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-sm text-left">
-                <Avatar className="rounded-xl">
-                  <AvatarImage
-                    src={currentUser.avatar}
-                    alt={currentUser.name}
-                  />
-                  <AvatarFallback className="rounded-xl">
-                    {currentUser.name?.slice(0, 2).toUpperCase() || "US"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 grid text-sm text-left leading-tight">
-                  <span className="font-medium truncate">
-                    {currentUser.name}
-                  </span>
-                  <span className="text-muted-foreground text-xs truncate">
-                    {currentUser.email}
-                  </span>
-                </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link href="/" target="_blank">
-                  <ArrowSquareOutIcon />
-                  View Site
-                </Link>
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-sm text-left">
+                  <Avatar className="rounded-xl">
+                    <AvatarImage
+                      src={currentUser.avatar}
+                      alt={currentUser.name}
+                    />
+                    <AvatarFallback className="rounded-xl">
+                      {currentUser.name?.slice(0, 2).toUpperCase() || "US"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 grid text-sm text-left leading-tight">
+                    <span className="font-medium truncate">
+                      {currentUser.name}
+                    </span>
+                    <span className="text-muted-foreground text-xs truncate">
+                      {currentUser.email}
+                    </span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/" target="_blank" />}>
+                <ArrowSquareOutIcon />
+                View Site
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/settings">
-                  <GearIcon />
-                  Settings
-                </Link>
+              <DropdownMenuItem render={<Link href="/dashboard/settings" />}>
+                <GearIcon />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} variant="destructive">
+                <SignOutIcon />
+                Sign out
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={handleLogout} variant="destructive">
-              <SignOutIcon />
-              Sign out
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

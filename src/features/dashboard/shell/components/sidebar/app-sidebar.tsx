@@ -84,24 +84,26 @@ function AppSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lg" tooltip="Storylio">
-              <Link href="/dashboard">
-                <div className="flex justify-center items-center rounded-xl size-9 aspect-square">
-                  <Image
-                    src="/images/logo.png"
-                    alt="Logo"
-                    width={28}
-                    height={28}
-                    className="size-7 object-contain"
-                    priority
-                  />
-                </div>
-                <div className="flex-1 grid text-left leading-tight">
-                  <span className="font-heading font-semibold text-[15px] truncate">
-                    Storylio
-                  </span>
-                </div>
-              </Link>
+            <SidebarMenuButton
+              render={<Link href="/dashboard" />}
+              size="lg"
+              tooltip="Storylio"
+            >
+              <div className="flex justify-center items-center rounded-xl size-9 aspect-square">
+                <Image
+                  src="/images/logo.png"
+                  alt="Logo"
+                  width={28}
+                  height={28}
+                  className="size-7 object-contain"
+                  priority
+                />
+              </div>
+              <div className="flex-1 grid text-left leading-tight">
+                <span className="font-heading font-semibold text-[15px] truncate">
+                  Storylio
+                </span>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

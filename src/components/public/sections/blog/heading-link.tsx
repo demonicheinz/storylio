@@ -2,8 +2,8 @@
 
 import { LinkIcon } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
 type BlogHeadingLinkProps = {
@@ -28,9 +28,9 @@ export function BlogHeadingLink({
 
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Heading link copied.");
+      toast.add({ title: "Heading link copied.", type: "success" });
     } catch {
-      toast.error("Could not copy heading link.");
+      toast.add({ title: "Could not copy heading link.", type: "error" });
     }
   };
 

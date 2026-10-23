@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-23",
+  "baseUI": "^1.9.0",
+  "style": "base-luma",
+  "remainingRadixWrappers": [],
+  "fixtureShipped": false,
+  "baseline": {
+    "typecheck": "passed",
+    "buildPages": 35
+  },
+  "final": {
+    "vitestTests": 55,
+    "vitestFiles": 10,
+    "buildPages": 35,
+    "lint": "passed",
+    "frozenInstall": "passed",
+    "uiFixtureDesktopMobile": "passed",
+    "drawerToastDesktopMobile": "passed"
+  },
+  "dependencyAudit": {
+    "knownHighAdvisories": 1,
+    "package": "braces",
+    "newAdvisories": 0
+  },
+  "limits": [
+    "No authenticated production CMS mutations tested",
+    "No real OAuth/WebAuthn ceremony tested"
+  ],
+  "nativeDrawer": true,
+  "nativeToast": true,
+  "removedDirectDependencies": ["radix-ui", "vaul", "sonner"]
+}

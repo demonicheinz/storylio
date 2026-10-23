@@ -58,21 +58,21 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                 return (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton
-                      asChild
+                      render={
+                        <Link
+                          href={item.url}
+                          onClick={() => {
+                            if (isMobile) {
+                              setOpenMobile(false);
+                            }
+                          }}
+                        />
+                      }
                       isActive={isActive}
                       tooltip={item.title}
                     >
-                      <Link
-                        href={item.url}
-                        onClick={() => {
-                          if (isMobile) {
-                            setOpenMobile(false);
-                          }
-                        }}
-                      >
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
+                      <item.icon />
+                      <span>{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

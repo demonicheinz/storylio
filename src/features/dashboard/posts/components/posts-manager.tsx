@@ -22,7 +22,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +49,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
+import { toast } from "@/components/ui/toast";
 import {
   actionDeletePosts,
   actionMovePostsToDraft,
@@ -253,22 +254,24 @@ function FilterDropdown<T extends string>({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
-        >
-          <span className="min-w-0 text-left">
-            <span className="block text-[10px] text-muted-foreground leading-none">
-              {label}
-            </span>
-            <span className="block mt-1 font-medium text-xs truncate">
-              {displayValue}
-            </span>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
+          />
+        }
+      >
+        <span className="min-w-0 text-left">
+          <span className="block text-[10px] text-muted-foreground leading-none">
+            {label}
           </span>
-          <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-        </Button>
+          <span className="block mt-1 font-medium text-xs truncate">
+            {displayValue}
+          </span>
+        </span>
+        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuRadioGroup
@@ -299,43 +302,47 @@ function TagDropdown({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
-        >
-          <span className="min-w-0 text-left">
-            <span className="block text-[10px] text-muted-foreground leading-none">
-              Tag
-            </span>
-            <span className="block mt-1 font-medium text-xs truncate">
-              {selectedTags.length === 0
-                ? "All Tags"
-                : `${selectedTags.length} selected`}
-            </span>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="outline"
+            className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
+          />
+        }
+      >
+        <span className="min-w-0 text-left">
+          <span className="block text-[10px] text-muted-foreground leading-none">
+            Tag
           </span>
-          <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-        </Button>
+          <span className="block mt-1 font-medium text-xs truncate">
+            {selectedTags.length === 0
+              ? "All Tags"
+              : `${selectedTags.length} selected`}
+          </span>
+        </span>
+        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-60">
-        <DropdownMenuLabel>Filter by tags</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={onClear}>All Tags</DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {tags.length === 0 ? (
-          <DropdownMenuItem disabled>No tags yet</DropdownMenuItem>
-        ) : (
-          tags.map((tag) => (
-            <DropdownMenuCheckboxItem
-              key={tag}
-              checked={selectedTags.includes(tag)}
-              onCheckedChange={() => onToggleTag(tag)}
-              onSelect={(event) => event.preventDefault()}
-            >
-              {tag}
-            </DropdownMenuCheckboxItem>
-          ))
-        )}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Filter by tags</DropdownMenuLabel>
+          <DropdownMenuItem onClick={onClear}>All Tags</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {tags.length === 0 ? (
+            <DropdownMenuItem disabled>No tags yet</DropdownMenuItem>
+          ) : (
+            tags.map((tag) => (
+              <DropdownMenuCheckboxItem
+                key={tag}
+                checked={selectedTags.includes(tag)}
+                onCheckedChange={() => onToggleTag(tag)}
+                closeOnClick={false}
+              >
+                {tag}
+              </DropdownMenuCheckboxItem>
+            ))
+          )}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -385,47 +392,49 @@ function PostActions({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
-          aria-label={`Open actions for ${post.title}`}
-        >
-          <DotsThreeVerticalIcon />
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
+            aria-label={`Open actions for ${post.title}`}
+          />
+        }
+      >
+        <DotsThreeVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="w-44">
-        <DropdownMenuLabel>Post</DropdownMenuLabel>
-        {isPublished(post) && (
-          <DropdownMenuItem asChild>
-            <Link href={`/blog/${post.slug}`} target="_blank">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Post</DropdownMenuLabel>
+          {isPublished(post) && (
+            <DropdownMenuItem
+              render={<Link href={`/blog/${post.slug}`} target="_blank" />}
+            >
               <EyeIcon data-icon="inline-start" />
               Preview
-            </Link>
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem asChild>
-          <Link href={`/dashboard/posts/${post.id}/edit`}>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            render={<Link href={`/dashboard/posts/${post.id}/edit`} />}
+          >
             <PencilSimpleIcon data-icon="inline-start" />
             Edit
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <PostDeleteButton
-          postId={post.id}
-          title={post.title}
-          trigger={
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={(event) => event.preventDefault()}
-            >
-              <TrashIcon data-icon="inline-start" />
-              Delete
-            </DropdownMenuItem>
-          }
-        />
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <PostDeleteButton
+            triggerNativeButton={false}
+            postId={post.id}
+            title={post.title}
+            trigger={
+              <DropdownMenuItem variant="destructive" closeOnClick={false}>
+                <TrashIcon data-icon="inline-start" />
+                Delete
+              </DropdownMenuItem>
+            }
+          />
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -773,17 +782,19 @@ function BatchActionsBar({
           Move to draft
         </Button>
         <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              className="rounded-xl"
-              disabled={isPending || selectedCount === 0}
-            >
-              <TrashIcon data-icon="inline-start" />
-              Delete
-            </Button>
+          <AlertDialogTrigger
+            render={
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                className="rounded-xl"
+                disabled={isPending || selectedCount === 0}
+              />
+            }
+          >
+            <TrashIcon data-icon="inline-start" />
+            Delete
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -934,16 +945,18 @@ function ItemsPerPageDropdown({
         <span className="text-muted-foreground text-sm">Items per page</span>
       )}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="bg-input/35 rounded-xl"
-          >
-            {value}
-            <CaretDownIcon className="size-3.5" />
-          </Button>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="bg-input/35 rounded-xl"
+            />
+          }
+        >
+          {value}
+          <CaretDownIcon className="size-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-24">
           <DropdownMenuRadioGroup
@@ -1241,13 +1254,16 @@ export function PostsManager({ posts }: PostsManagerProps) {
       const result = await action(postIds);
 
       if (result.success) {
-        toast.success(result.message ?? fallbackMessage);
+        toast.add({
+          title: result.message ?? fallbackMessage,
+          type: "success",
+        });
         clearSelection();
         router.refresh();
         return;
       }
 
-      toast.error(result.error);
+      toast.add({ title: result.error, type: "error" });
     });
   };
 
@@ -1280,14 +1296,14 @@ export function PostsManager({ posts }: PostsManagerProps) {
           </p>
         </div>
         <Button
-          asChild
+          role="link"
+          render={<Link href="/dashboard/posts/new" />}
+          nativeButton={false}
           size="icon"
           className="md:px-4 rounded-full md:rounded-3xl md:w-auto md:h-9 size-10 shrink-0"
         >
-          <Link href="/dashboard/posts/new">
-            <PlusIcon data-icon="inline-start" />
-            <span className="sr-only md:not-sr-only">New Post</span>
-          </Link>
+          <PlusIcon data-icon="inline-start" />
+          <span className="sr-only md:not-sr-only">New Post</span>
         </Button>
       </div>
 
@@ -1466,11 +1482,13 @@ export function PostsManager({ posts }: PostsManagerProps) {
               Adjust the filters or create a new article draft.
             </p>
           </div>
-          <Button asChild>
-            <Link href="/dashboard/posts/new">
-              <PlusIcon data-icon="inline-start" />
-              New Post
-            </Link>
+          <Button
+            role="link"
+            render={<Link href="/dashboard/posts/new" />}
+            nativeButton={false}
+          >
+            <PlusIcon data-icon="inline-start" />
+            New Post
           </Button>
         </div>
       ) : (
@@ -1510,7 +1528,8 @@ export function PostsManager({ posts }: PostsManagerProps) {
       <Drawer
         open={filtersOpen}
         onOpenChange={handleFiltersOpenChange}
-        direction="bottom"
+        swipeDirection="down"
+        showSwipeHandle
       >
         <DrawerContent className="before:top-2 before:bottom-0 before:inset-x-0 p-0 before:rounded-t-4xl before:rounded-b-none">
           <DrawerHeader>
