@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileAvatar } from "@/components/common/profile-avatar";
 import { cn } from "@/lib/utils";
 
 export interface Testimonial {
@@ -21,14 +21,6 @@ export interface InfiniteCardsProps {
   pauseOnHover?: boolean;
   className?: string;
 }
-
-const getInitials = (name: string) =>
-  name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
 export function InfiniteCards({
   clientItems,
@@ -163,12 +155,12 @@ function TestimonialCard({ item }: { item: Testimonial }) {
           &ldquo;{item.quote}&rdquo;
         </p>
         <div className="z-20 relative flex flex-row items-center gap-3 mt-auto pt-6">
-          <Avatar className="border-2 border-brand-soft/50 size-12">
-            {item.avatar ? (
-              <AvatarImage src={item.avatar} alt={`${item.name} avatar`} />
-            ) : null}
-            <AvatarFallback>{getInitials(item.name)}</AvatarFallback>
-          </Avatar>
+          <ProfileAvatar
+            src={item.avatar}
+            name={item.name}
+            size={48}
+            className="border-2 border-brand-soft/50"
+          />
           <span className="flex flex-col">
             <span className="font-semibold text-brand-soft/90 text-sm leading-[1.6]">
               {item.name}

@@ -33,6 +33,11 @@ colors:
   semantic-success: "oklch(0.75 0.14 155)"
   semantic-warning: "oklch(0.82 0.14 80)"
   semantic-error: "oklch(0.72 0.16 25)"
+  asset-ink-light: "#f2fbfe"
+  asset-ink-dark: "#000b27"
+  asset-accent: "#068ce6"
+  orb-wash-light: "#67c6f1"
+  orb-wash-dark: "#006c9b"
 
 typography:
   display-xl:
@@ -304,6 +309,25 @@ loading, empty, disabled, validation, and keyboard states during migration.
 New motion should respect reduced-motion preferences.
 
 ## Adoption status
+
+### Logos and avatars
+
+Logo artwork stays in `src/assets/logo/` as SVG files. `Logo` selects the dark
+or light artwork using the theme classes and keeps dimensions and alternative
+text consistent. The asset hex colors above are the fixed export colors used by
+the SVGs and the WebGL shader, which accepts hex input. The optional orb wash
+uses a blue ramp; the default orb remains monochrome.
+
+`ProfileAvatar` displays a supplied image when it loads, and uses `LiveOrb` for
+missing or failed images. Old URLs for the removed bundled portrait are treated
+as empty without making a request. The orb is static CSS by default: no canvas,
+WebGL context, theme observer, or animation loop. The large About profile opts
+into animation; reduced motion and unavailable WebGL retain a still fallback.
+Static automatic-theme orbs use foreground/background tokens directly, including
+the server-rendered frame.
+
+`public/images/` contains only `home-hero.avif`. Existing favicon files are
+managed separately in `src/app/` and `public/metadata/`.
 
 This update establishes tokens, shared heading styling, radii, selection/caret
 colors, quiet scrollbars, and semantic article callouts. It does not install the

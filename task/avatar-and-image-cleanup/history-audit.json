@@ -1,0 +1,63 @@
+{
+  "mirror": "D:\\GitHub\\storylio\\.tmp\\avatar-and-image-cleanup\\remote-clean.git",
+  "remote": "git@github.com:demonicheinz/storylio.git",
+  "remote_modified": true,
+  "branches": [
+    {
+      "ref": "refs/heads/main",
+      "before": "d1ca3484aafcf1deb05b1183d6fdd97d74d17d98",
+      "after": "aa64d793e30ecfb8a75b625388e8635bf931791c",
+      "tree_changes": ["delete public/images/heinz.jpg"]
+    },
+    {
+      "ref": "refs/heads/refactor/ui-base-ui",
+      "before": "d1ee406982ad9c1a17d9586bb6f075f0274c9b68",
+      "after": "6e8a4eb81ce621127bab5010359b9be9891df1b0",
+      "tree_changes": ["delete public/images/heinz.jpg"]
+    },
+    {
+      "ref": "refs/heads/staging",
+      "before": "37cdc82f65dac9361b00788b9741ff9675dfa78c",
+      "after": "1842aed908400ce51bd5814204110e6c946ed588",
+      "tree_changes": ["delete public/images/heinz.jpg"]
+    }
+  ],
+  "other_refs": 19,
+  "portrait_reachable": false,
+  "portrait_object_present": false,
+  "commit_map_rows": 167,
+  "publication": {
+    "authorized_by_user": true,
+    "attempted": true,
+    "result": "published",
+    "remote_refs_verified_match_cleaned_history": true,
+    "last_verified_date": "2026-10-25",
+    "previous_attempt": {
+      "result": "rejected",
+      "error_code": "GH013",
+      "remote_refs_verified_unchanged": true
+    },
+    "initial_blockers": {
+      "main": [
+        "Force pushes are prohibited",
+        "An active successful Preview deployment is required",
+        "Changes must be made through a pull request",
+        "Six required status checks are expected"
+      ],
+      "staging": [
+        "Force pushes are prohibited",
+        "Changes must be made through a pull request",
+        "Six required status checks are expected"
+      ]
+    },
+    "atomic_push": true,
+    "administrator_authorized_rules_bypass_used": true,
+    "rules_modified_by_assistant": false
+  },
+  "post_push_pull_request_audit": {
+    "github_managed_head_refs": 19,
+    "refs_still_pointing_to_original_history": 19,
+    "requires_separate_github_support_review": true
+  },
+  "working_repository_history_rewritten": false
+}

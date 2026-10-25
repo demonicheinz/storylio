@@ -22,7 +22,7 @@ import {
 import { useRouter } from "next/navigation";
 import { type ComponentType, useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileAvatar } from "@/components/common/profile-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -119,17 +119,6 @@ function getProfileDefaults(
   };
 }
 
-function getInitials(name?: string | null) {
-  return (
-    name
-      ?.split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join("") || "AH"
-  );
-}
-
 function ProfileAvatarUpload({
   image,
   name,
@@ -144,12 +133,12 @@ function ProfileAvatarUpload({
   return (
     <div className="flex flex-col items-center gap-3 text-center">
       <div className="relative">
-        <Avatar className="bg-background/60 shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-border/70 size-30">
-          <AvatarImage src={image} alt={name || "Profile avatar"} />
-          <AvatarFallback className="font-heading text-4xl">
-            {getInitials(name)}
-          </AvatarFallback>
-        </Avatar>
+        <ProfileAvatar
+          src={image}
+          name={name}
+          size={120}
+          className="bg-background/60 shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-border/70"
+        />
         <span className="right-1 bottom-1 z-10 absolute flex justify-center items-center bg-primary shadow-lg rounded-full ring-4 ring-card size-10 text-primary-foreground">
           <UploadSimpleIcon className="size-5" />
         </span>

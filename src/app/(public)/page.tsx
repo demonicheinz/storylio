@@ -160,7 +160,7 @@ export default async function HomePage() {
             subtitle="Dynamic Web Magic with Next.js"
             description={description}
             avatar={owner?.image}
-            avatarAlt={owner?.name ?? "Heinz Avatar"}
+            avatarAlt={owner?.name ?? "Heinz"}
           />
         </section>
 

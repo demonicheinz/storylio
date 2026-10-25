@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileAvatar } from "@/components/common/profile-avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -95,12 +95,11 @@ export function NavUser({ user }: { user: User }) {
               />
             }
           >
-            <Avatar className="rounded-xl">
-              <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-              <AvatarFallback className="rounded-xl">
-                {currentUser.name?.slice(0, 2).toUpperCase() || "US"}
-              </AvatarFallback>
-            </Avatar>
+            <ProfileAvatar
+              src={currentUser.avatar}
+              name={currentUser.name}
+              className="rounded-xl"
+            />
             <div className="flex-1 grid text-sm text-left leading-tight">
               <span className="font-medium truncate">{currentUser.name}</span>
               <span className="text-sidebar-foreground/70 text-xs truncate">
@@ -118,15 +117,11 @@ export function NavUser({ user }: { user: User }) {
             <DropdownMenuGroup>
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-sm text-left">
-                  <Avatar className="rounded-xl">
-                    <AvatarImage
-                      src={currentUser.avatar}
-                      alt={currentUser.name}
-                    />
-                    <AvatarFallback className="rounded-xl">
-                      {currentUser.name?.slice(0, 2).toUpperCase() || "US"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <ProfileAvatar
+                    src={currentUser.avatar}
+                    name={currentUser.name}
+                    className="rounded-xl"
+                  />
                   <div className="flex-1 grid text-sm text-left leading-tight">
                     <span className="font-medium truncate">
                       {currentUser.name}

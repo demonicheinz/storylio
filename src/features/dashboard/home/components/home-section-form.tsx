@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import type { ReactElement } from "react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import { ProfileAvatar } from "@/components/common/profile-avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +29,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -668,15 +668,6 @@ function getTestimonialDefaults(
   };
 }
 
-function getInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
 function getTestimonialTitle(testimonial: DashboardTestimonial) {
   return [testimonial.role, testimonial.company].filter(Boolean).join(" at ");
 }
@@ -1122,17 +1113,11 @@ function TestimonialList({
               {handle}
             </div>
             <div className="flex items-start gap-3 p-4 xl:p-3 xl:pr-4 min-w-0">
-              <Avatar className="size-12 shrink-0">
-                {testimonial.avatar && (
-                  <AvatarImage
-                    src={testimonial.avatar}
-                    alt={testimonial.name}
-                  />
-                )}
-                <AvatarFallback>
-                  {getInitials(testimonial.name) || "T"}
-                </AvatarFallback>
-              </Avatar>
+              <ProfileAvatar
+                src={testimonial.avatar}
+                name={testimonial.name}
+                size={48}
+              />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
                   <h2 className="font-heading font-semibold xl:text-sm text-base wrap-break-words line-clamp-2 leading-snug">

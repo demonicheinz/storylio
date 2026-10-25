@@ -1,4 +1,5 @@
 import { MagicButton } from "@/components/common";
+import { ProfileAvatar } from "@/components/common/profile-avatar";
 import { Spotlight, TextGenerateEffect } from "@/components/effects";
 
 export interface HeroProps {
@@ -18,7 +19,7 @@ export function HeroSection({
   buttonText = "About me",
   buttonLink = "/about",
   avatar,
-  avatarAlt = "Heinz Avatar",
+  avatarAlt = "Heinz",
 }: HeroProps = {}) {
   return (
     <section className="relative flex flex-col justify-center items-center w-full h-screen">
@@ -51,8 +52,9 @@ export function HeroSection({
           <MagicButton
             href={buttonLink}
             iconName="arrowUpRight"
-            imageSrc={avatar ?? "/images/heinz.jpg"}
-            imageAlt={avatarAlt}
+            imageSlot={
+              <ProfileAvatar src={avatar} name={avatarAlt} size={28} />
+            }
             size="lg"
             variant="default"
             iconSize={20}
