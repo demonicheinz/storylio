@@ -13,8 +13,10 @@ administrator-authorized ruleset bypass. A fresh remote check on October 25,
 2026 confirmed the three cleaned branch tips below; no tags were present.
 
 GitHub-managed PR references and existing clones are not cleaned by that push.
-The local working branch still has its original history and uncommitted app
-changes. Do not merge or push its old ancestry into the cleaned branches.
+On October 25, 2026, the app changes were committed and `style/design-tokens` was
+migrated onto cleaned `origin/staging`. Its current ancestry contains neither
+the portrait path nor the original portrait blob. Other local branches and
+reflogs are not purged and must not be merged into the cleaned history.
 
 ## Applied in the working tree
 
@@ -31,7 +33,8 @@ changes. Do not merge or push its old ancestry into the cleaned branches.
   Static automatic-theme faces use CSS tokens immediately, including SSR.
 - Preserved the user's newly installed favicon assets. No database/profile
   records or Cloudinary files were modified. GitHub history publication is
-  recorded separately below; the app changes have not been committed or pushed.
+  recorded separately below; the app changes are committed locally and have not
+  been pushed.
 
 ## Verification
 
@@ -108,13 +111,26 @@ successful retry used the bypass explicitly enabled by the administrator.
 The original old-hash leases are retained as evidence. This completed migration
 should not be rerun against subsequently changed refs.
 
-The working repository's history is intentionally untouched while it contains
-the user's uncommitted favicon/logo/orb work and the new implementation. Before
-an old local branch is ever merged into the cleaned GitHub history, transfer its
-new commits onto the cleaned base (or use a fresh clone with the reviewed patch).
-Merging the old history would make the portrait reachable again. The code changes
-and existing favicon/logo assets remain in the working tree; this publication
-did not commit or publish those pending application changes.
+### Local branch migration completed
+
+The identity changes, favicon assets, regression tests, and audit records were
+first committed as `c7e8316`. With a clean working tree, only the two topic commits
+above the explicit old staging boundary `37cdc82f` were rebased onto clean staging
+`1842aed9`, using `--no-update-refs` to leave other local branches alone.
+
+- Theme: `00bd327` → `aa987f1`.
+- Identity: `c7e8316` → `6dfffee`.
+- No conflicts occurred. The resulting tree hash exactly matches the committed
+  pre-migration tree; no source or asset content was lost or changed by rebase.
+- `origin/staging` is an ancestor of the migrated branch. The portrait path has
+  no commits in that branch's history and its original blob is not reachable
+  from the branch tip.
+- Commit hooks ran Biome, TypeScript, and commitlint. The previous 68-test result
+  applies to the same source tree; tests were not rerun solely for hash changes.
+
+The migrated topic branch has not been pushed. Existing local branches and
+reflogs may still retain old ancestry for recovery. Do not push or merge those
+old branches without transferring their new work onto a cleaned base first.
 
 ## Self-review
 
@@ -129,11 +145,12 @@ checks above must not be read as a clean dependency-security audit.
 | Axis | Score | Evidence / remaining work |
 | --- | --- | --- |
 | Accuracy | 5/5 | Real source tests, runtime fallback checks, and branch-tree comparisons. |
-| Completeness | 4/5 | App changes and three-branch publication complete; GitHub-owned PR refs and local ancestry still need separate handling. |
+| Completeness | 4/5 | App changes, three-branch publication, and topic-branch migration complete; GitHub-owned PR refs and other clones remain. |
 | Clarity | 5/5 | Working-tree changes and remote-history preparation are distinguished. |
 | Actionability | 5/5 | Shared components are integrated and a guarded publication script is ready. |
 | Conciseness | 4/5 | One shared avatar replaces repeated logic; existing orb engine is retained. |
 
 Overall: 4.6/5. Remaining priorities are restoring normal branch protections,
-transferring local work onto the cleaned ancestry, and GitHub Support review of
-cached or PR references. No further force-push is needed for the three branches.
+GitHub Support review of cached or PR references, and separate remediation of
+the two dependency advisories. The topic branch is ready for normal review and
+publication; no further force-push is needed for the three cleaned branches.

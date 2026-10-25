@@ -59,5 +59,19 @@
     "refs_still_pointing_to_original_history": 19,
     "requires_separate_github_support_review": true
   },
-  "working_repository_history_rewritten": false
+  "working_repository_history_rewritten": true,
+  "rewritten_local_branches": ["style/design-tokens"],
+  "other_local_branches_and_reflogs_not_purged": true,
+  "local_branch_migration": {
+    "date": "2026-10-25",
+    "base": "1842aed908400ce51bd5814204110e6c946ed588",
+    "old_upstream_boundary": "37cdc82f65dac9361b00788b9741ff9675dfa78c",
+    "theme_commit_before": "00bd3277151849066a6a01a8a4e6bf1e9e67e92f",
+    "theme_commit_after": "aa987f158a90cea70f5c98fce995977b1229b755",
+    "identity_commit_before": "c7e8316",
+    "identity_commit_after": "6dfffeef039570da295113438ab0e74e9e55d879",
+    "tree_preserved_exactly": true,
+    "portrait_reachable_from_migrated_branch": false,
+    "pushed": false
+  }
 }
