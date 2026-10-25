@@ -1,6 +1,7 @@
 import { asc, desc, inArray } from "drizzle-orm";
 import { connection } from "next/server";
 import { GalleryManager } from "@/features/dashboard/gallery/components/gallery-item-form";
+import { DashboardRouteBoundary } from "@/features/dashboard/shared/components/route-boundary";
 import { db } from "@/lib/db";
 
 async function getGalleryItems() {
@@ -46,7 +47,15 @@ async function getGalleryItems() {
   }));
 }
 
-export default async function GalleryPage() {
+export default function GalleryPage() {
+  return (
+    <DashboardRouteBoundary title="Gallery">
+      <GalleryContent />
+    </DashboardRouteBoundary>
+  );
+}
+
+async function GalleryContent() {
   await connection();
 
   const items = await getGalleryItems();

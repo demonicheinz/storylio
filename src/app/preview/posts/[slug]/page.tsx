@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PublicBackground } from "@/components/common";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import { ArticleProgress, ArticleToc } from "@/components/public/sections/blog";
 import { BlogCover } from "@/components/public/sections/blog/blog-cover";
 import { Badge } from "@/components/ui/badge";
@@ -91,9 +92,15 @@ function getTocItems(content: string) {
   });
 }
 
-export default async function PreviewPostPage({
-  params,
-}: PreviewPostPageProps) {
+export default function PreviewPostPage(props: PreviewPostPageProps) {
+  return (
+    <PublicRouteBoundary variant="post-detail">
+      <PreviewPostContent {...props} />
+    </PublicRouteBoundary>
+  );
+}
+
+async function PreviewPostContent({ params }: PreviewPostPageProps) {
   await requirePreviewSession();
 
   const { slug } = await params;

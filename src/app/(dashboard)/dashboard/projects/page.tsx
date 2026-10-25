@@ -1,6 +1,7 @@
 import { asc, desc } from "drizzle-orm";
 import { connection } from "next/server";
 import { ProjectsManager } from "@/features/dashboard/projects/components/projects-manager";
+import { DashboardRouteBoundary } from "@/features/dashboard/shared/components/route-boundary";
 import { db } from "@/lib/db";
 
 async function getProjects() {
@@ -27,7 +28,15 @@ async function getProjects() {
     );
 }
 
-export default async function ProjectsPage() {
+export default function ProjectsPage() {
+  return (
+    <DashboardRouteBoundary title="Projects">
+      <ProjectsContent />
+    </DashboardRouteBoundary>
+  );
+}
+
+async function ProjectsContent() {
   await connection();
 
   const projects = await getProjects();

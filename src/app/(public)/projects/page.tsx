@@ -1,9 +1,10 @@
 import { and, arrayContains, asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { Suspense } from "react";
 import { PublicBackground } from "@/components/common";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import {
   EmptyProjects,
   FeaturedProject,
@@ -14,16 +15,12 @@ import {
 } from "@/components/public/sections/projects";
 import { db } from "@/lib/db";
 import { ProjectStatus } from "@/lib/db/enums";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type ProjectsPageProps = {
   searchParams: Promise<{
     tech?: string | string[] | undefined;
   }>;
-};
-
-export const unstable_instant = {
-  prefetch: "runtime",
-  samples: [{ searchParams: { tech: null } }],
 };
 
 export const metadata: Metadata = {
@@ -65,6 +62,7 @@ function formatProjectsSummary(projectsCount: number, selectedTech?: string) {
 async function getProjectsData(selectedTech?: string) {
   "use cache";
   cacheLife("minutes");
+  cacheTag(PUBLIC_CACHE_TAGS.projects);
 
   const [projects, allPublishedProjects] = await Promise.all([
     db.query.project
@@ -118,9 +116,15 @@ async function getProjectsData(selectedTech?: string) {
   };
 }
 
-export default async function ProjectsPage({
-  searchParams,
-}: ProjectsPageProps) {
+export default function ProjectsPage(props: ProjectsPageProps) {
+  return (
+    <PublicRouteBoundary>
+      <ProjectsContent {...props} />
+    </PublicRouteBoundary>
+  );
+}
+
+async function ProjectsContent({ searchParams }: ProjectsPageProps) {
   const selectedTech = getSelectedTech((await searchParams).tech);
   const { projects, technologies, totalProjects } =
     await getProjectsData(selectedTech);

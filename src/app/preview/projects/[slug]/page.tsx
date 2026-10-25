@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PublicBackground } from "@/components/common";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import {
   ProjectCover,
   ProjectScreenshots,
@@ -105,9 +106,15 @@ function getProjectTocItems(content: string) {
   });
 }
 
-export default async function PreviewProjectPage({
-  params,
-}: PreviewProjectPageProps) {
+export default function PreviewProjectPage(props: PreviewProjectPageProps) {
+  return (
+    <PublicRouteBoundary variant="project-detail">
+      <PreviewProjectContent {...props} />
+    </PublicRouteBoundary>
+  );
+}
+
+async function PreviewProjectContent({ params }: PreviewProjectPageProps) {
   await requirePreviewSession();
 
   const { slug } = await params;

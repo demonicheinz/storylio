@@ -1,7 +1,7 @@
 "use server";
 
 import { and, desc, eq, gt, gte, lt, lte, ne, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import {
   type HomeSectionActionInput,
   type HomeSectionActionValues,
@@ -20,6 +20,7 @@ import {
   homeSection as homeSectionTable,
   testimonial as testimonialTable,
 } from "@/lib/db/schema";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type EntityActionData = { id: string };
 type OrderTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -34,6 +35,7 @@ async function requireSession(): Promise<ActionResult | null> {
 }
 
 function revalidateHomePaths() {
+  updateTag(PUBLIC_CACHE_TAGS.home);
   revalidatePath("/dashboard/home");
   revalidatePath("/dashboard");
   revalidatePath("/");

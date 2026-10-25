@@ -1,10 +1,11 @@
 import { ArrowLeftIcon } from "@phosphor-icons/react/dist/ssr";
 import { and, desc, eq, isNull, lte, or } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicBackground } from "@/components/common";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import {
   ArticleHeader,
   ArticleNavigation,
@@ -17,7 +18,8 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { PostStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
-import { renderMDX } from "@/lib/mdx";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { renderPublicMDX } from "@/lib/public-mdx";
 import { slugify } from "@/lib/utils";
 
 type BlogPostPageProps = {
@@ -29,6 +31,7 @@ type BlogPostPageProps = {
 async function getPostBySlug(slug: string) {
   "use cache";
   cacheLife("minutes");
+  cacheTag(PUBLIC_CACHE_TAGS.posts);
 
   return db.query.post
     .findFirst({
@@ -70,6 +73,7 @@ async function getPostBySlug(slug: string) {
 async function getArticleCompanions(currentPostId: string, tagNames: string[]) {
   "use cache";
   cacheLife("minutes");
+  cacheTag(PUBLIC_CACHE_TAGS.posts);
 
   const posts = await db.query.post
     .findMany({
@@ -194,7 +198,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function BlogPostPage({ params }: BlogPostPageProps) {
+export default function BlogPostPage(props: BlogPostPageProps) {
+  return (
+    <PublicRouteBoundary variant="post-detail">
+      <BlogPostContent {...props} />
+    </PublicRouteBoundary>
+  );
+}
+
+async function BlogPostContent({ params }: BlogPostPageProps) {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
 
@@ -203,7 +215,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   const [mdxContent, tocItems, companions] = await Promise.all([
-    renderMDX(post.content),
+    renderPublicMDX(post.content, "post"),
     Promise.resolve(getTocItems(post.content)),
     getArticleCompanions(
       post.id,

@@ -5,10 +5,11 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { and, asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicBackground } from "@/components/common";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import { ViewCounter } from "@/components/public/sections/blog";
 import {
   ProjectCover,
@@ -20,8 +21,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { ProjectStatus } from "@/lib/db/enums";
-import { renderMDX } from "@/lib/mdx";
 import { getProjectContribution } from "@/lib/project-contribution";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { renderPublicMDX } from "@/lib/public-mdx";
 import { calculateReadingTime, formatDate, slugify } from "@/lib/utils";
 
 type ProjectDetailPageProps = {
@@ -33,6 +35,7 @@ type ProjectDetailPageProps = {
 async function getProjectBySlug(slug: string) {
   "use cache";
   cacheLife("minutes");
+  cacheTag(PUBLIC_CACHE_TAGS.projects);
 
   return db.query.project
     .findFirst({
@@ -79,6 +82,7 @@ async function getProjectBySlug(slug: string) {
 async function getProjectNeighbors(projectId: string) {
   "use cache";
   cacheLife("minutes");
+  cacheTag(PUBLIC_CACHE_TAGS.projects);
 
   const projects = await db.query.project.findMany({
     where: (table) => eq(table.status, ProjectStatus.PUBLISHED),
@@ -170,9 +174,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProjectDetailPage({
-  params,
-}: ProjectDetailPageProps) {
+export default function ProjectDetailPage(props: ProjectDetailPageProps) {
+  return (
+    <PublicRouteBoundary variant="project-detail">
+      <ProjectDetailContent {...props} />
+    </PublicRouteBoundary>
+  );
+}
+
+async function ProjectDetailContent({ params }: ProjectDetailPageProps) {
   const { slug } = await params;
   const project = await getProjectBySlug(slug);
 
@@ -182,7 +192,7 @@ export default async function ProjectDetailPage({
 
   const [mdxContent, tocItems, { previousProject, nextProject }] =
     await Promise.all([
-      project.content ? renderMDX(project.content) : null,
+      project.content ? renderPublicMDX(project.content, "project") : null,
       Promise.resolve(
         project.content ? getProjectTocItems(project.content) : [],
       ),

@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, isNull, lte, or } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { MotionReveal, PublicBackground } from "@/components/common";
 import {
   ApproachSection,
@@ -12,6 +12,7 @@ import {
 import { db } from "@/lib/db";
 import { PostStatus, ProjectStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 export const metadata: Metadata = {
   title: "Heinz — Full Stack Developer | Storylio",
@@ -36,6 +37,12 @@ export const metadata: Metadata = {
 async function getHomeData() {
   "use cache";
   cacheLife("hours");
+  cacheTag(
+    PUBLIC_CACHE_TAGS.home,
+    PUBLIC_CACHE_TAGS.projects,
+    PUBLIC_CACHE_TAGS.posts,
+    PUBLIC_CACHE_TAGS.profile,
+  );
 
   const now = new Date();
   const [owner, phases, logos, testimonials, recentProjects, recentPosts] =

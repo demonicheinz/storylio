@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { connection } from "next/server";
 import { SettingsManager } from "@/features/dashboard/settings/components/profile-settings-form";
+import { DashboardRouteBoundary } from "@/features/dashboard/shared/components/route-boundary";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 
@@ -32,7 +33,15 @@ async function getLinkedAccounts(userId: string) {
   });
 }
 
-export default async function SettingsPage() {
+export default function SettingsPage() {
+  return (
+    <DashboardRouteBoundary title="Settings">
+      <SettingsContent />
+    </DashboardRouteBoundary>
+  );
+}
+
+async function SettingsContent() {
   await connection();
 
   const session = await getActionSession();

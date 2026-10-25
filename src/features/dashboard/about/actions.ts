@@ -1,7 +1,7 @@
 "use server";
 
 import { asc, desc, eq, inArray } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { ABOUT_CONTENT_SINGLETON_ID } from "@/features/about/data";
 import {
   type AboutContentActionInput,
@@ -14,6 +14,7 @@ import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { aboutContent as aboutContentTable } from "@/lib/db/schema";
 import { getMdxSafetyError } from "@/lib/mdx-safety";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 export async function actionUpdateAboutContent(
   input: AboutContentActionInput,
@@ -88,6 +89,7 @@ export async function actionUpdateAboutContent(
       return saved;
     });
 
+    updateTag(PUBLIC_CACHE_TAGS.about);
     revalidatePath("/dashboard/about");
     revalidatePath("/about");
     return actionSuccess({ id: aboutContent.id }, "About content updated.");

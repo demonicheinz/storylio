@@ -1,9 +1,10 @@
 import { and, desc, eq, inArray, isNull, lte, or } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { Suspense } from "react";
 import { PublicBackground } from "@/components/common";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import {
   BlogFilters,
   BlogHero,
@@ -16,16 +17,12 @@ import { db } from "@/lib/db";
 import { PostStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
 import { post, postToTag, tag } from "@/lib/db/schema";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type BlogPageProps = {
   searchParams: Promise<{
     tag?: string | string[] | undefined;
   }>;
-};
-
-export const unstable_instant = {
-  prefetch: "runtime",
-  samples: [{ searchParams: { tag: null } }],
 };
 
 export const metadata: Metadata = {
@@ -67,6 +64,7 @@ function formatBlogSummary(postsCount: number, selectedTag?: string) {
 async function getBlogData(selectedTag?: string) {
   "use cache";
   cacheLife("minutes");
+  cacheTag(PUBLIC_CACHE_TAGS.posts);
 
   const now = new Date();
   const publishedWhere = and(
@@ -152,7 +150,15 @@ async function getBlogData(selectedTag?: string) {
   };
 }
 
-export default async function BlogPage({ searchParams }: BlogPageProps) {
+export default function BlogPage(props: BlogPageProps) {
+  return (
+    <PublicRouteBoundary>
+      <BlogContent {...props} />
+    </PublicRouteBoundary>
+  );
+}
+
+async function BlogContent({ searchParams }: BlogPageProps) {
   const selectedTag = getSelectedTag((await searchParams).tag);
   const { posts, tags, totalPosts } = await getBlogData(selectedTag);
   const [featuredPost, ...remainingPosts] = posts;

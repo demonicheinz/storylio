@@ -1,13 +1,15 @@
 import { asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { PublicBackground } from "@/components/common";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import {
   GalleryExperience,
   GalleryHero,
   type GalleryPhoto,
 } from "@/components/public/sections/gallery";
 import { db } from "@/lib/db";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type GalleryPageProps = {
   searchParams: Promise<{
@@ -19,11 +21,6 @@ const fallbackImageDimensions = {
   width: 1200,
   height: 900,
 } as const;
-
-export const unstable_instant = {
-  prefetch: "runtime",
-  samples: [{ searchParams: { category: null } }],
-};
 
 export const metadata: Metadata = {
   title: "Gallery — Storylio",
@@ -48,6 +45,7 @@ export const metadata: Metadata = {
 async function getGalleryData() {
   "use cache";
   cacheLife("hours");
+  cacheTag(PUBLIC_CACHE_TAGS.gallery);
 
   const items = await db.query.galleryItem.findMany({
     where: (table) => eq(table.isVisible, true),
@@ -105,7 +103,15 @@ function getSelectedCategory(value: string | string[] | undefined) {
   return category?.trim() || undefined;
 }
 
-export default async function GalleryPage({ searchParams }: GalleryPageProps) {
+export default function GalleryPage(props: GalleryPageProps) {
+  return (
+    <PublicRouteBoundary variant="gallery">
+      <GalleryContent {...props} />
+    </PublicRouteBoundary>
+  );
+}
+
+async function GalleryContent({ searchParams }: GalleryPageProps) {
   const selectedCategory = getSelectedCategory((await searchParams).category);
   const { photos, categories } = await getGalleryData();
 

@@ -1,7 +1,8 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { Heading, MotionReveal, PublicBackground } from "@/components/common";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import {
   AboutSideNavigation,
   BioSection,
@@ -19,6 +20,7 @@ import { getAboutContent } from "@/features/about/data";
 import { db } from "@/lib/db";
 import { skill } from "@/lib/db/schema";
 import { renderMDX } from "@/lib/mdx";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 import { cn } from "@/lib/utils";
 
 const sectionSpacing = "mt-16 scroll-mt-28 md:mt-24";
@@ -26,11 +28,6 @@ const aboutMdxClassName =
   "flex min-w-0 max-w-full flex-col gap-4 overflow-hidden [&_img]:h-auto [&_img]:max-w-full [&_pre]:max-w-full [&_table]:max-w-full";
 const metadataFallback =
   "Background, experience, education, and technical skills of Ahmad Haizul Amany.";
-
-export const unstable_instant = {
-  prefetch: "runtime",
-  samples: [{ searchParams: { lang: null } }],
-};
 
 function getMetadataDescription(value?: string | null) {
   const description = value?.replace(/\s+/g, " ").trim() || metadataFallback;
@@ -66,6 +63,7 @@ export async function generateMetadata(): Promise<Metadata> {
 async function getAboutProfile() {
   "use cache";
   cacheLife("hours");
+  cacheTag(PUBLIC_CACHE_TAGS.profile);
 
   return db.query.user
     .findFirst({
@@ -87,6 +85,7 @@ async function getAboutProfile() {
 async function getStructuredAboutData() {
   "use cache";
   cacheLife("hours");
+  cacheTag(PUBLIC_CACHE_TAGS.about);
 
   const [experiences, education, categories] = await Promise.all([
     db.query.workExperience
@@ -170,6 +169,7 @@ function localizedOptional(
 async function renderAboutMdx(source: string, fallback: string) {
   "use cache";
   cacheLife("hours");
+  cacheTag(PUBLIC_CACHE_TAGS.about);
 
   try {
     return await renderMDX(source);
@@ -185,7 +185,15 @@ type AboutPageProps = {
   }>;
 };
 
-export default async function AboutPage({ searchParams }: AboutPageProps) {
+export default function AboutPage(props: AboutPageProps) {
+  return (
+    <PublicRouteBoundary variant="about">
+      <AboutContent {...props} />
+    </PublicRouteBoundary>
+  );
+}
+
+async function AboutContent({ searchParams }: AboutPageProps) {
   const [profile, aboutContent, structuredData] = await Promise.all([
     getAboutProfile(),
     getAboutContent(),

@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq, inArray } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import {
   type PostActionInput,
@@ -15,8 +15,8 @@ import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { PostStatus } from "@/lib/db/enums";
 import { post as postTable, postToTag, tag as tagTable } from "@/lib/db/schema";
-
 import { getMdxSafetyError } from "@/lib/mdx-safety";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -82,6 +82,7 @@ function toPublishedAt(values: PostActionValues, current?: Date | null) {
 }
 
 function revalidatePostPaths(slug: string, oldSlug?: string) {
+  updateTag(PUBLIC_CACHE_TAGS.posts);
   revalidatePath("/dashboard/posts");
   revalidatePath("/dashboard");
   revalidatePath("/blog");
@@ -94,6 +95,7 @@ function revalidatePostPaths(slug: string, oldSlug?: string) {
 }
 
 function revalidatePostsCollection() {
+  updateTag(PUBLIC_CACHE_TAGS.posts);
   revalidatePath("/dashboard/posts");
   revalidatePath("/dashboard");
   revalidatePath("/blog");
