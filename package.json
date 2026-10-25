@@ -14,6 +14,7 @@
     "browser:open": "playwright-cli -s=storylio-security open --config=playwright-cli.config.json",
     "test:browser": "playwright-cli -s=storylio-security run-code --filename=tests/browser/security-smoke.js",
     "test:browser:navigation": "playwright-cli -s=storylio-navigation run-code --filename=tests/browser/public-navigation.js",
+    "test:browser:gooey-nav": "playwright-cli -s=storylio-gooey run-code --filename=tests/browser/gooey-navigation.js",
     "test:browser:about-language": "playwright-cli -s=storylio-about-language run-code --filename=tests/browser/about-language.js",
     "test:browser:filters": "playwright-cli -s=storylio-filters run-code --filename=tests/browser/filter-prefetch.js",
     "prepare": "husky",

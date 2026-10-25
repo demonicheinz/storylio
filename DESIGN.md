@@ -310,6 +310,27 @@ New motion should respect reduced-motion preferences.
 
 ## Adoption status
 
+### Public navigation
+
+The floating public navbar uses `GooeyNav` inside the existing scroll-visibility
+wrapper. Its frame follows the surface, border, foreground, and muted-text
+tokens. Dark mode pairs a pale `#f2fbfe` pill with navy `#000b27` ink; light mode
+reverses that pairing. Blue `#068ce6` is reserved for transition particles.
+
+This is one deliberate interactive motion accent: 7 particles, a 400ms travel
+time with 100ms variance, 24px spread, 0.3 gooeyness, and 0.2 wobble. It does not
+loop while idle. Route state follows the URL, including detail and preview
+routes. Links use Next.js client navigation with global Partial Prefetching.
+Public navbar links also prepare their cached URL-specific content; uncached
+request-time data stays streamed behind a route-local boundary. Mobile shows
+the five icons with accessible link names; desktop includes
+labels. Link targets are at least 44px high and wide.
+
+Reduced-motion preferences switch to a static pill immediately, including
+changes made while the page is open. Unavailable/lost WebGL uses the same static
+fallback; the renderer can recover after context restoration. Keyboard focus
+keeps the floating wrapper visible and has a visible outline.
+
 ### Logos and avatars
 
 Logo artwork stays in `src/assets/logo/` as SVG files. `Logo` selects the dark

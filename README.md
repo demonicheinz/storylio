@@ -340,7 +340,21 @@ It verifies that filter variants are not prefetched on page load, hover/focus
 warms the selected destination without navigating, clicking reuses that prefetch,
 and resetting to All preserves unrelated query parameters.
 
+For the public GooeyNav checks, start the local app and use a fresh isolated
+session. The check needs the published `/projects/storylio` fixture. It verifies
+client navigation, active routes, Back/Forward, mobile target sizes, theme
+changes, keyboard focus, reduced motion, and WebGL fallback/context recovery:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-gooey open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:gooey-nav
+bunx --no-install playwright-cli -s=storylio-gooey close
+```
+
 ## Integrations
+
+Cache and Partial Prefetching policy, public tag invalidation, and protected
+route boundaries are documented in [CACHE_AND_PREFETCH.md](docs/CACHE_AND_PREFETCH.md).
 
 ### UI primitives
 
