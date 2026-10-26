@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import page from "@/components/public/public-page.module.css";
+import type { CSSProperties } from "react";
+import GooeyNav from "@/components/common/gooey-nav";
 import { introCopy } from "@/components/public/sections/about/data";
 import styles from "./about.module.css";
 
@@ -24,24 +24,36 @@ export function LanguageIntro({
 }) {
   return (
     <div className={styles.language}>
-      <nav aria-label="Language" className={styles.languageNav}>
-        {languages.map((item) => {
-          const isActive = language === item.value;
-
-          return (
-            <Link
-              key={item.value}
-              className={page.filter}
-              href={`/about?lang=${item.value}`}
-              prefetch={true}
-              scroll={false}
-              aria-current={isActive ? "page" : undefined}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+      <GooeyNav
+        ariaLabel="Language"
+        className={styles.languageNav}
+        items={languages.map((item) => ({
+          label: item.label,
+          href: `/about?lang=${item.value}`,
+        }))}
+        activeIndex={languages.findIndex((item) => item.value === language)}
+        scroll={false}
+        color="#f2fbfe"
+        activeTextColor="#000b27"
+        size="sm"
+        animationTime={400}
+        particleCount={5}
+        spread={16}
+        timeVariance={100}
+        gooeyness={0.3}
+        wobble={0.2}
+        hoverEffect={false}
+        style={
+          {
+            "--gn-frame": "var(--surface)",
+            "--gn-frame-edge": "var(--border)",
+            "--gn-frame-highlight": "transparent",
+            "--gn-frame-shadow": "none",
+            "--gn-ink": "var(--foreground)",
+            "--gn-muted": "var(--muted-foreground)",
+          } as CSSProperties
+        }
+      />
       <p>{intro}</p>
     </div>
   );

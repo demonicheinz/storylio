@@ -100,8 +100,7 @@
   gap: 24px;
 }
 .languageNav {
-  display: flex;
-  gap: 8px;
+  align-self: flex-start;
 }
 .language p {
   color: var(--muted-foreground);
@@ -199,7 +198,6 @@
 }
 .timeline {
   margin-left: 5px;
-  border-left: 1px solid var(--border);
 }
 .timelineItem {
   position: relative;
@@ -212,12 +210,21 @@
   content: "";
   position: absolute;
   top: 7px;
-  left: -5px;
+  left: -4px;
   width: 9px;
   height: 9px;
   border-radius: 50%;
   border: 1px solid var(--border-hover);
   background: var(--background);
+}
+.timelineItem:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 16px;
+  bottom: -7px;
+  left: 0;
+  width: 1px;
+  background: var(--border);
 }
 .timelineItem[data-current="true"]::before {
   background: var(--link);
@@ -279,11 +286,21 @@
   height: 1px;
   flex-shrink: 0;
   background: var(--border-hover);
+  transition:
+    width 220ms ease-out,
+    background-color 160ms;
 }
 .sidebarNav a:hover,
 .sidebarNav a[aria-current] {
   color: var(--link);
 }
 .sidebarNav a[aria-current]::before {
+  width: 24px;
   background: var(--link);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebarNav a,
+  .sidebarNav a::before {
+    transition: none;
+  }
 }

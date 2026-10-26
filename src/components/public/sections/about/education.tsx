@@ -31,8 +31,8 @@ export function EducationSection({
         level="h2"
         variant="section"
         size="lg"
-        title={language === "id" ? "Riwayat" : "Education"}
-        highlight={language === "id" ? "Pendidikan" : "History"}
+        title={language === "id" ? "Pendidikan &" : "Education &"}
+        highlight={language === "id" ? "Pembelajaran" : "Learning"}
       />
       <div className={styles.timeline}>
         {items.map((institution) => (

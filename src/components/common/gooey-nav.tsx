@@ -26,6 +26,8 @@ export interface GooeyNavItem {
 }
 
 interface GooeyNavProps {
+  ariaLabel?: string;
+  scroll?: boolean;
   items?: GooeyNavItem[];
   initialActiveIndex?: number;
   activeIndex?: number;
@@ -380,6 +382,8 @@ const build = (gl: WebGL2RenderingContext): Pipeline | null => {
 };
 
 const GooeyNav = ({
+  ariaLabel = "Main navigation",
+  scroll,
   items = DEFAULT_ITEMS,
   initialActiveIndex = 0,
   activeIndex,
@@ -1098,7 +1102,7 @@ const GooeyNav = ({
           data-active={index === current ? "" : undefined}
         >
           {item.href ? (
-            <Link href={item.href} prefetch={true} {...shared}>
+            <Link href={item.href} prefetch={true} scroll={scroll} {...shared}>
               {content}
             </Link>
           ) : (
@@ -1113,7 +1117,7 @@ const GooeyNav = ({
   return (
     <nav
       data-slot="gooey-nav"
-      aria-label="Main navigation"
+      aria-label={ariaLabel}
       className={`${ROOT}${frame ? ` ${FRAMED}` : ""} ${className}`.trim()}
       style={
         {

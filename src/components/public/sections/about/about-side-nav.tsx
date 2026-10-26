@@ -30,7 +30,7 @@ export const sideNavItems: SideNavItem[] = [
     id: "work-experience",
   },
   {
-    title: { en: "Education History", id: "Riwayat Pendidikan" },
+    title: { en: "Education & Learning", id: "Pendidikan & Pembelajaran" },
     href: "#education-history",
     id: "education-history",
   },
