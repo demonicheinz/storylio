@@ -1,23 +1,22 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
-import { Heading, MotionReveal } from "@/components/common";
+import { Heading } from "@/components/common/heading";
+import { MotionReveal } from "@/components/common/motion";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import pageStyles from "@/components/public/public-page.module.css";
-import {
-  AboutSideNavigation,
-  BioSection,
-  EducationSection,
-  ExperienceSection,
-  ProfileSection,
-  SkillsSection,
-} from "@/components/public/sections/about";
 import aboutStyles from "@/components/public/sections/about/about.module.css";
+import { AboutSideNavigation } from "@/components/public/sections/about/about-side-nav";
+import { BioSection } from "@/components/public/sections/about/bio";
 import {
   aboutStoryFallback,
   introCopy,
 } from "@/components/public/sections/about/data";
+import { EducationSection } from "@/components/public/sections/about/education";
+import { ExperienceSection } from "@/components/public/sections/about/experience";
 import type { AboutLanguage } from "@/components/public/sections/about/language-intro";
+import { ProfileSection } from "@/components/public/sections/about/profile";
+import { SkillsSection } from "@/components/public/sections/about/skills";
 import { getAboutContent } from "@/features/about/data";
 import { db } from "@/lib/db";
 import { skill } from "@/lib/db/schema";

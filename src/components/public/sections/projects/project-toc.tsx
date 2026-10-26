@@ -1,4 +1,7 @@
-import { ContentToc, type ContentTocItem } from "@/components/common";
+import {
+  ContentToc,
+  type ContentTocItem,
+} from "@/components/common/content-toc";
 
 type ProjectTocProps = {
   items: ContentTocItem[];

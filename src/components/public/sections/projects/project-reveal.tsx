@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { MotionReveal } from "@/components/common";
+import { MotionReveal } from "@/components/common/motion";
 
 type ProjectRevealProps = {
   children: ReactNode;

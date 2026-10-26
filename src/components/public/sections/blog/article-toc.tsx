@@ -1,4 +1,4 @@
-import { ContentToc } from "@/components/common";
+import { ContentToc } from "@/components/common/content-toc";
 import type { TocItem } from "@/components/public/sections/blog/types";
 
 type ArticleTocProps = {

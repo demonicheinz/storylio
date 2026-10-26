@@ -5,14 +5,12 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import styles from "@/components/public/public-page.module.css";
-import {
-  BlogFilters,
-  BlogHero,
-  BlogReveal,
-  EmptyPosts,
-  FeaturedPost,
-  PostList,
-} from "@/components/public/sections/blog";
+import { BlogFilters } from "@/components/public/sections/blog/blog-filters";
+import { BlogHero } from "@/components/public/sections/blog/blog-hero";
+import { BlogReveal } from "@/components/public/sections/blog/blog-reveal";
+import { EmptyPosts } from "@/components/public/sections/blog/empty-posts";
+import { FeaturedPost } from "@/components/public/sections/blog/featured-post";
+import { PostList } from "@/components/public/sections/blog/post-list";
 import { db } from "@/lib/db";
 import { PostStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";

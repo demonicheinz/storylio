@@ -1,4 +1,4 @@
-import { Heading } from "@/components/common";
+import { Heading } from "@/components/common/heading";
 import { workExperiences } from "@/components/public/sections/about/data";
 
 type PublicExperience = {

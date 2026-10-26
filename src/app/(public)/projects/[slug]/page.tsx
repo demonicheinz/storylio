@@ -11,13 +11,11 @@ import { notFound } from "next/navigation";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import detailStyles from "@/components/public/public-detail.module.css";
 import pageStyles from "@/components/public/public-page.module.css";
-import { ViewCounter } from "@/components/public/sections/blog";
-import {
-  ProjectCover,
-  ProjectNavigation,
-  ProjectScreenshots,
-  ProjectToc,
-} from "@/components/public/sections/projects";
+import { ViewCounter } from "@/components/public/sections/blog/view-counter";
+import { ProjectCover } from "@/components/public/sections/projects/project-cover";
+import { ProjectNavigation } from "@/components/public/sections/projects/project-navigation";
+import { ProjectScreenshots } from "@/components/public/sections/projects/project-screenshots";
+import { ProjectToc } from "@/components/public/sections/projects/project-toc";
 import { db } from "@/lib/db";
 import { ProjectStatus } from "@/lib/db/enums";
 import { getProjectContribution } from "@/lib/project-contribution";

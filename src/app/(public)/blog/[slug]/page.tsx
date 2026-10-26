@@ -7,14 +7,12 @@ import { notFound } from "next/navigation";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import detail from "@/components/public/public-detail.module.css";
 import page from "@/components/public/public-page.module.css";
-import {
-  ArticleHeader,
-  ArticleNavigation,
-  ArticleProgress,
-  ArticleToc,
-  RelatedPosts,
-  ShareButton,
-} from "@/components/public/sections/blog";
+import { ArticleHeader } from "@/components/public/sections/blog/article-header";
+import { ArticleNavigation } from "@/components/public/sections/blog/article-navigation";
+import { ArticleProgress } from "@/components/public/sections/blog/article-progress";
+import { ArticleToc } from "@/components/public/sections/blog/article-toc";
+import { RelatedPosts } from "@/components/public/sections/blog/related-posts";
+import { ShareButton } from "@/components/public/sections/blog/share-button";
 import { db } from "@/lib/db";
 import { PostStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";

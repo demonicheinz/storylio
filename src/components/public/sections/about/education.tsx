@@ -1,4 +1,4 @@
-import { Heading } from "@/components/common";
+import { Heading } from "@/components/common/heading";
 import { educationItems } from "@/components/public/sections/about/data";
 import { aboutInteractiveGlowCardClassName } from "@/components/public/sections/about/styles";
 import { cn } from "@/lib/utils";

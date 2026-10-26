@@ -5,14 +5,12 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import styles from "@/components/public/public-page.module.css";
-import {
-  EmptyProjects,
-  FeaturedProject,
-  ProjectFilters,
-  ProjectReveal,
-  ProjectsGrid,
-  ProjectsHero,
-} from "@/components/public/sections/projects";
+import { EmptyProjects } from "@/components/public/sections/projects/empty-projects";
+import { FeaturedProject } from "@/components/public/sections/projects/featured-project";
+import { ProjectFilters } from "@/components/public/sections/projects/project-filters";
+import { ProjectReveal } from "@/components/public/sections/projects/project-reveal";
+import { ProjectsGrid } from "@/components/public/sections/projects/projects-grid";
+import { ProjectsHero } from "@/components/public/sections/projects/projects-hero";
 import { db } from "@/lib/db";
 import { ProjectStatus } from "@/lib/db/enums";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
