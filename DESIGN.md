@@ -485,16 +485,33 @@ the existing Motion dependency. Keyboard focus reveals clipped footer links.
 The token system also covers shared heading styling, radii, selection/caret
 colors, quiet scrollbars, and semantic article callouts.
 
-Remaining component work is explicit:
+### Public adoption — October 26, 2026
 
-- Replace fixed purple RGBA gradients/shadows outside Home in featured project/post panels,
-  cards, article progress, and the About experience timeline with semantic tokens.
-- Replace fixed neutral/white/blue text where it needs to adapt to light mode.
-- Replace legacy primary hover utility declarations with `hover:bg-primary-hover`
-  as components are edited; the shared rule already covers default shadcn buttons
-  and linked badges.
-- Adopt the control/card radius recipes where explicit `rounded-3xl`,
-  `rounded-4xl`, or arbitrary radii currently override the intended shape.
-- Verify actual page crops, text over the hero, popovers, focus opacity, charts,
-  and editor styling when those components are migrated. Token previews alone
-  do not establish accessibility for the entire application.
+All public routes extend the approved Home world. `public-page.module.css` owns
+the 1280px page container, 56px/40px page title, 18px/16px introduction, 44px
+filters, 3/2/1 archive grid, quiet media cards and truthful empty states. The
+planet and gravity stars remain local to Home. Collection counts are supporting
+metadata rather than decorative statistic cards. All public routes share the
+approved navy footer; Lenis remains Home-only.
+
+About uses a sticky profile and section navigation alongside a reading column.
+Experience, education and skills use separated rows. Language controls preserve
+English/Indonesian content, query state and prefetch. Mobile stacks profile and
+story without a floating side menu.
+
+Projects use a wide featured work and archive cards with the approved cover tilt.
+Case studies place title/contribution above a full-width cover, followed by MDX
+and a quiet sticky TOC. Screenshots retain captions and lightbox. Writing uses
+the same archive cards; notes without covers remain text-led. Articles use a
+bounded reading column, real publication metadata, optional cover, related posts
+and adjacent navigation. `public-detail.module.css` owns these reading recipes.
+
+Gallery retains native-aspect masonry and lightbox with minimal frames; captions
+appear on hover/focus, and remain visible with touch/reduced motion. Preserve
+source dimensions, blur placeholders and lazy loading. Status pages use the same
+canvas/type with clear recovery actions. Skeletons match the new content shapes
+and do not add a looping entrance.
+
+The dashboard has not been redesigned. Existing control/card recipes elsewhere
+can be adopted when those surfaces are edited. Theme previews alone do not prove
+contrast for all authored images, article embeds, popovers or editor content.

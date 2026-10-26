@@ -242,6 +242,23 @@
   color: var(--muted-foreground);
   line-height: 1.75;
 }
+.state {
+  display: flex;
+  align-items: center;
+  padding-block: 160px 80px;
+}
+.state > section {
+  padding-bottom: 0;
+}
+.state .lede {
+  margin-block: 24px 32px;
+}
+.statusCode {
+  margin-top: 24px;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
 .page :is(a, button):focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 4px;
