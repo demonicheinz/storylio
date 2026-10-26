@@ -6,11 +6,48 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { registerPageScroller } from "@/lib/page-scroll";
 
-export function HomeSmoothScroll() {
+export function PublicSmoothScroll() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname !== "/") return;
+    const root = document.documentElement;
+    const restore = () => {
+      root.dataset.publicHistory = "true";
+    };
+    const navigate = (event: MouseEvent) => {
+      if (
+        event.button ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return;
+      const link = event
+        .composedPath()
+        .find(
+          (node): node is HTMLAnchorElement =>
+            node instanceof HTMLAnchorElement,
+        );
+      if (!link || (link.target && link.target !== "_self")) return;
+      const url = new URL(link.href);
+      if (
+        url.origin === location.origin &&
+        url.pathname !== location.pathname
+      ) {
+        delete root.dataset.publicHistory;
+      }
+    };
+    window.addEventListener("popstate", restore);
+    window.addEventListener("click", navigate, true);
+    return () => {
+      delete root.dataset.publicHistory;
+      window.removeEventListener("popstate", restore);
+      window.removeEventListener("click", navigate, true);
+    };
+  }, []);
+
+  useEffect(() => {
     const preference = matchMedia(
       "(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)",
     );
@@ -68,10 +105,15 @@ export function HomeSmoothScroll() {
       focused = true;
       syncActivity();
     };
+    const onPopState = () => {
+      // Let the browser restore history without a pending animation overriding it.
+      instance?.scrollTo(instance.actualScroll, { immediate: true });
+    };
     preference.addEventListener("change", syncPreference);
     document.addEventListener("visibilitychange", syncActivity);
     window.addEventListener("blur", onBlur);
     window.addEventListener("focus", onFocus);
+    window.addEventListener("popstate", onPopState);
     void syncPreference();
     return () => {
       disposed = true;
@@ -80,6 +122,7 @@ export function HomeSmoothScroll() {
       document.removeEventListener("visibilitychange", syncActivity);
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("popstate", onPopState);
     };
   }, [pathname]);
 

@@ -72,8 +72,8 @@ async sessionPage => {
     await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));
     await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Projects',exact:true}).click();
     await page.waitForURL(origin+'/projects');
-    await page.waitForFunction(()=>!document.documentElement.classList.contains('lenis'));
-    assert(await page.evaluate(()=>getComputedStyle(document.documentElement).scrollBehavior)==='smooth','Native scrolling was not restored');
+    await active();
+    assert(await page.evaluate(()=>getComputedStyle(document.documentElement).scrollBehavior)==='auto','Public route lost Lenis');
     await page.goBack();await active();
     await page.waitForFunction(()=>document.querySelector('[data-home-page]'));
 

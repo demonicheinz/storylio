@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "@/components/public/public-detail.module.css";
 import { useActiveSection } from "@/hooks/use-active-section";
+import { navigateToAnchor } from "@/lib/page-scroll";
 import { cn } from "@/lib/utils";
 
 export type ContentTocItem = {
@@ -73,15 +74,11 @@ export function ContentToc({
       setLockedActiveId("");
     }, 1200);
 
-    const offsetPosition =
-      element.getBoundingClientRect().top + window.scrollY - 96;
-
-    window.scrollTo({ top: offsetPosition, behavior: "auto" });
-    window.history.pushState(null, "", `#${id}`);
+    navigateToAnchor(`#${id}`);
   };
 
   return (
-    <aside className={styles.toc}>
+    <aside className={styles.toc} data-lenis-prevent>
       <h2>{eyebrow}</h2>
       {description && (
         <p className="mt-2 text-muted-foreground text-sm leading-6">

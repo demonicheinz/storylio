@@ -5,6 +5,7 @@ import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
 import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
+import { InPageLink } from "@/components/common/in-page-link";
 import { BlogHeadingLink } from "@/components/public/sections/blog/heading-link";
 import {
   normalizeHeadingDepths,
@@ -91,6 +92,16 @@ const components: MDXComponents = {
   a: ({ children, href }) => {
     const safeHref = getSafeHref(href);
     const isExternal = safeHref?.startsWith("http");
+    if (safeHref?.startsWith("#")) {
+      return (
+        <InPageLink
+          href={safeHref as `#${string}`}
+          className="font-medium text-brand-soft hover:underline underline-offset-4 wrap-anywhere"
+        >
+          {children}
+        </InPageLink>
+      );
+    }
 
     return (
       <a

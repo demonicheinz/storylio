@@ -1,4 +1,10 @@
 /* Approved Home palette shared by every public route. */
+/* History restoration must measure the final layout, not entrance translations. */
+:global(html[data-public-history]) .chrome :global([data-route-motion]),
+:global(html[data-public-history]) .chrome :global([data-motion-reveal]) {
+  transform: none !important;
+}
+
 :global(.dark) .chrome {
   --background: oklch(0.11 0.018 259.15);
   --surface: oklch(0.155 0.023 259.15);

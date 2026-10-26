@@ -15,7 +15,7 @@ async sessionPage => {
       await page.locator('h1').waitFor();await page.locator('[data-public-footer]').waitFor();
       assert(await page.locator('footer').count()===1,'Duplicate footer on '+path);
       assert(await page.locator('main').count()===1,'Public route needs one main landmark: '+path);
-      assert(await page.locator('html.lenis').count()===0,'Home Lenis leaked to '+path);
+      assert(await page.locator('html.lenis').count()===0,'Reduced motion enabled Lenis on '+path);
       assert(await page.getByRole('button',{name:'Scroll to top',exact:true}).count()===0,'Duplicate top control');
       if(grid&&await page.locator(grid).count())assert(await page.locator(grid).evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)===3,'Desktop archive does not have three columns');
       results.push({path,sharedFooter:true,nativeScroll:true});

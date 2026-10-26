@@ -5,6 +5,7 @@ import { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import { MotionReveal } from "@/components/common/motion";
 import { ProjectCover } from "@/components/public/sections/projects/project-cover";
+import { useLightboxScrollLock } from "@/hooks/use-lightbox-scroll-lock";
 
 type StructuredScreenshot = {
   imageUrl: string;
@@ -26,6 +27,7 @@ export function ProjectScreenshots({
   title,
 }: ProjectScreenshotsProps) {
   const [activeIndex, setActiveIndex] = useState(-1);
+  const scrollLock = useLightboxScrollLock();
 
   const items: StructuredScreenshot[] =
     structuredScreenshots && structuredScreenshots.length > 0
@@ -116,7 +118,7 @@ export function ProjectScreenshots({
         slides={slides}
         carousel={{ finite: false, imageFit: "contain" }}
         controller={{ closeOnBackdropClick: true }}
-        on={{ view: ({ index }) => setActiveIndex(index) }}
+        on={{ ...scrollLock, view: ({ index }) => setActiveIndex(index) }}
         render={{
           slideFooter: () =>
             activeSlide ? (

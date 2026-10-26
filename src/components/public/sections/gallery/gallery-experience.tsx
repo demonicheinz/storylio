@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { MasonryPhotoAlbum } from "react-photo-album";
 import Lightbox from "yet-another-react-lightbox";
 import page from "@/components/public/public-page.module.css";
+import { useLightboxScrollLock } from "@/hooks/use-lightbox-scroll-lock";
 import styles from "./gallery.module.css";
 import type { GalleryPhoto } from "./types";
 
@@ -36,6 +37,7 @@ export function GalleryExperience({
   const searchParams = useSearchParams();
   const activeCategory = selectedCategory ?? "All";
   const [activeIndex, setActiveIndex] = useState(-1);
+  const scrollLock = useLightboxScrollLock();
 
   const filteredPhotos = useMemo(
     () =>
@@ -147,7 +149,7 @@ export function GalleryExperience({
         slides={slides}
         carousel={{ finite: false, imageFit: "contain" }}
         controller={{ closeOnBackdropClick: true }}
-        on={{ view: ({ index }) => setActiveIndex(index) }}
+        on={{ ...scrollLock, view: ({ index }) => setActiveIndex(index) }}
         render={{
           slideFooter: () =>
             activePhoto ? (
