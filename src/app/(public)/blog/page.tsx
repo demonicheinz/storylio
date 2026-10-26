@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { Suspense } from "react";
-import { PublicBackground } from "@/components/common";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
+import styles from "@/components/public/public-page.module.css";
 import {
   BlogFilters,
   BlogHero,
@@ -164,10 +164,8 @@ async function BlogContent({ searchParams }: BlogPageProps) {
   const [featuredPost, ...remainingPosts] = posts;
 
   return (
-    <main className="min-h-screen overflow-x-clip">
-      <PublicBackground variant="blog" />
-
-      <div className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-295">
+    <main className={styles.page} data-public-page="blog">
+      <div className={styles.container}>
         <BlogHero
           totalPosts={totalPosts}
           totalTags={tags.length}
@@ -175,14 +173,12 @@ async function BlogContent({ searchParams }: BlogPageProps) {
         />
 
         <Suspense
-          fallback={
-            <div className="bg-surface/55 backdrop-blur-xl border border-border/40 rounded-3xl h-24" />
-          }
+          fallback={<div className="bg-surface border-y border-border h-24" />}
         >
           <BlogFilters tags={tags} selectedTag={selectedTag} />
         </Suspense>
 
-        <div className="flex flex-wrap justify-between items-center gap-3 mt-4 px-1 text-muted-foreground text-sm">
+        <div className={styles.summary}>
           <p>{formatBlogSummary(posts.length, selectedTag)}</p>
           {selectedTag && (
             <Link
@@ -209,8 +205,6 @@ async function BlogContent({ searchParams }: BlogPageProps) {
           )}
         </div>
       </div>
-
-      <div className="h-24" />
     </main>
   );
 }

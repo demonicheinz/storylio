@@ -1,8 +1,8 @@
 "use client";
 
-import { TagIcon } from "@phosphor-icons/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FilterLink } from "@/components/public/filter-link";
+import styles from "@/components/public/public-page.module.css";
 
 type BlogFiltersProps = {
   tags: string[];
@@ -28,26 +28,19 @@ export function BlogFilters({ tags, selectedTag }: BlogFiltersProps) {
   };
 
   return (
-    <div className="bg-background/65 sm:bg-surface/55 backdrop-blur-xl -mx-4 sm:mx-0 px-4 sm:px-5 py-3.5 sm:border border-border/30 border-y sm:rounded-3xl">
-      <div className="flex items-center gap-2 mb-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-[0.24em]">
-        <TagIcon className="text-brand-soft" size={16} />
-        Filter by topic
-      </div>
+    <nav className={styles.filters} aria-label="Filter writing by topic">
+      <FilterLink href={getFilterHref()} active={!selectedTag}>
+        All
+      </FilterLink>
+      {tags.map((tag) => {
+        const isActive = selectedTag === tag;
 
-      <div className="[&::-webkit-scrollbar]:hidden flex gap-2 pb-1 overflow-x-auto scrollbar-none">
-        <FilterLink href={getFilterHref()} active={!selectedTag}>
-          All
-        </FilterLink>
-        {tags.map((tag) => {
-          const isActive = selectedTag === tag;
-
-          return (
-            <FilterLink key={tag} href={getFilterHref(tag)} active={isActive}>
-              {tag}
-            </FilterLink>
-          );
-        })}
-      </div>
-    </div>
+        return (
+          <FilterLink key={tag} href={getFilterHref(tag)} active={isActive}>
+            {tag}
+          </FilterLink>
+        );
+      })}
+    </nav>
   );
 }

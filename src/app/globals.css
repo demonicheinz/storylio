@@ -11,7 +11,8 @@ html.lenis {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-motion-reveal] {
+  [data-motion-reveal],
+  [data-route-motion] {
     opacity: 1 !important;
     transform: none !important;
   }

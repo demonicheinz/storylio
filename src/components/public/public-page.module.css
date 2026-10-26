@@ -176,6 +176,18 @@
   font-size: 40px;
   line-height: 1.15;
 }
+.textFeature {
+  grid-template-columns: 1fr;
+}
+.textFeature .cardBody {
+  max-width: 880px;
+  padding: 48px;
+}
+@media (max-width: 767px) {
+  .textFeature .cardBody {
+    padding: 24px;
+  }
+}
 @media (max-width: 1023px) {
   .feature {
     grid-template-columns: 1fr;

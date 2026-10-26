@@ -4,8 +4,9 @@ import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PublicBackground } from "@/components/common";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
+import detail from "@/components/public/public-detail.module.css";
+import page from "@/components/public/public-page.module.css";
 import {
   ArticleHeader,
   ArticleNavigation,
@@ -14,7 +15,6 @@ import {
   RelatedPosts,
   ShareButton,
 } from "@/components/public/sections/blog";
-import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { PostStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
@@ -224,41 +224,25 @@ async function BlogPostContent({ params }: BlogPostPageProps) {
   ]);
 
   return (
-    <main className="min-h-screen overflow-x-clip">
+    <main className={page.page} data-public-page="article">
       <ArticleProgress />
-      <PublicBackground variant="blog" />
-
-      <article className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 pb-24 w-full max-w-7xl">
-        <div className="flex flex-wrap justify-between items-center gap-3 mb-8">
-          <Button
-            role="link"
-            render={<Link href="/blog" />}
-            nativeButton={false}
-            variant="outline"
-            className="bg-surface/70 backdrop-blur border-border/60 rounded-full"
-          >
-            <ArrowLeftIcon data-icon="inline-start" />
-            Back to writing
-          </Button>
-
+      <article className={`${page.container} ${detail.article}`}>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <Link href="/blog" className={page.link}>
+            <ArrowLeftIcon size={16} aria-hidden="true" /> Back to writing
+          </Link>
           <ShareButton title={post.title} />
         </div>
-
         <ArticleHeader post={post} />
-
-        <div className="items-start gap-10 grid xl:grid-cols-[minmax(0,1fr)_280px] mt-16 md:mt-20">
+        <div className={`${detail.readingLayout} ${detail.articleBody}`}>
           <section
             aria-label="Article content"
-            className="pl-5 sm:pl-8 lg:pl-10 border-border/30 border-l min-w-0"
+            className={`${detail.prose} storylio-article-content`}
           >
-            <div className="flex flex-col gap-6 prose-invert [&>h2:first-child]:mt-0 [&>h2]:mt-20 [&>h3]:mt-12 [&>h2:first-child]:pt-0 [&>h2]:pt-2 min-w-0 max-w-4xl overflow-hidden storylio-article-content">
-              {mdxContent}
-            </div>
+            {mdxContent}
           </section>
-
           <ArticleToc items={tocItems} />
         </div>
-
         <RelatedPosts posts={companions.relatedPosts} />
         <ArticleNavigation
           previousPost={companions.previousPost}

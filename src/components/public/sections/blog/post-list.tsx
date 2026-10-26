@@ -1,19 +1,15 @@
-import { BlogReveal } from "@/components/public/sections/blog/blog-reveal";
-import { PostCard } from "@/components/public/sections/blog/post-card";
-import type { BlogPostListItem } from "@/components/public/sections/blog/types";
-
-type PostListProps = {
-  posts: BlogPostListItem[];
-};
-
-export function PostList({ posts }: PostListProps) {
+import { MotionReveal } from "@/components/common/motion";
+import styles from "@/components/public/public-page.module.css";
+import { PostCard } from "./post-card";
+import type { BlogPostListItem } from "./types";
+export function PostList({ posts }: { posts: BlogPostListItem[] }) {
   return (
-    <div className="flex flex-col gap-5 mx-auto w-full">
-      {posts.map((post, index) => (
-        <BlogReveal key={post.id} delay={Math.min(index * 0.05, 0.2)}>
-          <PostCard post={post} />
-        </BlogReveal>
-      ))}
-    </div>
+    <MotionReveal>
+      <div className={styles.grid} data-post-grid>
+        {posts.map((post) => (
+          <PostCard key={post.id} post={post} />
+        ))}
+      </div>
+    </MotionReveal>
   );
 }

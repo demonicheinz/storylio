@@ -1,5 +1,6 @@
 import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import styles from "@/components/public/public-detail.module.css";
 
 type ArticleNavigationItem = {
   title: string;
@@ -31,10 +32,7 @@ export function ArticleNavigation({
         </h2>
       </div>
 
-      <nav
-        aria-label="Article navigation"
-        className="gap-4 grid md:grid-cols-2"
-      >
+      <nav aria-label="Article navigation" className={styles.adjacent}>
         <ArticleNavigationCard post={previousPost} direction="previous" />
         <ArticleNavigationCard post={nextPost} direction="next" />
       </nav>
@@ -57,10 +55,7 @@ function ArticleNavigationCard({
   const Icon = isNext ? ArrowRightIcon : ArrowLeftIcon;
 
   return (
-    <Link
-      href={`/blog/${post.slug}`}
-      className="group bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] backdrop-blur-xl p-5 border border-border/40 hover:border-brand-soft/45 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60 transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 duration-300"
-    >
+    <Link href={`/blog/${post.slug}`}>
       <div
         className={`flex items-center gap-2 text-xs font-semibold tracking-[0.24em] text-muted-foreground uppercase ${
           isNext ? "justify-end text-right" : ""
