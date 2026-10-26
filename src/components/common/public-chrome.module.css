@@ -1,5 +1,5 @@
-/* Share Home's palette with its floating navigation and curtain footer. */
-:global(.dark) .chrome:has([data-home-page]) {
+/* Approved Home palette shared by every public route. */
+:global(.dark) .chrome {
   --background: oklch(0.11 0.018 259.15);
   --surface: oklch(0.155 0.023 259.15);
   --surface-2: oklch(0.195 0.028 259.15);

@@ -401,13 +401,13 @@ projects, a readable ordered approach, technology logos, latest writing, and
 personal notes. Notes come from published posts with the exact tag `notes` and
 are hidden when empty; testimonials are no longer queried on Home.
 
-`public-chrome.module.css` shares Home's dark palette across its navigation,
-content, and footer: near-black canvas (`oklch(0.11 0.018 259.15)`), quiet
+`public-chrome.module.css` shares the approved Home dark palette across all public
+navigation, content, and footers: near-black canvas (`oklch(0.11 0.018 259.15)`), quiet
 surface (`oklch(0.155 0.023 259.15)`), next surface
 (`oklch(0.195 0.028 259.15)`), and border (`oklch(0.28 0.025 259.15)`).
 One navy hue connects the surfaces; lightness separates their roles. The scope
-exists only while the public shell contains Home. Other pages retain their
-existing semantic tokens. The footer uses surface-2 in both themes, retaining
+exists throughout the public shell; dashboard tokens stay independent.
+The shared footer uses surface-2 in both themes, retaining
 enough separation from the canvas for its curtain reveal.
 
 The hero serves the original 2560×1441 AVIF with `unoptimized` and preload,
@@ -473,8 +473,8 @@ anchor with smooth scrolling; no secondary bottom link remains.
 Hero fallback copy is personal and direct: “I’m Heinz. I build web apps.” Home's section
 labels are “Projects I’ve built”, “How I work”, “My usual stack”, “Writing”, and
 “Notes from building”. Home's footer invitation is “Got something in mind?
-Let’s talk.” Keep only its back-to-top control on Home; other public pages retain
-their floating control while they await redesign.
+Let’s talk.” All public routes share this footer and its back-to-top control;
+there is no second floating control.
 
 The Home footer adopts the reference
 columns and oversized wordmark; desktop curtain reveal is enabled only when

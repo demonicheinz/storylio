@@ -7,6 +7,7 @@ import {
   useTransform,
 } from "motion/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { scrollPageTo } from "@/lib/page-scroll";
 import homeStyles from "./home.module.css";
@@ -24,6 +25,7 @@ export function HomeFooter({
   socialLinks: HomeSocialLink[];
   email?: string | null;
 }) {
+  const isHome = usePathname() === "/";
   const wrapperRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
@@ -74,11 +76,13 @@ export function HomeFooter({
       ref={wrapperRef}
       className={curtainHeight ? styles.curtain : undefined}
       style={curtainHeight ? { height: curtainHeight } : undefined}
-      data-home-footer-wrapper
+      data-home-footer-wrapper={isHome ? true : undefined}
+      data-public-footer-wrapper
     >
       <footer
         ref={footerRef}
-        data-home-footer
+        data-home-footer={isHome ? true : undefined}
+        data-public-footer
         className={`${homeStyles.surface} ${styles.footer}`}
         onFocusCapture={revealFocusedLinks}
       >
@@ -166,12 +170,12 @@ export function HomeFooter({
           <div className={styles.socialStrip}>
             <p>Ahmad Haizul Amany</p>
             <a
-              href="#home-title"
+              href={isHome ? "#home-title" : "#page-title"}
               className={styles.backToTop}
               onClick={(event) => {
                 event.preventDefault();
                 scrollPageTo(0, { immediate: !!reduceMotion });
-                const title = document.getElementById("home-title");
+                const title = document.querySelector<HTMLElement>("h1");
                 title?.setAttribute("tabindex", "-1");
                 title?.focus({ preventScroll: true });
               }}
