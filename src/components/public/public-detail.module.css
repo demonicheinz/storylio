@@ -56,6 +56,15 @@
   margin-top: 24px;
   scroll-margin-top: 112px;
 }
+.subheading {
+  font-family: var(--font-heading);
+  font-size: var(--public-type-item-size);
+  font-weight: var(--public-type-item-weight);
+  line-height: var(--public-type-item-leading);
+  letter-spacing: var(--public-type-item-tracking);
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
 .prose :is(pre, table) {
   max-width: 100%;
   overflow-x: auto;
@@ -111,11 +120,12 @@
 .adjacent a:hover {
   border-color: var(--border-hover);
 }
-.adjacent h3 {
+.adjacent :is(h2, h3) {
   font-family: var(--font-heading);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.3;
+  font-size: var(--public-type-item-size);
+  font-weight: var(--public-type-item-weight);
+  line-height: var(--public-type-item-leading);
+  letter-spacing: var(--public-type-item-tracking);
 }
 .adjacent p {
   color: var(--muted-foreground);

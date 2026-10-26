@@ -26,14 +26,6 @@
   gap: 16px 32px;
   margin-bottom: 32px;
 }
-.sectionTitle {
-  font-family: var(--font-heading);
-  font-size: 36px;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.025em;
-  text-wrap: balance;
-}
 .sectionLink {
   display: inline-flex;
   align-items: center;
@@ -169,10 +161,10 @@
 .heroTitle {
   overflow-wrap: anywhere;
   font-family: var(--font-heading);
-  font-size: 56px;
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.025em;
+  font-size: var(--public-type-page-size);
+  font-weight: var(--public-type-heading-weight);
+  line-height: var(--public-type-page-leading);
+  letter-spacing: var(--public-type-heading-tracking);
   text-wrap: balance;
 }
 .heroDescription {
@@ -211,10 +203,10 @@
 }
 .cardTitle {
   font-family: var(--font-heading);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
+  font-size: var(--public-type-item-size);
+  font-weight: var(--public-type-item-weight);
+  line-height: var(--public-type-item-leading);
+  letter-spacing: var(--public-type-item-tracking);
   overflow-wrap: anywhere;
 }
 .card:hover .cardTitle {
@@ -227,6 +219,7 @@
   color: var(--muted-foreground);
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -366,6 +359,7 @@
   height: 2.8em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -412,11 +406,6 @@
   text-decoration: underline;
   color: var(--link);
 }
-@media (min-width: 768px) {
-  .sectionTitle {
-    font-size: 48px;
-  }
-}
 @media (max-width: 1199px) {
   .logo:nth-child(n + 5) {
     display: none;
@@ -452,10 +441,6 @@
   .heroContent {
     width: calc(100% - 32px);
     padding-top: 140px;
-  }
-  .heroTitle {
-    font-size: 40px;
-    line-height: 1.15;
   }
   .heroDescription {
     font-size: 16px;

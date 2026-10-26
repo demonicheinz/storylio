@@ -35,9 +35,7 @@ export function SkillsSection({
       <div className="grid">
         {items.map((skill) => (
           <article key={skill.id} className={styles.skillGroup}>
-            <h3 className="font-heading font-semibold text-foreground text-xl">
-              {skill.name}
-            </h3>
+            <h3>{skill.name}</h3>
             <p className="mt-3 text-muted-foreground text-sm leading-7">
               {skill.description}
             </p>

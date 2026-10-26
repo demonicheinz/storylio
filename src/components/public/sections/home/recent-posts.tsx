@@ -1,6 +1,7 @@
 import { ArrowUpRightIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { MotionReveal } from "@/components/common/motion";
+import { SectionHeading } from "@/components/common/section-heading";
 import { TiltedCard } from "@/components/common/tilted-card";
 import { BlogCover } from "@/components/public/sections/blog/blog-cover";
 import { calculateReadingTime, formatDate } from "@/lib/utils";
@@ -22,9 +23,7 @@ export function RecentPostsSection({ posts }: { posts: HomeRecentPost[] }) {
     <section className={styles.section} aria-labelledby="writing-title">
       <MotionReveal>
         <div className={styles.sectionHeader}>
-          <h2 id="writing-title" className={styles.sectionTitle}>
-            Writing
-          </h2>
+          <SectionHeading id="writing-title">Writing</SectionHeading>
           <Link href="/blog" className={styles.sectionLink}>
             All writing <ArrowUpRightIcon size={16} aria-hidden="true" />
           </Link>

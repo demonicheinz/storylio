@@ -410,6 +410,20 @@ the current public route at 1440/768/390/320px, including heading visibility and
 footer keyboard focus. Existing filter, About-language and GooeyNav checks
 remain separate so prefetch behavior and navigation can be inspected directly.
 
+The public typography check compares every route with Home at
+1440/1024/768/390/320px. It covers page/section/item roles, featured cards,
+heading-decoration scoping, root font scaling, overflow, and article heading copy actions:
+
+```powershell
+bunx --no-install playwright-cli -s=storylio-type open http://localhost:3000 --config=playwright-cli.config.json
+bunx --no-install playwright-cli -s=storylio-type run-code --filename=tests/browser/public-typography.js
+bunx --no-install playwright-cli -s=storylio-type close
+```
+
+Use published Home, About, project and article fixtures. The article fixture is
+`building-storylio-with-server-first-pages`. Typography roles and approved
+exceptions are documented in [DESIGN.md](DESIGN.md#typography-and-geometry).
+
 ## Integrations
 
 Cache and Partial Prefetching policy, public tag invalidation, and protected

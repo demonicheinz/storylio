@@ -1,5 +1,6 @@
 import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { SectionHeading } from "@/components/common/section-heading";
 import styles from "@/components/public/public-detail.module.css";
 
 type ProjectNavigationItem = {
@@ -24,9 +25,7 @@ export function ProjectNavigation({
   return (
     <section className="mt-16 md:mt-20 pt-9 md:pt-10 border-border/30 border-t">
       <div className="mb-5">
-        <h2 className="mt-2 font-heading font-semibold text-foreground text-2xl">
-          Continue exploring
-        </h2>
+        <SectionHeading className="mt-2">Continue exploring</SectionHeading>
       </div>
 
       <nav aria-label="Project navigation" className={styles.adjacent}>
@@ -63,7 +62,7 @@ function ProjectNavigationCard({
         {isNext && <Icon className="text-brand-soft" size={16} />}
       </div>
       <h2
-        className={`mt-4 font-heading text-2xl font-semibold text-foreground transition-colors group-hover:text-brand-soft ${
+        className={`mt-4 transition-colors group-hover:text-brand-soft ${
           isNext ? "text-right" : ""
         }`}
       >

@@ -1,4 +1,5 @@
 import { MotionReveal } from "@/components/common/motion";
+import { SectionHeading } from "@/components/common/section-heading";
 import styles from "./home.module.css";
 export type HomePhase = {
   id: string;
@@ -36,9 +37,7 @@ export function ApproachSection({ phases }: { phases: HomePhase[] }) {
       <MotionReveal>
         <div className={styles.approach}>
           <div>
-            <h2 id="approach-title" className={styles.sectionTitle}>
-              How I work
-            </h2>
+            <SectionHeading id="approach-title">How I work</SectionHeading>
             <p className={styles.intro}>
               A look at the process behind each project.
             </p>

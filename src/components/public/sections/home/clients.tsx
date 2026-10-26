@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
 import { InfiniteCards } from "@/components/common";
+import { SectionHeading } from "@/components/common/section-heading";
 
 export type HomeLogo = {
   id: string;
@@ -45,10 +46,9 @@ export function ClientsSection({
 
   return (
     <section id="testimonials" className="py-10">
-      <h2 className="heading">
-        {title}
-        <span className="text-brand-soft"> {subtitle}</span>
-      </h2>
+      <SectionHeading className="text-center">
+        {title} {subtitle}
+      </SectionHeading>
 
       <div className="flex flex-col items-center max-lg:mt-10">
         {testimonialItems.length > 0 ? (

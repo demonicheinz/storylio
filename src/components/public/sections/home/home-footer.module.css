@@ -26,10 +26,10 @@
 }
 .invitation h2 {
   font-family: var(--font-heading);
-  font-size: 56px;
+  font-size: var(--public-type-page-size);
   line-height: 1.1;
-  letter-spacing: -0.025em;
-  font-weight: 600;
+  letter-spacing: var(--public-type-heading-tracking);
+  font-weight: var(--public-type-heading-weight);
 }
 .contact {
   display: inline-flex;
@@ -126,9 +126,6 @@
   }
   .invitation {
     grid-column: 1 / -1;
-  }
-  .invitation h2 {
-    font-size: 40px;
   }
   .wordmark {
     font-size: 24vw;

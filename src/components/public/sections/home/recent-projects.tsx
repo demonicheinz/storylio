@@ -1,6 +1,7 @@
 import { ArrowUpRightIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { MotionReveal } from "@/components/common/motion";
+import { SectionHeading } from "@/components/common/section-heading";
 import { TiltedCard } from "@/components/common/tilted-card";
 import { ProjectCover } from "@/components/public/sections/projects/project-cover";
 import styles from "./home.module.css";
@@ -28,9 +29,9 @@ export function RecentProjectsSection({
     >
       <MotionReveal>
         <div className={styles.sectionHeader}>
-          <h2 id="projects-title" className={styles.sectionTitle}>
+          <SectionHeading id="projects-title">
             Projects I’ve built
-          </h2>
+          </SectionHeading>
           <Link href="/projects" className={styles.sectionLink}>
             All projects <ArrowUpRightIcon size={16} aria-hidden="true" />
           </Link>

@@ -8,6 +8,7 @@ import postgresLogo from "@/assets/technology/postgresql.svg";
 import reactLogo from "@/assets/technology/react.svg";
 import typescriptLogo from "@/assets/technology/typescript.svg";
 import { MotionReveal } from "@/components/common/motion";
+import { SectionHeading } from "@/components/common/section-heading";
 import { normalizeTechnologyName } from "@/lib/home-technologies";
 import { getTechnologyPage } from "@/lib/technology-pagination";
 import type { HomeLogo } from "./clients";
@@ -212,9 +213,9 @@ export function TechStackSection({ logos }: { logos: HomeLogo[] }) {
     >
       <MotionReveal>
         <div className={styles.stackHeader}>
-          <h2 id="stack-title" className={styles.cardTitle}>
+          <SectionHeading id="stack-title" size="compact">
             My usual stack
-          </h2>
+          </SectionHeading>
           <p>For the interface and the systems behind it.</p>
         </div>
         <div

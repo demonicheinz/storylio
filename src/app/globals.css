@@ -91,6 +91,20 @@ html.lenis {
 }
 
 :root {
+  /* Public typography follows the approved Home hierarchy. */
+  --public-type-page-size: 2.5rem;
+  --public-type-page-leading: 1.15;
+  --public-type-section-size: 2.25rem;
+  --public-type-section-leading: 1.15;
+  --public-type-item-size: 1.375rem;
+  --public-type-item-leading: 1.25;
+  --public-type-feature-size: 1.75rem;
+  --public-type-state-size: 1.75rem;
+  --public-type-heading-weight: 600;
+  --public-type-item-weight: 500;
+  --public-type-heading-tracking: -0.025em;
+  --public-type-item-tracking: -0.02em;
+
   /* Fixed samples from home-hero.avif; semantic roles below adapt per theme. */
   --planet-accent: oklch(0.6249 0.1668 248.04);
   --planet-accent-light: oklch(0.7803 0.1169 233.01);
@@ -206,6 +220,19 @@ html.lenis {
   --sidebar-ring: var(--ring);
 }
 
+@media (min-width: 768px) {
+  :root {
+    --public-type-page-size: 3.5rem;
+    --public-type-page-leading: 1.1;
+    --public-type-section-size: 3rem;
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --public-type-feature-size: 2.5rem;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -268,7 +295,12 @@ html.lenis {
   }
 
   .heading {
-    @apply font-heading font-semibold text-4xl md:text-5xl text-center tracking-tight;
+    font-family: var(--font-heading);
+    font-size: var(--public-type-section-size);
+    font-weight: var(--public-type-heading-weight);
+    line-height: var(--public-type-section-leading);
+    letter-spacing: var(--public-type-heading-tracking);
+    text-align: center;
   }
 
   .no-scrollbar {

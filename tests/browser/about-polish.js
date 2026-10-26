@@ -29,6 +29,16 @@ async sessionPage => {
           introAlign: getComputedStyle(language.nextElementSibling).textAlign,
           languageLeft: language.getBoundingClientRect().left,
           contentLeft: h1.getBoundingClientRect().left,
+          profileCenters:[...avatar.parentElement.children].map(el => el.getBoundingClientRect().left + el.getBoundingClientRect().width / 2),
+          sidebarCenter:side.getBoundingClientRect().left + side.getBoundingClientRect().width / 2,
+          languageHeight:language.getBoundingClientRect().height,
+          languageTargets:[...language.querySelectorAll('a')].map(el => el.getBoundingClientRect().height),
+          firstSkill:(() => {
+            const item=main.querySelector('#technical-skills article');
+            const heading=main.querySelector('#technical-skills h2');
+            return {border:getComputedStyle(item).borderTopWidth,padding:getComputedStyle(item).paddingTop,gap:item.getBoundingClientRect().top-heading.getBoundingClientRect().bottom};
+          })(),
+          introTop:language.nextElementSibling.getBoundingClientRect().top + scrollY,
           timelines: [...main.querySelectorAll('[class*="timelineItem"]')].map(item => {
             const dot = getComputedStyle(item, '::before');
             const line = getComputedStyle(item, '::after');
@@ -37,6 +47,10 @@ async sessionPage => {
         };
       });
       assert(!state.overflow, 'Horizontal overflow: ' + JSON.stringify(state));
+      assert(state.profileCenters.every(center => Math.abs(center-state.sidebarCenter)<1), 'Profile elements must be centered at every width: '+JSON.stringify(state));
+      assert(state.languageHeight===52 && state.languageTargets.every(height=>height>=44), 'Language frame/targets have wrong height');
+      assert(state.firstSkill.border==='0px' && state.firstSkill.padding==='0px' && Math.abs(state.firstSkill.gap-24)<1, 'First skill has a stacked divider or excess spacing: '+JSON.stringify(state.firstSkill));
+      if (width===390) assert(state.introTop<600,'Mobile opening is still too tall: '+state.introTop);
       for (const item of state.timelines) {
         if (item.last) assert(item.lineContent === 'none', 'Timeline extends beyond its last dot');
         else assert(item.lineTop === item.dotTop + item.dotSize && item.lineBottom === -item.dotTop && item.dotCenter === item.lineCenter, 'Timeline connector is misaligned: ' + JSON.stringify(item));

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import { MotionReveal } from "@/components/common/motion";
+import { SectionHeading } from "@/components/common/section-heading";
 import { ProjectCover } from "@/components/public/sections/projects/project-cover";
 import { useLightboxScrollLock } from "@/hooks/use-lightbox-scroll-lock";
 
@@ -48,19 +49,16 @@ export function ProjectScreenshots({
   return (
     <section className="mt-16 md:mt-20" aria-labelledby="project-screenshots">
       <div className="flex flex-col gap-2 mb-7 pb-5 border-border/30 border-b">
-        <h2
-          id="project-screenshots"
-          className="font-heading font-semibold text-foreground text-3xl"
-        >
+        <SectionHeading id="project-screenshots">
           Interface details
-        </h2>
+        </SectionHeading>
       </div>
 
       <div className="gap-5 lg:gap-6 grid md:grid-cols-2">
         {items.map((item, index) => (
           <MotionReveal
             key={item.imageUrl}
-            className="border border-border bg-surface p-3 rounded-xl overflow-hidden"
+            className="bg-surface p-3 border border-border rounded-xl overflow-hidden"
           >
             <button
               type="button"

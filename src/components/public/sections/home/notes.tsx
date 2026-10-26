@@ -1,6 +1,7 @@
 import { ArrowUpRightIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { MotionReveal } from "@/components/common/motion";
+import { SectionHeading } from "@/components/common/section-heading";
 import { formatDate } from "@/lib/utils";
 import styles from "./home.module.css";
 import type { HomeRecentPost } from "./recent-posts";
@@ -11,9 +12,7 @@ export function NotesSection({ posts }: { posts: HomeRecentPost[] }) {
     <section className={styles.section} aria-labelledby="notes-title">
       <MotionReveal>
         <div className={styles.sectionHeader}>
-          <h2 id="notes-title" className={styles.sectionTitle}>
-            Notes from building
-          </h2>
+          <SectionHeading id="notes-title">Notes from building</SectionHeading>
           <Link href="/blog?tag=notes" className={styles.sectionLink}>
             All notes <ArrowUpRightIcon size={16} aria-hidden="true" />
           </Link>

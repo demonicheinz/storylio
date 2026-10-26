@@ -45,6 +45,9 @@ export function LanguageIntro({
         hoverEffect={false}
         style={
           {
+            "--gn-pad": "4px",
+            "--gn-gap": "4px",
+            "--gn-x": "16px",
             "--gn-frame": "var(--surface)",
             "--gn-frame-edge": "var(--border)",
             "--gn-frame-highlight": "transparent",

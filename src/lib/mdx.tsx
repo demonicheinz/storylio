@@ -6,6 +6,7 @@ import rehypeSlug from "rehype-slug";
 import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 import { InPageLink } from "@/components/common/in-page-link";
+import detail from "@/components/public/public-detail.module.css";
 import { BlogHeadingLink } from "@/components/public/sections/blog/heading-link";
 import {
   normalizeHeadingDepths,
@@ -52,10 +53,7 @@ const components: MDXComponents = {
     <BlogHeadingLink
       as="h2"
       id={typeof id === "string" ? id : undefined}
-      className={cn(
-        "mt-12 first:mt-0 font-heading font-semibold text-foreground text-3xl scroll-mt-28",
-        className,
-      )}
+      className={cn("mt-12 first:mt-0 scroll-mt-28", className)}
     >
       {children}
     </BlogHeadingLink>
@@ -64,10 +62,7 @@ const components: MDXComponents = {
     <BlogHeadingLink
       as="h2"
       id={typeof id === "string" ? id : undefined}
-      className={cn(
-        "mt-12 first:mt-0 font-heading font-semibold text-foreground text-3xl scroll-mt-28",
-        className,
-      )}
+      className={cn("mt-12 first:mt-0 scroll-mt-28", className)}
     >
       {children}
     </BlogHeadingLink>
@@ -76,10 +71,7 @@ const components: MDXComponents = {
     <BlogHeadingLink
       as="h3"
       id={typeof id === "string" ? id : undefined}
-      className={cn(
-        "mt-8 font-heading font-semibold text-foreground text-2xl scroll-mt-28",
-        className,
-      )}
+      className={cn(detail.subheading, "mt-8 scroll-mt-28", className)}
     >
       {children}
     </BlogHeadingLink>

@@ -58,18 +58,34 @@ typography:
     fontWeight: 600
     lineHeight: 1.15
     letterSpacing: -1px
-  headline:
+  page-title:
     fontFamily: Clash Display
-    fontSize: 28px
+    fontSize: 40px
+    fontSizeFrom768: 56px
     fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: -0.6px
+    lineHeight: 1.15
+    lineHeightFrom768: 1.1
+    letterSpacing: -0.025em
+  section-title:
+    fontFamily: Clash Display
+    fontSize: 36px
+    fontSizeFrom768: 48px
+    fontWeight: 600
+    lineHeight: 1.15
+    letterSpacing: -0.025em
   card-title:
     fontFamily: Clash Display
     fontSize: 22px
     fontWeight: 500
     lineHeight: 1.25
-    letterSpacing: -0.4px
+    letterSpacing: -0.02em
+  featured-title:
+    fontFamily: Clash Display
+    fontSize: 28px
+    fontSizeFrom1024: 40px
+    fontWeight: 500
+    lineHeight: 1.15
+    letterSpacing: -0.02em
   body-lg:
     fontFamily: Satoshi
     fontSize: 18px
@@ -176,8 +192,10 @@ atmosphere instead of repeating glow across cards and controls.
 
 `src/app/globals.css` is the runtime source for colors and radii. This document
 records their roles and the component design direction. Font loading stays in
-`src/lib/font.ts`. Typography, spacing, and component recipes above are guidance;
-they do not generate CSS or replace existing component markup automatically.
+`src/lib/font.ts`. Responsive public typography is defined by the
+`--public-type-*` variables in `globals.css` and consumed by the shared
+`SectionHeading` and public CSS modules. The recipes above document those roles;
+this Markdown does not generate CSS. Spacing and component recipes remain guidance.
 
 The six `palette` samples map to fixed `--planet-*` variables. Semantic variables
 map those samples to usable roles in `:root` (light) and `.dark` (dark). The app
@@ -263,11 +281,52 @@ markers, or patterns; adjacent colors alone do not communicate a series.
 - **JetBrains Mono** / `font-mono`: code, identifiers, and technical values.
 
 All three remain locally hosted variable fonts. Do not load Linear's proprietary
-fonts or substitute Inter/Geist. Display tracking stays between -0.02em and
--0.03em; body tracking stays neutral. The existing `.heading` helper uses Clash
-Display at weight 600, 36px on mobile and 48px from the `md` breakpoint.
-The larger front-matter display sizes are available design directions, not
-global overrides of every heading.
+fonts or substitute Inter/Geist. The approved Home hierarchy is the reference for
+every public route. Use named roles, rather than choosing a font size separately
+for About, an archive, or article content.
+
+| Role | Below 768px | From 768px | Weight | Line height | Tracking |
+| --- | --- | --- | --- | --- | --- |
+| Page title / H1 | 40px | 56px | 600 | 1.15 / 1.1 | -0.025em |
+| Section heading / H2 | 36px | 48px | 600 | 1.15 | -0.025em |
+| Item title / H3 or card title | 22px | 22px | 500 | 1.25 | -0.02em |
+
+These sizes are rem-based in CSS (2.5/3.5rem, 2.25/3rem, 1.375rem respectively)
+and follow the reader's root font size. The 768px breakpoint is shared; do not
+add a different breakpoint or size to a route. Body copy and metadata keep their
+existing Satoshi roles (16px body, 18px lead, 14px secondary, 12px caption).
+
+Use `SectionHeading` for section H2s. It owns the family, size, weight, line height,
+and tracking. Its `className` is for layout and spacing, not `text-*` or alternate
+type sizes. The older `Heading` component delegates `variant="section"` H2s to
+this component; its generic `size` prop does not override section typography.
+About, Home, related content, interface details, and Markdown H2s follow this
+same scale. Article/study H3s, institution names, work titles, and skill categories
+use the item role. Heading levels describe structure: archive cards can be H2s
+and still use the item role visually.
+
+Keep public headings plain in `--foreground`. No slash prefixes, decorative
+underlines, gradient bars, or highlighted words. Distinguish sections from items
+through the scale, weight, and spacing. Keep existing section and item spacing;
+do not decorate a weak hierarchy instead of fixing the type roles. Native links
+inside content retain their functional hover/focus treatment.
+
+Explicit exceptions are limited to existing roles:
+
+- Home's compact tech-stack block uses `SectionHeading size="compact"` at the
+  item scale, preserving its approved composition.
+- A featured archive card uses 28px below 1024px and 40px from 1024px via
+  `--public-type-feature-size`; regular cards remain 22px.
+- Empty-state headings use `--public-type-state-size` (28px, weight 500), rather
+  than competing with the page's real H1. TOC and footer navigation labels are
+  controls, not section titles.
+- The footer invitation remains a display CTA at the page-title sizes, with its
+  existing 1.1 line height; its logo wordmark is an illustration. Neither follows
+  H2 section sizing.
+
+The reserved `display-*` presets above are not alternate page or section sizes.
+Changes to the public hierarchy must update the tokens, this role table, and
+the browser typography check together. Dashboard/auth typography is independent.
 
 Use a 4px spacing unit, 24px card interiors, 32–48px between related blocks, and
 64–96px between sections. Content containers generally cap at 1280px; reading
