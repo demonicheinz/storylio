@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { InPageLink } from "@/components/common/in-page-link";
 import { useActiveSection } from "@/hooks/use-active-section";
-import { cn } from "@/lib/utils";
 import styles from "./about.module.css";
 
 export interface SideNavItem {
@@ -46,60 +45,6 @@ const sectionIds = sideNavItems.map((item) => item.id);
 
 export function AboutSideNavigation({ language }: { language: "en" | "id" }) {
   const activeId = useActiveSection(sectionIds, "position");
-  const [displayActiveId, setDisplayActiveId] = useState(activeId);
-  const [lockedActiveId, setLockedActiveId] = useState("");
-  const lockTimeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (lockedActiveId) {
-      if (activeId === lockedActiveId) {
-        setDisplayActiveId(activeId);
-        setLockedActiveId("");
-      }
-
-      return;
-    }
-
-    if (activeId) {
-      setDisplayActiveId(activeId);
-    }
-  }, [activeId, lockedActiveId]);
-
-  useEffect(() => {
-    return () => {
-      if (lockTimeoutRef.current) {
-        window.clearTimeout(lockTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const scrollTo = (id: string, href: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      setDisplayActiveId(href);
-      setLockedActiveId(href);
-
-      if (lockTimeoutRef.current) {
-        window.clearTimeout(lockTimeoutRef.current);
-      }
-
-      lockTimeoutRef.current = window.setTimeout(() => {
-        setLockedActiveId("");
-      }, 1200);
-
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.scrollY - 80;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "auto",
-      });
-
-      // Update URL
-      window.history.pushState(null, "", href);
-    }
-  };
-
   return (
     <nav
       className={styles.sidebarNav}
@@ -107,28 +52,13 @@ export function AboutSideNavigation({ language }: { language: "en" | "id" }) {
     >
       <ul>
         {sideNavItems.map((item) => (
-          <li key={item.id} className="group">
-            <button
-              type="button"
-              aria-current={displayActiveId === item.href ? "true" : undefined}
-              onClick={() => scrollTo(item.id, item.href)}
-              className={cn(
-                "flex items-center gap-2 outline-none hover:text-brand-soft focus-visible:text-brand-soft transition-colors cursor-pointer",
-                displayActiveId === item.href
-                  ? "font-medium text-brand-soft"
-                  : "text-muted-foreground",
-              )}
+          <li key={item.id}>
+            <InPageLink
+              href={`#${item.id}`}
+              aria-current={activeId === item.href ? "location" : undefined}
             >
-              <div
-                className={cn(
-                  "bg-muted-foreground w-4 h-px transition-all",
-                  displayActiveId === item.href
-                    ? "w-6 bg-brand-soft"
-                    : "bg-muted-foreground",
-                )}
-              />
-              <span>{item.title[language]}</span>
-            </button>
+              {item.title[language]}
+            </InPageLink>
           </li>
         ))}
       </ul>

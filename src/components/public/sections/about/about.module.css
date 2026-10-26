@@ -1,25 +1,33 @@
 .layout {
   display: grid;
-  grid-template-columns: 272px minmax(0, 1fr);
-  gap: 80px;
-  padding-top: 160px;
+  grid-template-columns: 224px minmax(0, 1fr);
+  max-width: 1120px;
+  gap: 64px;
+  padding-top: 144px;
 }
 .sidebar {
   position: sticky;
   top: 112px;
   align-self: start;
+  min-width: 0;
+  max-height: calc(100svh - 136px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding: 4px;
+  margin: -4px;
 }
 .content {
   min-width: 0;
-  max-width: 75ch;
+  max-width: 65ch;
 }
 .content h2 {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   font-family: var(--font-heading);
   font-size: 36px;
   font-weight: 600;
   line-height: 1.2;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
 }
 .content h2 > span {
   border: 0;
@@ -64,7 +72,7 @@
   flex-direction: column;
   gap: 4px;
 }
-.sidebarNav button {
+.sidebarNav :is(a, button) {
   min-height: 44px;
   text-align: left;
   font-size: 14px;
@@ -72,10 +80,10 @@
 .bio {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
 }
 .role {
-  margin-top: 16px;
+  margin-top: 12px;
   color: var(--muted-foreground);
   font-size: 18px;
   line-height: 1.5;
@@ -84,7 +92,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px 24px;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 .language {
   display: flex;
@@ -98,7 +106,7 @@
 .language p {
   color: var(--muted-foreground);
   font-size: 18px;
-  line-height: 1.8;
+  line-height: 1.75;
   text-wrap: pretty;
 }
 .rows {
@@ -117,35 +125,53 @@
 }
 .row p {
   color: var(--muted-foreground);
-  line-height: 1.8;
+  line-height: 1.75;
 }
 .row ul {
-  line-height: 1.8;
+  line-height: 1.75;
 }
-@media (max-width: 1199px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   .layout {
-    gap: 48px;
-    grid-template-columns: 224px minmax(0, 1fr);
+    gap: 32px;
+    grid-template-columns: 192px minmax(0, 1fr);
   }
 }
 @media (max-width: 767px) {
   .layout {
     display: flex;
     flex-direction: column;
-    gap: 40px;
-    padding-top: 136px;
+    gap: 32px;
+    padding-top: 120px;
   }
   .sidebar {
     position: static;
+    align-self: stretch;
+    max-height: none;
+    overflow: visible;
   }
   .profileMeta {
-    flex-direction: row;
+    flex-direction: column;
     flex-wrap: wrap;
     align-items: center;
   }
-  .profileMeta > div:first-child {
-    width: 96px;
-    height: 96px;
+  .avatar,
+  .avatar [data-slot="live-orb"] {
+    width: 96px !important;
+    height: 96px !important;
+  }
+  .profile {
+    align-items: center;
+    text-align: center;
+  }
+  .identity {
+    text-align: center;
+  }
+  .profileLanguages,
+  .socials {
+    justify-content: center;
+  }
+  .language {
+    text-align: left;
   }
   .sidebarNav {
     display: none;
@@ -156,4 +182,108 @@
   .language p {
     font-size: 16px;
   }
+}
+
+.section {
+  margin-top: 64px;
+  scroll-margin-top: 112px;
+}
+.principles {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.principle + .principle {
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+.timeline {
+  margin-left: 5px;
+  border-left: 1px solid var(--border);
+}
+.timelineItem {
+  position: relative;
+  padding: 0 0 32px 28px;
+}
+.timelineItem:last-child {
+  padding-bottom: 0;
+}
+.timelineItem::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: -5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hover);
+  background: var(--background);
+}
+.timelineItem[data-current="true"]::before {
+  background: var(--link);
+  border-color: var(--link);
+}
+.period {
+  margin-bottom: 8px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.timelineItem h3,
+.skillGroup h3 {
+  font-family: var(--font-heading);
+  color: var(--foreground);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.timelineRole {
+  margin-block: 8px 16px;
+  color: var(--link);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.timelineDescription {
+  margin-block: 12px 16px;
+  color: var(--muted-foreground);
+  font-size: 16px;
+  line-height: 1.75;
+}
+.skillGroup {
+  padding-block: 24px;
+  border-top: 1px solid var(--border);
+}
+.skillGroup p {
+  margin-top: 8px;
+  color: var(--muted-foreground);
+  font-size: 16px;
+  line-height: 1.75;
+}
+@media (max-width: 767px) {
+  .section {
+    margin-top: 48px;
+  }
+}
+
+.sidebarNav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted-foreground);
+  transition: color 160ms;
+}
+.sidebarNav a::before {
+  content: "";
+  width: 16px;
+  height: 1px;
+  flex-shrink: 0;
+  background: var(--border-hover);
+}
+.sidebarNav a:hover,
+.sidebarNav a[aria-current] {
+  color: var(--link);
+}
+.sidebarNav a[aria-current]::before {
+  background: var(--link);
 }

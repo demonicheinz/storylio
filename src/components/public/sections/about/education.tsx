@@ -1,12 +1,12 @@
 import { Heading } from "@/components/common/heading";
 import { educationItems } from "@/components/public/sections/about/data";
-import { aboutInteractiveGlowCardClassName } from "@/components/public/sections/about/styles";
-import { cn } from "@/lib/utils";
+import styles from "./about.module.css";
 
 type PublicEducation = {
   id: string;
   institution: string;
   detail: string;
+  period?: string;
   description: string | null;
 };
 export function EducationSection({
@@ -22,6 +22,7 @@ export function EducationSection({
         id: item.name,
         institution: item.name,
         detail: item.description,
+        period: "",
         description: null,
       }));
   return (
@@ -33,12 +34,12 @@ export function EducationSection({
         title={language === "id" ? "Riwayat" : "Education"}
         highlight={language === "id" ? "Pendidikan" : "History"}
       />
-      <div className="gap-4 grid">
+      <div className={styles.timeline}>
         {items.map((institution) => (
-          <article
-            key={institution.id}
-            className={cn(aboutInteractiveGlowCardClassName)}
-          >
+          <article key={institution.id} className={styles.timelineItem}>
+            {institution.period && (
+              <p className={styles.period}>{institution.period}</p>
+            )}
             <h3 className="font-heading font-semibold text-foreground text-xl">
               {institution.institution}
             </h3>

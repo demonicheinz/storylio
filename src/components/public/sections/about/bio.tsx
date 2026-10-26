@@ -62,7 +62,7 @@ export function BioSection({
   });
   return (
     <div className={styles.bio}>
-      <div>
+      <div className={styles.identity}>
         <h1 id="page-title" className={page.title}>
           {name}
         </h1>

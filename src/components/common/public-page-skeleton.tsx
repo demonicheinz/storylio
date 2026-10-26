@@ -58,14 +58,16 @@ function Content({ variant }: PublicPageSkeletonProps) {
   if (variant === "about")
     return (
       <div className={`${page.container} ${about.layout}`}>
-        <div>
-          <Bar className="size-36 rounded-full" />
-          <Bar className="w-40 h-4 mt-8" />
+        <div className="flex flex-col items-center md:items-start">
+          <Bar className="size-24 md:size-36 rounded-full" />
+          <Bar className="w-40 h-4 mt-6" />
         </div>
         <div>
-          <Bar className="w-4/5 h-14 mb-8" />
+          <Bar className="w-4/5 h-14 mb-6 mx-auto md:mx-0" />
+          <Bar className="w-48 h-4 mb-6 mx-auto md:mx-0" />
+          <Bar className="w-56 h-11 mb-6" />
           <Lines />
-          <div className="mt-20">
+          <div className="mt-12 md:mt-16">
             <Bar className="w-2/3 h-9 mb-8" />
             <Lines />
           </div>

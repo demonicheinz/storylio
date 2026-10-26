@@ -28,7 +28,7 @@ export function ProfileSection({
           name={name}
           size={144}
           animated
-          className="border border-brand-soft/40"
+          className={cn(styles.avatar, "border border-brand-soft/40")}
         />
 
         <div className="flex items-center gap-2 font-medium text-foreground text-sm">

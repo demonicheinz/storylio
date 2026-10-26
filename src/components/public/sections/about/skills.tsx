@@ -1,7 +1,6 @@
 import { Heading } from "@/components/common/heading";
 import { skillGroups } from "@/components/public/sections/about/data";
-import { aboutInteractiveGlowCardClassName } from "@/components/public/sections/about/styles";
-import { cn } from "@/lib/utils";
+import styles from "./about.module.css";
 
 type PublicSkillCategory = {
   id: string;
@@ -35,10 +34,7 @@ export function SkillsSection({
       />
       <div className="grid">
         {items.map((skill) => (
-          <article
-            key={skill.id}
-            className={cn(aboutInteractiveGlowCardClassName)}
-          >
+          <article key={skill.id} className={styles.skillGroup}>
             <h3 className="font-heading font-semibold text-foreground text-xl">
               {skill.name}
             </h3>

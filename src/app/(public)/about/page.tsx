@@ -24,7 +24,7 @@ import { renderMDX } from "@/lib/mdx";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 import { cn } from "@/lib/utils";
 
-const sectionSpacing = "mt-16 scroll-mt-28 md:mt-24";
+const sectionSpacing = aboutStyles.section;
 const aboutMdxClassName =
   "flex min-w-0 max-w-full flex-col gap-4 overflow-hidden [&_img]:h-auto [&_img]:max-w-full [&_pre]:max-w-full [&_table]:max-w-full";
 const metadataFallback =
@@ -254,7 +254,7 @@ async function AboutContent({ searchParams }: AboutPageProps) {
   return (
     <main className={pageStyles.page} data-public-page="about">
       <div className={cn(pageStyles.container, aboutStyles.layout)}>
-        <aside className={aboutStyles.sidebar}>
+        <aside className={aboutStyles.sidebar} data-lenis-prevent>
           <ProfileSection profile={publicProfile} />
           <AboutSideNavigation language={language} />
         </aside>
@@ -271,8 +271,8 @@ async function AboutContent({ searchParams }: AboutPageProps) {
 
           <MotionReveal className={sectionSpacing}>
             <section id="working-principles" className="scroll-mt-28">
-              <div className="flex flex-col gap-10 md:gap-12">
-                <div className="min-w-0">
+              <div className={aboutStyles.principles}>
+                <div className={aboutStyles.principle}>
                   <Heading
                     level="h2"
                     variant="section"
@@ -285,7 +285,7 @@ async function AboutContent({ searchParams }: AboutPageProps) {
                   </div>
                 </div>
 
-                <div className="pt-10 md:pt-12 border-border/30 border-t min-w-0">
+                <div className={aboutStyles.principle}>
                   <Heading
                     level="h2"
                     variant="section"
@@ -334,14 +334,10 @@ async function AboutContent({ searchParams }: AboutPageProps) {
                   education={education.map((item) => ({
                     id: item.id,
                     institution: item.institution,
-                    detail: [
-                      item.degree,
-                      item.field,
-                      item.location,
-                      [item.startYear, item.endYear]
-                        .filter(Boolean)
-                        .join(" - "),
-                    ]
+                    period: [item.startYear, item.endYear]
+                      .filter(Boolean)
+                      .join(" – "),
+                    detail: [item.degree, item.field, item.location]
                       .filter(Boolean)
                       .join(" · "),
                     description: localizedOptional(
@@ -376,10 +372,7 @@ async function AboutContent({ searchParams }: AboutPageProps) {
               ),
             },
           ].map((section) => (
-            <MotionReveal
-              key={section.id}
-              className={cn(sectionSpacing, "last:mb-16")}
-            >
+            <MotionReveal key={section.id} className={sectionSpacing}>
               <section id={section.id} className="scroll-mt-28">
                 {section.component}
               </section>
