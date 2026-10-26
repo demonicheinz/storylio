@@ -34,15 +34,13 @@ export function EducationSection({
         title={language === "id" ? "Pendidikan &" : "Education &"}
         highlight={language === "id" ? "Pembelajaran" : "Learning"}
       />
-      <div className={styles.timeline}>
+      <div>
         {items.map((institution) => (
-          <article key={institution.id} className={styles.timelineItem}>
+          <article key={institution.id} className={styles.educationItem}>
             {institution.period && (
               <p className={styles.period}>{institution.period}</p>
             )}
-            <h3 className="font-heading font-semibold text-foreground text-xl">
-              {institution.institution}
-            </h3>
+            <h3>{institution.institution}</h3>
             <p className="mt-2 text-muted-foreground text-sm leading-7">
               {institution.detail}
             </p>

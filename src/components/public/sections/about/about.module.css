@@ -214,8 +214,8 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  border: 1px solid var(--border-hover);
-  background: var(--background);
+  border: 1px solid var(--link);
+  background: var(--link);
 }
 .timelineItem:not(:last-child)::after {
   content: "";
@@ -226,9 +226,15 @@
   width: 1px;
   background: var(--border);
 }
-.timelineItem[data-current="true"]::before {
-  background: var(--link);
-  border-color: var(--link);
+.educationItem {
+  padding-bottom: 24px;
+}
+.educationItem + .educationItem {
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.educationItem:last-child {
+  padding-bottom: 0;
 }
 .period {
   margin-bottom: 8px;
@@ -238,6 +244,7 @@
   font-variant-numeric: tabular-nums;
 }
 .timelineItem h3,
+.educationItem h3,
 .skillGroup h3 {
   font-family: var(--font-heading);
   color: var(--foreground);

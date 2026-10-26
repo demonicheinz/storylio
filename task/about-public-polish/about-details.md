@@ -51,3 +51,17 @@ high advisories. This change does not alter dependencies. DESIGN.md is unchanged
 Overall: 4.0/5. Highest-value follow-up: owner review of the corrected tablet TOC.
 The owner's rejection of translated links informed the final normal-flow version;
 the implementation is verified but visual approval is not assumed.
+
+## Education list and blue work markers
+
+Follow-up: replace Education's timeline with a vertical list, using 24px item
+padding and 1px separators only between entries. Keep CMS content and dates.
+Work Experience retains its timeline with all dots filled using `--link` blue;
+connectors stay neutral.
+
+PASS: lint, production build including TypeScript, and About browser regression
+at all five widths and both tablet languages. Browser inspection confirms three
+education entries without dots or left indentation, separators on entries two
+and three, and matching blue backgrounds for both work markers. Education and
+Work screenshots were inspected in `.playwright-cli/about-education-list.png`
+and `.playwright-cli/about-work-blue.png`.
