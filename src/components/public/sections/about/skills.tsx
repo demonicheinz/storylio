@@ -33,11 +33,11 @@ export function SkillsSection({
         title={language === "id" ? "Keahlian" : "Technical"}
         highlight={language === "id" ? "Teknis" : "Skills"}
       />
-      <div className="gap-4 grid sm:grid-cols-2">
+      <div className="grid">
         {items.map((skill) => (
           <article
             key={skill.id}
-            className={cn(aboutInteractiveGlowCardClassName, "rounded-3xl p-5")}
+            className={cn(aboutInteractiveGlowCardClassName)}
           >
             <h3 className="font-heading font-semibold text-foreground text-xl">
               {skill.name}
@@ -50,7 +50,7 @@ export function SkillsSection({
                 {skill.skills.map((item) => (
                   <span
                     key={item.id}
-                    className="bg-background/30 px-3 py-1 border border-border/50 rounded-full text-muted-foreground text-xs"
+                    className="bg-surface px-3 py-1 border border-border rounded-md text-muted-foreground text-sm"
                   >
                     {item.name}
                     {item.level ? ` · ${item.level}` : ""}

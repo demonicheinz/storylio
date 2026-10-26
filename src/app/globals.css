@@ -10,6 +10,13 @@ html.lenis {
   scroll-behavior: auto !important;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  [data-motion-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

@@ -37,7 +37,7 @@ export function EducationSection({
         {items.map((institution) => (
           <article
             key={institution.id}
-            className={cn(aboutInteractiveGlowCardClassName, "rounded-3xl p-5")}
+            className={cn(aboutInteractiveGlowCardClassName)}
           >
             <h3 className="font-heading font-semibold text-foreground text-xl">
               {institution.institution}

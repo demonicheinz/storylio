@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useActiveSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
+import styles from "./about.module.css";
 
 export interface SideNavItem {
   title: {
@@ -101,17 +102,10 @@ export function AboutSideNavigation({ language }: { language: "en" | "id" }) {
 
   return (
     <nav
-      className="py-2"
-      style={{
-        position: "fixed",
-        left: 0,
-        top: "50%",
-        transform: "translateY(-50%)",
-        whiteSpace: "nowrap",
-        paddingLeft: "1.5rem",
-      }}
+      className={styles.sidebarNav}
+      aria-label={language === "id" ? "Di halaman ini" : "On this page"}
     >
-      <ul className="space-y-8">
+      <ul>
         {sideNavItems.map((item) => (
           <li key={item.id} className="group">
             <button

@@ -44,10 +44,9 @@ export function ExperienceSection({
         title={language === "id" ? "Pengalaman" : "Work"}
         highlight={language === "id" ? "Kerja" : "Experience"}
       />
-      <div className="before:top-2 before:bottom-2 before:left-1 before:absolute relative flex flex-col gap-10 before:bg-border/70 before:w-px">
+      <div className="flex flex-col">
         {items.map((experience) => (
-          <article key={experience.id} className="relative pl-8">
-            <span className="top-2 left-0 absolute bg-brand-soft shadow-[0_0_24px_rgba(168,85,247,0.7)] rounded-full size-2.5" />
+          <article key={experience.id} className="border-t border-border py-7">
             <div className="flex flex-row flex-wrap justify-between items-baseline gap-2 mb-3">
               <h3 className="font-heading font-semibold text-foreground text-xl sm:text-2xl">
                 {experience.company ?? experience.title}

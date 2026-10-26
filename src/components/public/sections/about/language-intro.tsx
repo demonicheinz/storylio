@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import page from "@/components/public/public-page.module.css";
 import { introCopy } from "@/components/public/sections/about/data";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import styles from "./about.module.css";
 
 export type AboutLanguage = keyof typeof introCopy;
 
@@ -23,37 +23,26 @@ export function LanguageIntro({
   language: AboutLanguage;
 }) {
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex bg-surface/70 backdrop-blur p-1 border border-border/50 rounded-full w-fit">
+    <div className={styles.language}>
+      <nav aria-label="Language" className={styles.languageNav}>
         {languages.map((item) => {
           const isActive = language === item.value;
 
           return (
-            <Button
-              role="link"
+            <Link
               key={item.value}
-              variant={isActive ? "default" : "ghost"}
-              size="sm"
-              className={cn(
-                "px-4 rounded-full h-8",
-                !isActive && "text-muted-foreground hover:text-foreground",
-              )}
-              render={
-                <Link
-                  href={`/about?lang=${item.value}`}
-                  prefetch={true}
-                  scroll={false}
-                  aria-current={isActive ? "page" : undefined}
-                />
-              }
-              nativeButton={false}
+              className={page.filter}
+              href={`/about?lang=${item.value}`}
+              prefetch={true}
+              scroll={false}
+              aria-current={isActive ? "page" : undefined}
             >
               {item.label}
-            </Button>
+            </Link>
           );
         })}
-      </div>
-      <p className="text-muted-foreground text-lg leading-8">{intro}</p>
+      </nav>
+      <p>{intro}</p>
     </div>
   );
 }

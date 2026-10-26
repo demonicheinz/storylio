@@ -21,6 +21,7 @@ export function MotionReveal({
 
   return (
     <motion.div
+      data-motion-reveal
       initial={reduceMotion ? false : { opacity: 0, y: 24 }}
       whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
