@@ -45,6 +45,7 @@ export function RouteMotion({
   return (
     <motion.div
       key={pathname}
+      data-route-motion
       initial={reduceMotion ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease }}

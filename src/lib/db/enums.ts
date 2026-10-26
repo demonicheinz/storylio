@@ -7,6 +7,10 @@ export const ProjectStatus = {
 } as const;
 export type ProjectStatus = (typeof ProjectStatus)[keyof typeof ProjectStatus];
 
-export const HomeSectionType = { PHASE: "PHASE", LOGO: "LOGO" } as const;
+export const HomeSectionType = {
+  PHASE: "PHASE",
+  LOGO: "LOGO",
+  HERO: "HERO",
+} as const;
 export type HomeSectionType =
   (typeof HomeSectionType)[keyof typeof HomeSectionType];

@@ -291,6 +291,39 @@ badges to `--primary-hover`. This keeps their hover fill opaque even where the
 component still declares `hover:bg-primary/80`, which reduces label contrast.
 New component variants should use the explicit semantic hover utility directly.
 
+The Home CTA is an explicit material exception: VenomButton uses the upstream
+exteestudio symbiote renderer and 3D cursor, adapted to black navy rubber with
+restrained cool blue reflections. Keep its Satoshi
+label at the project's button typography (14px, weight 500), with at least a
+44px target and 12px/24px padding. Its pill geometry belongs to this effect;
+other controls keep their existing radius tokens. The renderer reads dimensions
+and font from the real navigation link. Touch, reduced motion and unavailable
+WebGL keep the CSS link. Its thin pale-blue rim travels around the pill once
+every 5 seconds, brightens on hover/focus, and stops under reduced motion.
+The text and full-size pill exist in the server-rendered link. The Home entrance
+reveals this link on a fixed schedule while its renderer prepares. Crossfade to WebGL in
+180ms once the first complete frame is ready; the rim pauses and fades out.
+The scene is transparent and scoped to the CTA area;
+it releases cursor ownership and pauses rendering when offscreen, hidden, or
+unfocused, then resumes at full size without replaying the intro. A visible
+paused button keeps a stable 2D snapshot of its WebGL material; offscreen buttons
+hide that snapshot. Resume replaces it only after the next complete WebGL frame.
+GPU resources
+are retained for this pause and freed on unmount, reduced motion, or context
+loss. Use no growth or delayed-label entrance, including on the initial mount.
+Begin loading the engine and font immediately for a visible desktop CTA;
+keep the engine deferred for touch and reduced motion. Cache the two cursor
+rasters and distance fields per browser module; GPU textures remain per scene.
+Submit all three shader programs before validation, share the vertex shader,
+and poll completion over animation frames when parallel compilation is available.
+Idle probes use 1–2 short strands every 4–6 seconds; cursor interaction retains
+the original physics. Keep the hero text horizontally centered above the horizon.
+
+In-page anchors use native smooth scrolling when reduced motion is not requested.
+Imperative table-of-contents and scroll-to-top actions use CSS-controlled `auto`
+behavior, so the same preference applies. The root `data-scroll-behavior="smooth"`
+attribute lets Next.js keep route transitions immediate.
+
 Cards use `bg-card text-card-foreground` with a 1px decorative border. Dropdowns
 use `bg-popover text-popover-foreground`. Inputs use surface fill, `border-input`,
 `text-foreground`, and `placeholder:text-muted-foreground`. Focus must remain
@@ -323,8 +356,9 @@ loop while idle. Route state follows the URL, including detail and preview
 routes. Links use Next.js client navigation with global Partial Prefetching.
 Public navbar links also prepare their cached URL-specific content; uncached
 request-time data stays streamed behind a route-local boundary. Mobile shows
-the five icons with accessible link names; desktop includes
-labels. Link targets are at least 44px high and wide.
+five visible text labels with icons hidden below 640px, using 13px text and 6px
+horizontal padding to fit a 320px viewport. Desktop retains icons and labels.
+Link targets are at least 44px high and wide.
 
 Reduced-motion preferences switch to a static pill immediately, including
 changes made while the page is open. Unavailable/lost WebGL uses the same static
@@ -350,13 +384,100 @@ the server-rendered frame.
 `public/images/` contains only `home-hero.avif`. Existing favicon files are
 managed separately in `src/app/` and `public/metadata/`.
 
-This update establishes tokens, shared heading styling, radii, selection/caret
-colors, quiet scrollbars, and semantic article callouts. It does not install the
-hero image into the page or migrate component markup.
+### Home adoption — October 25, 2026
+
+Home now uses the supplied planet hero, the approved Venom CTA, three selected
+projects, a readable ordered approach, technology logos, latest writing, and
+personal notes. Notes come from published posts with the exact tag `notes` and
+are hidden when empty; testimonials are no longer queried on Home.
+
+`public-chrome.module.css` shares Home's dark palette across its navigation,
+content, and footer: near-black canvas (`oklch(0.11 0.018 259.15)`), quiet
+surface (`oklch(0.155 0.023 259.15)`), next surface
+(`oklch(0.195 0.028 259.15)`), and border (`oklch(0.28 0.025 259.15)`).
+One navy hue connects the surfaces; lightness separates their roles. The scope
+exists only while the public shell contains Home. Other pages retain their
+existing semantic tokens. The footer uses surface-2 in both themes, retaining
+enough separation from the canvas for its curtain reveal.
+
+The hero serves the original 2560×1441 AVIF with `unoptimized` and preload,
+avoiding another lossy encode of the roughly 80KB asset. No blur is applied.
+A navy scrim starts opaque at the top, falls to 40% behind the heading and
+22% near the planet rim, then 28% at the bottom. A separate fade joins the
+image to the page canvas. Mobile cropping and the source resolution still
+limit detail on high-density displays.
+
+Hero type is Clash Display 56px/600 on desktop and 40px/600 on mobile.
+The initial hero entrance runs once: dark canvas, scene/nav, staggered headline,
+subheadline, then CTA. CSS starts at first paint and completes within about 1.8s;
+WebGL readiness never blocks the sequence. Headline words blur from 5px over 1s,
+with an initial 350ms delay and at most 400ms total stagger. Scroll, focus, click,
+window blur or hidden document finish the entrance; reduced motion shows it directly.
+Returning to the viewport or browser does not replay it.
+
+Gravity stars sit above the hero image scrim and fade out toward the planet.
+Use 40 desktop stars and 24 below 640px, 1.1px base size, 2.8 glow, 0.85 layer
+opacity, speed 0.15, and a small crisp core. Disable connecting lines and cursor
+gravity. Pause while offscreen, unfocused or hidden; reduced motion keeps a
+static sky. The image itself remains sharp beneath the separate scrim.
+
+Home section groups use the shared MotionReveal already used by About, Projects
+and Blog: opacity and 24px vertical travel, 550ms, once, with an 80px viewport
+inset. Each section's heading and content enter together. Do not restore per-card
+blur or an independent heading animation.
+
+Section headings retain the project's existing 48px/36px helper sizes.
+Card titles use 22px/500; body uses 16px or 18px; secondary copy 14px;
+metadata 12px. Font loading and control sizes remain unchanged. The large
+decorative footer wordmark is a graphic exception: Clash Display at a fluid
+80–280px, rather than a new heading size.
+
+Projects and writing share a 1280px container, 24px gap, and 3/2/1 columns
+at 1200px/768px/mobile. Cards use radius-xl (16px), covers radius-md (8px),
+with a border instead of glow. Cover appearance="home" keeps legacy page
+variants separate. Home covers adapt the supplied tilted-card spring/glare:
+projects tilt up to 4° at 1.02 scale; writing up to 2.5° at 1.01 scale.
+Text remains stationary, and the whole card stays a native navigation link.
+No flip, tooltip, gyroscope, floating or intro. Touch/reduced motion stay static;
+offscreen/hidden/unfocused covers stop their animation frames.
+Missing media has an honest text fallback.
+
+Tech logos stay in one row: at most 6 at 1200px+, 4 at 768–1199px, 3 below 768px.
+More entries rotate in filled groups every 5 seconds while visible and active;
+the last group can overlap the previous group to avoid empty slots. The supplied
+920ms clip/blur wipe runs with 110ms per-slot staggering; logo content changes at
+the fully clipped point. The wipe repeats indefinitely, including when all logos
+fit in one group; completing a full set restarts at the first group.
+No visible previous/next, pause/play, or pagination controls. Hover/focus pause
+rotation; swipe or a focused row's left/right/Home/End keys change groups.
+Reduced motion disables autoplay/wipes but keeps manual access to every logo.
+Dashboard logo category and Home visibility determine selection; the old label
+list is only a compatibility default for unconfigured records.
+
+Hero's public contract uses `headline` and `subheadline`. A singleton HERO
+HomeSection holds the headline; the existing profile bio supplies the subheadline
+without renaming or discarding its database column. The future dashboard editor
+will use these names and the prepared authenticated action. Empty values use
+the defaults in `home-hero.ts`. The only hero CTA is the Venom “Selected projects”
+anchor with smooth scrolling; no secondary bottom link remains.
+Hero fallback copy is personal and direct: “I’m Heinz. I build web apps.” Home's section
+labels are “Projects I’ve built”, “How I work”, “My usual stack”, “Writing”, and
+“Notes from building”. Home's footer invitation is “Got something in mind?
+Let’s talk.” Keep only its back-to-top control on Home; other public pages retain
+their floating control while they await redesign.
+
+The Home footer adopts the reference
+columns and oversized wordmark; desktop curtain reveal is enabled only when
+its measured height fits the viewport. Short screens, mobile, reduced motion,
+and SSR use normal flow. Wordmark parallax and small staggered reveals use
+the existing Motion dependency. Keyboard focus reveals clipped footer links.
+
+The token system also covers shared heading styling, radii, selection/caret
+colors, quiet scrollbars, and semantic article callouts.
 
 Remaining component work is explicit:
 
-- Replace fixed purple RGBA gradients/shadows in featured project/post panels,
+- Replace fixed purple RGBA gradients/shadows outside Home in featured project/post panels,
   cards, article progress, and the About experience timeline with semantic tokens.
 - Replace fixed neutral/white/blue text where it needs to adapt to light mode.
 - Replace legacy primary hover utility declarations with `hover:bg-primary-hover`

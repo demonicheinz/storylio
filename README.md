@@ -252,9 +252,18 @@ bun run db:check         # Check local Drizzle migration history
 bun run db:baseline      # Verify an existing schema; read-only by default
 bun run db:status        # Report applied/pending migrations and baseline requirements
 bun run db:migrate       # Apply migrations to an empty or already-baselined database
-bun run db:seed          # Seed owner account and initial content
+bun run db:seed          # Interactive seed menu (dev)
 bun run db:studio        # Open Drizzle Studio
 ```
+
+The seed menu lets you select groups (owner, Home, About, or individual demo
+content), enter profile text and review the plan before connecting to the
+database. `bun run db:seed -- --dry-run` previews it without writing. Use
+`:preview` for staging and `:production` for prod. Login credentials stay in
+Infisical; supplied profile fields update an existing owner only when explicitly
+selected in the menu. Blank optional answers preserve saved fields. Demo posts
+and projects still replace matching demo slugs when selected. See
+[database/seeder guide](docs/DRIZZLE_MIGRATION.md).
 
 ---
 
@@ -351,6 +360,34 @@ bun run test:browser:gooey-nav
 bunx --no-install playwright-cli -s=storylio-gooey close
 ```
 
+For the Home Venom CTA, use the existing local app. This checks the Satoshi
+label and 44px target, a complete first rendered frame, cached cursor assets,
+the orbiting CSS rim during pending shaders, the handover without resizing,
+compilation without the parallel extension, shader failure cleanup, transparent
+WebGL rendering, motion, native link
+navigation, cursor cleanup, full-size resume after scrolling, window blur and
+document visibility changes, live reduced motion, context
+loss, no-WebGL fallback, and touch. The no-WebGL override uses a separate page:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-venom open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:venom
+bunx --no-install playwright-cli -s=storylio-venom close
+```
+
+For Home's entrance and stars, use a separate session against the local app:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-home open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:hero
+bunx --no-install playwright-cli -s=storylio-home close
+```
+
+This checks finite entrance timing, visible star cores above the hero scrim,
+desktop/mobile layout, reduced motion, the CTA anchor, and the retained Venom
+appearance with no rendering loop while paused. Scroll and browser focus changes
+must not replay the entrance.
+
 ## Integrations
 
 Cache and Partial Prefetching policy, public tag invalidation, and protected
@@ -443,12 +480,34 @@ bun run db:backfill-media -- --force
 
 ---
 
+## Home redesign verification
+
+With the local app already running:
+
+```powershell
+bunx --no-install playwright-cli -s=storylio-home open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:home
+bun run test:browser:home-interactions
+bunx --no-install playwright-cli -s=storylio-home close
+```
+
+Checks cover 320–1440px layouts, short screens, light/dark, reduced motion,
+keyboard footer focus, touch navigation, failed media, server-rendered markup,
+Back navigation, footer scoping and missing-post HTTP 404. Each scenario owns
+and closes its page/context. The interactions suite also checks the single-row
+6/4/3 technology limits, button-free wipe rotation, pause conditions, keyboard
+and touch swipes, and static text with restrained cover tilt. Captures are in
+`.playwright-cli/`.
+
+For personal notes and technology logos, see
+[Home content guide](task/home-redesign-2026-10-25/content-guide.md).
+
 ## CMS Capabilities
 
 - **Posts & Projects** — drafts, publishing, validation, cover images, and public cache revalidation
 - **Gallery** — image upload with cropping, captions, categories, and drag-and-drop ordering; items can be hidden without deletion
 - **Testimonials** — manageable from the dashboard with ordering and visibility toggle
-- **Home sections** — approach phases and client logos are fully editable from the dashboard
+- **Home sections** — editable approach phases and logo images/order, with technology/client categories and Home stack visibility
 - **About** — structured bilingual content (Indonesian / English) with ordering support
 - **Media Library** — metadata-rich storage with Cloudinary sync; referenced media is protected from accidental deletion
 - **Analytics** — 24-hour deduplicated local view events combined with optional Umami traffic metrics

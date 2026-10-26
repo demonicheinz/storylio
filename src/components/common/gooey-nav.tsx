@@ -1048,36 +1048,32 @@ const GooeyNav = ({
   }, [pillColor, palette, gooeyness, size, frame]);
 
   const textColor = activeTextColor || contrastInk(pillRgb);
+  const mobileLink = compactOnMobile ? " max-sm:px-1.5 max-sm:text-[13px]" : "";
 
   const labels = (interactive: boolean) =>
     items.map((item, index) => {
       const content = (
         <>
           {item.icon && (
-            <span className={ICON} aria-hidden="true">
+            <span
+              className={`${ICON}${compactOnMobile ? " max-sm:hidden" : ""}`}
+              aria-hidden="true"
+            >
               {item.icon}
             </span>
           )}
-          {item.label && (
-            <span
-              className={
-                compactOnMobile && item.icon ? "hidden sm:inline" : undefined
-              }
-            >
-              {item.label}
-            </span>
-          )}
+          {item.label && <span>{item.label}</span>}
         </>
       );
       if (!interactive) {
         return (
           <li key={item.label ?? item.href ?? index} className="flex">
-            <span className={GHOST}>{content}</span>
+            <span className={GHOST + mobileLink}>{content}</span>
           </li>
         );
       }
       const shared = {
-        className: LINK,
+        className: LINK + mobileLink,
         "aria-label": item.label,
         "aria-current": index === current ? ("page" as const) : undefined,
         onClick: (event: MouseEvent) => {

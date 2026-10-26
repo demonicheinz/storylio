@@ -1,0 +1,32 @@
+.word {
+  display: inline-block;
+  max-width: 100%;
+}
+@keyframes word-focus {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .word {
+    animation: word-focus 1s cubic-bezier(0.22, 1, 0.36, 1)
+      var(--blur-delay, 0.35s) both;
+  }
+  :global([data-blur-complete="true"]) .word {
+    animation: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .word {
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+}

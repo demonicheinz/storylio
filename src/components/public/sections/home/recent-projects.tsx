@@ -1,7 +1,9 @@
 import { ArrowUpRightIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { MotionReveal } from "@/components/common/motion";
+import { TiltedCard } from "@/components/common/tilted-card";
 import { ProjectCover } from "@/components/public/sections/projects/project-cover";
-import { Badge } from "@/components/ui/badge";
+import styles from "./home.module.css";
 
 export type HomeRecentProject = {
   id: string;
@@ -13,100 +15,78 @@ export type HomeRecentProject = {
   isFeatured: boolean;
   techStack: string[];
 };
-
 export function RecentProjectsSection({
   projects,
 }: {
   projects: HomeRecentProject[];
 }) {
   return (
-    <section className="py-10 w-full">
-      <div className="flex flex-wrap justify-between items-end gap-4">
-        <h2 className="text-left heading">
-          Featured
-          <span className="text-brand-soft"> projects</span>
-        </h2>
-        <Link
-          href="/projects"
-          className="inline-flex items-center gap-2 bg-surface/60 px-4 py-2 border border-border/50 hover:border-brand-soft/50 rounded-full font-medium text-brand-soft hover:text-foreground text-sm transition-colors"
-        >
-          View all projects
-          <ArrowUpRightIcon size={16} />
-        </Link>
-      </div>
-
-      {projects.length > 0 ? (
-        <div className="gap-6 grid grid-cols-1 md:grid-cols-2 mt-10">
-          {projects.map((project) => {
-            const visibleTech = project.techStack.slice(0, 3);
-            const remainingTech = project.techStack.length - visibleTech.length;
-
-            return (
+    <section
+      id="selected-projects"
+      className={styles.section}
+      aria-labelledby="projects-title"
+    >
+      <MotionReveal>
+        <div className={styles.sectionHeader}>
+          <h2 id="projects-title" className={styles.sectionTitle}>
+            Projects I’ve built
+          </h2>
+          <Link href="/projects" className={styles.sectionLink}>
+            All projects <ArrowUpRightIcon size={16} aria-hidden="true" />
+          </Link>
+        </div>
+        {projects.length > 0 ? (
+          <div className={styles.cards} data-home-grid="projects">
+            {projects.map((project) => (
               <Link
                 href={`/projects/${project.slug}`}
                 key={project.id}
-                className="group/project flex flex-col bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] backdrop-blur-xl p-3 border border-border/40 hover:border-brand-soft/45 rounded-3xl h-full overflow-hidden transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 duration-300"
+                className={`group/project ${styles.card}`}
               >
-                <div className="relative">
+                <TiltedCard>
                   <ProjectCover
                     src={project.thumbnailImageUrl ?? project.coverImage}
                     alt={project.title}
+                    appearance="home"
                     className="aspect-video"
-                    sizes="(min-width: 1280px) 672px, (min-width: 768px) calc(50vw - 2.5rem), calc(100vw - 2rem)"
+                    sizes="(min-width: 1328px) 394px, (min-width: 1200px) calc((100vw - 112px) / 3), (min-width: 768px) calc((100vw - 72px) / 2), calc(100vw - 50px)"
                   />
-                  {project.isFeatured && (
-                    <Badge className="top-3 left-3 absolute bg-brand-soft/90 shadow-[0_8px_24px_rgba(10,10,20,0.35)] backdrop-blur px-3 rounded-full text-primary-foreground pointer-events-none">
-                      Featured
-                    </Badge>
+                </TiltedCard>
+                <div className={styles.cardBody}>
+                  <h3 className={styles.cardTitle}>{project.title}</h3>
+                  {project.description && (
+                    <p className={styles.summary}>{project.description}</p>
                   )}
-                </div>
-
-                <div className="flex flex-col flex-1 p-4">
-                  <h3 className="font-heading font-semibold text-foreground group-hover/project:text-brand-soft text-2xl leading-tight transition-colors">
-                    {project.title}
-                  </h3>
-                  <p className="mt-3 text-muted-foreground text-sm line-clamp-2 leading-7">
-                    {project.description ??
-                      "A selected project from Heinz's archive."}
-                  </p>
-
                   {project.techStack.length > 0 && (
-                    <div className="flex items-center gap-1.5 mt-5 max-w-full overflow-hidden">
-                      {visibleTech.map((tech) => (
-                        <Badge
-                          key={`${project.id}-${tech}`}
-                          variant="outline"
-                          className="bg-background/35 border-border/90 rounded-full text-foreground/85 shrink-0"
-                        >
+                    <div className={styles.tags}>
+                      {project.techStack.slice(0, 3).map((tech) => (
+                        <span key={tech} className={styles.tag}>
                           {tech}
-                        </Badge>
+                        </span>
                       ))}
-                      {remainingTech > 0 && (
-                        <Badge
-                          variant="outline"
-                          className="bg-background/35 border-border/90 rounded-full text-foreground/85 shrink-0"
-                          aria-label={`${remainingTech} more technologies`}
+                      {project.techStack.length > 3 && (
+                        <span
+                          aria-label={`${project.techStack.length - 3} more technologies`}
                         >
-                          +{remainingTech}
-                        </Badge>
+                          +{project.techStack.length - 3}
+                        </span>
                       )}
                     </div>
                   )}
-
-                  <span className="inline-flex items-center gap-2 mt-auto pt-6 font-medium text-brand-soft text-sm">
-                    View project
-                    <ArrowUpRightIcon size={16} />
+                  <span className={styles.cardAction}>
+                    View project{" "}
+                    <ArrowUpRightIcon size={16} aria-hidden="true" />
                   </span>
                 </div>
               </Link>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="bg-surface/45 backdrop-blur-xl mt-10 p-8 border border-border/60 border-dashed rounded-3xl text-muted-foreground text-sm text-center leading-7">
-          Published projects will appear here once they are added from the CMS.
-        </div>
-      )}
+            ))}
+          </div>
+        ) : (
+          <p className={styles.empty}>
+            No projects published yet. Check back soon.
+          </p>
+        )}
+      </MotionReveal>
     </section>
   );
 }

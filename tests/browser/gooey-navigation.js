@@ -17,7 +17,7 @@ async (page) => {
   page.on('request', onRequest);
   const nav = (target = page) => target.getByRole('navigation', {name:'Main navigation',exact:true});
   const select = async (name, path, target = page) => {
-    await target.evaluate(()=>window.scrollTo(0,0));
+    await target.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
     await nav(target).getByRole('link',{name,exact:true}).click();
     await target.waitForURL(url=>url.pathname === path);
     await target.waitForFunction(href => document.querySelector('nav[aria-label="Main navigation"] a[aria-current="page"]')?.getAttribute('href') === href, path);
@@ -59,7 +59,7 @@ async (page) => {
 
     await page.goto(origin);
     await nav().waitFor();
-    await page.evaluate(()=>window.scrollTo(0,0));
+    await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
     for(const [label,width,height] of [['desktop',1440,1000],['mobile',390,844],['narrow',320,720]]){
       await page.setViewportSize({width,height});
       await page.waitForFunction(()=>{
@@ -69,6 +69,11 @@ async (page) => {
         return active&&getComputedStyle(overlay).visibility==='visible';
       });
       const snapshot=await state();
+      const content = await nav().evaluate(el => [...el.querySelectorAll('a')].map(a => ({
+        labelVisible: a.lastElementChild.getBoundingClientRect().width > 0,
+        iconVisible: a.querySelector('svg').getBoundingClientRect().width > 0,
+      })));
+      if(content.some(item => !item.labelVisible || item.iconVisible !== (width >= 640))) throw new Error('Wrong mobile/desktop navigation content');
       if(snapshot.left<0||snapshot.right>width||snapshot.links.some(a=>a.width<44||a.height<44))throw new Error(`Invalid targets at ${width}: ${JSON.stringify(snapshot)}`);
       if(snapshot.links.length!==5||snapshot.links.some(a=>!a.label))throw new Error('Missing link name');
       await page.screenshot({path:`.tmp/gooey-navigation/${label}.png`});

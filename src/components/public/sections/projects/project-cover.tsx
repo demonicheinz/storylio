@@ -12,6 +12,7 @@ type ProjectCoverProps = {
   fetchPriority?: "auto" | "high" | "low";
   loading?: "eager" | "lazy";
   sizes?: string;
+  appearance?: "default" | "home";
 };
 
 export function ProjectCover({
@@ -21,6 +22,7 @@ export function ProjectCover({
   fetchPriority,
   loading = "lazy",
   sizes = "(min-width: 1024px) 50vw, 100vw",
+  appearance = "default",
 }: ProjectCoverProps) {
   const [hasImageError, setHasImageError] = useState(false);
   const shouldShowImage = Boolean(src) && !hasImageError;
@@ -28,7 +30,10 @@ export function ProjectCover({
   return (
     <div
       className={cn(
-        "relative bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.28),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(49,46,129,0.28),rgba(10,10,20,0.96))] border border-border/40 rounded-2xl overflow-hidden",
+        "relative overflow-hidden",
+        appearance === "home"
+          ? "bg-surface-2 rounded-md"
+          : "bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.28),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(49,46,129,0.28),rgba(10,10,20,0.96))] border border-border/40 rounded-2xl",
         className,
       )}
     >
@@ -40,9 +45,18 @@ export function ProjectCover({
           sizes={sizes}
           fetchPriority={fetchPriority}
           loading={loading}
-          className="object-cover group-hover/project:scale-105 transition-transform duration-500"
+          className={cn(
+            "object-cover",
+            appearance === "default" &&
+              "motion-safe:group-hover/project:scale-105 motion-safe:transition-transform duration-500",
+          )}
           onError={() => setHasImageError(true)}
         />
+      ) : appearance === "home" ? (
+        <div className="flex justify-center items-center gap-2 p-6 h-full min-h-40 text-muted-foreground text-sm">
+          <ImageIcon size={20} aria-hidden="true" />
+          <span>Project preview unavailable</span>
+        </div>
       ) : (
         <div className="flex flex-col justify-between p-5 h-full min-h-56">
           <div className="bg-brand-soft/50 rounded-full w-24 h-2" />
@@ -60,7 +74,9 @@ export function ProjectCover({
         </div>
       )}
 
-      <div className="absolute inset-0 bg-linear-to-t from-background/30 via-transparent to-white/5 pointer-events-none" />
+      {appearance === "default" && (
+        <div className="absolute inset-0 bg-linear-to-t from-background/30 via-transparent to-white/5 pointer-events-none" />
+      )}
     </div>
   );
 }

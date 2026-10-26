@@ -75,7 +75,7 @@ export function ContentToc({
     const offsetPosition =
       element.getBoundingClientRect().top + window.scrollY - 96;
 
-    window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+    window.scrollTo({ top: offsetPosition, behavior: "auto" });
     window.history.pushState(null, "", `#${id}`);
   };
 

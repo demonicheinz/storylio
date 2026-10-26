@@ -91,7 +91,7 @@ export function AboutSideNavigation({ language }: { language: "en" | "id" }) {
 
       window.scrollTo({
         top: offsetPosition,
-        behavior: "smooth",
+        behavior: "auto",
       });
 
       // Update URL

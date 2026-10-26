@@ -25,7 +25,11 @@ const updatedAt = () =>
 
 export const postStatus = pgEnum("PostStatus", ["DRAFT", "PUBLISHED"]);
 export const projectStatus = pgEnum("ProjectStatus", ["DRAFT", "PUBLISHED"]);
-export const homeSectionType = pgEnum("HomeSectionType", ["PHASE", "LOGO"]);
+export const homeSectionType = pgEnum("HomeSectionType", [
+  "PHASE",
+  "LOGO",
+  "HERO",
+]);
 
 export const user = pgTable(
   "User",

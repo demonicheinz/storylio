@@ -1,4 +1,17 @@
 import { z } from "zod";
+import { hasLocalTechnologyLogo } from "@/lib/home-technologies";
+
+export const homeHeroActionSchema = z.object({
+  headline: z
+    .string()
+    .trim()
+    .max(160, "Headline must be 160 characters or fewer"),
+  subheadline: z
+    .string()
+    .trim()
+    .max(500, "Subheadline must be 500 characters or fewer"),
+});
+export type HomeHeroActionInput = z.input<typeof homeHeroActionSchema>;
 
 const optionalUrlSchema = z
   .string()
@@ -57,6 +70,8 @@ export const homeSectionTypeSchema = z.enum(["PHASE", "LOGO"]);
 export const homeSectionActionSchema = z
   .object({
     type: homeSectionTypeSchema,
+    category: z.enum(["TECHNOLOGY", "CLIENT"]).optional(),
+    showOnHome: z.boolean().optional(),
     label: z
       .string()
       .trim()
@@ -82,7 +97,11 @@ export const homeSectionActionSchema = z
       .transform((value) => value ?? 0),
   })
   .superRefine((value, ctx) => {
-    if (value.type === "LOGO" && !value.imageUrl) {
+    if (
+      value.type === "LOGO" &&
+      !value.imageUrl &&
+      !hasLocalTechnologyLogo(value.label)
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["imageUrl"],

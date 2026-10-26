@@ -12,6 +12,7 @@ import {
 import { actionUpdateAboutContent } from "../../src/features/dashboard/about/actions";
 import { actionReorderSkills } from "../../src/features/dashboard/about/structured-actions";
 import {
+  actionCreateHomeSection,
   actionCreateTestimonial,
   actionUpdateHomeSection,
   actionUpdateTestimonial,
@@ -22,6 +23,10 @@ import {
   actionDeleteMediaBatch,
 } from "../../src/features/dashboard/media/actions";
 import * as schema from "../../src/lib/db/schema";
+import {
+  getHomeLogoSettings,
+  selectHomeTechnologies,
+} from "../../src/lib/home-technologies";
 import { createTestDatabase } from "../helpers/database";
 
 type TestDatabase = Awaited<ReturnType<typeof createTestDatabase>>;
@@ -81,6 +86,65 @@ afterAll(async () => {
 });
 
 describe("management actions against PostgreSQL", () => {
+  it("persists custom technology visibility while preserving phase content and cache invalidation", async () => {
+    const created = await actionCreateHomeSection({
+      type: "LOGO",
+      label: "Astro",
+      category: "TECHNOLOGY",
+      showOnHome: true,
+      content: "Original note",
+      imageUrl: "https://example.test/astro.svg",
+    });
+    if (!created.success || !created.data)
+      throw new Error("Expected a created technology");
+    const id = created.data.id;
+    const read = () =>
+      fixture.db.query.homeSection.findFirst({
+        where: eq(schema.homeSection.id, id),
+      });
+    const visible = await read();
+    expect(getHomeLogoSettings(visible!)).toEqual({
+      category: "TECHNOLOGY",
+      showOnHome: true,
+      description: "Original note",
+    });
+    expect(selectHomeTechnologies([visible!])).toHaveLength(1);
+    expect(
+      await actionUpdateHomeSection(id, {
+        type: "LOGO",
+        label: "Astro",
+        category: "TECHNOLOGY",
+        showOnHome: false,
+        content: "Original note",
+        imageUrl: "https://example.test/astro.svg",
+      }),
+    ).toMatchObject({ success: true });
+    expect(selectHomeTechnologies([(await read())!])).toHaveLength(0);
+    expect(
+      await actionUpdateHomeSection(id, {
+        type: "PHASE",
+        label: "Build",
+        content: "Actual process description",
+      }),
+    ).toMatchObject({ success: true });
+    expect(await read()).toMatchObject({
+      type: "PHASE",
+      content: "Actual process description",
+      imageUrl: null,
+    });
+    expect(effects.updateTag).toHaveBeenCalledWith("public-home");
+  });
+
+  it("lets built-in technology logos be configured without an uploaded image", async () => {
+    const created = await actionCreateHomeSection({
+      type: "LOGO",
+      label: "Next.js",
+      category: "TECHNOLOGY",
+      showOnHome: true,
+    });
+    expect(created.success).toBe(true);
+  });
+
   it("expires public Home data after a testimonial changes", async () => {
     const result = await actionCreateTestimonial({
       name: "Author",

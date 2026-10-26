@@ -144,7 +144,8 @@
   --brand-soft: var(--planet-accent-light);
   --brand-hover: var(--planet-accent-light);
   --link: var(--planet-accent-light);
-  --background: var(--planet-night);
+  /* --background: var(--planet-night); */
+  --background: oklch(0.0816 0.0622 259.15);
   --foreground: var(--planet-glow);
   --surface: var(--planet-surface);
   --surface-2: oklch(0.225 0.035 247.77);
@@ -211,6 +212,11 @@
     @apply font-sans;
     scrollbar-color: var(--border-hover) var(--background);
     scrollbar-width: thin;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   ::-webkit-scrollbar {
