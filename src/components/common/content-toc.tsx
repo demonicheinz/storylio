@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import styles from "@/components/public/public-detail.module.css";
 import { useActiveSection } from "@/hooks/use-active-section";
 import { cn } from "@/lib/utils";
 
@@ -80,10 +81,8 @@ export function ContentToc({
   };
 
   return (
-    <aside className="hidden xl:block top-28 sticky self-start bg-surface/60 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl p-5 border border-border/40 rounded-3xl max-h-[calc(100vh-8rem)] overflow-y-auto">
-      <p className="font-semibold text-brand-soft text-xs uppercase tracking-[0.24em]">
-        {eyebrow}
-      </p>
+    <aside className={styles.toc}>
+      <h2>{eyebrow}</h2>
       {description && (
         <p className="mt-2 text-muted-foreground text-sm leading-6">
           {description}

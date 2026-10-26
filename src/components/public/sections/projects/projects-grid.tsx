@@ -1,19 +1,15 @@
-import { ProjectCard } from "@/components/public/sections/projects/project-card";
-import { ProjectReveal } from "@/components/public/sections/projects/project-reveal";
-import type { ProjectListItem } from "@/components/public/sections/projects/types";
-
-type ProjectsGridProps = {
-  projects: ProjectListItem[];
-};
-
-export function ProjectsGrid({ projects }: ProjectsGridProps) {
+import { MotionReveal } from "@/components/common/motion";
+import styles from "@/components/public/public-page.module.css";
+import { ProjectCard } from "./project-card";
+import type { ProjectListItem } from "./types";
+export function ProjectsGrid({ projects }: { projects: ProjectListItem[] }) {
   return (
-    <div className="items-stretch gap-5 lg:gap-6 grid md:grid-cols-2">
-      {projects.map((project, index) => (
-        <ProjectReveal key={project.id} delay={Math.min(index * 0.06, 0.24)}>
-          <ProjectCard project={project} />
-        </ProjectReveal>
-      ))}
-    </div>
+    <MotionReveal>
+      <div className={styles.grid} data-project-grid>
+        {projects.map((project) => (
+          <ProjectCard key={project.id} project={project} />
+        ))}
+      </div>
+    </MotionReveal>
   );
 }

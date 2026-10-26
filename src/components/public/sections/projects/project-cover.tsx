@@ -31,9 +31,7 @@ export function ProjectCover({
     <div
       className={cn(
         "relative overflow-hidden",
-        appearance === "home"
-          ? "bg-surface-2 rounded-md"
-          : "bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.28),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(49,46,129,0.28),rgba(10,10,20,0.96))] border border-border/40 rounded-2xl",
+        "bg-surface-2 rounded-md",
         className,
       )}
     >
@@ -52,30 +50,11 @@ export function ProjectCover({
           )}
           onError={() => setHasImageError(true)}
         />
-      ) : appearance === "home" ? (
-        <div className="flex justify-center items-center gap-2 p-6 h-full min-h-40 text-muted-foreground text-sm">
+      ) : (
+        <div className="flex items-center justify-center gap-2 p-6 min-h-40 h-full text-muted-foreground text-sm">
           <ImageIcon size={20} aria-hidden="true" />
           <span>Project preview unavailable</span>
         </div>
-      ) : (
-        <div className="flex flex-col justify-between p-5 h-full min-h-56">
-          <div className="bg-brand-soft/50 rounded-full w-24 h-2" />
-          <div className="space-y-3">
-            <div className="bg-foreground/35 rounded-full w-3/4 h-3" />
-            <div className="bg-foreground/20 rounded-full w-1/2 h-3" />
-            <div className="gap-2 grid grid-cols-3 pt-3">
-              <div className="bg-foreground/10 rounded-xl h-16" />
-              <div className="place-items-center grid bg-brand-soft/20 rounded-xl h-16 text-brand-soft">
-                <ImageIcon size={22} />
-              </div>
-              <div className="bg-foreground/10 rounded-xl h-16" />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {appearance === "default" && (
-        <div className="absolute inset-0 bg-linear-to-t from-background/30 via-transparent to-white/5 pointer-events-none" />
       )}
     </div>
   );

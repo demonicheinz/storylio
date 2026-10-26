@@ -1,9 +1,9 @@
 "use client";
 
-import { motion } from "motion/react";
 import Image from "next/image";
 import { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
+import { MotionReveal } from "@/components/common/motion";
 import { ProjectCover } from "@/components/public/sections/projects/project-cover";
 
 type StructuredScreenshot = {
@@ -46,9 +46,6 @@ export function ProjectScreenshots({
   return (
     <section className="mt-16 md:mt-20" aria-labelledby="project-screenshots">
       <div className="flex flex-col gap-2 mb-7 pb-5 border-border/30 border-b">
-        <p className="font-semibold text-brand-soft text-xs uppercase tracking-[0.28em]">
-          Screenshots
-        </p>
         <h2
           id="project-screenshots"
           className="font-heading font-semibold text-foreground text-3xl"
@@ -59,27 +56,18 @@ export function ProjectScreenshots({
 
       <div className="gap-5 lg:gap-6 grid md:grid-cols-2">
         {items.map((item, index) => (
-          <motion.div
+          <MotionReveal
             key={item.imageUrl}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -4 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{
-              duration: 0.45,
-              delay: Math.min(index * 0.08, 0.24),
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="group/shot bg-surface/55 shadow-[0_0_48px_rgba(139,92,246,0.08)] backdrop-blur-xl p-2.5 border border-border/40 rounded-3xl overflow-hidden"
+            className="border border-border bg-surface p-3 rounded-xl overflow-hidden"
           >
             <button
               type="button"
-              className="group/project block rounded-[1.2rem] outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60 w-full text-left"
+              className="group/project block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60 w-full text-left"
               onClick={() => setActiveIndex(index)}
               aria-label={`Open ${item.altText || item.caption || `${title} screenshot ${index + 1}`}`}
             >
               {item.width && item.height ? (
-                <div className="relative bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.28),transparent_34%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(49,46,129,0.28),rgba(10,10,20,0.96))] border border-border/40 rounded-[1.2rem] w-full aspect-video overflow-hidden">
+                <div className="relative bg-surface-2 rounded-md w-full aspect-video overflow-hidden">
                   <Image
                     src={item.imageUrl}
                     alt={
@@ -88,7 +76,7 @@ export function ProjectScreenshots({
                       `${title} screenshot ${index + 1}`
                     }
                     fill
-                    className="object-cover group-hover/project:scale-105 transition-transform duration-500"
+                    className="object-contain"
                     sizes="(min-width: 768px) 50vw, 100vw"
                     {...(item.blurDataUrl
                       ? {
@@ -107,7 +95,7 @@ export function ProjectScreenshots({
                     item.caption ||
                     `${title} screenshot ${index + 1}`
                   }
-                  className="rounded-[1.2rem] aspect-video"
+                  className="rounded-md aspect-video"
                   sizes="(min-width: 1280px) 536px, (min-width: 768px) calc(50vw - 2.5rem), calc(100vw - 2rem)"
                 />
               )}
@@ -117,7 +105,7 @@ export function ProjectScreenshots({
                 {item.caption}
               </p>
             )}
-          </motion.div>
+          </MotionReveal>
         ))}
       </div>
 
@@ -133,7 +121,7 @@ export function ProjectScreenshots({
           slideFooter: () =>
             activeSlide ? (
               <div className="bottom-0 absolute inset-x-0 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col items-center mx-auto px-4 sm:px-6 sm:pb-8 max-w-3xl text-center pointer-events-none">
-                <div className="bg-background/75 shadow-[0_0_48px_rgba(139,92,246,0.14)] backdrop-blur-xl px-4 sm:px-5 py-3 border border-border/40 rounded-2xl max-w-[calc(100vw-2rem)] sm:max-w-2xl">
+                <div className="bg-background/95 px-4 sm:px-5 py-3 border border-border/40 rounded-lg max-w-[calc(100vw-2rem)] sm:max-w-2xl">
                   <p className="text-foreground text-xs sm:text-sm leading-5 sm:leading-6">
                     {activeSlide.description}
                   </p>

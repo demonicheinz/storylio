@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { Suspense } from "react";
-import { PublicBackground } from "@/components/common";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
+import styles from "@/components/public/public-page.module.css";
 import {
   EmptyProjects,
   FeaturedProject,
@@ -134,10 +134,8 @@ async function ProjectsContent({ searchParams }: ProjectsPageProps) {
     : projects;
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
-      <PublicBackground variant="projects" />
-
-      <div className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-295">
+    <main className={styles.page} data-public-page="projects">
+      <div className={styles.container}>
         <ProjectsHero
           totalProjects={totalProjects}
           totalTech={technologies.length}
@@ -145,9 +143,7 @@ async function ProjectsContent({ searchParams }: ProjectsPageProps) {
         />
 
         <Suspense
-          fallback={
-            <div className="bg-surface/55 backdrop-blur-xl border border-border/40 rounded-3xl h-24" />
-          }
+          fallback={<div className="bg-surface border-y border-border h-24" />}
         >
           <ProjectFilters
             technologies={technologies}
@@ -155,7 +151,7 @@ async function ProjectsContent({ searchParams }: ProjectsPageProps) {
           />
         </Suspense>
 
-        <div className="flex flex-wrap justify-between items-center gap-3 mt-4 px-1 text-muted-foreground text-sm">
+        <div className={styles.summary}>
           <p>{formatProjectsSummary(projects.length, selectedTech)}</p>
           {selectedTech && (
             <Link
@@ -186,8 +182,6 @@ async function ProjectsContent({ searchParams }: ProjectsPageProps) {
           )}
         </div>
       </div>
-
-      <div className="h-24" />
     </main>
   );
 }

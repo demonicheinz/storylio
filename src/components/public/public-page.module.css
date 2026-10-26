@@ -152,6 +152,38 @@
   font-size: 16px;
   line-height: 1.75;
 }
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  margin-top: auto;
+}
+.feature {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  align-items: center;
+  margin-bottom: 32px;
+}
+.feature .cardMedia {
+  padding: 16px;
+  min-width: 0;
+}
+.feature .cardBody {
+  padding: 32px;
+}
+.feature .cardTitle {
+  font-size: 40px;
+  line-height: 1.15;
+}
+@media (max-width: 1023px) {
+  .feature {
+    grid-template-columns: 1fr;
+  }
+  .feature .cardTitle {
+    font-size: 28px;
+  }
+}
 .tags {
   display: flex;
   align-items: center;

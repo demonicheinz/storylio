@@ -11,7 +11,7 @@ export function ProjectToc({ items }: ProjectTocProps) {
       eyebrow="Case study"
       description="Jump between the decisions behind this project."
       ariaLabel="Project case study table of contents"
-      indicator="number"
+      indicator="line"
     />
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { FunnelSimpleIcon } from "@phosphor-icons/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FilterLink } from "@/components/public/filter-link";
+import styles from "@/components/public/public-page.module.css";
 
 type ProjectFiltersProps = {
   technologies: string[];
@@ -31,26 +31,19 @@ export function ProjectFilters({
   };
 
   return (
-    <div className="bg-background/65 sm:bg-surface/55 backdrop-blur-xl -mx-4 sm:mx-0 px-4 sm:px-5 py-3.5 sm:border border-border/30 border-y sm:rounded-3xl">
-      <div className="flex items-center gap-2 mb-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-[0.24em]">
-        <FunnelSimpleIcon className="text-brand-soft" size={16} />
-        Filter by stack
-      </div>
+    <nav className={styles.filters} aria-label="Filter projects by stack">
+      <FilterLink href={getFilterHref()} active={!selectedTech}>
+        All
+      </FilterLink>
+      {technologies.map((tech) => {
+        const isActive = selectedTech === tech;
 
-      <div className="[&::-webkit-scrollbar]:hidden flex gap-2 pb-1 overflow-x-auto scrollbar-none">
-        <FilterLink href={getFilterHref()} active={!selectedTech}>
-          All
-        </FilterLink>
-        {technologies.map((tech) => {
-          const isActive = selectedTech === tech;
-
-          return (
-            <FilterLink key={tech} href={getFilterHref(tech)} active={isActive}>
-              {tech}
-            </FilterLink>
-          );
-        })}
-      </div>
-    </div>
+        return (
+          <FilterLink key={tech} href={getFilterHref(tech)} active={isActive}>
+            {tech}
+          </FilterLink>
+        );
+      })}
+    </nav>
   );
 }

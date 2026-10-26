@@ -8,8 +8,9 @@ import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PublicBackground } from "@/components/common";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
+import detailStyles from "@/components/public/public-detail.module.css";
+import pageStyles from "@/components/public/public-page.module.css";
 import { ViewCounter } from "@/components/public/sections/blog";
 import {
   ProjectCover,
@@ -17,8 +18,6 @@ import {
   ProjectScreenshots,
   ProjectToc,
 } from "@/components/public/sections/projects";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { ProjectStatus } from "@/lib/db/enums";
 import { getProjectContribution } from "@/lib/project-contribution";
@@ -205,165 +204,95 @@ async function ProjectDetailContent({ params }: ProjectDetailPageProps) {
     : "Quick view";
 
   return (
-    <main className="min-h-screen overflow-x-clip">
+    <main className={pageStyles.page} data-public-page="project-detail">
       <ViewCounter type="project" slug={project.slug} />
-      <PublicBackground variant="projects" />
-
-      <article className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 pb-24 w-full max-w-7xl">
-        <Button
-          role="link"
-          render={<Link href="/projects" />}
-          nativeButton={false}
-          variant="outline"
-          className="bg-surface/70 backdrop-blur mb-8 border-border/60 rounded-full w-fit"
-        >
-          <ArrowLeftIcon data-icon="inline-start" />
-          Back to projects
-        </Button>
-
-        <div className="lg:items-start gap-6 md:gap-8 grid lg:grid-cols-[1.08fr_0.92fr]">
-          <div className="lg:top-28 lg:sticky">
-            <ProjectCover
-              src={project.coverImage}
-              alt={project.title}
-              className="shadow-[0_0_80px_rgba(139,92,246,0.14)] aspect-video"
-              fetchPriority="high"
-              loading="eager"
-              sizes="(min-width: 1280px) 640px, (min-width: 1024px) 52vw, calc(100vw - 2rem)"
-            />
-          </div>
-
-          <div className="flex flex-col bg-surface/65 shadow-[0_0_64px_rgba(139,92,246,0.1)] backdrop-blur-xl p-6 md:p-8 lg:p-9 border border-border/40 rounded-3xl min-w-0">
-            <div className="flex flex-wrap gap-1.5 mb-6">
-              {project.techStack.map((tech) => (
-                <Badge
-                  key={`${project.id}-${tech}`}
-                  variant="outline"
-                  className="bg-background/35 border-border/90 rounded-full text-foreground/85"
-                >
-                  {tech}
-                </Badge>
-              ))}
-            </div>
-
-            <h1 className="font-heading font-bold text-foreground text-4xl md:text-5xl xl:text-6xl leading-[1.08]">
+      <article className={`${pageStyles.container} ${detailStyles.article}`}>
+        <Link href="/projects" className={pageStyles.link}>
+          <ArrowLeftIcon size={16} aria-hidden="true" /> Back to projects
+        </Link>
+        <header className={detailStyles.projectIntro}>
+          <div>
+            <h1 id="page-title" className={pageStyles.title}>
               {project.title}
             </h1>
-
-            <p className="mt-6 text-muted-foreground text-base md:text-lg leading-8">
-              {project.description ??
-                "A selected project from Heinz's archive, focused on thoughtful implementation and polished interaction."}
-            </p>
-
-            <div className="sm:hidden mt-8 py-5 border-border/40 border-y">
-              <p className="font-medium text-foreground">{contribution}</p>
-              <p className="mt-1.5 text-muted-foreground text-sm">
-                {formatDate(project.updatedAt)}
-                <span className="px-2 text-border" aria-hidden="true">
-                  •
-                </span>
-                {readingTime}
+            {project.description && (
+              <p className={`${pageStyles.lede} ${detailStyles.description}`}>
+                {project.description}
               </p>
-            </div>
-
-            <dl className="hidden gap-4 sm:grid sm:grid-cols-3 mt-9 py-6 border-border/40 border-y">
+            )}
+            <ul
+              className={`${pageStyles.tags} mt-6`}
+              aria-label="Technology stack"
+            >
+              {project.techStack.map((tech) => (
+                <li key={tech} className={pageStyles.tag}>
+                  {tech}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <dl className={detailStyles.facts}>
               <div>
-                <dt className="text-muted-foreground text-xs uppercase tracking-[0.24em]">
-                  Contribution
-                </dt>
-                <dd className="mt-2 font-medium text-foreground">
-                  {contribution}
-                </dd>
+                <dt>My part</dt>
+                <dd>{contribution}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground text-xs uppercase tracking-[0.24em]">
-                  Updated
-                </dt>
-                <dd className="mt-2 font-medium text-foreground">
-                  {formatDate(project.updatedAt)}
-                </dd>
+                <dt>Updated</dt>
+                <dd>{formatDate(project.updatedAt)}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground text-xs uppercase tracking-[0.24em]">
-                  Read
-                </dt>
-                <dd className="mt-2 font-medium text-foreground">
-                  {readingTime.replace(" read", "")}
-                </dd>
+                <dt>Reading time</dt>
+                <dd>{readingTime}</dd>
               </div>
             </dl>
-
-            <div className="flex flex-wrap gap-3 mt-7">
+            <div className={pageStyles.cardActions}>
               {project.liveUrl && (
-                <Button
-                  role="link"
-                  render={
-                    <Link
-                      href={project.liveUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    />
-                  }
-                  nativeButton={false}
-                  className="rounded-full"
+                <a
+                  href={project.liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={pageStyles.link}
                 >
-                  Live site
-                  <ArrowUpRightIcon data-icon="inline-end" />
-                </Button>
+                  Live site <ArrowUpRightIcon aria-hidden="true" size={16} />
+                </a>
               )}
-
               {!project.isClosedSource && project.githubUrl && (
-                <Button
-                  role="link"
-                  render={
-                    <Link
-                      href={project.githubUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    />
-                  }
-                  nativeButton={false}
-                  variant="outline"
-                  className="bg-surface/70 border-border/60 rounded-full"
+                <a
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={pageStyles.link}
                 >
-                  GitHub
-                  <GithubLogoIcon data-icon="inline-end" />
-                </Button>
+                  Source <GithubLogoIcon aria-hidden="true" size={18} />
+                </a>
               )}
             </div>
           </div>
-        </div>
-
+        </header>
+        <ProjectCover
+          src={project.coverImage}
+          alt={project.title}
+          className="aspect-video"
+          fetchPriority="high"
+          loading="eager"
+          sizes="(min-width:1328px) 1280px, 96vw"
+        />
         {mdxContent && (
-          <section aria-label="Project case study" className="mt-16 md:mt-24">
-            <div className="mb-10 max-w-3xl">
-              <p className="font-semibold text-brand-soft text-xs uppercase tracking-[0.28em]">
-                Inside the project
-              </p>
-              <h2 className="mt-3 font-heading font-semibold text-foreground text-3xl md:text-4xl">
-                From intent to outcome
-              </h2>
-              <p className="mt-4 max-w-2xl text-muted-foreground text-base leading-8">
-                A closer look at the thinking, implementation, and decisions
-                that shaped the final work.
-              </p>
-            </div>
-
-            <div className="items-start gap-10 grid xl:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="flex flex-col gap-6 prose-invert [&>h2:first-child]:mt-0 [&>h2]:mt-20 [&>h3]:mt-12 [&>h2:first-child]:pt-0 [&>h2]:pt-2 pl-5 sm:pl-8 lg:pl-10 border-border/30 border-l min-w-0 max-w-4xl">
-                {mdxContent}
-              </div>
-
+          <section
+            aria-label="Project case study"
+            className={pageStyles.section}
+          >
+            <div className={detailStyles.readingLayout}>
+              <div className={detailStyles.prose}>{mdxContent}</div>
               <ProjectToc items={tocItems} />
             </div>
           </section>
         )}
-
         <ProjectScreenshots
           structuredScreenshots={project.structuredScreenshots}
           title={project.title}
         />
-
         <ProjectNavigation
           previousProject={previousProject}
           nextProject={nextProject}
