@@ -8,6 +8,7 @@ import {
 } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { scrollPageTo } from "@/lib/page-scroll";
 import homeStyles from "./home.module.css";
 import styles from "./home-footer.module.css";
 
@@ -59,8 +60,14 @@ export function HomeFooter({
   }, [reduceMotion]);
 
   const revealFocusedLinks = () => {
-    if (curtainHeight)
-      wrapperRef.current?.scrollIntoView({ block: "end", behavior: "instant" });
+    const wrapper = wrapperRef.current;
+    if (curtainHeight && wrapper)
+      scrollPageTo(
+        scrollY + wrapper.getBoundingClientRect().bottom - innerHeight,
+        {
+          immediate: true,
+        },
+      );
   };
   return (
     <div
@@ -163,10 +170,7 @@ export function HomeFooter({
               className={styles.backToTop}
               onClick={(event) => {
                 event.preventDefault();
-                window.scrollTo({
-                  top: 0,
-                  behavior: reduceMotion ? "instant" : "smooth",
-                });
+                scrollPageTo(0, { immediate: !!reduceMotion });
                 const title = document.getElementById("home-title");
                 title?.setAttribute("tabindex", "-1");
                 title?.focus({ preventScroll: true });

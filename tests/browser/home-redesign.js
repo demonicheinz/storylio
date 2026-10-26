@@ -126,13 +126,16 @@ async (sessionPage) => {
         return document.getElementById("selected-projects").getBoundingClientRect().top;
       });
       const behavior = await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior);
-      assert(behavior === (reducedMotion === "reduce" ? "auto" : "smooth"), "Incorrect motion preference for anchors");
+      const lenisActive = await page.locator('html.lenis').count() > 0;
+      assert(behavior === (reducedMotion === "reduce" || lenisActive ? "auto" : "smooth"), "Competing smoothing or incorrect motion preference for anchors");
       await page.locator('a[href="#selected-projects"]').click();
       await page.waitForFunction(y => Math.abs(scrollY - y) < 2, targetY);
       const samples = await page.evaluate(() => window.__finishScrollCheck());
       const intermediate = samples.some(y => y > 1 && y < targetY - 2);
       assert(reducedMotion === "reduce" ? !intermediate : intermediate, "Anchor did not follow motion preference");
       assert(await page.getByRole("button", { name: "Scroll to top", exact: true }).count() === 0, "Home renders a duplicate floating top control");
+      // Let the interpolator finish before the test performs a native scroll jump.
+      await page.waitForFunction(() => !document.documentElement.classList.contains('lenis-scrolling'));
       await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
       stage = "footer top " + reducedMotion;
       await page.locator('a[href="#home-title"]').click();

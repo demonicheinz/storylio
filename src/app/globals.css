@@ -3,6 +3,12 @@
 @import "shadcn/tailwind.css";
 @import "react-photo-album/masonry.css";
 @import "yet-another-react-lightbox/styles.css";
+@import "lenis/dist/lenis.css";
+
+/* Lenis owns interpolation while mounted; native anchors keep the rule below. */
+html.lenis {
+  scroll-behavior: auto !important;
+}
 
 @custom-variant dark (&:is(.dark *));
 

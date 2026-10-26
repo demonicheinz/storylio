@@ -388,6 +388,12 @@ desktop/mobile layout, reduced motion, the CTA anchor, and the retained Venom
 appearance with no rendering loop while paused. Scroll and browser focus changes
 must not replay the entrance.
 
+In the same Home browser session, `bun run test:browser:home-scroll` checks Lenis
+wheel interpolation, anchor history/focus, footer back-to-top, nested native
+scrolling, focus interruption, route cleanup/Back, and touch/reduced-motion
+fallbacks. Lenis runs only on Home with a fine pointer and hover, uses Motion's
+frame loop, and leaves native window scrolling and the fixed footer intact.
+
 ## Integrations
 
 Cache and Partial Prefetching policy, public tag invalidation, and protected

@@ -13,6 +13,7 @@ import {
   FloatingNav,
   type FloatingNavItem,
 } from "@/components/common/floating-nav";
+import { HomeSmoothScroll } from "@/components/common/home-smooth-scroll";
 import { RouteMotion } from "@/components/common/motion";
 import { ScrollToTop } from "@/components/common/scroll-to-top";
 import styles from "./public-chrome.module.css";
@@ -53,6 +54,7 @@ export function PublicChrome({ children }: { children: ReactNode }) {
   return (
     <div className={`flex flex-col min-h-screen ${styles.chrome}`}>
       <Suspense fallback={null}>
+        <HomeSmoothScroll />
         <PublicScrollToTop />
         <FloatingNav navItems={navItems} />
       </Suspense>

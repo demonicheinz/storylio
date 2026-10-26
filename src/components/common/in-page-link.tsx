@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentProps, MouseEvent } from "react";
+import { scrollPageTo } from "@/lib/page-scroll";
 
 /** Preserve modified clicks while handling repeated in-page navigation. */
 export function scrollToAnchor(
@@ -21,7 +22,7 @@ export function scrollToAnchor(
   if (!target) return;
   event.preventDefault();
   if (window.location.hash !== href) window.history.pushState(null, "", href);
-  target.scrollIntoView({ behavior: "auto", block: "start" });
+  scrollPageTo(target);
   if (!target.hasAttribute("tabindex")) {
     target.setAttribute("tabindex", "-1");
     target.addEventListener("blur", () => target.removeAttribute("tabindex"), {

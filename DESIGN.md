@@ -319,10 +319,20 @@ and poll completion over animation frames when parallel compilation is available
 Idle probes use 1–2 short strands every 4–6 seconds; cursor interaction retains
 the original physics. Keep the hero text horizontally centered above the horizon.
 
-In-page anchors use native smooth scrolling when reduced motion is not requested.
-Imperative table-of-contents and scroll-to-top actions use CSS-controlled `auto`
-behavior, so the same preference applies. The root `data-scroll-behavior="smooth"`
-attribute lets Next.js keep route transitions immediate.
+Home uses Lenis for gentle wheel interpolation (lerp 0.14) on fine-pointer,
+hover-capable devices without reduced motion. It drives native window scrolling
+from the existing Motion frame loop, with no transformed page wrapper. The
+deferred engine is destroyed when leaving Home or changing those preferences.
+Hidden documents and unfocused windows suspend its clock and discard pending
+inertia. Touch stays native; nested dialogs/listboxes and `data-lenis-prevent`
+regions keep native input. No smoothing is applied to dashboard routes.
+
+Home's anchors, back-to-top and footer focus reveal use the same page-scroll
+adapter. Native CSS smoothing is disabled only while Lenis owns interpolation.
+Other public pages retain native smooth anchors; reduced motion uses direct
+scrolling. Hash history and target focus remain owned by the existing link
+handler. The root `data-scroll-behavior="smooth"` attribute lets Next.js keep
+route transitions immediate.
 
 Cards use `bg-card text-card-foreground` with a 1px decorative border. Dropdowns
 use `bg-popover text-popover-foreground`. Inputs use surface fill, `border-input`,
