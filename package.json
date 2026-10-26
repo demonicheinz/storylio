@@ -19,6 +19,7 @@
     "test:browser:home": "playwright-cli -s=storylio-home run-code --filename=tests/browser/home-redesign.js",
     "test:browser:hero": "playwright-cli -s=storylio-home run-code --filename=tests/browser/hero-entrance.js",
     "test:browser:home-scroll": "playwright-cli -s=storylio-home run-code --filename=tests/browser/home-smooth-scroll.js",
+    "test:browser:public-redesign": "playwright-cli -s=storylio-public run-code --filename=tests/browser/public-redesign.js",
     "test:browser:home-interactions": "playwright-cli -s=storylio-home run-code --filename=tests/browser/home-interactions.js",
     "test:browser:about-language": "playwright-cli -s=storylio-about-language run-code --filename=tests/browser/about-language.js",
     "test:browser:filters": "playwright-cli -s=storylio-filters run-code --filename=tests/browser/filter-prefetch.js",

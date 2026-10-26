@@ -17,12 +17,12 @@ async (page) => {
   try {
     const results = [];
     for (const [path, param, label] of [
-      ["/projects", "tech", "Filter by stack"],
-      ["/blog", "tag", "Filter by topic"],
+      ["/projects", "tech", "Filter projects by stack"],
+      ["/blog", "tag", "Filter writing by topic"],
     ]) {
       const start = requests.length;
       await page.goto(`${origin}${path}?keep=filter-test`);
-      const bar = page.getByText(label, { exact: true }).locator("..");
+      const bar = page.getByRole("navigation", { name: label, exact: true });
       const option = bar.locator("a,button").nth(1);
       await option.waitFor();
       const value = (await option.innerText()).trim();

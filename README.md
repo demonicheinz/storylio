@@ -394,6 +394,22 @@ scrolling, focus interruption, route cleanup/Back, and touch/reduced-motion
 fallbacks. Lenis runs only on Home with a fine pointer and hover, uses Motion's
 frame loop, and leaves native window scrolling and the fixed footer intact.
 
+For the complete public redesign integration check, open a production session:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-public open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:public-redesign
+bunx --no-install playwright-cli -s=storylio-public close
+```
+
+This checks collection grids, shared footers, native scrolling outside Home,
+case-study contents/screenshots, article content, gallery category/lightbox,
+empty filters, and cold missing-route HTTP 404. It needs the published Storylio
+project, writing and gallery fixtures. `tests/browser/public-surface.js` checks
+the current public route at 1440/768/390/320px, including heading visibility and
+footer keyboard focus. Existing filter, About-language and GooeyNav checks
+remain separate so prefetch behavior and navigation can be inspected directly.
+
 ## Integrations
 
 Cache and Partial Prefetching policy, public tag invalidation, and protected

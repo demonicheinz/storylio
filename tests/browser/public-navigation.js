@@ -21,7 +21,7 @@ async (page) => {
   await page.route("**/*", delayRsc);
   try {
     await page.goto(origin);
-    await page.getByRole("link", { name: "About", exact: true }).waitFor();
+    await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "About", exact: true }).waitFor();
     await page.evaluate(() => {
       window.__publicNavigationProbe = { loading: [], visible: false };
       window.__publicNavigationObserver = new MutationObserver(() => {

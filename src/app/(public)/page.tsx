@@ -156,7 +156,7 @@ export default async function HomePage() {
     await getHomeData();
 
   return (
-    <div className={`${styles.surface} ${styles.page}`} data-home-page>
+    <main className={`${styles.surface} ${styles.page}`} data-home-page>
       <HeroSection {...hero} />
       <div className={styles.content}>
         <RecentProjectsSection projects={recentProjects} />
@@ -174,6 +174,6 @@ export default async function HomePage() {
         <RecentPostsSection posts={recentPosts} />
         <NotesSection posts={notes} />
       </div>
-    </div>
+    </main>
   );
 }
