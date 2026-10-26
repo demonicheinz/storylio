@@ -1,8 +1,8 @@
 import { asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
-import { PublicBackground } from "@/components/common";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
+import styles from "@/components/public/public-page.module.css";
 import {
   GalleryExperience,
   GalleryHero,
@@ -116,10 +116,8 @@ async function GalleryContent({ searchParams }: GalleryPageProps) {
   const { photos, categories } = await getGalleryData();
 
   return (
-    <main className="min-h-screen overflow-x-clip">
-      <PublicBackground variant="gallery" />
-
-      <div className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-295">
+    <main className={styles.page} data-public-page="gallery">
+      <div className={styles.container}>
         <GalleryHero
           totalItems={photos.length}
           totalCategories={categories.length}
