@@ -474,6 +474,12 @@ focus restoration, direct/legacy links, in-place Home reading and Lenis locking.
 the matching archive and article reading layouts. Use published demo content in
 an isolated CLI session; the tests do not edit CMS records.
 
+`tests/browser/gallery-polish.js` verifies the Gallery layout at five widths,
+single-category search/reset/history, image zoom, keyboard focus, and scrollable
+long captions with Lenis locked. `tests/browser/gallery-touch.js` checks lightbox
+swipe, zoom controls, and native page panning in a separate touch context. Run
+both with `playwright-cli run-code --filename=...` against the local server.
+
 ### UI primitives
 
 The shadcn components use Base UI with the `base-luma` registry style and the

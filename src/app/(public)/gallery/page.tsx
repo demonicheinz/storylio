@@ -118,10 +118,7 @@ async function GalleryContent({ searchParams }: GalleryPageProps) {
   return (
     <main className={styles.page} data-public-page="gallery">
       <div className={styles.container}>
-        <GalleryHero
-          totalItems={photos.length}
-          totalCategories={categories.length}
-        />
+        <GalleryHero />
         <GalleryExperience
           photos={photos}
           categories={categories}

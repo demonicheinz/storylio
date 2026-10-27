@@ -46,8 +46,8 @@ async sessionPage => {
 
     stage='gallery lightbox';
     await page.goto(origin+'/gallery?keep=redesign');
-    const filter=page.getByRole('navigation',{name:'Filter gallery by category'});
-    const category=filter.getByRole('button').nth(1);const name=await category.innerText();await category.click();
+    await page.getByRole('button',{name:'Filter category',exact:true}).click();
+    const category=page.getByRole('listbox',{name:'Categories',exact:true}).getByRole('option').first();const name=(await category.innerText()).trim();await category.click();
     await page.waitForURL(url=>url.searchParams.get('category')===name);
     assert(new URL(page.url()).searchParams.get('keep')==='redesign','Gallery lost unrelated query');
     const photo=page.locator('[data-gallery-photo]').first();await photo.click();
