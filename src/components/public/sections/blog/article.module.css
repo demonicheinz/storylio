@@ -5,12 +5,8 @@
 .header {
   order: 0;
   width: 100%;
-  max-width: 960px;
-  margin-inline: auto;
+  margin: 0;
   padding-block: 40px 32px;
-}
-.header h1 {
-  max-width: 24ch;
 }
 .header p {
   margin-top: 24px;
@@ -23,8 +19,7 @@
   justify-content: space-between;
   gap: 16px;
   width: 100%;
-  max-width: 960px;
-  margin: 0 auto 32px;
+  margin: 0 0 32px;
   padding-block: 20px;
   border-block: 1px solid var(--border);
 }

@@ -8,10 +8,11 @@ async sessionPage=>{
       await page.setViewportSize({width,height:1000});await page.goto(origin+'/blog/building-storylio-with-server-first-pages');
       await page.getByRole('region',{name:'Article content',exact:true}).waitFor();await page.evaluate(()=>document.fonts.ready);
       const data=await page.evaluate(()=>{
-        const body=document.querySelector('.storylio-article-content'),p=body.querySelector('p'),header=document.querySelector('article header'),meta=header.parentElement.querySelector('time').closest('[class*="meta"]'),cover=header.parentElement.querySelector('img');
-        const box=el=>el?.getBoundingClientRect();return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+1,bodyFont:getComputedStyle(p).fontSize,textWidth:box(p).width,coverTop:box(cover)?.top,coverBottom:box(cover)?.bottom,metaTop:box(meta)?.top,copy:box(body.querySelector('[data-heading-link]'))?.height};
+        const body=document.querySelector('.storylio-article-content'),p=body.querySelector('p'),header=document.querySelector('article header'),meta=[...header.parentElement.children].find(el=>el.querySelector('time')),cover=header.parentElement.querySelector('img');
+        const box=el=>el?.getBoundingClientRect();return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+1,bodyFont:getComputedStyle(p).fontSize,textWidth:box(p).width,headerWidth:box(header).width,coverWidth:box(cover)?.width,metaWidth:box(meta)?.width,headerOffset:box(header).left-box(cover)?.left,metaOffset:box(meta)?.left-box(cover)?.left,coverTop:box(cover)?.top,coverBottom:box(cover)?.bottom,metaTop:box(meta)?.top,copy:box(body.querySelector('[data-heading-link]'))?.height};
       });
       assert(!data.overflow&&data.textWidth<=641,'Article reading measure: '+JSON.stringify(data));
+      assert(Math.abs(data.headerWidth-data.coverWidth)<1&&Math.abs(data.metaWidth-data.coverWidth)<1&&Math.abs(data.headerOffset)<1&&Math.abs(data.metaOffset)<1,'Article opening does not align with the full-width cover: '+JSON.stringify(data));
       assert(data.bodyFont===(width<768?'16px':'18px')&&data.copy>=43.99,'Type or copy target changed');
       if(width<768)assert(data.coverBottom<=data.metaTop,'Mobile metadata precedes cover');
       const toggle=page.getByRole('button',{name:'On this page',exact:true});
