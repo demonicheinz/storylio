@@ -17,6 +17,7 @@
         "@paralleldrive/cuid2": "3.3.0",
         "@phosphor-icons/react": "^2.1.10",
         "@react-three/fiber": "^9.6.1",
+        "@simplewebauthn/browser": "13.3.0",
         "better-auth": "~1.6.33",
         "class-variance-authority": "^0.7.1",
         "cloudinary": "^2.10.0",

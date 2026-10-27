@@ -50,7 +50,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 
 - **Single-owner** — web registration disabled; owner account seeded once via CLI
 - **Email + password** — credential login with configurable min/max password length
-- **GitHub OAuth** — optional; appears only when credentials are configured; supports `OWNER_GITHUB_ID` guard for strictest account restriction
+- **GitHub OAuth** — optional; requires OAuth credentials and the pinned `OWNER_GITHUB_ID`
 - **Passkey** — WebAuthn/FIDO2 support via BetterAuth passkey plugin (biometrics, PIN, or hardware security key)
 - **Content Security Policy** — strict CSP headers with environment-aware `unsafe-eval`, Cloudinary and Umami origins allowlisted
 - **Route protection** — all `/dashboard/*` routes protected via `proxy.ts` with owner email allowlist
@@ -218,9 +218,9 @@ GitHub OIDC configuration, and Vercel secret sync.
 | Variable | Description |
 |----------|-------------|
 | `CLOUDINARY_FOLDER` | Upload folder name; defaults to `storylio` |
-| `GITHUB_CLIENT_ID` | Enables GitHub sign-in when paired with secret |
-| `GITHUB_CLIENT_SECRET` | Enables GitHub sign-in when paired with client ID |
-| `OWNER_GITHUB_ID` | Restricts GitHub OAuth to one specific GitHub account |
+| `GITHUB_CLIENT_ID` | GitHub OAuth client ID; requires secret and owner ID |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret; requires client ID and owner ID |
+| `OWNER_GITHUB_ID` | Required numeric GitHub owner account ID for OAuth |
 | `RESEND_REPLY_TO` | Reply-to address for outgoing emails |
 | `UMAMI_WEBSITE_ID` | Enables public Umami tracking script |
 | `UMAMI_SCRIPT_URL` | Custom script URL; defaults to Umami Cloud |
@@ -480,6 +480,21 @@ long captions with Lenis locked. `tests/browser/gallery-touch.js` checks lightbo
 swipe, zoom controls, and native page panning in a separate touch context. Run
 both with `playwright-cli run-code --filename=...` against the local server.
 
+`tests/browser/sign-in-polish.js` covers the one-column sign-in page, short-screen
+scrolling, password reveal, field errors, provider failures, and safe return URLs.
+`tests/browser/sign-in-passkey.js` checks conditional WebAuthn cancellation and
+late challenges. Both intercept authentication requests and use browser fixtures;
+they never authenticate a real account or send email.
+
+`tests/browser/auth-sky.js` checks the auth-only Earth background, star animation
+pause/resume and reduced motion, responsive layering, and shared global surface
+tokens. Dashboard colors are checked with disposable token consumers, without
+signing in or changing CMS records.
+
+`tests/browser/auth-entrance.js` verifies the short auth entrance on desktop and
+mobile, interaction/reduced-motion completion, no replay on blur/focus, and the
+Home navbar staying visible independently of the hero introduction.
+
 ### UI primitives
 
 The shadcn components use Base UI with the `base-luma` registry style and the
@@ -509,9 +524,28 @@ Web registration is disabled. The owner account is created once via `bun run db:
 
 Dashboard access and all CMS mutations require the signed-in email to be listed in `OWNER_EMAIL`. Before changing the login email in Settings, add the new address to `OWNER_EMAIL` and redeploy.
 
-GitHub sign-in is available only when both `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are set. Set `OWNER_GITHUB_ID` for the strictest possible guard — limiting GitHub OAuth to a single numeric GitHub account ID.
+GitHub sign-in requires `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and
+`OWNER_GITHUB_ID`. The owner ID is checked against the provider profile on every
+OAuth flow and when creating a linked account. If it is missing, GitHub sign-in
+is disabled; email/password and existing passkeys remain available.
 
-**Preview environments:** BetterAuth automatically derives allowed Vercel Preview origins (`*.vercel.app`) from each request. Keep `BETTER_AUTH_URL` pointed at the production HTTPS origin in both Production and Preview environments, and use the same `BETTER_AUTH_SECRET` wherever sessions must remain compatible.
+**Preview environments:** BetterAuth accepts the canonical auth host and exact
+deployment/branch hosts from `VERCEL_URL` and `VERCEL_BRANCH_URL`. It does not trust
+every `*.vercel.app` project. Localhost wildcard access is development-only. Keep
+`BETTER_AUTH_URL` pointed at the production HTTPS origin in Production and Preview,
+and retain the same `BETTER_AUTH_SECRET` wherever existing sessions must work.
+
+Login return URLs are limited to dashboard paths. Changing the login email first
+requires approval at the current address, followed by verification at the new
+address; both must be in `OWNER_EMAIL`. The endpoint and user-update hooks enforce
+that allowlist, including calls outside the Settings form.
+
+Production authentication uses database-backed rate limits. Apply the reviewed
+`drizzle/0002_auth_rate_limits.sql` through the matching `db:migrate` script before
+deploying this auth configuration. It adds only the `RateLimit` table and indexes;
+it does not alter users, password hashes, sessions, or passkeys. Development does
+not enable throttling. Password sign-in allows five attempts per minute per
+client/path; passkey and social endpoints have separate rules in `src/lib/auth.ts`.
 
 **GitHub OAuth in Preview:** GitHub OAuth Apps only support a single fixed callback URL. For Preview sign-in, create a separate OAuth App and set its callback to a stable branch Preview URL:
 

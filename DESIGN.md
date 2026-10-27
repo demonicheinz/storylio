@@ -20,16 +20,16 @@ colors:
   link: "{palette.accent-light}"
   ink: "{palette.glow}"
   ink-muted: "oklch(0.72 0.025 247.77)"
-  canvas: "{palette.night}"
-  surface-1: "{palette.lunar-surface}"
-  surface-2: "oklch(0.225 0.035 247.77)"
-  surface-3: "oklch(0.26 0.032 247.77)"
-  surface-4: "oklch(0.295 0.03 247.77)"
-  hairline: "oklch(0.31 0.025 247.77)"
-  hairline-strong: "oklch(0.55 0.04 247.77)"
-  input-border: "oklch(0.5 0.035 247.77)"
-  interaction: "oklch(0.28 0.045 247.77)"
-  interaction-hover: "oklch(0.32 0.05 247.77)"
+  canvas: "oklch(0.11 0.018 259.15)"
+  surface-1: "oklch(0.155 0.023 259.15)"
+  surface-2: "oklch(0.195 0.028 259.15)"
+  surface-3: "oklch(0.235 0.03 259.15)"
+  surface-4: "oklch(0.275 0.032 259.15)"
+  hairline: "oklch(0.28 0.025 259.15)"
+  hairline-strong: "oklch(0.46 0.03 259.15)"
+  input-border: "{colors.hairline-strong}"
+  interaction: "{colors.surface-2}"
+  interaction-hover: "{colors.surface-3}"
   semantic-success: "oklch(0.75 0.14 155)"
   semantic-warning: "oklch(0.82 0.14 80)"
   semantic-error: "oklch(0.72 0.16 25)"
@@ -202,6 +202,10 @@ map those samples to usable roles in `:root` (light) and `.dark` (dark). The app
 currently applies `.dark` in `src/app/layout.tsx`; defining a light palette does
 not add a theme switcher.
 
+The approved public navy canvas and surfaces are global semantic tokens. Auth
+and dashboard consume the same roles; public chrome does not redefine their
+colors. Raw planet samples stay fixed and are not the dark elevation ramp.
+
 ### Brand and interaction
 
 | Role / CSS token | Light | Dark | Purpose |
@@ -233,16 +237,16 @@ for new inline links; underline links in running text.
 
 | CSS token | Light | Dark |
 | --- | --- | --- |
-| `--background` | `oklch(0.985 0.003 247.77)` | Night |
+| `--background` | `oklch(0.985 0.003 247.77)` | `oklch(0.11 0.018 259.15)` |
 | `--foreground` | `oklch(0.23 0.035 259.15)` | Glow |
-| `--surface`, `--card`, `--sidebar` | `oklch(1 0 0)` | Lunar surface |
-| `--surface-2` | `oklch(0.965 0.007 247.77)` | `oklch(0.225 0.035 247.77)` |
-| `--surface-3`, dark `--popover` | `oklch(0.945 0.012 247.77)` | `oklch(0.26 0.032 247.77)` |
-| `--surface-4` | `oklch(0.94 0.018 247.77)` | `oklch(0.295 0.03 247.77)` |
+| `--surface`, `--card`, `--sidebar` | `oklch(1 0 0)` | `oklch(0.155 0.023 259.15)` |
+| `--surface-2` | `oklch(0.965 0.007 247.77)` | `oklch(0.195 0.028 259.15)` |
+| `--surface-3`, dark `--popover` | `oklch(0.945 0.012 247.77)` | `oklch(0.235 0.03 259.15)` |
+| `--surface-4` | `oklch(0.94 0.018 247.77)` | `oklch(0.275 0.032 259.15)` |
 | `--muted-foreground` | `oklch(0.47 0.025 250)` | `oklch(0.72 0.025 247.77)` |
-| `--border` | `oklch(0.89 0.014 247.77)` | `oklch(0.31 0.025 247.77)` |
-| `--border-hover` | `oklch(0.64 0.035 247.77)` | `oklch(0.55 0.04 247.77)` |
-| `--input` | `oklch(0.64 0.035 247.77)` | `oklch(0.5 0.035 247.77)` |
+| `--border` | `oklch(0.89 0.014 247.77)` | `oklch(0.28 0.025 259.15)` |
+| `--border-hover` | `oklch(0.64 0.035 247.77)` | `oklch(0.46 0.03 259.15)` |
+| `--input` | `oklch(0.64 0.035 247.77)` | `var(--border-hover)` |
 
 `--surface-hover`, `--secondary`, and `--muted` alias surface 2.
 `--surface-border` and `--sidebar-border` alias the decorative border.

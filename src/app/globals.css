@@ -172,13 +172,13 @@ html.lenis {
   --brand-soft: var(--planet-accent-light);
   --brand-hover: var(--planet-accent-light);
   --link: var(--planet-accent-light);
-  /* --background: var(--planet-night); */
-  --background: oklch(0.0816 0.0622 259.15);
+  /* Approved public canvas and surfaces shared by public, auth and dashboard. */
+  --background: oklch(0.11 0.018 259.15);
   --foreground: var(--planet-glow);
-  --surface: var(--planet-surface);
-  --surface-2: oklch(0.225 0.035 247.77);
-  --surface-3: oklch(0.26 0.032 247.77);
-  --surface-4: oklch(0.295 0.03 247.77);
+  --surface: oklch(0.155 0.023 259.15);
+  --surface-2: oklch(0.195 0.028 259.15);
+  --surface-3: oklch(0.235 0.03 259.15);
+  --surface-4: oklch(0.275 0.032 259.15);
   --surface-hover: var(--surface-2);
   --surface-border: var(--border);
   --card: var(--surface);
@@ -193,17 +193,17 @@ html.lenis {
   --secondary-foreground: var(--foreground);
   --muted: var(--surface-2);
   --muted-foreground: oklch(0.72 0.025 247.77);
-  --accent: oklch(0.28 0.045 247.77);
-  --accent-hover: oklch(0.32 0.05 247.77);
+  --accent: var(--surface-2);
+  --accent-hover: var(--surface-3);
   --accent-foreground: var(--foreground);
   --destructive: oklch(0.72 0.16 25);
   --destructive-foreground: var(--planet-night);
   --success: oklch(0.75 0.14 155);
   --warning: oklch(0.82 0.14 80);
   --info: var(--link);
-  --border: oklch(0.31 0.025 247.77);
-  --border-hover: oklch(0.55 0.04 247.77);
-  --input: oklch(0.5 0.035 247.77);
+  --border: oklch(0.28 0.025 259.15);
+  --border-hover: oklch(0.46 0.03 259.15);
+  --input: var(--border-hover);
   --ring: var(--planet-accent-light);
   --chart-1: var(--planet-accent-light);
   --chart-2: oklch(0.72 0.13 238);
