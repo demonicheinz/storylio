@@ -3,7 +3,7 @@ import { and, desc, eq, isNull, lte, or } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import detail from "@/components/public/public-detail.module.css";
 import page from "@/components/public/public-page.module.css";
@@ -20,6 +20,7 @@ import { PostStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
 import { postToTag, tag } from "@/lib/db/schema";
 import { HOME_NOTES_TAG, homePostWhere } from "@/lib/home-content";
+import { buildNotePermalink } from "@/lib/note-links";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 import { renderPublicMDX } from "@/lib/public-mdx";
 import { slugify } from "@/lib/utils";
@@ -216,6 +217,9 @@ async function BlogPostContent({ params }: BlogPostPageProps) {
   if (!post) {
     notFound();
   }
+
+  if (post.tags.some((tag) => tag.name === HOME_NOTES_TAG))
+    redirect(buildNotePermalink(post.slug));
 
   const [mdxContent, tocItems, companions] = await Promise.all([
     renderPublicMDX(post.content, "post"),

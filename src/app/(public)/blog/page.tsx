@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
+import { NotesCollection } from "@/components/public/notes/notes-collection";
 import page from "@/components/public/public-page.module.css";
 import styles from "@/components/public/sections/blog/blog.module.css";
 import { BlogFilters } from "@/components/public/sections/blog/blog-filters";
@@ -73,7 +74,15 @@ async function BlogContent({ searchParams }: BlogPageProps) {
           aria-label={data.kind === "notes" ? "Notes" : "Articles"}
           className={styles.collection}
         >
-          {data.posts.length ? (
+          {data.kind === "notes" ? (
+            <>
+              {!data.posts.length && <EmptyPosts selectedTag="notes" />}
+              <NotesCollection
+                posts={data.posts}
+                selectedSlug={getWritingTag(query.note)}
+              />
+            </>
+          ) : data.posts.length ? (
             <PostList posts={data.posts} />
           ) : (
             <EmptyPosts selectedTag={data.selectedTag} />

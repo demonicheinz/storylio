@@ -111,6 +111,15 @@ offset; Back/Forward leaves restoration to the browser.
 About language links prefetch their URL-specific cached variants. Ordinary
 links can keep the default when only the shared shell is needed.
 
+Notes use the same public-posts tag and cached, server-rendered MDX. Home's
+URL-dependent Notes section stays inside its own Suspense boundary, while the
+existing cached hero and other Home data retain their behavior. A dialog opens
+through native history without a route reload; Back/Forward follows the note
+query and explicit close restores the previous URL. Direct links on the Notes
+archive resolve even when the selected note is not on the current page. Unknown,
+article, draft and future slugs are rejected against published Notes facets
+before entering the row cache; that cache is keyed by known public IDs.
+
 ## Verification
 
 Run `bun run test` and `bun typecheck`. The route-shell tests hold URL/request

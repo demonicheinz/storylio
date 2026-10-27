@@ -20,6 +20,8 @@ learn about its author. The owner manages published content through the dashboar
 - Home notes are personal reflections about work, as confirmed by the owner.
   They use published blog posts with the exact tag `notes`.
 - Empty notes are hidden. Do not invent reflections, projects, quotes, or clients.
+- Notes open a complete reading dialog on Home and the `?tag=notes` archive.
+  Shared links use `/blog?tag=notes&note=<slug>`; there is no full-page CTA.
 - Existing testimonial data stays in the CMS even though Home no longer uses it.
 - The priority audience beyond portfolio visitors has not been specified.
 

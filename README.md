@@ -464,6 +464,16 @@ bunx --no-install playwright-cli -s=project-detail close
 Cache and Partial Prefetching policy, public tag invalidation, and protected
 route boundaries are documented in [CACHE_AND_PREFETCH.md](docs/CACHE_AND_PREFETCH.md).
 
+Writing's default archive excludes the reserved `notes` tag; the Notes format
+keeps the existing `/blog?tag=notes` URL. Notes on Home and the archive open a
+complete reading dialog with close and copy-link controls. Shared links use
+`/blog?tag=notes&note=<slug>`; old `/blog/<note-slug>` links redirect there.
+`tests/browser/expandable-notes.js` checks responsive dialogs, hash/query history,
+focus restoration, direct/legacy links, in-place Home reading and Lenis locking.
+`tests/browser/writing-archive.js` and `tests/browser/article-reading.js` verify
+the matching archive and article reading layouts. Use published demo content in
+an isolated CLI session; the tests do not edit CMS records.
+
 ### UI primitives
 
 The shadcn components use Base UI with the `base-luma` registry style and the

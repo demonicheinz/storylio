@@ -1,6 +1,7 @@
 import { asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
+import { Suspense } from "react";
 import {
   ApproachSection,
   HeroSection,
@@ -151,7 +152,11 @@ async function getHomeData() {
   };
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ note?: string | string[] }>;
+}) {
   const { hero, phases, logos, recentProjects, recentPosts, notes } =
     await getHomeData();
 
@@ -172,7 +177,9 @@ export default async function HomePage() {
           )}
         />
         <RecentPostsSection posts={recentPosts} />
-        <NotesSection posts={notes} />
+        <Suspense fallback={null}>
+          <NotesSection posts={notes} searchParams={searchParams} />
+        </Suspense>
       </div>
     </main>
   );

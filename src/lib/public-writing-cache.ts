@@ -76,3 +76,31 @@ export async function getWritingRows(
   });
   return rows.map(flattenPostTags);
 }
+
+// Only called after the public Notes facets validate the requested slug.
+export async function getNoteRow(id: string) {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag(PUBLIC_CACHE_TAGS.posts);
+  const noteIds = db
+    .select({ postId: postToTag.postId })
+    .from(postToTag)
+    .innerJoin(tag, eq(postToTag.tagId, tag.id))
+    .where(eq(tag.name, HOME_NOTES_TAG));
+  const row = await db.query.post.findFirst({
+    where: and(
+      eq(post.id, id),
+      homePostWhere(post, "notes", new Date(), noteIds),
+    ),
+    columns: {
+      id: true,
+      slug: true,
+      title: true,
+      excerpt: true,
+      content: true,
+      publishedAt: true,
+      createdAt: true,
+    },
+  });
+  return row ?? null;
+}

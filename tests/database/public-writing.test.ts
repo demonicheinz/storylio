@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import * as schema from "@/lib/db/schema";
+import { getPublicNote } from "@/lib/public-notes";
 import { getPublicWriting } from "@/lib/public-writing";
 import { createTestDatabase } from "../helpers/database";
 
@@ -47,6 +48,7 @@ beforeAll(async () => {
     })),
     { postId: "writing-14", tagId: "journal" },
     { postId: "writing-23", tagId: "notes" },
+    { postId: "writing-22", tagId: "notes" },
   ]);
 });
 afterAll(async () => {
@@ -54,6 +56,23 @@ afterAll(async () => {
 });
 
 describe("public writing archive", () => {
+  it("resolves a published off-page note but never articles, drafts or scheduled notes", async () => {
+    const note = await getPublicNote("writing-21");
+    expect(note?.id).toBe("writing-21");
+    const read = vi.spyOn(fixture.db.query.post, "findFirst");
+    try {
+      for (const slug of [
+        "writing-0",
+        "writing-22",
+        "writing-23",
+        "unknown-note",
+      ])
+        expect(await getPublicNote(slug)).toBeNull();
+      expect(read).not.toHaveBeenCalled();
+    } finally {
+      read.mockRestore();
+    }
+  });
   it("separates notes before paging and excludes draft/future posts", async () => {
     const pages = await Promise.all(
       [1, 2, 3].map((page) => getPublicWriting(undefined, page)),
