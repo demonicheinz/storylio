@@ -68,6 +68,8 @@ export function scrollPageTo(
       ) || 0;
   }
   if (scroller) {
+    // Streamed content can outgrow the dimensions measured during the shell.
+    scroller.resize();
     scroller.scrollTo(top, { immediate });
   } else {
     window.scrollTo({ top, behavior: immediate ? "instant" : "auto" });

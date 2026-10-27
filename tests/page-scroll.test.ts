@@ -14,7 +14,12 @@ afterEach(() => {
 });
 
 function register() {
-  const instance = { stop: vi.fn(), start: vi.fn(), scrollTo: vi.fn() };
+  const instance = {
+    stop: vi.fn(),
+    start: vi.fn(),
+    scrollTo: vi.fn(),
+    resize: vi.fn(),
+  };
   cleanups.push(registerPageScroller(instance as unknown as Lenis));
   return instance;
 }
@@ -26,6 +31,19 @@ function lock() {
 }
 
 describe("public page scrolling", () => {
+  it("reaches content streamed beyond the scroller's initial page limit", () => {
+    const instance = register();
+    let limit = 100;
+    let position = 0;
+    instance.resize.mockImplementation(() => {
+      limit = 1000;
+    });
+    instance.scrollTo.mockImplementation((target: number) => {
+      position = Math.min(target, limit);
+    });
+    scrollPageTo(700);
+    expect(position).toBe(700);
+  });
   it("keeps overlapping overlays locked and releases each lock only once", () => {
     const instance = register();
     const first = lock();
