@@ -33,7 +33,7 @@ export function MultiSelectList({
       role="listbox"
       data-lenis-prevent
       aria-label={ariaLabel}
-      aria-multiselectable="true"
+      aria-multiselectable={context.selectionMode === "multiple"}
       style={{
         maxHeight: "min(16rem, var(--multi-select-list-height, 16rem))",
       }}

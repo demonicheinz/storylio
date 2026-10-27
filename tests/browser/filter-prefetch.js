@@ -56,100 +56,21 @@ async (page) => {
         scrollPreserved: true,
       });
     }
-    for (const [path, param, label] of [
-      ["/blog", "tag", "Filter writing by topic"],
-    ]) {
-      const start = requests.length;
-      await page.goto(`${origin}${path}?keep=filter-test`);
-      const bar = page.getByRole("navigation", { name: label, exact: true });
-      const option = bar.locator("a,button").nth(1);
-      await option.waitFor();
+    {
+      await page.goto(`${origin}/blog?keep=filter-test&page=3`);
+      const trigger = page.getByRole("button", { name: "Filter topic", exact: true });
+      await trigger.click();
+      const option = page.getByRole("listbox", { name: "Topics", exact: true }).getByRole("option").first();
       const value = (await option.innerText()).trim();
-      await page.waitForTimeout(1000);
-      if (
-        requests
-          .slice(start)
-          .some((url) => url.pathname === path && url.searchParams.has(param))
-      ) {
-        throw new Error("Filters prefetched before intent: " + path);
-      }
-      const prefetched = page.waitForResponse(
-        (response) => matches(new URL(response.url()), path, param, value),
-        { timeout: 5000 },
-      );
-      await option.hover();
-      if (!(await prefetched).ok())
-        throw new Error("Hover prefetch failed: " + path);
-      if (new URL(page.url()).searchParams.has(param))
-        throw new Error("Hover navigated");
-      const before = requests.length;
       const scrollBefore = await page.evaluate(() => scrollY);
       await option.click();
-      await page.waitForURL((url) => matches(url, path, param, value), {
-        timeout: 10000,
-      });
-      await bar
-        .locator('[aria-current="page"]')
-        .filter({ hasText: value })
-        .waitFor({ timeout: 10000 });
-      if (
-        requests.slice(before).some((url) => matches(url, path, param, value))
-      )
-        throw new Error("Click did not reuse hover prefetch");
-      if (Math.abs((await page.evaluate(() => scrollY)) - scrollBefore) > 2)
-        throw new Error("Filter changed scroll position");
-
-      const keyboardOption = bar.getByRole("link").nth(2);
-      await keyboardOption.waitFor({ timeout: 5000 });
-      const keyboardValue = (await keyboardOption.innerText()).trim();
-      const focusPrefetch = page.waitForResponse(
-        (response) =>
-          matches(new URL(response.url()), path, param, keyboardValue),
-        { timeout: 5000 },
-      );
-      await keyboardOption.focus();
-      if (!(await focusPrefetch).ok())
-        throw new Error("Focus prefetch failed: " + path);
-      if (new URL(page.url()).searchParams.get(param) !== value)
-        throw new Error("Focus navigated");
-      const beforeFocusClick = requests.length;
-      await keyboardOption.press("Enter");
-      await page.waitForURL((url) => matches(url, path, param, keyboardValue), {
-        timeout: 10000,
-      });
-      await bar
-        .locator('[aria-current="page"]')
-        .filter({ hasText: keyboardValue })
-        .waitFor({ timeout: 10000 });
-      if (
-        requests
-          .slice(beforeFocusClick)
-          .some((url) => matches(url, path, param, keyboardValue))
-      )
-        throw new Error("Click did not reuse focus prefetch");
-
-      // All may be cached, or focusing it may start a fresh prefetch.
-      // Check reset behavior without assuming the destination stayed cached.
-      const all = bar.getByRole("link", { name: "All", exact: true });
-      await all.focus();
-      if (new URL(page.url()).searchParams.get(param) !== keyboardValue)
-        throw new Error("Focusing All navigated");
-      await all.press("Enter");
-      await page.waitForURL((url) => matches(url, path, param, null), {
-        timeout: 10000,
-      });
-      await bar
-        .locator('[aria-current="page"]')
-        .filter({ hasText: "All" })
-        .waitFor({ timeout: 10000 });
-      results.push({
-        path,
-        value,
-        keyboardValue,
-        hover: "passed",
-        focus: "passed",
-        queryPreserved: true,
-      });
+      await page.waitForURL(url => matches(url, "/blog", "tag", value));
+      if (new URL(page.url()).searchParams.has("page")) throw new Error("Topic did not reset page");
+      if (Math.abs(await page.evaluate(() => scrollY) - scrollBefore) > 2)
+        throw new Error("Topic changed scroll position");
+      await page.getByRole("button", { name: "Reset topic", exact: true }).click();
+      await page.waitForURL(url => matches(url, "/blog", "tag", null));
+      results.push({ path: "/blog", singleTopic: true, queryPreserved: true, scrollPreserved: true });
     }
     return results;
   } finally {

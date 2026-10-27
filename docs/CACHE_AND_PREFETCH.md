@@ -83,8 +83,13 @@ Never move session or draft data into the public tag groups.
 
 ## Intent-driven links
 
-Blog filter links begin with prefetch disabled and opt into URL prefetch on
-hover/focus. Projects uses a searchable multi-select: the highlighted option
+Writing format links opt into URL prefetch on hover/focus. Its single-topic
+searchable popover navigates on selection, clears the page and open-note state, and preserves
+unrelated query values and scroll. Published article/Notes facets are cached
+without user arguments; unknown topics short-circuit before row caching. Filtered
+counts derive from those facets, and page rows use SQL limit/offset only after
+the requested page is clamped. Notes retain the existing `?tag=notes` archive.
+Projects uses a searchable multi-select: the highlighted option
 requests a router prefetch for its next selection only while the panel is open.
 Next.js may reuse the existing partial shell without another request; selected
 result data can still load on navigation. Both preserve unrelated query parameters

@@ -55,8 +55,10 @@ async sessionPage => {
     await page.waitForURL(url=>url.searchParams.getAll('tech').length===1);
     await page.keyboard.press('Escape');
     await page.goBack();await page.waitForURL(url=>url.searchParams.getAll('tech').length===2);
+    await page.waitForFunction(()=>document.querySelector('button[aria-label="Filter stack"]')?.getAttribute('aria-description')?.split(', ').length===2);
     assert((await trigger().innerText()).includes('2 technologies'),'Back did not restore selection');
     await page.goForward();await page.waitForURL(url=>url.searchParams.getAll('tech').length===1);
+    await page.waitForFunction(()=>document.querySelector('button[aria-label="Filter stack"]')?.getAttribute('aria-description')?.split(', ').length===1);
     await page.getByRole('button',{name:'Reset stack',exact:true}).click();
     await page.waitForURL(url=>!url.searchParams.has('tech'));
     assert(new URL(page.url()).searchParams.get('keep')==='projects-review','Reset discarded query');

@@ -14,9 +14,15 @@ import styles from "./multi-select.module.css";
 export function MultiSelectTrigger({
   label,
   onClear,
+  fieldLabel = "Stack",
+  emptyLabel = "All technologies",
+  clearLabel = "Reset stack",
 }: {
   label: string;
   onClear?: () => void;
+  fieldLabel?: string;
+  emptyLabel?: string;
+  clearLabel?: string;
 }) {
   const context = useMultiSelectContext("MultiSelectTrigger");
   const count = context.values.length;
@@ -26,9 +32,7 @@ export function MultiSelectTrigger({
         id={context.triggerId}
         type="button"
         aria-label={label}
-        aria-description={
-          count ? context.values.join(", ") : "All technologies"
-        }
+        aria-description={count ? context.values.join(", ") : emptyLabel}
         aria-haspopup="listbox"
         aria-expanded={context.open}
         aria-controls={context.open ? context.listId : undefined}
@@ -43,17 +47,17 @@ export function MultiSelectTrigger({
           }
         }}
       >
-        <span className={styles.triggerLabel}>Stack</span>
+        <span className={styles.triggerLabel}>{fieldLabel}</span>
         <span className={styles.desktopSummary}>
-          {count === 0
-            ? "All technologies"
-            : context.values.slice(0, 2).join(" + ")}
+          {count === 0 ? emptyLabel : context.values.slice(0, 2).join(" + ")}
           {count > 2 && ` +${count - 2}`}
         </span>
         <span className={styles.mobileSummary}>
           {count === 0
-            ? "All technologies"
-            : `${count} ${count === 1 ? "technology" : "technologies"}`}
+            ? emptyLabel
+            : context.selectionMode === "single"
+              ? context.values[0]
+              : `${count} ${count === 1 ? "technology" : "technologies"}`}
         </span>
         {count === 0 && (
           <CaretUpDownIcon size={16} aria-hidden="true" className="shrink-0" />
@@ -63,7 +67,7 @@ export function MultiSelectTrigger({
         <button
           type="button"
           className={styles.clear}
-          aria-label="Reset stack"
+          aria-label={clearLabel}
           onClick={() => {
             context.setOpen(false, true);
             onClear();
@@ -79,7 +83,13 @@ export function MultiSelectTrigger({
   );
 }
 
-export function MultiSelectSearch() {
+export function MultiSelectSearch({
+  label = "Search technologies",
+  placeholder = "Search technologies…",
+}: {
+  label?: string;
+  placeholder?: string;
+}) {
   const context = useMultiSelectContext("MultiSelectSearch");
   return (
     <div className={styles.search}>
@@ -88,14 +98,14 @@ export function MultiSelectSearch() {
         ref={context.inputRef}
         id={context.inputId}
         role="combobox"
-        aria-label="Search technologies"
+        aria-label={label}
         aria-autocomplete="list"
         aria-expanded={context.open}
         aria-controls={context.listId}
         aria-activedescendant={context.open ? context.activeItemId : undefined}
         autoComplete="off"
         value={context.query}
-        placeholder="Search technologies…"
+        placeholder={placeholder}
         onChange={(event) => context.setQuery(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown" || event.key === "ArrowUp") {

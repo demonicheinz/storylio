@@ -48,6 +48,7 @@ const defaultFilter: MultiSelectFilter = (value, query, keywords) => {
 };
 
 export type MultiSelectContextValue = {
+  selectionMode: "multiple" | "single";
   open: boolean;
   setOpen: (open: boolean, restoreFocus?: boolean) => void;
   values: string[];
@@ -102,6 +103,7 @@ export function mergeRefs<T>(...refs: Array<Ref<T> | undefined>) {
 }
 
 export interface MultiSelectProps {
+  selectionMode?: "multiple" | "single";
   children: ReactNode;
   value?: string[];
   defaultValue?: string[];
@@ -118,6 +120,7 @@ export interface MultiSelectProps {
 }
 
 export function MultiSelect({
+  selectionMode = "multiple",
   children,
   value: controlledValue,
   defaultValue = [],
@@ -250,16 +253,22 @@ export function MultiSelect({
     (next: string) => {
       if (items.get(next)?.disabled) return;
       commitValue(
-        values.includes(next)
-          ? values.filter((value) => value !== next)
-          : [...values, next],
+        selectionMode === "single"
+          ? [next]
+          : values.includes(next)
+            ? values.filter((value) => value !== next)
+            : [...values, next],
       );
       updateQuery("");
+      if (selectionMode === "single") {
+        updateOpen(false, true);
+        return;
+      }
       requestAnimationFrame(() =>
         inputRef.current?.focus({ preventScroll: true }),
       );
     },
-    [commitValue, items, updateQuery, values],
+    [commitValue, items, updateQuery, values, selectionMode, updateOpen],
   );
 
   const remove = useCallback(
@@ -324,6 +333,7 @@ export function MultiSelect({
   const activeItem = activeValue ? items.get(activeValue) : undefined;
   const context = useMemo<MultiSelectContextValue>(
     () => ({
+      selectionMode,
       open,
       setOpen: updateOpen,
       values,
@@ -354,6 +364,7 @@ export function MultiSelect({
       activeLayoutId: `${baseId}-active`,
     }),
     [
+      selectionMode,
       activeItem?.id,
       activeValue,
       baseId,
