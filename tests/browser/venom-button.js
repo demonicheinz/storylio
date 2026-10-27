@@ -59,6 +59,23 @@ async (sessionPage) => {
     await page.emulateMedia({reducedMotion:'no-preference'});
     await page.goto(origin);
     await ready();
+    const layers = await page.evaluate(() => {
+      const canvas = document.querySelector("[data-venom-canvas]");
+      const chrome = document.querySelector("[data-public-chrome]");
+      const nav = document.querySelector('nav[aria-label="Main navigation"]');
+      return {
+        sameContext:
+          canvas.parentElement === chrome &&
+          nav.closest("[data-public-chrome]") === chrome,
+        canvas: Number(getComputedStyle(canvas).zIndex),
+        nav: Number(getComputedStyle(nav.parentElement).zIndex),
+      };
+    });
+    assert(
+      layers.sameContext && layers.nav > layers.canvas,
+      "Venom canvas escapes the navbar stacking context: " +
+        JSON.stringify(layers),
+    );
     assert(await widthCoverage()>.85,'CTA starts with a growth intro');
     assert(await page.evaluate(()=>window.__venomFirstLabel)===1,'First rendered label is delayed');
     assert(await page.evaluate(()=>window.__venomIconReads)===2,'Cursor asset preparation did not run once per icon');

@@ -46,7 +46,10 @@ const navItems: FloatingNavItem[] = [
 
 export function PublicChrome({ children }: { children: ReactNode }) {
   return (
-    <div className={`flex flex-col min-h-screen ${styles.chrome}`}>
+    <div
+      data-public-chrome
+      className={`flex flex-col min-h-screen ${styles.chrome}`}
+    >
       <Suspense fallback={null}>
         <PublicStarfield />
       </Suspense>

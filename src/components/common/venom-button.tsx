@@ -79,7 +79,8 @@ export function VenomButton({ href, children, className }: VenomButtonProps) {
         canvas.className = styles.canvas;
         canvas.setAttribute("aria-hidden", "true");
         canvas.dataset.venomCanvas = "true";
-        document.body.append(canvas);
+        // Share the navbar's stacking context; a body portal would escape it.
+        (link.closest("[data-public-chrome]") ?? document.body).append(canvas);
         scene = renderer.createVenomScene(canvas, link);
         if (!scene) {
           canvas.remove();
