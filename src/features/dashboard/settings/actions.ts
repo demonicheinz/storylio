@@ -252,7 +252,7 @@ export async function actionChangeEmail(
 
     return actionSuccess(
       undefined,
-      "A confirmation email has been sent to your new email address. Click the link to confirm the change.",
+      "Check your current email to approve the change, then verify the new address.",
     );
   } catch (error) {
     const message =

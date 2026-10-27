@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { relations } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   doublePrecision,
   foreignKey,
@@ -123,6 +124,20 @@ export const verification = pgTable("Verification", {
     .$defaultFn(() => new Date())
     .$onUpdate(() => new Date()),
 });
+
+export const rateLimit = pgTable(
+  "RateLimit",
+  {
+    id: id(),
+    key: text("key").notNull(),
+    count: integer("count").notNull(),
+    lastRequest: bigint("lastRequest", { mode: "number" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("RateLimit_key_key").on(table.key),
+    index("RateLimit_lastRequest_idx").on(table.lastRequest),
+  ],
+);
 
 export const post = pgTable(
   "Post",

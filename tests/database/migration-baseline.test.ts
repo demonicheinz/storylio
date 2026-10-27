@@ -130,7 +130,36 @@ describe("Drizzle migration baseline safety", () => {
             : entry,
         ),
       };
-      expect(differingSchemaSections(expected, actual)).toEqual([]);
+      expect(
+        actual.columns
+          .filter((row) => row.table_name === "RateLimit")
+          .map(({ name, type, not_null }) => ({ name, type, not_null })),
+      ).toEqual([
+        { name: "count", type: "integer", not_null: true },
+        { name: "id", type: "text", not_null: true },
+        { name: "key", type: "text", not_null: true },
+        { name: "lastRequest", type: "bigint", not_null: true },
+      ]);
+      expect(
+        actual.indexes
+          .filter((row) => row.table_name === "RateLimit")
+          .map((row) => row.name),
+      ).toEqual([
+        "RateLimit_key_key",
+        "RateLimit_lastRequest_idx",
+        "RateLimit_pkey",
+      ]);
+      const legacyShape = Object.fromEntries(
+        Object.entries(actual).map(([section, rows]) => [
+          section,
+          rows.filter((row) =>
+            section === "tables"
+              ? row.name !== "RateLimit"
+              : row.table_name !== "RateLimit",
+          ),
+        ]),
+      );
+      expect(differingSchemaSections(expected, legacyShape)).toEqual([]);
       expect(
         await migrationStatus((query) =>
           db.execute<Record<string, unknown>>(query),

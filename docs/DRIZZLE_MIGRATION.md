@@ -21,6 +21,16 @@ Drizzle adapter. The application does not generate an ORM client on install.
 Schema and relation definitions live in `src/lib/db/schema.ts`. Client-safe
 enum constants live in `src/lib/db/enums.ts`. There is no Prisma query adapter.
 
+## Pending authentication rate-limit table
+
+`0002_auth_rate_limits.sql` adds the `RateLimit` table with a unique key and a
+timestamp index. Production Better Auth requests use this shared storage, so
+apply the reviewed migration before deploying the corresponding auth changes.
+It preserves every existing user, password hash, session and passkey. Local auth
+tests apply it only to PGlite fixtures; implementation work has not applied it to
+dev, staging or prod. Use `db:status` and the matching environment's `db:migrate`
+script when rollout is authorized. Do not run the baseline migration again.
+
 ## Existing databases: inspect, then adopt
 
 The first Drizzle SQL migration describes the complete existing schema. Its

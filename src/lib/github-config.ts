@@ -1,7 +1,9 @@
 /**
  * Whether GitHub OAuth login is configured.
- * Only true when both GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET are set.
+ * Require both OAuth credentials and the pinned owner identity.
  * Safe to import from both server and client contexts (reads env at import time).
  */
 export const isGitHubEnabled =
-  !!process.env.GITHUB_CLIENT_ID && !!process.env.GITHUB_CLIENT_SECRET;
+  !!process.env.GITHUB_CLIENT_ID &&
+  !!process.env.GITHUB_CLIENT_SECRET &&
+  !!process.env.OWNER_GITHUB_ID;

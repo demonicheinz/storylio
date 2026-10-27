@@ -520,7 +520,8 @@ function ChangeEmailForm({ currentEmail }: { currentEmail: string }) {
 
       if (result.success) {
         toast.add({
-          title: result.message ?? "Check your new email for confirmation.",
+          title:
+            result.message ?? "Check your current email to approve the change.",
           type: "success",
         });
         reset();
@@ -556,8 +557,8 @@ function ChangeEmailForm({ currentEmail }: { currentEmail: string }) {
             {...register("newEmail")}
           />
           <p className="text-muted-foreground text-xs">
-            Changing your login email requires verification. A confirmation link
-            will be sent to the new email address.
+            Approve the change from your current email, then verify the new
+            address. Both addresses must be listed in OWNER_EMAIL.
           </p>
           {errors.newEmail?.message && (
             <p className="text-destructive text-sm">
@@ -1328,7 +1329,8 @@ export function SettingsManager({
               <CardTitle>Email</CardTitle>
               <CardDescription>
                 Your login email is used for authentication. Changing it
-                requires verification via the new address.
+                requires approval from your current address, then verification
+                of the new address.
               </CardDescription>
             </CardHeader>
             <CardContent>

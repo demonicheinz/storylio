@@ -11,7 +11,7 @@ let auth: typeof import("../../src/lib/auth").auth;
 let passwordHash: string;
 
 beforeAll(async () => {
-  fixture = await createTestDatabase();
+  fixture = await createTestDatabase({ authRateLimits: true });
   vi.stubEnv("NODE_ENV", "production");
   vi.stubEnv("TEST", "false");
   vi.stubEnv("BETTER_AUTH_URL", origin);
