@@ -1,0 +1,22 @@
+### Result
+{"title":"[Human] Assessment B","scriptPresent":true,"overlays":0,"detectorGlobals":[],"error":"page.addScriptTag: Loading the script 'http://localhost:8400/detect.js' violates the following Content Security Policy directive: \"script-src 'self' 'unsafe-inline' https://analytics.heinz.id\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked.","messages":[],"presentation":"Headless repository CLI; no user-visible tab presentation API used. Session will be closed."}
+### Ran Playwright code
+```js
+await (async page => {
+  const messages=[];
+  page.on('console',msg=>{if(/impeccable/i.test(msg.text()))messages.push({type:msg.type(),text:msg.text()})});
+  await page.evaluate(()=>{document.title='[Human] Assessment B';window.scrollTo({top:0,behavior:'instant'})});
+  let error=null;
+  try{await page.addScriptTag({url:'http://localhost:8400/detect.js',timeout:5000})}catch(e){error=e.message}
+  await page.waitForTimeout(2500);
+  const result=await page.evaluate(()=>({title:document.title,scriptPresent:[...document.scripts].some(s=>s.src==='http://localhost:8400/detect.js'),overlays:document.querySelectorAll('.impeccable-overlay').length,detectorGlobals:Object.keys(window).filter(k=>/impeccable/i.test(k))}));
+  return {...result,error,messages,presentation:'Headless repository CLI; no user-visible tab presentation API used. Session will be closed.'};
+}
+)(page);
+```
+### Page
+- Page URL: http://localhost:3102/projects/storylio#implementation-detail
+- Page Title: [Human] Assessment B
+- Console: 1 errors, 0 warnings
+### Events
+- New console entries: .playwright-cli\console-2026-10-27T01-16-43-231Z.log#L1

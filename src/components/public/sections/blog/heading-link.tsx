@@ -45,6 +45,7 @@ export function BlogHeadingLink({
         as === "h3" && "ml-2",
       )}
       aria-label="Copy heading link"
+      data-heading-link
       onClick={copyLink}
     >
       <LinkIcon />

@@ -8,11 +8,13 @@ import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FlowButton } from "@/components/common/flow-button";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import detailStyles from "@/components/public/public-detail.module.css";
 import pageStyles from "@/components/public/public-page.module.css";
 import { ViewCounter } from "@/components/public/sections/blog/view-counter";
 import { ProjectCover } from "@/components/public/sections/projects/project-cover";
+import projectStyles from "@/components/public/sections/projects/project-detail.module.css";
 import { ProjectNavigation } from "@/components/public/sections/projects/project-navigation";
 import { ProjectScreenshots } from "@/components/public/sections/projects/project-screenshots";
 import { ProjectToc } from "@/components/public/sections/projects/project-toc";
@@ -208,8 +210,8 @@ async function ProjectDetailContent({ params }: ProjectDetailPageProps) {
         <Link href="/projects" className={pageStyles.link}>
           <ArrowLeftIcon size={16} aria-hidden="true" /> Back to projects
         </Link>
-        <header className={detailStyles.projectIntro}>
-          <div>
+        <div className={projectStyles.overview}>
+          <header className={projectStyles.intro}>
             <h1 id="page-title" className={pageStyles.title}>
               {project.title}
             </h1>
@@ -218,8 +220,58 @@ async function ProjectDetailContent({ params }: ProjectDetailPageProps) {
                 {project.description}
               </p>
             )}
+          </header>
+          {(project.liveUrl ||
+            (!project.isClosedSource && project.githubUrl)) && (
+            <div className={projectStyles.actions}>
+              {project.liveUrl && (
+                <FlowButton
+                  href={project.liveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Live site
+                </FlowButton>
+              )}
+              {!project.isClosedSource && project.githubUrl && (
+                <a
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={pageStyles.link}
+                >
+                  Source <GithubLogoIcon aria-hidden="true" size={18} />
+                </a>
+              )}
+            </div>
+          )}
+          <div className={projectStyles.cover}>
+            <ProjectCover
+              src={project.coverImage}
+              alt={project.title}
+              className="aspect-video"
+              fetchPriority="high"
+              loading="eager"
+              sizes="(min-width:1328px) 1280px, 96vw"
+            />
+          </div>
+          <dl className={projectStyles.facts}>
+            <div>
+              <dt>My part</dt>
+              <dd>{contribution}</dd>
+            </div>
+            <div>
+              <dt>Updated</dt>
+              <dd>{formatDate(project.updatedAt)}</dd>
+            </div>
+            <div>
+              <dt>Reading time</dt>
+              <dd>{readingTime}</dd>
+            </div>
+          </dl>
+          {project.techStack.length > 0 && (
             <ul
-              className={`${pageStyles.tags} mt-6`}
+              className={`${pageStyles.tags} ${projectStyles.stack}`}
               aria-label="Technology stack"
             >
               {project.techStack.map((tech) => (
@@ -228,62 +280,21 @@ async function ProjectDetailContent({ params }: ProjectDetailPageProps) {
                 </li>
               ))}
             </ul>
-          </div>
-          <div>
-            <dl className={detailStyles.facts}>
-              <div>
-                <dt>My part</dt>
-                <dd>{contribution}</dd>
-              </div>
-              <div>
-                <dt>Updated</dt>
-                <dd>{formatDate(project.updatedAt)}</dd>
-              </div>
-              <div>
-                <dt>Reading time</dt>
-                <dd>{readingTime}</dd>
-              </div>
-            </dl>
-            <div className={pageStyles.cardActions}>
-              {project.liveUrl && (
-                <a
-                  href={project.liveUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={pageStyles.link}
-                >
-                  Live site <ArrowUpRightIcon aria-hidden="true" size={16} />
-                </a>
-              )}
-              {!project.isClosedSource && project.githubUrl && (
-                <a
-                  href={project.githubUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={pageStyles.link}
-                >
-                  Source <GithubLogoIcon aria-hidden="true" size={18} />
-                </a>
-              )}
-            </div>
-          </div>
-        </header>
-        <ProjectCover
-          src={project.coverImage}
-          alt={project.title}
-          className="aspect-video"
-          fetchPriority="high"
-          loading="eager"
-          sizes="(min-width:1328px) 1280px, 96vw"
-        />
+          )}
+        </div>
         {mdxContent && (
           <section
             aria-label="Project case study"
             className={pageStyles.section}
           >
-            <div className={detailStyles.readingLayout}>
-              <div className={detailStyles.prose}>{mdxContent}</div>
+            <div
+              className={`${detailStyles.readingLayout} ${projectStyles.reading}`}
+              data-has-toc={tocItems.length > 0 || undefined}
+            >
               <ProjectToc items={tocItems} />
+              <div className={`${detailStyles.prose} ${projectStyles.prose}`}>
+                {mdxContent}
+              </div>
             </div>
           </section>
         )}

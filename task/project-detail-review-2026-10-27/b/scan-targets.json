@@ -1,0 +1,18 @@
+[
+  {
+    "File": "src/app/(public)/projects/[slug]/page.tsx",
+    "Lines": 301
+  },
+  {
+    "File": "src/components/public/sections/projects/project-toc.tsx",
+    "Lines": 20
+  },
+  {
+    "File": "src/components/public/sections/projects/project-screenshots.tsx",
+    "Lines": 135
+  },
+  {
+    "File": "src/components/public/sections/projects/project-navigation.tsx",
+    "Lines": 82
+  }
+]

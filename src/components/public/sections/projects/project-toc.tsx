@@ -15,6 +15,7 @@ export function ProjectToc({ items }: ProjectTocProps) {
       description="Jump between the decisions behind this project."
       ariaLabel="Project case study table of contents"
       indicator="line"
+      collapsible
     />
   );
 }

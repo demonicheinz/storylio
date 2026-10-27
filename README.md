@@ -438,9 +438,28 @@ cover tilt, stable text, Flow Button focus/hover/reduced-motion behavior, hidden
 pagination for the three demo projects, and filter-driven page reset. Database
 pagination is covered with fourteen in-memory PGlite fixtures in
 `tests/database/public-project-pagination.test.ts`; no live seed data is needed.
-`tests/browser/project-card-content.js` verifies two-line titles, three-line
-descriptions, reserved short/empty text slots, three technology tags plus an
-overflow count, and responsive wrapping using browser-only long-text fixtures.
+`tests/browser/project-card-content.js` verifies natural title height with a
+two-line limit, three-line description slots, aligned card footers, three
+technology tags plus an overflow count, and browser-only long-text fixtures.
+`tests/browser/project-detail-polish.js` checks the earlier mobile cover,
+bounded reading width, responsive TOC keyboard/anchor behavior, heading wrapping,
+44px copy targets, lightbox focus restoration, and single-neighbor navigation.
+`tests/browser/code-block-scroll.js` checks the shared MDX code block's 12px
+radius, Shift + wheel, native horizontal wheel, ordinary vertical page scrolling,
+zoom modifiers, and short-code fallback with Lenis and reduced motion.
+`tests/browser/project-depth-carousel.js` verifies the screenshot stack at
+320–1440px with normal/reduced motion: keyboard controls, pointer drag, caption
+and counter updates, lightbox synchronization/focus, and vertical wheel scrolling.
+`tests/browser/project-depth-touch.js` checks horizontal swipe, tap-to-open, and
+native vertical panning in a separate Chromium touch context. Both use the
+published `/projects/storylio` demo screenshots and never write CMS data.
+Run it against `/projects/storylio` with an isolated Playwright CLI session:
+
+```powershell
+bunx --no-install playwright-cli -s=project-detail open http://localhost:3000/projects/storylio --config=playwright-cli.config.json
+bunx --no-install playwright-cli -s=project-detail run-code --filename=tests/browser/project-detail-polish.js
+bunx --no-install playwright-cli -s=project-detail close
+```
 
 Cache and Partial Prefetching policy, public tag invalidation, and protected
 route boundaries are documented in [CACHE_AND_PREFETCH.md](docs/CACHE_AND_PREFETCH.md).

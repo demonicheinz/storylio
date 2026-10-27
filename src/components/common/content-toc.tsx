@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { CaretDownIcon } from "@phosphor-icons/react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import styles from "@/components/public/public-detail.module.css";
 import { useActiveSection } from "@/hooks/use-active-section";
 import { navigateToAnchor } from "@/lib/page-scroll";
 import { cn } from "@/lib/utils";
+import responsive from "./content-toc.module.css";
 
 export type ContentTocItem = {
   id: string;
@@ -18,6 +20,7 @@ type ContentTocProps = {
   description?: string;
   ariaLabel: string;
   indicator?: "line" | "number";
+  collapsible?: boolean;
 };
 
 export function ContentToc({
@@ -26,7 +29,11 @@ export function ContentToc({
   description,
   ariaLabel,
   indicator = "line",
+  collapsible = false,
 }: ContentTocProps) {
+  const navigationId = useId();
+  const [expanded, setExpanded] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const sectionIds = useMemo(() => items.map((item) => item.id), [items]);
   const activeId = useActiveSection(sectionIds, "position");
   const [displayActiveId, setDisplayActiveId] = useState(activeId);
@@ -78,15 +85,51 @@ export function ContentToc({
   };
 
   return (
-    <aside className={styles.toc} data-lenis-prevent>
-      <h2>{eyebrow}</h2>
-      {description && (
-        <p className="mt-2 text-muted-foreground text-sm leading-6">
-          {description}
-        </p>
+    <aside
+      className={cn(styles.toc, collapsible && responsive.responsive)}
+      data-lenis-prevent
+      onKeyDown={(event) => {
+        if (
+          collapsible &&
+          expanded &&
+          event.key === "Escape" &&
+          toggleRef.current?.getClientRects().length
+        ) {
+          setExpanded(false);
+          toggleRef.current?.focus();
+        }
+      }}
+    >
+      <div className={collapsible ? responsive.header : undefined}>
+        <h2>{eyebrow}</h2>
+        {description && (
+          <p className="mt-2 text-muted-foreground text-sm leading-6">
+            {description}
+          </p>
+        )}
+      </div>
+      {collapsible && (
+        <button
+          ref={toggleRef}
+          type="button"
+          className={responsive.toggle}
+          aria-expanded={expanded}
+          aria-controls={navigationId}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          On this page <CaretDownIcon size={16} aria-hidden="true" />
+        </button>
       )}
 
-      <nav aria-label={ariaLabel} className={description ? "mt-5" : "mt-4"}>
+      <nav
+        id={navigationId}
+        aria-label={ariaLabel}
+        className={cn(
+          description ? "mt-5" : "mt-4",
+          collapsible && responsive.links,
+        )}
+        data-expanded={collapsible ? expanded : undefined}
+      >
         <ol className="flex flex-col gap-3">
           {items.map((item, index) => {
             const isActive = displayActiveId === `#${item.id}`;

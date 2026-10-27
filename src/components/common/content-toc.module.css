@@ -1,0 +1,38 @@
+.toggle {
+  display: none;
+}
+@media (max-width: 1199px) {
+  aside.responsive {
+    display: block;
+    position: static;
+    max-height: none;
+    overflow: visible;
+    padding-top: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .header {
+    display: none;
+  }
+  .toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    min-height: 44px;
+    padding-block: 12px;
+    color: var(--foreground);
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .toggle[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+  }
+  .links {
+    margin-top: 0;
+    padding-bottom: 0;
+  }
+  .links[data-expanded="false"] {
+    display: none;
+  }
+}

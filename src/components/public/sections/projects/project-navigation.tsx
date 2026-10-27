@@ -2,6 +2,7 @@ import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { SectionHeading } from "@/components/common/section-heading";
 import styles from "@/components/public/public-detail.module.css";
+import projectStyles from "./project-detail.module.css";
 
 type ProjectNavigationItem = {
   title: string;
@@ -28,7 +29,10 @@ export function ProjectNavigation({
         <SectionHeading className="mt-2">Continue exploring</SectionHeading>
       </div>
 
-      <nav aria-label="Project navigation" className={styles.adjacent}>
+      <nav
+        aria-label="Project navigation"
+        className={`${styles.adjacent} ${projectStyles.navigation}`}
+      >
         <ProjectNavigationCard project={previousProject} direction="previous" />
         <ProjectNavigationCard project={nextProject} direction="next" />
       </nav>
@@ -44,14 +48,14 @@ function ProjectNavigationCard({
   direction: "previous" | "next";
 }) {
   if (!project) {
-    return <div className="hidden md:block" />;
+    return null;
   }
 
   const isNext = direction === "next";
   const Icon = isNext ? ArrowRightIcon : ArrowLeftIcon;
 
   return (
-    <Link href={`/projects/${project.slug}`}>
+    <Link className="group" href={`/projects/${project.slug}`}>
       <div
         className={`flex items-center gap-2 text-xs font-semibold tracking-[0.24em] text-muted-foreground uppercase ${
           isNext ? "justify-end text-right" : ""
