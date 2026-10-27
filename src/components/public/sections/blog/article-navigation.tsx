@@ -2,6 +2,7 @@ import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { SectionHeading } from "@/components/common/section-heading";
 import styles from "@/components/public/public-detail.module.css";
+import articleStyles from "./article.module.css";
 
 type ArticleNavigationItem = {
   title: string;
@@ -25,13 +26,13 @@ export function ArticleNavigation({
   return (
     <section className="mt-16 md:mt-20 pt-9 md:pt-10 border-border/30 border-t">
       <div className="mb-5">
-        <p className="font-semibold text-brand-soft text-xs uppercase tracking-[0.28em]">
-          From the archive
-        </p>
-        <SectionHeading className="mt-2">Keep reading</SectionHeading>
+        <SectionHeading className="mt-2">Continue reading</SectionHeading>
       </div>
 
-      <nav aria-label="Article navigation" className={styles.adjacent}>
+      <nav
+        aria-label="Article navigation"
+        className={`${styles.adjacent} ${articleStyles.navigation}`}
+      >
         <ArticleNavigationCard post={previousPost} direction="previous" />
         <ArticleNavigationCard post={nextPost} direction="next" />
       </nav>
@@ -47,14 +48,14 @@ function ArticleNavigationCard({
   direction: "previous" | "next";
 }) {
   if (!post) {
-    return <div className="hidden md:block" />;
+    return null;
   }
 
   const isNext = direction === "next";
   const Icon = isNext ? ArrowRightIcon : ArrowLeftIcon;
 
   return (
-    <Link href={`/blog/${post.slug}`}>
+    <Link className="group" href={`/blog/${post.slug}`}>
       <div
         className={`flex items-center gap-2 text-xs font-semibold tracking-[0.24em] text-muted-foreground uppercase ${
           isNext ? "justify-end text-right" : ""

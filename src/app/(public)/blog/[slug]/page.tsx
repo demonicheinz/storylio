@@ -7,6 +7,8 @@ import { notFound } from "next/navigation";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import detail from "@/components/public/public-detail.module.css";
 import page from "@/components/public/public-page.module.css";
+import reading from "@/components/public/reading.module.css";
+import articleStyles from "@/components/public/sections/blog/article.module.css";
 import { ArticleHeader } from "@/components/public/sections/blog/article-header";
 import { ArticleNavigation } from "@/components/public/sections/blog/article-navigation";
 import { ArticleProgress } from "@/components/public/sections/blog/article-progress";
@@ -16,6 +18,8 @@ import { ShareButton } from "@/components/public/sections/blog/share-button";
 import { db } from "@/lib/db";
 import { PostStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
+import { postToTag, tag } from "@/lib/db/schema";
+import { HOME_NOTES_TAG, homePostWhere } from "@/lib/home-content";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 import { renderPublicMDX } from "@/lib/public-mdx";
 import { slugify } from "@/lib/utils";
@@ -73,13 +77,14 @@ async function getArticleCompanions(currentPostId: string, tagNames: string[]) {
   cacheLife("minutes");
   cacheTag(PUBLIC_CACHE_TAGS.posts);
 
+  const noteIds = db
+    .select({ postId: postToTag.postId })
+    .from(postToTag)
+    .innerJoin(tag, eq(postToTag.tagId, tag.id))
+    .where(eq(tag.name, HOME_NOTES_TAG));
   const posts = await db.query.post
     .findMany({
-      where: (table) =>
-        and(
-          eq(table.status, PostStatus.PUBLISHED),
-          or(isNull(table.publishedAt), lte(table.publishedAt, new Date())),
-        ),
+      where: (table) => homePostWhere(table, "writing", new Date(), noteIds),
       columns: {
         id: true,
         title: true,
@@ -232,14 +237,17 @@ async function BlogPostContent({ params }: BlogPostPageProps) {
           <ShareButton title={post.title} />
         </div>
         <ArticleHeader post={post} />
-        <div className={`${detail.readingLayout} ${detail.articleBody}`}>
+        <div
+          className={`${reading.layout} ${articleStyles.body}`}
+          data-has-toc={tocItems.length > 0 || undefined}
+        >
+          <ArticleToc items={tocItems} />
           <section
             aria-label="Article content"
-            className={`${detail.prose} storylio-article-content`}
+            className={`${reading.prose} storylio-article-content`}
           >
             {mdxContent}
           </section>
-          <ArticleToc items={tocItems} />
         </div>
         <RelatedPosts posts={companions.relatedPosts} />
         <ArticleNavigation

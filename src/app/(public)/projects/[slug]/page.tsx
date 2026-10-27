@@ -12,6 +12,7 @@ import { FlowButton } from "@/components/common/flow-button";
 import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import detailStyles from "@/components/public/public-detail.module.css";
 import pageStyles from "@/components/public/public-page.module.css";
+import reading from "@/components/public/reading.module.css";
 import { ViewCounter } from "@/components/public/sections/blog/view-counter";
 import { ProjectCover } from "@/components/public/sections/projects/project-cover";
 import projectStyles from "@/components/public/sections/projects/project-detail.module.css";
@@ -288,13 +289,11 @@ async function ProjectDetailContent({ params }: ProjectDetailPageProps) {
             className={pageStyles.section}
           >
             <div
-              className={`${detailStyles.readingLayout} ${projectStyles.reading}`}
+              className={reading.layout}
               data-has-toc={tocItems.length > 0 || undefined}
             >
               <ProjectToc items={tocItems} />
-              <div className={`${detailStyles.prose} ${projectStyles.prose}`}>
-                {mdxContent}
-              </div>
+              <div className={reading.prose}>{mdxContent}</div>
             </div>
           </section>
         )}

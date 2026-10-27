@@ -12,6 +12,7 @@ export function ArticleToc({ items }: ArticleTocProps) {
       eyebrow="On this page"
       ariaLabel="Article table of contents"
       indicator="line"
+      collapsible
     />
   );
 }

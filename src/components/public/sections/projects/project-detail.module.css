@@ -41,61 +41,8 @@
   margin-top: 8px;
   min-width: 0;
 }
-div.reading {
-  grid-template-columns: minmax(0, 720px) 224px;
-  grid-template-areas: "body toc";
-  gap: 64px;
-  max-width: 1008px;
-  margin-inline: auto;
-}
-.reading > aside {
-  grid-area: toc;
-}
-.reading > aside nav > ol {
-  row-gap: 4px;
-}
-.reading > aside nav button {
-  align-items: center;
-}
-.reading > aside nav button > span:first-child {
-  margin-top: 0;
-}
-.reading:not([data-has-toc]) {
-  grid-template-columns: minmax(0, 720px);
-  grid-template-areas: "body";
-  max-width: 720px;
-}
-.prose {
-  grid-area: body;
-  max-width: 100%;
-}
-.prose > :is(p, ul, ol, blockquote) {
-  max-width: min(100%, 640px);
-  font-size: inherit;
-  line-height: 1.8;
-}
-.prose li {
-  font-size: inherit;
-  line-height: 1.8;
-}
-.prose :global([data-section-heading]) > span {
-  overflow-wrap: break-word;
-  hyphens: auto;
-}
-.prose :global([data-heading-link]) {
-  width: 44px;
-  height: 44px;
-}
 .navigation:has(> a:only-child) {
   grid-template-columns: minmax(0, 1fr);
-}
-@media (max-width: 1199px) {
-  div.reading {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "toc" "body";
-    gap: 32px;
-    max-width: 720px;
-  }
 }
 @media (max-width: 1023px) {
   .overview {
@@ -120,17 +67,5 @@ div.reading {
   }
   .facts > div:first-child {
     grid-column: 1 / -1;
-  }
-}
-@media (max-width: 767px) {
-  .prose :global([data-heading-action]) {
-    display: block;
-  }
-  .prose :global([data-heading-action]) > span {
-    display: inline;
-  }
-  .prose :global([data-heading-action]) > button {
-    margin-inline-start: 8px;
-    vertical-align: middle;
   }
 }

@@ -7,7 +7,7 @@ export function RelatedPosts({ posts }: { posts: BlogPostListItem[] }) {
   return (
     <section className={page.section} aria-labelledby="related-writing">
       <div className={page.sectionHeader}>
-        <SectionHeading id="related-writing">Keep reading</SectionHeading>
+        <SectionHeading id="related-writing">Related articles</SectionHeading>
       </div>
       <div className={page.grid}>
         {posts.map((post) => (
