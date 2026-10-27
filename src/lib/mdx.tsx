@@ -5,6 +5,7 @@ import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
 import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
+import { CodeBlock } from "@/components/common/code-block";
 import { InPageLink } from "@/components/common/in-page-link";
 import detail from "@/components/public/public-detail.module.css";
 import { BlogHeadingLink } from "@/components/public/sections/blog/heading-link";
@@ -156,13 +157,7 @@ const components: MDXComponents = {
       </span>
     );
   },
-  pre: ({ children }) => (
-    <div className="bg-background/80 border border-border/40 rounded-2xl max-w-full overflow-hidden">
-      <pre className="[&_code]:bg-transparent [&_mark]:bg-transparent **:data-highlighted-chars:bg-transparent **:data-highlighted-line:bg-transparent p-4 [&_code]:p-0 max-w-full overflow-x-auto [&_code]:text-inherit text-sm leading-7 whitespace-pre scrollbar-thin">
-        {children}
-      </pre>
-    </div>
-  ),
+  pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
   code: ({ children }) => (
     <code className="bg-brand-soft/10 px-1.5 py-0.5 rounded-md font-mono text-brand-soft text-sm wrap-anywhere">
       {children}
