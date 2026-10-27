@@ -1,0 +1,94 @@
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 40px 10px 18px;
+  overflow: hidden;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  isolation: isolate;
+  transition:
+    color 350ms,
+    border-color 350ms;
+}
+.sweep {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: 160%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--primary);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 450ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+.label {
+  transition: transform 400ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.enteringArrow,
+.leavingArrow {
+  position: absolute;
+  top: calc(50% - 8px);
+  transition:
+    transform 400ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 350ms;
+}
+.enteringArrow {
+  left: 14px;
+  opacity: 0;
+  transform: translateX(-30px);
+}
+.leavingArrow {
+  right: 14px;
+}
+.button:is(:hover, :focus-visible) {
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+.button:is(:hover, :focus-visible) .sweep {
+  transform: translate(-50%, -50%) scale(1);
+}
+.button:is(:hover, :focus-visible) .label {
+  transform: translateX(16px);
+}
+.button:is(:hover, :focus-visible) .enteringArrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+.button:is(:hover, :focus-visible) .leavingArrow {
+  opacity: 0;
+  transform: translateX(30px);
+}
+.button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .sweep,
+  .label,
+  .enteringArrow,
+  .leavingArrow {
+    transition: none;
+  }
+  .button:is(:hover, :focus-visible) .label {
+    transform: none;
+  }
+  .enteringArrow {
+    display: none;
+  }
+  .button:is(:hover, :focus-visible) .leavingArrow {
+    transform: none;
+    opacity: 1;
+  }
+}

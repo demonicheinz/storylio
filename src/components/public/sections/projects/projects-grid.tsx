@@ -7,7 +7,11 @@ export function ProjectsGrid({ projects }: { projects: ProjectListItem[] }) {
     <MotionReveal>
       <div className={styles.grid} data-project-grid>
         {projects.map((project) => (
-          <ProjectCard key={project.id} project={project} />
+          <ProjectCard
+            key={project.id}
+            project={project}
+            featured={project.isFeatured}
+          />
         ))}
       </div>
     </MotionReveal>

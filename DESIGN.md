@@ -315,8 +315,15 @@ Explicit exceptions are limited to existing roles:
 
 - Home's compact tech-stack block uses `SectionHeading size="compact"` at the
   item scale, preserving its approved composition.
-- A featured archive card uses 28px below 1024px and 40px from 1024px via
-  `--public-type-feature-size`; regular cards remain 22px.
+- A featured Blog card uses 28px below 1024px and 40px from 1024px via
+  `--public-type-feature-size`. Projects uses one uniform card grid: all titles
+  stay 22px; featured projects are ordered first and identified by a small navy
+  badge with blue text on the cover, without a larger layout or title.
+  Projects card titles clamp to two lines with natural height; descriptions
+  reserve up to three lines, including missing descriptions. Technology and
+  action rows align at the bottom of cards in the same grid row. Show the first
+  three saved technologies plus a noninteractive `+N` count. Full text remains
+  in the DOM/detail page; filtering still matches the full saved technology list.
 - Empty-state headings use `--public-type-state-size` (28px, weight 500), rather
   than competing with the page's real H1. TOC and footer navigation labels are
   controls, not section titles.
@@ -327,6 +334,18 @@ Explicit exceptions are limited to existing roles:
 The reserved `display-*` presets above are not alternate page or section sizes.
 Changes to the public hierarchy must update the tokens, this role table, and
 the browser typography check together. Dashboard/auth typography is independent.
+
+Projects' Read case study action uses FlowButton: Satoshi 14px/500, a minimum
+44px target, and a fixed 8px radius in all states. Its outlined navy surface gains
+a blue circular sweep and exchanges arrows on hover or visible keyboard focus.
+Reduced motion removes the movement. Live/source actions remain secondary text
+links. Cover-only TiltedCard movement follows the parent link or an explicitly
+marked card container; titles and controls remain stable.
+
+The Projects archive shows six results per page in the same 3/2/1 column grid.
+Pagination appears only when filtered results span multiple pages; page controls
+preserve stack/query state and use 44px targets. Mobile shows Previous, current
+page/total, and Next; larger screens also show numbered links with ellipses.
 
 Use a 4px spacing unit, 24px card interiors, 32–48px between related blocks, and
 64–96px between sections. Content containers generally cap at 1280px; reading

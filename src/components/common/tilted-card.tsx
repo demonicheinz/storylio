@@ -3,7 +3,6 @@
 import { type ReactNode, useEffect, useRef } from "react";
 import styles from "./tilted-card.module.css";
 
-// Spring response and pointer mapping adapted from .docs/referensi/tilted-card.tsx.bak.
 function spring(
   state: Record<string, number>,
   key: string,
@@ -32,7 +31,7 @@ function spring(
   return true;
 }
 
-/** Cover-only enhancement: the parent link keeps its text, focus and navigation. */
+/** Cover-only enhancement; listens on its parent link or an explicit card target. */
 export function TiltedCard({
   children,
   amplitude = 4,
@@ -47,7 +46,7 @@ export function TiltedCard({
   useEffect(() => {
     const stage = stageRef.current;
     const body = bodyRef.current;
-    const link = stage?.closest("a");
+    const link = stage?.closest<HTMLElement>("a, [data-tilt-target]");
     if (!stage || !body || !link) return;
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
     const pointer = matchMedia("(hover: hover) and (pointer: fine)");

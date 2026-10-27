@@ -16,8 +16,47 @@ async (page) => {
   await page.route("**/*", delay);
   try {
     const results = [];
+    {
+      await page.goto(`${origin}/projects?keep=filter-test`);
+      const trigger = page.getByRole("button", {
+        name: "Filter stack",
+        exact: true,
+      });
+      await trigger.waitFor();
+      await page.waitForTimeout(700);
+      if (
+        requests.some(
+          (url) => url.pathname === "/projects" && url.searchParams.has("tech"),
+        )
+      )
+        throw new Error("Project filters prefetched before intent");
+      await trigger.click();
+      const input = page.getByRole("combobox", { name: "Search technologies" });
+      await input.fill("Next.js");
+      // Router prefetch can reuse the existing partial shell without a request.
+      // Opening/searching must not navigate; result data may still load on select.
+      if (new URL(page.url()).searchParams.has("tech"))
+        throw new Error("Project search navigated");
+      const scrollBefore = await page.evaluate(() => scrollY);
+      await page.getByRole("option", { name: "Next.js", exact: true }).click();
+      await page.waitForURL((url) =>
+        matches(url, "/projects", "tech", "Next.js"),
+      );
+      await page.keyboard.press("Escape");
+      if (Math.abs((await page.evaluate(() => scrollY)) - scrollBefore) > 2)
+        throw new Error("Project selection changed scroll");
+      await page
+        .getByRole("button", { name: "Reset stack", exact: true })
+        .click();
+      await page.waitForURL((url) => matches(url, "/projects", "tech", null));
+      results.push({
+        path: "/projects",
+        intentDoesNotNavigate: true,
+        queryPreserved: true,
+        scrollPreserved: true,
+      });
+    }
     for (const [path, param, label] of [
-      ["/projects", "tech", "Filter projects by stack"],
       ["/blog", "tag", "Filter writing by topic"],
     ]) {
       const start = requests.length;
@@ -27,43 +66,90 @@ async (page) => {
       await option.waitFor();
       const value = (await option.innerText()).trim();
       await page.waitForTimeout(1000);
-      if (requests.slice(start).some(url => url.pathname === path && url.searchParams.has(param))) {
+      if (
+        requests
+          .slice(start)
+          .some((url) => url.pathname === path && url.searchParams.has(param))
+      ) {
         throw new Error("Filters prefetched before intent: " + path);
       }
-      const prefetched = page.waitForResponse(response => matches(new URL(response.url()), path, param, value), { timeout: 5000 });
+      const prefetched = page.waitForResponse(
+        (response) => matches(new URL(response.url()), path, param, value),
+        { timeout: 5000 },
+      );
       await option.hover();
-      if (!(await prefetched).ok()) throw new Error("Hover prefetch failed: " + path);
-      if (new URL(page.url()).searchParams.has(param)) throw new Error("Hover navigated");
+      if (!(await prefetched).ok())
+        throw new Error("Hover prefetch failed: " + path);
+      if (new URL(page.url()).searchParams.has(param))
+        throw new Error("Hover navigated");
       const before = requests.length;
       const scrollBefore = await page.evaluate(() => scrollY);
       await option.click();
-      await page.waitForURL(url => matches(url, path, param, value), { timeout: 10000 });
-      await bar.locator('[aria-current="page"]').filter({ hasText: value }).waitFor({ timeout: 10000 });
-      if (requests.slice(before).some(url => matches(url, path, param, value))) throw new Error("Click did not reuse hover prefetch");
-      if (Math.abs(await page.evaluate(() => scrollY) - scrollBefore) > 2) throw new Error("Filter changed scroll position");
+      await page.waitForURL((url) => matches(url, path, param, value), {
+        timeout: 10000,
+      });
+      await bar
+        .locator('[aria-current="page"]')
+        .filter({ hasText: value })
+        .waitFor({ timeout: 10000 });
+      if (
+        requests.slice(before).some((url) => matches(url, path, param, value))
+      )
+        throw new Error("Click did not reuse hover prefetch");
+      if (Math.abs((await page.evaluate(() => scrollY)) - scrollBefore) > 2)
+        throw new Error("Filter changed scroll position");
 
       const keyboardOption = bar.getByRole("link").nth(2);
       await keyboardOption.waitFor({ timeout: 5000 });
       const keyboardValue = (await keyboardOption.innerText()).trim();
-      const focusPrefetch = page.waitForResponse(response => matches(new URL(response.url()), path, param, keyboardValue), { timeout: 5000 });
+      const focusPrefetch = page.waitForResponse(
+        (response) =>
+          matches(new URL(response.url()), path, param, keyboardValue),
+        { timeout: 5000 },
+      );
       await keyboardOption.focus();
-      if (!(await focusPrefetch).ok()) throw new Error("Focus prefetch failed: " + path);
-      if (new URL(page.url()).searchParams.get(param) !== value) throw new Error("Focus navigated");
+      if (!(await focusPrefetch).ok())
+        throw new Error("Focus prefetch failed: " + path);
+      if (new URL(page.url()).searchParams.get(param) !== value)
+        throw new Error("Focus navigated");
       const beforeFocusClick = requests.length;
       await keyboardOption.press("Enter");
-      await page.waitForURL(url => matches(url, path, param, keyboardValue), { timeout: 10000 });
-      await bar.locator('[aria-current="page"]').filter({ hasText: keyboardValue }).waitFor({ timeout: 10000 });
-      if (requests.slice(beforeFocusClick).some(url => matches(url, path, param, keyboardValue))) throw new Error("Click did not reuse focus prefetch");
+      await page.waitForURL((url) => matches(url, path, param, keyboardValue), {
+        timeout: 10000,
+      });
+      await bar
+        .locator('[aria-current="page"]')
+        .filter({ hasText: keyboardValue })
+        .waitFor({ timeout: 10000 });
+      if (
+        requests
+          .slice(beforeFocusClick)
+          .some((url) => matches(url, path, param, keyboardValue))
+      )
+        throw new Error("Click did not reuse focus prefetch");
 
       // All may be cached, or focusing it may start a fresh prefetch.
       // Check reset behavior without assuming the destination stayed cached.
       const all = bar.getByRole("link", { name: "All", exact: true });
       await all.focus();
-      if (new URL(page.url()).searchParams.get(param) !== keyboardValue) throw new Error("Focusing All navigated");
+      if (new URL(page.url()).searchParams.get(param) !== keyboardValue)
+        throw new Error("Focusing All navigated");
       await all.press("Enter");
-      await page.waitForURL(url => matches(url, path, param, null), { timeout: 10000 });
-      await bar.locator('[aria-current="page"]').filter({ hasText: "All" }).waitFor({ timeout: 10000 });
-      results.push({ path, value, keyboardValue, hover: "passed", focus: "passed", queryPreserved: true });
+      await page.waitForURL((url) => matches(url, path, param, null), {
+        timeout: 10000,
+      });
+      await bar
+        .locator('[aria-current="page"]')
+        .filter({ hasText: "All" })
+        .waitFor({ timeout: 10000 });
+      results.push({
+        path,
+        value,
+        keyboardValue,
+        hover: "passed",
+        focus: "passed",
+        queryPreserved: true,
+      });
     }
     return results;
   } finally {

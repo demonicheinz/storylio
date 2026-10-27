@@ -1,26 +1,14 @@
 import styles from "@/components/public/public-page.module.css";
-export function ProjectsHero({
-  totalProjects,
-  totalTech,
-  selectedTech,
-}: {
-  totalProjects: number;
-  totalTech: number;
-  selectedTech?: string;
-}) {
+import projectStyles from "./projects.module.css";
+export function ProjectsHero() {
   return (
-    <header className={styles.hero}>
+    <header className={projectStyles.hero}>
       <h1 id="page-title" className={styles.title}>
         Projects I’ve built
       </h1>
       <p className={styles.lede}>
-        Web apps, interfaces, and experiments. Open a project to see what I
-        worked on and how it came together.
-      </p>
-      <p className={styles.meta}>
-        {totalProjects} published projects <span aria-hidden="true">/</span>{" "}
-        {totalTech} technologies{" "}
-        {selectedTech && <span>Filtered by {selectedTech}</span>}
+        Web apps, interfaces, and experiments, with the work and decisions
+        behind each one.
       </p>
     </header>
   );

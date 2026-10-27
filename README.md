@@ -426,6 +426,22 @@ exceptions are documented in [DESIGN.md](DESIGN.md#typography-and-geometry).
 
 ## Integrations
 
+Projects' searchable multi-select is adapted from BeUI's motion multi-select;
+the MIT notice is retained in `src/components/common/multi-select/LICENSE`.
+Selection uses AND matching and repeated `tech` query parameters. The search
+field searches technology names only; the X in the trigger resets the stack.
+Run `tests/browser/projects-polish.js` through an isolated Playwright CLI session
+to check responsive layout, multi-selection, keyboard/focus, reset, URL state,
+empty results, and Back/Forward behavior against the published demo fixtures.
+`tests/browser/project-cards-motion.js` checks the uniform Featured badge layout,
+cover tilt, stable text, Flow Button focus/hover/reduced-motion behavior, hidden
+pagination for the three demo projects, and filter-driven page reset. Database
+pagination is covered with fourteen in-memory PGlite fixtures in
+`tests/database/public-project-pagination.test.ts`; no live seed data is needed.
+`tests/browser/project-card-content.js` verifies two-line titles, three-line
+descriptions, reserved short/empty text slots, three technology tags plus an
+overflow count, and responsive wrapping using browser-only long-text fixtures.
+
 Cache and Partial Prefetching policy, public tag invalidation, and protected
 route boundaries are documented in [CACHE_AND_PREFETCH.md](docs/CACHE_AND_PREFETCH.md).
 

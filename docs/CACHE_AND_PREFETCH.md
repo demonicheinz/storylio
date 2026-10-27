@@ -83,8 +83,26 @@ Never move session or draft data into the public tag groups.
 
 ## Intent-driven links
 
-Collection filter links begin with prefetch disabled and opt into URL prefetch
-on hover/focus. They preserve unrelated query parameters and scroll position.
+Blog filter links begin with prefetch disabled and opt into URL prefetch on
+hover/focus. Projects uses a searchable multi-select: the highlighted option
+requests a router prefetch for its next selection only while the panel is open.
+Next.js may reuse the existing partial shell without another request; selected
+result data can still load on navigation. Both preserve unrelated query parameters
+and scroll position. Projects stores AND combinations as repeated `tech` params,
+trimmed, deduplicated, and sorted before they reach the public query/cache key.
+Reset clears the stack without dropping unrelated parameters; Back/Forward
+restores the URL-derived selection.
+Changing or resetting the stack also removes `page`, returning to the first
+result page. `getPublicProjects` validates canonical selections against shared,
+argument-free cached facets. Unknown technologies return zero results without
+creating count or row cache entries. Counts are cached by the validated stack;
+pages are clamped against that count before entering the row cache, so arbitrary
+out-of-range page numbers share the last valid page entry. All three caches use
+the projects tag and a minutes lifetime. Rows use SQL limit/offset for six
+cards. Ordering is featured first, CMS order, newest creation date, then unique
+id to keep page boundaries stable. Page links preserve every `tech` and unrelated
+parameter. Explicit page clicks focus/scroll to Project results with the navbar
+offset; Back/Forward leaves restoration to the browser.
 About language links prefetch their URL-specific cached variants. Ordinary
 links can keep the default when only the shared shell is needed.
 
