@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import styles from "./sidebar.module.css";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -217,7 +218,7 @@ function Sidebar({
       <div
         data-slot="sidebar-gap"
         className={cn(
-          "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
+          "relative w-(--sidebar-width) bg-transparent transition-[width] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
           "group-data-[collapsible=offcanvas]:w-0",
           "group-data-[side=right]:rotate-180",
           variant === "floating" || variant === "inset"
@@ -229,7 +230,7 @@ function Sidebar({
         data-slot="sidebar-container"
         data-side={side}
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:-left-(--sidebar-width) data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:-right-(--sidebar-width) md:flex",
+          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:-left-(--sidebar-width) data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:-right-(--sidebar-width) md:flex",
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
@@ -402,7 +403,7 @@ function SidebarGroupLabel({
     props: mergeProps<"div">(
       {
         className: cn(
-          "flex items-center group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-mt-8 px-3 rounded-md outline-hidden ring-sidebar-ring focus-visible:ring-2 h-8 [&>svg]:size-4 font-medium text-sidebar-foreground/70 text-xs transition-[margin,opacity] duration-200 ease-linear group-data-[collapsible=icon]:pointer-events-none shrink-0 [&>svg]:shrink-0",
+          "flex items-center group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-mt-8 px-3 rounded-md outline-hidden ring-sidebar-ring focus-visible:ring-2 h-8 [&>svg]:size-4 font-medium text-sidebar-foreground/70 text-xs transition-[margin,opacity] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none group-data-[collapsible=icon]:pointer-events-none shrink-0 [&>svg]:shrink-0",
           className,
         ),
       },
@@ -477,7 +478,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "group/menu-button peer/menu-button flex items-center gap-2 data-active:bg-sidebar-accent data-open:hover:bg-sidebar-accent hover:bg-sidebar-accent active:bg-sidebar-accent aria-disabled:opacity-50 disabled:opacity-50 group-data-[collapsible=icon]:p-2! px-3 py-2 group-has-data-[sidebar=menu-action]/menu-item:pr-8 rounded-md outline-hidden ring-sidebar-ring focus-visible:ring-2 w-full [&_svg]:size-4 group-data-[collapsible=icon]:size-8! overflow-hidden data-active:font-medium data-active:text-link text-sm text-left [&>span:last-child]:truncate transition-[width,height,padding] data-open:hover:text-sidebar-accent-foreground hover:text-sidebar-accent-foreground active:text-sidebar-accent-foreground aria-disabled:pointer-events-none disabled:pointer-events-none [&_svg]:shrink-0",
+  "group/menu-button peer/menu-button flex items-center gap-2 data-active:bg-sidebar-accent data-open:hover:bg-sidebar-accent hover:bg-sidebar-accent active:bg-sidebar-accent aria-disabled:opacity-50 disabled:opacity-50 px-3 py-2 group-has-data-[sidebar=menu-action]/menu-item:pr-8 rounded-md outline-hidden ring-sidebar-ring focus-visible:ring-2 w-full [&_svg]:size-4 overflow-hidden data-active:font-medium data-active:text-link text-sm text-left [&>span:last-child]:truncate transition-[width,height,padding] data-open:hover:text-sidebar-accent-foreground hover:text-sidebar-accent-foreground active:text-sidebar-accent-foreground aria-disabled:pointer-events-none disabled:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -486,7 +487,7 @@ const sidebarMenuButtonVariants = cva(
           "bg-background shadow-[0_0_0_1px_var(--sidebar-border)] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_var(--sidebar-accent)]",
       },
       size: {
-        default: "h-9 text-sm max-md:min-h-11 pointer-coarse:min-h-11",
+        default: "h-11 text-sm",
         sm: "h-8 text-xs",
         lg: "h-14 px-3 text-sm group-data-[collapsible=icon]:p-0!",
       },
@@ -516,7 +517,12 @@ function SidebarMenuButton({
     defaultTagName: "button",
     props: mergeProps<"button">(
       {
-        className: cn(sidebarMenuButtonVariants({ variant, size }), className),
+        className: cn(
+          sidebarMenuButtonVariants({ variant, size }),
+          styles.menuButton,
+          className,
+        ),
+        ...(typeof tooltip === "string" ? { "aria-label": tooltip } : {}),
       },
       props,
     ),

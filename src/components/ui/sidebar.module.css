@@ -1,0 +1,46 @@
+/* Keep the icon column fixed while the rail and content area resize together. */
+.menuButton {
+  display: grid;
+  grid-template-columns: calc(var(--sidebar-width-icon) - 1rem - 1px) minmax(
+      0,
+      1fr
+    ) auto;
+  gap: 0;
+  padding-inline: 0;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.menuButton > :first-child {
+  justify-self: center;
+}
+
+.menuButton > :not(:first-child) {
+  min-width: 0;
+  opacity: 1;
+  visibility: visible;
+  white-space: nowrap;
+  transition:
+    opacity 120ms ease,
+    visibility 0s;
+}
+
+.menuButton > :nth-child(3) {
+  margin-inline: 8px 12px;
+}
+
+:global([data-collapsible="icon"]) .menuButton > :not(:first-child) {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 100ms ease,
+    visibility 0s 100ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menuButton,
+  .menuButton > :not(:first-child) {
+    transition: none;
+  }
+}

@@ -88,6 +88,7 @@ export function NavUser({ user }: { user: User }) {
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger
+            aria-label="Account menu"
             render={
               <SidebarMenuButton
                 size="lg"
