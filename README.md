@@ -553,6 +553,14 @@ client/path; passkey and social endpoints have separate rules in `src/lib/auth.t
 https://<preview-domain>.vercel.app/api/auth/callback/github
 ```
 
+### Error monitoring
+
+Sentry error reporting is wired but disabled until explicitly configured. It
+covers browser/server errors and recovery boundaries, while Vercel keeps runtime
+logs and Umami keeps visitor analytics. Replay, tracing and Sentry Logs are off.
+See `docs/MONITORING.md` for Infisical/Vercel variables, source-map upload controls,
+privacy filtering and local verification. Normal 404s are not reported as errors.
+
 ### Umami
 
 Local post and project view tracking works without Umami. To enable public analytics, set `UMAMI_WEBSITE_ID` and optionally `UMAMI_SCRIPT_URL`. To surface Umami metrics inside the dashboard, also set `UMAMI_API_URL` and `UMAMI_API_KEY`. Missing or failing Umami config gracefully falls back to local analytics.

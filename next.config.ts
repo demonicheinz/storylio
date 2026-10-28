@@ -1,4 +1,6 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
+import { getSentryIngestOrigin } from "./src/lib/monitoring";
 
 const isDev = process.env.NODE_ENV === "development";
 const isVercelPreview = process.env.VERCEL_ENV === "preview";
@@ -17,6 +19,10 @@ const umamiScriptOrigin =
   getOrigin(process.env.UMAMI_SCRIPT_URL) ?? "https://analytics.heinz.id";
 const umamiApiOrigin =
   getOrigin(process.env.UMAMI_API_URL) ?? "https://analytics.heinz.id";
+const sentryOrigin =
+  process.env.NEXT_PUBLIC_SENTRY_ENABLED === "true"
+    ? getSentryIngestOrigin(process.env.NEXT_PUBLIC_SENTRY_DSN)
+    : null;
 const umamiConnectOrigins = [umamiScriptOrigin, umamiApiOrigin]
   .filter((origin): origin is string => Boolean(origin))
   .filter((origin, index, origins) => origins.indexOf(origin) === index)
@@ -28,7 +34,7 @@ const contentSecurityPolicy = [
   `style-src 'self' 'unsafe-inline'${isVercelPreview ? ` ${vercelLiveOrigin}` : ""}`,
   `img-src 'self' blob: data: https://res.cloudinary.com${isVercelPreview ? " https://vercel.live https://vercel.com" : ""}`,
   `font-src 'self' data:${isVercelPreview ? " https://vercel.live https://assets.vercel.com" : ""}`,
-  `connect-src 'self' ${umamiConnectOrigins}${isDev ? " ws: wss:" : ""}${isVercelPreview ? ` ${vercelPreviewConnectOrigins}` : ""}`,
+  `connect-src 'self' ${umamiConnectOrigins}${sentryOrigin ? ` ${sentryOrigin}` : ""}${isDev ? " ws: wss:" : ""}${isVercelPreview ? ` ${vercelPreviewConnectOrigins}` : ""}`,
   `frame-src ${isVercelPreview ? vercelLiveOrigin : "'none'"}`,
   "object-src 'none'",
   "base-uri 'self'",
@@ -75,4 +81,26 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const uploadSourceMaps =
+  process.env.SENTRY_UPLOAD_SOURCEMAPS === "true" &&
+  Boolean(
+    process.env.SENTRY_AUTH_TOKEN &&
+      process.env.SENTRY_ORG &&
+      process.env.SENTRY_PROJECT,
+  );
+
+export default process.env.NEXT_PUBLIC_SENTRY_ENABLED === "true" ||
+uploadSourceMaps
+  ? withSentryConfig(nextConfig, {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      silent: true,
+      telemetry: false,
+      sourcemaps: {
+        disable: !uploadSourceMaps,
+        deleteSourcemapsAfterUpload: true,
+      },
+      bundleSizeOptimizations: { excludeDebugStatements: true },
+    })
+  : nextConfig;

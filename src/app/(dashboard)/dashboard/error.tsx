@@ -1,54 +1,15 @@
 "use client";
 
-import { ArrowClockwiseIcon, HouseIcon } from "@phosphor-icons/react";
-import Link from "next/link";
-import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { ErrorState } from "@/components/common/error-state";
 
-export default function DashboardError({
+export default function ErrorPage({
   error,
-  unstable_retry,
+  retry,
 }: {
-  error: Error & { digest?: string };
-  unstable_retry: () => void;
+  error: unknown;
+  retry: () => void;
 }) {
-  useEffect(() => {
-    console.error("Dashboard page error:", error);
-  }, [error]);
-
   return (
-    <div className="flex justify-center items-center min-h-[calc(100vh-7.5rem)]">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <CardTitle>Dashboard page unavailable</CardTitle>
-          <CardDescription>
-            The requested CMS view could not be loaded. Your saved content was
-            not changed.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap justify-center gap-3">
-          <Button type="button" onClick={() => unstable_retry()}>
-            <ArrowClockwiseIcon />
-            Try again
-          </Button>
-          <Button
-            role="link"
-            render={<Link href="/dashboard" />}
-            nativeButton={false}
-            variant="outline"
-          >
-            <HouseIcon />
-            Dashboard overview
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+    <ErrorState error={error} retry={retry} boundary="dashboard" embedded />
   );
 }
