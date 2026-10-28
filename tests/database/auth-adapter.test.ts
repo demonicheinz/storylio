@@ -130,6 +130,83 @@ describe("Better Auth Drizzle adapter on legacy PostgreSQL tables", () => {
     });
   });
 
+  it("unlinks only an owned local account ID and preserves password login", async () => {
+    const now = new Date();
+    await fixture.db.insert(schema.user).values({
+      id: "other-owner-fixture",
+      email: "other@example.test",
+      name: "Other",
+      createdAt: now,
+      updatedAt: now,
+    });
+    await fixture.db.insert(schema.account).values([
+      {
+        id: "owned-social-row",
+        userId: ownerId,
+        accountId: "provider-subject",
+        providerId: "github",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "foreign-social-row",
+        userId: "other-owner-fixture",
+        accountId: "other-subject",
+        providerId: "github",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+    const login = await auth.handler(
+      new Request(origin + "/api/auth/sign-in/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: origin },
+        body: JSON.stringify({
+          email: "owner@example.test",
+          password: "fixture-owner-password",
+        }),
+      }),
+    );
+    expect(login.status).toBe(200);
+    const cookie = login.headers
+      .getSetCookie()
+      .map((value) => value.split(";")[0])
+      .join("; ");
+    const unlink = (accountId: string) =>
+      auth.handler(
+        new Request(origin + "/api/auth/unlink-account", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Origin: origin,
+            Cookie: cookie,
+          },
+          body: JSON.stringify({ accountId }),
+        }),
+      );
+    expect((await unlink("foreign-social-row")).status).toBe(400);
+    expect((await unlink("provider-subject")).status).toBe(400);
+    expect((await unlink("owned-social-row")).status).toBe(200);
+    expect(
+      await fixture.db.query.account.findFirst({
+        where: eq(schema.account.id, "owned-social-row"),
+      }),
+    ).toBeUndefined();
+    expect(
+      await fixture.db.query.account.findFirst({
+        where: eq(schema.account.id, "foreign-social-row"),
+      }),
+    ).toBeDefined();
+    expect(
+      await fixture.db.query.account.findFirst({
+        where: eq(schema.account.id, "cllegacyaccount00000000001"),
+      }),
+    ).toBeDefined();
+    await fixture.db
+      .delete(schema.user)
+      .where(eq(schema.user.id, "other-owner-fixture"));
+  });
+
   it("still blocks public registration and foreign origins", async () => {
     const blocked = await auth.handler(
       new Request(origin + "/api/auth/sign-up/email", {

@@ -1,7 +1,7 @@
 # Drizzle migration and database administration
 
 Storylio uses Drizzle ORM 0.45.4, Drizzle Kit 0.31.11, and the existing Neon
-WebSocket driver. Better Auth remains on the 1.6 maintenance line with its
+WebSocket driver. Better Auth uses the 1.7 maintenance line with its
 Drizzle adapter. The application does not generate an ORM client on install.
 
 ## What stays compatible

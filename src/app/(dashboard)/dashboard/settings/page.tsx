@@ -29,7 +29,7 @@ async function getProfile(userId: string) {
 async function getLinkedAccounts(userId: string) {
   return db.query.account.findMany({
     where: (table) => eq(table.userId, userId),
-    columns: { providerId: true, accountId: true, createdAt: true },
+    columns: { id: true, providerId: true, accountId: true, createdAt: true },
   });
 }
 

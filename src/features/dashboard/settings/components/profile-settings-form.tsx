@@ -69,6 +69,7 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 type LinkedAccount = {
+  id: string;
   providerId: string;
   accountId: string;
   createdAt: Date;
@@ -837,9 +838,10 @@ function ConnectedProviders({
                 onClick={() => {
                   startTransition(async () => {
                     try {
-                      await authClient.unlinkAccount({
-                        providerId: account.providerId,
+                      const { error } = await authClient.unlinkAccount({
+                        accountId: account.id,
                       });
+                      if (error) throw new Error(error.message);
                       toast.add({
                         title: `${account.providerId} unlinked successfully. Please refresh the page.`,
                         type: "success",
