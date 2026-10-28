@@ -44,6 +44,12 @@ beforeAll(async () => {
     vi.stubEnv(name, value);
   vi.doMock("../../src/lib/db", () => ({ db: fixture.db }));
   vi.doMock("../../src/lib/email", () => ({ sendEmail: deliverEmail }));
+  vi.doMock("next/server", () => ({
+    after: (task: Promise<unknown> | (() => unknown)) => {
+      if (typeof task === "function") void task();
+      else void task;
+    },
+  }));
   ({ auth } = await import("../../src/lib/auth"));
   const [owner] = await fixture.db
     .insert(schema.user)
@@ -70,6 +76,7 @@ beforeAll(async () => {
 afterAll(async () => {
   vi.doUnmock("../../src/lib/db");
   vi.doUnmock("../../src/lib/email");
+  vi.doUnmock("next/server");
   vi.unstubAllEnvs();
   await fixture.client.close();
 });

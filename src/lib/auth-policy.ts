@@ -18,3 +18,14 @@ export function isAllowedGitHubAccount(
 ) {
   return Boolean(ownerGitHubId && accountId === ownerGitHubId);
 }
+/** Only an explicitly configured local HTTP origin can use non-secure cookies. */
+export function getAuthProtocol(
+  authUrl: string,
+  env: Record<string, string | undefined>,
+): "http" | "https" | "auto" {
+  const url = new URL(authUrl);
+  const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+  if (loopback && url.protocol === "http:" && !env.VERCEL && !env.VERCEL_URL)
+    return "http";
+  return env.NODE_ENV === "production" ? "https" : "auto";
+}

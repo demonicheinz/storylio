@@ -2,8 +2,15 @@ import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
+import { twoFactor } from "better-auth/plugins/two-factor";
+import { and, eq, ne } from "drizzle-orm";
+import { after } from "next/server";
 import { authEmail } from "@/lib/auth-email";
-import { getAuthAllowedHosts, isAllowedGitHubAccount } from "@/lib/auth-policy";
+import {
+  getAuthAllowedHosts,
+  getAuthProtocol,
+  isAllowedGitHubAccount,
+} from "@/lib/auth-policy";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { sendEmail } from "@/lib/email";
@@ -43,10 +50,20 @@ export const auth = betterAuth({
   baseURL: {
     allowedHosts: getAuthAllowedHosts(productionAuthUrl, process.env),
     fallback: productionAuthUrl,
-    protocol: process.env.NODE_ENV === "development" ? "auto" : "https",
+    protocol: getAuthProtocol(productionAuthUrl, process.env),
   },
   secret: process.env.BETTER_AUTH_SECRET,
-  database: drizzleAdapter(db, { provider: "pg", schema }),
+  database: drizzleAdapter(db, { provider: "pg", schema, transaction: true }),
+  advanced: {
+    backgroundTasks: {
+      handler: (promise) =>
+        after(
+          promise.catch(() => {
+            console.error("An authentication background task failed.");
+          }),
+        ),
+    },
+  },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       if (
@@ -59,11 +76,52 @@ export const auth = betterAuth({
         });
       }
     }),
+    after: createAuthMiddleware(async (ctx) => {
+      if (
+        ctx.path === "/two-factor/verify-totp" &&
+        ctx.context.session?.user.twoFactorEnabled === false
+      ) {
+        const current = ctx.context.newSession;
+        if (current?.user.twoFactorEnabled) {
+          await db
+            .delete(schema.session)
+            .where(
+              and(
+                eq(schema.session.userId, current.user.id),
+                ne(schema.session.token, current.session.token),
+              ),
+            );
+        }
+      }
+    }),
   },
 
   // Blokir semua pembuatan user baru via auth flow.
   // Seed database langsung tidak melewati hook ini, jadi owner tetap bisa di-seed.
   databaseHooks: {
+    session: {
+      create: {
+        before: async (session, ctx) => {
+          if (
+            ctx &&
+            (ctx.path?.startsWith("/callback/") ||
+              ctx.path === "/sign-in/social" ||
+              ctx.path === "/passkey/verify-authentication")
+          ) {
+            const owner = await db.query.user.findFirst({
+              columns: { twoFactorEnabled: true },
+              where: eq(schema.user.id, session.userId),
+            });
+            if (owner?.twoFactorEnabled)
+              throw new APIError("FORBIDDEN", {
+                code: "MFA_PASSWORD_REQUIRED",
+                message:
+                  "Use your password and authenticator or backup code when two-factor authentication is enabled.",
+              });
+          }
+        },
+      },
+    },
     user: {
       create: {
         before: async () => {
@@ -106,6 +164,19 @@ export const auth = betterAuth({
     enabled: true,
     disableSignUp: true,
     requireEmailVerification: false,
+    resetPasswordTokenExpiresIn: 30 * 60,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, url }) => {
+      if (!isOwnerEmail(user.email)) return;
+      await sendEmail(
+        authEmail({
+          to: user.email,
+          name: user.name,
+          url,
+          passwordReset: true,
+        }),
+      );
+    },
   },
   socialProviders,
   user: {
@@ -131,7 +202,7 @@ export const auth = betterAuth({
       await sendEmail(authEmail({ to: user.email, name: user.name, url }));
     },
     sendOnSignUp: false,
-    autoSignInAfterVerification: true,
+    autoSignInAfterVerification: false,
   },
   account: {
     accountLinking: {
@@ -158,7 +229,27 @@ export const auth = betterAuth({
       "/change-email": { window: 60, max: 3 },
       "/change-password": { window: 60, max: 5 },
       "/send-verification-email": { window: 60, max: 3 },
+      "/request-password-reset": { window: 60, max: 3 },
+      "/reset-password": { window: 60, max: 5 },
+      "/two-factor/*": { window: 60, max: 10 },
     },
   },
-  plugins: [passkey()],
+  plugins: [
+    passkey(),
+    twoFactor({
+      issuer: "Storylio",
+      trustDeviceMaxAge: 0,
+      accountLockout: {
+        enabled: true,
+        maxFailedAttempts: 10,
+        durationSeconds: 900,
+      },
+      twoFactorCookieMaxAge: 600,
+      backupCodeOptions: {
+        amount: 10,
+        length: 10,
+        storeBackupCodes: "encrypted",
+      },
+    }),
+  ],
 });

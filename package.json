@@ -93,6 +93,7 @@
     "react-easy-crop": "^5.5.7",
     "react-hook-form": "^7.77.0",
     "react-photo-album": "^3.6.0",
+    "react-qr-code": "^2",
     "recharts": "^3.8.1",
     "rehype-pretty-code": "^0.14.3",
     "rehype-slug": "^6.0.0",

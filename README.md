@@ -52,6 +52,9 @@ Storylio is a single-owner portfolio and content management system built with Ne
 - **Email + password** — credential login with configurable min/max password length
 - **GitHub OAuth** — optional; requires OAuth credentials and the pinned `OWNER_GITHUB_ID`
 - **Passkey** — WebAuthn/FIDO2 support via BetterAuth passkey plugin (biometrics, PIN, or hardware security key)
+- **Password recovery** — generic email response, 30-minute single-use links, throttling, and session revocation
+- **Optional MFA** — authenticator TOTP and single-use backup codes; password login required while enabled
+- **Session controls** — revoke other sessions together or select an individual session
 - **Content Security Policy** — strict CSP headers with environment-aware `unsafe-eval`, Cloudinary and Umami origins allowlisted
 - **Route protection** — all `/dashboard/*` routes protected via `proxy.ts` with owner email allowlist
 
@@ -539,6 +542,13 @@ Login return URLs are limited to dashboard paths. Changing the login email first
 requires approval at the current address, followed by verification at the new
 address; both must be in `OWNER_EMAIL`. The endpoint and user-update hooks enforce
 that allowlist, including calls outside the Settings form.
+
+Password recovery and optional authenticator setup are documented in
+[`docs/AUTH_RECOVERY.md`](docs/AUTH_RECOVERY.md). Apply
+`drizzle/0003_auth_two_factor.sql` before deploying this version. GitHub and
+passkey sign-in cannot create sessions for accounts with local MFA enabled;
+use password plus an authenticator or backup code instead. Resetting a password
+does not disable MFA. Email verification no longer automatically signs users in.
 
 Production authentication uses database-backed rate limits. Apply the reviewed
 `drizzle/0002_auth_rate_limits.sql` through the matching `db:migrate` script before

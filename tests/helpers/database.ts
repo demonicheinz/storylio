@@ -9,7 +9,10 @@ const legacyMigrations = [
   "20260620000000_add_gallery_item_size",
 ];
 
-export async function createTestDatabase({ authRateLimits = false } = {}) {
+export async function createTestDatabase({
+  authRateLimits = false,
+  authMfa = true,
+} = {}) {
   const client = new PGlite();
   for (const migration of legacyMigrations) {
     const ddl = await readFile(
@@ -26,6 +29,14 @@ export async function createTestDatabase({ authRateLimits = false } = {}) {
     await client.exec(
       await readFile(
         new URL("../../drizzle/0002_auth_rate_limits.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+  }
+  if (authMfa) {
+    await client.exec(
+      await readFile(
+        new URL("../../drizzle/0003_auth_two_factor.sql", import.meta.url),
         "utf8",
       ),
     );

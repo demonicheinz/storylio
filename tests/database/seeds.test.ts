@@ -45,7 +45,7 @@ describe("PostgreSQL seed integration", () => {
     const [credential] = await db.query.account.findMany();
     expect(credential).toMatchObject({
       userId: first.id,
-      accountId: "",
+      accountId: first.id,
       providerId: "credential",
     });
     expect(credential.password).toBeTruthy();

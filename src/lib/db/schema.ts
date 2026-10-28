@@ -39,6 +39,7 @@ export const user = pgTable(
     name: text("name"),
     email: text("email").notNull(),
     emailVerified: boolean("emailVerified").default(false).notNull(),
+    twoFactorEnabled: boolean("twoFactorEnabled").default(false).notNull(),
     image: text("image"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -51,6 +52,27 @@ export const user = pgTable(
     publicEmail: text("publicEmail"),
   },
   (table) => [uniqueIndex("User_email_key").on(table.email)],
+);
+
+export const twoFactor = pgTable(
+  "TwoFactor",
+  {
+    id: id(),
+    secret: text("secret").notNull(),
+    backupCodes: text("backupCodes").notNull(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    verified: boolean("verified").default(true).notNull(),
+    failedVerificationCount: integer("failedVerificationCount")
+      .default(0)
+      .notNull(),
+    lockedUntil: timestamp("lockedUntil", { precision: 3, mode: "date" }),
+  },
+  (table) => [
+    uniqueIndex("TwoFactor_userId_key").on(table.userId),
+    index("TwoFactor_secret_idx").on(table.secret),
+  ],
 );
 
 export const session = pgTable(

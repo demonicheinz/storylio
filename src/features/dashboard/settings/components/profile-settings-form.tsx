@@ -51,6 +51,7 @@ import {
   actionChangeEmail,
   actionChangePassword,
   actionListDashboardSessions,
+  actionRevokeDashboardSession,
   actionRevokeOtherDashboardSessions,
   actionUpdateProfileSettings,
   type DashboardSessionItem,
@@ -65,8 +66,10 @@ import {
   profileSettingsActionSchema,
 } from "@/features/dashboard/settings/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
+import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
+import { TwoFactorSettings } from "./two-factor-settings";
 
 type LinkedAccount = {
   id: string;
@@ -134,13 +137,8 @@ function ProfileAvatarUpload({
   return (
     <div className="flex flex-col items-center gap-3 text-center">
       <div className="relative">
-        <ProfileAvatar
-          src={image}
-          name={name}
-          size={120}
-          className="bg-background/60 shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-border/70"
-        />
-        <span className="right-1 bottom-1 z-10 absolute flex justify-center items-center bg-primary shadow-lg rounded-full ring-4 ring-card size-10 text-primary-foreground">
+        <ProfileAvatar src={image} name={name} size={120} />
+        <span className="right-1 bottom-1 z-10 absolute flex justify-center items-center bg-primary rounded-full size-10 text-primary-foreground">
           <UploadSimpleIcon className="size-5" />
         </span>
         <ImageUpload
@@ -259,7 +257,7 @@ function ProfileSettingsForm({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const {
-    formState: { errors },
+    formState: { errors, isDirty },
     handleSubmit,
     register,
     reset,
@@ -311,6 +309,7 @@ function ProfileSettingsForm({
             },
           }),
         );
+        reset(values);
         router.refresh();
       } else {
         applyFieldErrors(result.fieldErrors);
@@ -380,7 +379,8 @@ function ProfileSettingsForm({
                   {...register("bio")}
                 />
                 <p className="text-muted-foreground text-xs">
-                  This bio is used on the Home Hero and About dashboard page.
+                  This bio supplies the Home hero subheadline and public
+                  profile.
                 </p>
                 <FieldError message={errors.bio?.message} />
               </div>
@@ -478,8 +478,11 @@ function ProfileSettingsForm({
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={isPending}>
+      <div className="bottom-0 z-10 sticky flex flex-wrap items-center gap-3 bg-card py-3 border-t">
+        <p role="status" className="mr-auto text-muted-foreground text-sm">
+          {isDirty ? "Unsaved profile changes" : "No unsaved profile changes"}
+        </p>
+        <Button type="submit" disabled={isPending || !isDirty}>
           {isPending ? (
             <SpinnerIcon data-icon="inline-start" className="animate-spin" />
           ) : (
@@ -490,11 +493,11 @@ function ProfileSettingsForm({
         <Button
           type="button"
           variant="outline"
-          disabled={isPending}
-          onClick={() => reset(getProfileDefaults(profile))}
+          disabled={isPending || !isDirty}
+          onClick={() => reset()}
         >
           <ArrowCounterClockwiseIcon data-icon="inline-start" />
-          Reset
+          Discard changes
         </Button>
       </div>
     </form>
@@ -674,7 +677,7 @@ function AccountSettingsForm() {
               type="button"
               variant="ghost"
               size="icon"
-              className="top-1/2 right-1 absolute size-8 -translate-y-1/2"
+              className="top-1/2 right-1 absolute -translate-y-1/2"
               onClick={() => toggleVisibility("currentPassword")}
               disabled={isPending}
               aria-label={
@@ -709,7 +712,7 @@ function AccountSettingsForm() {
               type="button"
               variant="ghost"
               size="icon"
-              className="top-1/2 right-1 absolute size-8 -translate-y-1/2"
+              className="top-1/2 right-1 absolute -translate-y-1/2"
               onClick={() => toggleVisibility("newPassword")}
               disabled={isPending}
               aria-label={
@@ -750,7 +753,7 @@ function AccountSettingsForm() {
               type="button"
               variant="ghost"
               size="icon"
-              className="top-1/2 right-1 absolute size-8 -translate-y-1/2"
+              className="top-1/2 right-1 absolute -translate-y-1/2"
               onClick={() => toggleVisibility("confirmPassword")}
               disabled={isPending}
               aria-label={
@@ -833,7 +836,6 @@ function ConnectedProviders({
               <Button
                 variant="ghost"
                 size="sm"
-                className="hover:bg-destructive/10 h-8 text-destructive hover:text-destructive"
                 disabled={isPending}
                 onClick={() => {
                   startTransition(async () => {
@@ -933,7 +935,6 @@ function PasskeySettings() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="hover:bg-destructive/10 h-8 text-destructive hover:text-destructive"
                   disabled={isDeleting === passkey.id || isAdding}
                   onClick={async () => {
                     setIsDeleting(passkey.id);
@@ -976,9 +977,14 @@ function PasskeySettings() {
   );
 }
 
-function SessionSettings() {
+function SessionSettings({
+  onSummaryChange,
+}: {
+  onSummaryChange: (value: string) => void;
+}) {
   const [sessions, setSessions] = useState<DashboardSessionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [isRevoking, startRevokeTransition] = useTransition();
 
   useEffect(() => {
@@ -992,6 +998,7 @@ function SessionSettings() {
       if (result.success) {
         setSessions(result.data ?? []);
       } else {
+        setLoadFailed(true);
         toast.add({ title: result.error, type: "error" });
       }
 
@@ -1002,6 +1009,16 @@ function SessionSettings() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    onSummaryChange(
+      isLoading
+        ? "Loading…"
+        : loadFailed
+          ? "Unavailable"
+          : String(sessions.length),
+    );
+  }, [isLoading, loadFailed, sessions.length, onSummaryChange]);
 
   const revokeAllSessions = () => {
     startRevokeTransition(async () => {
@@ -1018,6 +1035,17 @@ function SessionSettings() {
       } else {
         toast.add({ title: result.error, type: "error" });
       }
+    });
+  };
+  const revokeSession = (id: string) => {
+    startRevokeTransition(async () => {
+      const result = await actionRevokeDashboardSession(id);
+      if (result.success) {
+        setSessions((current) =>
+          current.filter((session) => session.id !== id),
+        );
+        toast.add({ title: "Session revoked.", type: "success" });
+      } else toast.add({ title: result.error, type: "error" });
     });
   };
 
@@ -1075,6 +1103,18 @@ function SessionSettings() {
                   <Badge variant={session.isCurrent ? "default" : "secondary"}>
                     {session.isCurrent ? "Current" : "Active"}
                   </Badge>
+                  {!session.isCurrent && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="min-h-11"
+                      disabled={isRevoking}
+                      onClick={() => revokeSession(session.id)}
+                      aria-label={`Revoke session from ${session.userAgent || "unknown browser"}`}
+                    >
+                      Revoke session
+                    </Button>
+                  )}
                 </div>
                 <p className="mt-1 text-muted-foreground text-sm">
                   {session.userAgent || "Unknown browser"}
@@ -1240,7 +1280,6 @@ function EditPasskeyDialog({ passkey }: { passkey: any }) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-8"
             onClick={() => setName(passkey.name || "")}
           />
         }
@@ -1286,41 +1325,76 @@ function EditPasskeyDialog({ passkey }: { passkey: any }) {
   );
 }
 
+function SecuritySummary({ sessions }: { sessions: string }) {
+  const { data: session, isPending, error } = authClient.useSession();
+  const {
+    data: passkeys,
+    isPending: loadingPasskeys,
+    error: passkeyError,
+  } = authClient.useListPasskeys();
+  return (
+    <DashboardSummary
+      items={[
+        {
+          label: "Two-factor authentication",
+          value: isPending
+            ? "Loading…"
+            : error || !session
+              ? "Unavailable"
+              : session.user.twoFactorEnabled
+                ? "Enabled"
+                : "Not enabled",
+        },
+        {
+          label: "Passkeys",
+          value: loadingPasskeys
+            ? "Loading…"
+            : passkeyError || !passkeys
+              ? "Unavailable"
+              : passkeys.length,
+        },
+        { label: "Active sessions", value: sessions },
+      ]}
+    />
+  );
+}
+
 export function SettingsManager({
   profile,
   linkedAccounts,
 }: SettingsManagerProps) {
+  const [sessionSummary, setSessionSummary] = useState("Loading…");
   return (
     <Tabs
       defaultValue="profile"
       orientation="vertical"
       className="lg:items-start gap-5 grid lg:grid-cols-[200px_minmax(0,1fr)]"
     >
-      <TabsList className="lg:top-24 lg:sticky lg:flex grid grid-cols-3 lg:grid-cols-none bg-card/45 shadow-[0_18px_80px_rgba(0,0,0,0.16)] p-2 border border-border/70 rounded-3xl w-full">
+      <TabsList className="lg:top-24 lg:sticky lg:flex grid grid-cols-3 lg:grid-cols-none w-full">
         <TabsTrigger
           value="profile"
-          className="justify-center! lg:justify-start! items-center data-active:bg-primary dark:data-active:bg-primary px-2 lg:px-3 rounded-2xl h-9 lg:h-11 data-active:text-primary-foreground dark:data-active:text-primary-foreground text-xs sm:text-sm"
+          className="justify-center! lg:justify-start! text-xs sm:text-sm"
         >
           <UserCircleIcon data-icon="inline-start" />
           Profile
         </TabsTrigger>
         <TabsTrigger
           value="account"
-          className="justify-center! lg:justify-start! data-active:bg-primary dark:data-active:bg-primary px-2 lg:px-3 rounded-2xl h-9 lg:h-11 data-active:text-primary-foreground dark:data-active:text-primary-foreground text-xs sm:text-sm"
+          className="justify-center! lg:justify-start! text-xs sm:text-sm"
         >
           <GearSixIcon data-icon="inline-start" />
           Account
         </TabsTrigger>
         <TabsTrigger
           value="security"
-          className="justify-center! lg:justify-start! data-active:bg-primary dark:data-active:bg-primary px-2 lg:px-3 rounded-2xl h-9 lg:h-11 data-active:text-primary-foreground dark:data-active:text-primary-foreground text-xs sm:text-sm"
+          className="justify-center! lg:justify-start! text-xs sm:text-sm"
         >
           <LockKeyIcon data-icon="inline-start" />
           Security
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="profile" className="mt-0 min-w-0">
+      <TabsContent value="profile" keepMounted className="mt-0 min-w-0">
         <ProfileSettingsForm profile={profile} />
       </TabsContent>
 
@@ -1370,6 +1444,18 @@ export function SettingsManager({
         value="security"
         className="flex flex-col gap-5 mt-0 min-w-0"
       >
+        <SecuritySummary sessions={sessionSummary} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Two-factor authentication</CardTitle>
+            <CardDescription>
+              Protect password sign-in with an authenticator and recovery codes.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TwoFactorSettings />
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle>Session</CardTitle>
@@ -1378,7 +1464,7 @@ export function SettingsManager({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SessionSettings />
+            <SessionSettings onSummaryChange={setSessionSummary} />
           </CardContent>
         </Card>
 

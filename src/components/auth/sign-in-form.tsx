@@ -167,7 +167,15 @@ export function SignInForm({
         setError(getSignInError(result.error, "password"));
       else {
         success = true;
-        navigate();
+        if (
+          "twoFactorRedirect" in result.data &&
+          result.data.twoFactorRedirect
+        ) {
+          setPending("redirect");
+          router.replace(
+            "/two-factor?" + new URLSearchParams({ callbackUrl: redirectTo }),
+          );
+        } else navigate();
       }
     } catch {
       if (mounted.current) setError(SIGN_IN_CONNECTION_ERROR);
@@ -329,6 +337,9 @@ export function SignInForm({
             : "Sign in"}
         </Button>
       </form>
+      <Link href="/forgot-password" className={styles.back}>
+        Forgot password?
+      </Link>
       <div className={styles.divider} aria-hidden="true">
         or
       </div>
@@ -376,6 +387,9 @@ export function SignInForm({
         <ArrowLeftIcon size={16} aria-hidden="true" />
         Back to home
       </Link>
+      <p className="mt-3 text-muted-foreground text-xs text-center">
+        If two-factor authentication is enabled, use your password to sign in.
+      </p>
     </div>
   );
 }

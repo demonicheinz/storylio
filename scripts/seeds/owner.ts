@@ -46,7 +46,7 @@ export async function seedOwner(
         .returning();
       await tx.insert(account).values({
         userId: createdOwner.id,
-        accountId: "",
+        accountId: createdOwner.id,
         providerId: "credential",
         password,
         createdAt: now,

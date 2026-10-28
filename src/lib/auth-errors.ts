@@ -5,6 +5,8 @@ export function getSignInError(
   method: "password" | "github" | "passkey",
 ) {
   if (error?.status === 0) return SIGN_IN_CONNECTION_ERROR;
+  if (error?.code === "MFA_PASSWORD_REQUIRED")
+    return "Two-factor authentication is enabled. Sign in with your password, then use your authenticator or a backup code.";
   if (error?.status === 429)
     return "Too many attempts. Please wait a minute and try again.";
   if (

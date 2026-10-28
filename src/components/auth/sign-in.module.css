@@ -257,6 +257,37 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+.confirmation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+  margin-inline: auto;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.content[data-compact] .header {
+  margin-block: 20px;
+}
+.confirmationActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 24px;
+}
+.confirmationActions > a,
+.confirmationActions > button {
+  min-height: 44px;
+}
+.confirmationIcon {
+  width: 28px;
+  height: 28px;
+  color: var(--link);
+}
 .brand:focus-visible,
 .toggle:focus-visible,
 .back:focus-visible {

@@ -33,6 +33,14 @@ script when rollout is authorized. Do not run the baseline migration again.
 
 ## Existing databases: inspect, then adopt
 
+Before deploying optional MFA, apply the reviewed additive migration
+`0003_auth_two_factor.sql`. It adds `User.twoFactorEnabled` (default false) and
+`TwoFactor` with encrypted secrets/backup codes and verification-lockout fields.
+Existing passwords and passkeys are unchanged. The new user column is queried by
+the auth adapter, so deploying code before applying the migration can break login.
+This implementation generated and tested the migration locally only; it has not
+applied it to dev, staging, or prod. See `AUTH_RECOVERY.md` for the feature policy.
+
 The first Drizzle SQL migration describes the complete existing schema. Its
 CREATE TABLE statements are for empty databases. Existing databases adopt that
 migration by recording its checksum and timestamp in Drizzle's ledger.
