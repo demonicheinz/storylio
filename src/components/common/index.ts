@@ -2,7 +2,6 @@ export * from "@/components/common/card";
 export * from "@/components/common/content-toc";
 export * from "@/components/common/floating-nav";
 export * from "@/components/common/heading";
-export * from "@/components/common/infinite-cards";
 export * from "@/components/common/magic-button";
 export * from "@/components/common/motion";
 export * from "@/components/common/public-background";

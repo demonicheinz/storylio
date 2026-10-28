@@ -15,7 +15,6 @@ import {
   post,
   project,
   projectScreenshot,
-  testimonial,
   user,
 } from "@/lib/db/schema";
 
@@ -41,7 +40,6 @@ async function getMediaReferences(url: string) {
     projectContent,
     projectScreenshots,
     galleryItems,
-    testimonials,
     homeSections,
   ] = await Promise.all([
     db.$count(user, eq(user.image, url)),
@@ -53,7 +51,6 @@ async function getMediaReferences(url: string) {
     db.$count(project, like(project.content, containsPattern(url))),
     db.$count(projectScreenshot, eq(projectScreenshot.imageUrl, url)),
     db.$count(galleryItem, eq(galleryItem.imageUrl, url)),
-    db.$count(testimonial, eq(testimonial.avatar, url)),
     db.$count(homeSection, eq(homeSection.imageUrl, url)),
   ]);
 
@@ -67,7 +64,6 @@ async function getMediaReferences(url: string) {
     ["project content", projectContent],
     ["project screenshot", projectScreenshots],
     ["gallery item", galleryItems],
-    ["testimonial avatar", testimonials],
     ["home section", homeSections],
   ];
 

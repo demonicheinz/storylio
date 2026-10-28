@@ -21,7 +21,7 @@ import { createTestDatabase } from "../helpers/database";
 let fixture: Awaited<ReturnType<typeof createTestDatabase>>;
 let connection: MigrationConnection;
 beforeAll(async () => {
-  fixture = await createTestDatabase({ authMfa: false });
+  fixture = await createTestDatabase({ authMfa: false, currentSchema: false });
   connection = {
     execute: (query) => fixture.db.execute<Record<string, unknown>>(query),
     transaction: (callback) =>
@@ -127,7 +127,16 @@ describe("Drizzle migration baseline safety", () => {
         db.execute<Record<string, unknown>>(query),
       );
       const expected = {
-        ...baseline.schema,
+        ...Object.fromEntries(
+          Object.entries(baseline.schema).map(([section, rows]) => [
+            section,
+            rows.filter((row) =>
+              section === "tables"
+                ? row.name !== "Testimonial"
+                : !("table_name" in row) || row.table_name !== "Testimonial",
+            ),
+          ]),
+        ),
         enums: baseline.schema.enums.map((entry) =>
           entry.name === "HomeSectionType"
             ? { ...entry, values: [...entry.values, "HERO"] }

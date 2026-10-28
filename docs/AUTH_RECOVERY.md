@@ -7,8 +7,11 @@ remain active. The public auth forms reuse the sign-in background and typography
 ## Deployment
 
 Apply `drizzle/0003_auth_two_factor.sql` before deploying the new application
-version. Check migration status and use the matching environment's migration
-script according to `DRIZZLE_MIGRATION.md`. Never replay the initial schema or
+version. The current journal also contains the destructive `0004` retirement;
+`db:migrate` applies all pending entries and has no stop-at-0003 option. Back up
+Testimonial before the first authorized run and use the
+[shared-journal rollout](DRIZZLE_MIGRATION.md#shared-journal-rollout), including a
+maintenance window when `0003` is still pending. Never replay the initial schema or
 repeat the adopted baseline. The migration is additive: a false-by-default user
 flag, a `TwoFactor` table, indexes, and a cascading user foreign key. No existing
 account is opted into MFA automatically. Local tests use PGlite only.

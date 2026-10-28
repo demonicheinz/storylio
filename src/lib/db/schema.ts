@@ -343,18 +343,6 @@ export const media = pgTable("Media", {
   createdAt: createdAt(),
 });
 
-export const testimonial = pgTable("Testimonial", {
-  id: id(),
-  name: text("name").notNull(),
-  role: text("role"),
-  company: text("company"),
-  avatar: text("avatar"),
-  content: text("content").notNull(),
-  isVisible: boolean("isVisible").default(true).notNull(),
-  order: integer("order").default(0).notNull(),
-  createdAt: createdAt(),
-});
-
 export const homeSection = pgTable("HomeSection", {
   id: id(),
   type: homeSectionType("type").notNull(),

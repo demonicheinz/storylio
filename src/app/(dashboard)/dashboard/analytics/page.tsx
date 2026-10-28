@@ -22,13 +22,7 @@ import { DashboardSummary } from "@/features/dashboard/shared/components/summary
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { db } from "@/lib/db";
 import { PostStatus, ProjectStatus } from "@/lib/db/enums";
-import {
-  galleryItem,
-  post,
-  project,
-  testimonial,
-  viewEvent,
-} from "@/lib/db/schema";
+import { galleryItem, post, project, viewEvent } from "@/lib/db/schema";
 import { getUmamiAnalytics } from "@/lib/umami";
 import AnalyticsLoading from "./loading";
 
@@ -79,7 +73,6 @@ async function getAnalyticsData() {
     totalProjects,
     publishedProjects,
     galleryItems,
-    testimonials,
     postViews,
     projectViews,
     totalViewEvents,
@@ -94,7 +87,6 @@ async function getAnalyticsData() {
     db.$count(project),
     db.$count(project, eq(project.status, ProjectStatus.PUBLISHED)),
     db.$count(galleryItem),
-    db.$count(testimonial),
     db
       .select({ viewCount: sum(post.viewCount).mapWith(Number) })
       .from(post)
@@ -145,7 +137,6 @@ async function getAnalyticsData() {
     publishedPosts,
     publishedProjects,
     recentViews,
-    testimonials,
     timeline: getViewTimeline(timelineEvents),
     topPosts,
     topProjects,
@@ -317,11 +308,6 @@ function ContentBreakdown({
       label: "Gallery",
       description: "Stored gallery items, including hidden items",
       value: data.galleryItems,
-    },
-    {
-      label: "Testimonials",
-      description: "Legacy records; not used on public Home",
-      value: data.testimonials,
     },
   ];
 

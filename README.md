@@ -4,7 +4,7 @@
 
 *A personal portfolio and CMS — built to last, not to scaffold.*
 
-Storylio is a single-owner portfolio and content management system built with Next.js 16, React 19, Drizzle ORM, PostgreSQL, BetterAuth, and Cloudinary. It ships with a full dashboard for managing posts, projects, gallery, testimonials, and site content — no code changes required for day-to-day publishing.
+Storylio is a single-owner portfolio and content management system built with Next.js 16, React 19, Drizzle ORM, PostgreSQL, BetterAuth, and Cloudinary. It ships with a full dashboard for managing posts, projects, gallery, and site content — no code changes required for day-to-day publishing.
 
 [![Quality](https://img.shields.io/github/actions/workflow/status/demonicheinz/storylio/quality.yml?style=plastic&label=Quality&logo=github)](https://github.com/demonicheinz/storylio/actions/workflows/quality.yml)
 [![Security](https://img.shields.io/github/actions/workflow/status/demonicheinz/storylio/trivy.yml?style=plastic&label=Security&logo=github)](https://github.com/demonicheinz/storylio/actions/workflows/trivy.yml)
@@ -27,7 +27,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
  
 ### Public Site
 
-- **Home** — hero section, approach phases, testimonials, and client/tech logos — all editable from dashboard
+- **Home** — hero section, approach phases, and technology logos — all editable from dashboard
 - **About** — bilingual (Indonesian / English) with toggle, work experience timeline, education history, and technical skills
 - **Projects** — filterable grid by category, featured projects section, and full detail page with MDX content and screenshots
 - **Blog** — MDX articles with syntax highlighting, sticky table of contents, reading time, view counter, tag filtering, and social share
@@ -40,8 +40,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 - **Posts** — create, edit, publish, draft, and delete blog posts; MDXEditor with CodeMirror plugin; auto-save every 30 seconds; cover image upload; tag management; scheduled publishing
 - **Projects** — full project management with MDX content, screenshots, tech stack tags, live/GitHub URLs, featured flag, and drag-and-drop ordering
 - **Gallery** — upload with cropping, caption and category editing, visibility toggle (hide without deleting), and drag-and-drop ordering
-- **Testimonials** — add, edit, delete, and reorder testimonials shown on the Home page
-- **Home** — edit approach phase cards and client/tech logos directly from the dashboard
+- **Home** — edit the hero headline, preview the profile bio subheadline, and manage approach phases and technology logos
 - **Media Library** — centralized Cloudinary-backed asset browser with metadata, copy URL, and safe deletion (referenced media is protected)
 - **Analytics** — local 24-hour deduplicated view events combined with optional Umami traffic metrics (visitors, visits, views, bounce rate, visit duration, top pages, referrers, browsers, locations)
 - **Settings** — update profile (name, tagline, bio, avatar, social links) and change login password
@@ -545,14 +544,22 @@ that allowlist, including calls outside the Settings form.
 
 Password recovery and optional authenticator setup are documented in
 [`docs/AUTH_RECOVERY.md`](docs/AUTH_RECOVERY.md). Apply
-`drizzle/0003_auth_two_factor.sql` before deploying this version. GitHub and
+`drizzle/0003_auth_two_factor.sql` before serving this version. **This checkout's
+`db:migrate` applies all pending journal entries, including the destructive
+`0004_retire_testimonials.sql`; it cannot stop at `0003`.** Back up Testimonial
+before the first authorized run and follow the
+[shared-journal rollout](docs/DRIZZLE_MIGRATION.md#shared-journal-rollout).
+If `0003` is still pending, pause old consumers for the coordinated migration
+and deployment; do not run the drop while the old application serves traffic.
+GitHub and
 passkey sign-in cannot create sessions for accounts with local MFA enabled;
 use password plus an authenticator or backup code instead. Resetting a password
 does not disable MFA. Email verification no longer automatically signs users in.
 
 Production authentication uses database-backed rate limits. Apply the reviewed
 `drizzle/0002_auth_rate_limits.sql` through the matching `db:migrate` script before
-deploying this auth configuration. It adds only the `RateLimit` table and indexes;
+deploying this auth configuration, using the same shared-journal rollout when
+later entries are pending. The `0002` file itself adds only the `RateLimit` table and indexes;
 it does not alter users, password hashes, sessions, or passkeys. Development does
 not enable throttling. Password sign-in allows five attempts per minute per
 client/path; passkey and social endpoints have separate rules in `src/lib/auth.ts`.
@@ -645,8 +652,8 @@ For personal notes and technology logos, see
 
 - **Posts & Projects** — drafts, publishing, validation, cover images, and public cache revalidation
 - **Gallery** — image upload with cropping, captions, categories, and drag-and-drop ordering; items can be hidden without deletion
-- **Testimonials** — manageable from the dashboard with ordering and visibility toggle
-- **Home sections** — editable approach phases and logo images/order, with technology/client categories and Home stack visibility
+- **Home sections** — editable headline, profile bio subheadline, approach phases and logo images/order, with technology/client categories and Home stack visibility
+- **Testimonials retired** — no CMS, analytics, seed or media-usage contract remains. The reviewed `0004_retire_testimonials.sql` migration removes only that table; media assets remain. See [Drizzle rollout guidance](docs/DRIZZLE_MIGRATION.md#testimonial-retirement).
 - **About** — structured bilingual content (Indonesian / English) with ordering support
 - **Media Library** — metadata-rich storage with Cloudinary sync; referenced media is protected from accidental deletion
 - **Analytics** — 24-hour deduplicated local view events combined with optional Umami traffic metrics

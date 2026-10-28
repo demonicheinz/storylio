@@ -173,7 +173,6 @@ async function FixtureContent({
           headline="Example headline for layout review"
           phases={[]}
           logos={[]}
-          testimonials={[]}
         />
       </>
     );

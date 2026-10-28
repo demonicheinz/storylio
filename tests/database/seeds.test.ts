@@ -6,7 +6,6 @@ import { seedHomeSections } from "../../scripts/seeds/home-sections";
 import { seedOwner } from "../../scripts/seeds/owner";
 import { seedPosts } from "../../scripts/seeds/posts";
 import { seedProjects } from "../../scripts/seeds/projects";
-import { seedTestimonials } from "../../scripts/seeds/testimonials";
 import type { Database } from "../../src/lib/db";
 import * as schema from "../../src/lib/db/schema";
 import { createTestDatabase } from "../helpers/database";
@@ -286,12 +285,11 @@ describe("PostgreSQL seed integration", () => {
     ]);
   });
 
-  it("does not duplicate initial About, gallery, home sections or testimonials", async () => {
+  it("does not duplicate initial About, gallery, home sections", async () => {
     async function seedInitialContent() {
       await seedAboutContent(seedDb);
       await seedGallery({ db: seedDb });
       await seedHomeSections(seedDb);
-      await seedTestimonials(seedDb);
     }
     async function readInitialContent() {
       return {
@@ -305,9 +303,6 @@ describe("PostgreSQL seed integration", () => {
             asc(schema.homeSection.order),
           ],
         }),
-        testimonials: await db.query.testimonial.findMany({
-          orderBy: [asc(schema.testimonial.order)],
-        }),
       };
     }
     await seedInitialContent();
@@ -315,7 +310,6 @@ describe("PostgreSQL seed integration", () => {
     expect(original.about).toHaveLength(1);
     expect(original.gallery).toHaveLength(8);
     expect(original.sections).toHaveLength(8);
-    expect(original.testimonials).toHaveLength(3);
 
     await seedInitialContent();
     expect(await readInitialContent()).toEqual(original);

@@ -10,7 +10,6 @@ import { seedNotes } from "./notes";
 import { seedOwner } from "./owner";
 import { seedPosts } from "./posts";
 import { seedProjects } from "./projects";
-import { seedTestimonials } from "./testimonials";
 
 export async function runSeedPlan(db: Database, plan: SeedPlan) {
   let owner: { id: string } | undefined;
@@ -40,7 +39,6 @@ export async function runSeedPlan(db: Database, plan: SeedPlan) {
   for (const part of plan.parts) {
     if (part === "home") await seedHomeSections(db);
     else if (part === "about") await seedAboutContent(db);
-    else if (part === "testimonials") await seedTestimonials(db);
     else if (part === "projects")
       await seedProjects({ db, ownerId: owner!.id });
     else if (part === "posts") await seedPosts({ db, ownerId: owner!.id });

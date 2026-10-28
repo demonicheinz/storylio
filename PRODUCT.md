@@ -22,7 +22,8 @@ learn about its author. The owner manages published content through the dashboar
 - Empty notes are hidden. Do not invent reflections, projects, quotes, or clients.
 - Notes open a complete reading dialog on Home and the `?tag=notes` archive.
   Shared links use `/blog?tag=notes&note=<slug>`; there is no full-page CTA.
-- Existing testimonial data stays in the CMS even though Home no longer uses it.
+- Testimonials are retired from the CMS, analytics, seeding, and media reference checks.
+  A separate reviewed migration drops their table; uploaded media stays available.
 - The priority audience beyond portfolio visitors has not been specified.
 
 ## Brand commitments

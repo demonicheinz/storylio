@@ -1,49 +1,11 @@
 "use client";
-import { CodeIcon } from "@phosphor-icons/react";
-import Image, { type StaticImageData } from "next/image";
 import { useEffect, useRef, useState } from "react";
-import nextLogo from "@/assets/technology/nextdotjs.svg";
-import nodeLogo from "@/assets/technology/nodedotjs.svg";
-import postgresLogo from "@/assets/technology/postgresql.svg";
-import reactLogo from "@/assets/technology/react.svg";
-import typescriptLogo from "@/assets/technology/typescript.svg";
 import { MotionReveal } from "@/components/common/motion";
 import { SectionHeading } from "@/components/common/section-heading";
-import { normalizeTechnologyName } from "@/lib/home-technologies";
+import { TechnologyLogo } from "@/components/common/technology-logo";
 import { getTechnologyPage } from "@/lib/technology-pagination";
-import type { HomeLogo } from "./clients";
 import styles from "./home.module.css";
-
-const localIcons: Record<string, StaticImageData> = {
-  nextjs: nextLogo,
-  react: reactLogo,
-  typescript: typescriptLogo,
-  nodejs: nodeLogo,
-  postgresql: postgresLogo,
-};
-
-function TechnologyLogo({ logo }: { logo: HomeLogo }) {
-  const [failed, setFailed] = useState(false);
-  const local = localIcons[normalizeTechnologyName(logo.label)];
-  const src = logo.imageUrl || local;
-  return (
-    <span className={styles.logoImage}>
-      {src && !failed ? (
-        <Image
-          src={src}
-          alt=""
-          width={40}
-          height={40}
-          unoptimized
-          className={!logo.imageUrl ? styles.monoLogo : undefined}
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        <CodeIcon size={32} aria-hidden="true" />
-      )}
-    </span>
-  );
-}
+import type { HomeLogo } from "./types";
 
 function LogoSlot({
   logo,
@@ -109,7 +71,9 @@ function LogoSlot({
     <li ref={slotRef} className={styles.logo}>
       <TechnologyLogo
         key={`${displayed.id}-${displayed.imageUrl}`}
-        logo={displayed}
+        label={displayed.label}
+        imageUrl={displayed.imageUrl}
+        monoClassName={styles.monoLogo}
       />
       <span className={styles.logoName} title={displayed.label}>
         {displayed.label}

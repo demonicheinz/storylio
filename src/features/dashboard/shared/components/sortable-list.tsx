@@ -22,7 +22,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { DotsSixVerticalIcon } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +44,9 @@ type DashboardSortableListProps<TItem extends SortableItemBase> = {
   className?: string;
   itemClassName?: string;
   strategy?: SortingStrategy;
-  onReorder: (items: TItem[]) => void;
+  onReorder: (items: TItem[]) => void | Promise<boolean | void>;
+  getItemLabel?: (item: TItem) => string;
+  handleVariant?: "rail" | "button";
   renderItem: (args: SortableRenderArgs<TItem>) => ReactNode;
 };
 
@@ -58,9 +60,14 @@ export function DashboardSortableList<TItem extends SortableItemBase>({
   strategy = verticalListSortingStrategy,
   onReorder,
   renderItem,
+  getItemLabel,
+  handleVariant = "rail",
 }: DashboardSortableListProps<TItem>) {
   const [isMounted, setIsMounted] = useState(false);
   const [orderedItems, setOrderedItems] = useState(items);
+  const [saving, setSaving] = useState(false);
+  const inFlight = useRef(false);
+  const savedItems = useRef(items);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -87,10 +94,12 @@ export function DashboardSortableList<TItem extends SortableItemBase>({
   }, []);
 
   useEffect(() => {
+    savedItems.current = items;
     setOrderedItems(items);
   }, [items]);
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
+    if (disabled || inFlight.current) return;
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -107,7 +116,17 @@ export function DashboardSortableList<TItem extends SortableItemBase>({
     const nextItems = arrayMove(orderedItems, oldIndex, newIndex);
 
     setOrderedItems(nextItems);
-    onReorder(nextItems);
+    inFlight.current = true;
+    setSaving(true);
+    try {
+      if ((await onReorder(nextItems)) === false)
+        setOrderedItems(savedItems.current);
+    } catch {
+      setOrderedItems(savedItems.current);
+    } finally {
+      inFlight.current = false;
+      setSaving(false);
+    }
   };
 
   if (!isMounted) {
@@ -119,6 +138,39 @@ export function DashboardSortableList<TItem extends SortableItemBase>({
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
+      accessibility={
+        getItemLabel
+          ? {
+              announcements: {
+                onDragStart: ({ active }) => {
+                  const item = orderedItems.find(
+                    (item) => item.id === active.id,
+                  );
+                  return item
+                    ? `Picked up ${getItemLabel(item)}. Use the arrow keys to move it.`
+                    : undefined;
+                },
+                onDragOver: ({ active, over }) => {
+                  const item = orderedItems.find(
+                    (item) => item.id === active.id,
+                  );
+                  return item && over
+                    ? `${getItemLabel(item)}, position ${orderedItems.findIndex((item) => item.id === over.id) + 1} of ${orderedItems.length}.`
+                    : undefined;
+                },
+                onDragEnd: ({ active, over }) => {
+                  const item = orderedItems.find(
+                    (item) => item.id === active.id,
+                  );
+                  return item && over
+                    ? `Dropped ${getItemLabel(item)}. Saving order.`
+                    : "Reordering cancelled.";
+                },
+                onDragCancel: () => "Reordering cancelled.",
+              },
+            }
+          : undefined
+      }
     >
       <SortableContext items={itemIds} strategy={strategy}>
         <div className={className}>
@@ -127,7 +179,9 @@ export function DashboardSortableList<TItem extends SortableItemBase>({
               key={item.id}
               item={item}
               index={index}
-              disabled={disabled}
+              disabled={disabled || saving}
+              label={getItemLabel?.(item)}
+              handleVariant={handleVariant}
               className={itemClassName}
               renderItem={renderItem}
             />
@@ -144,12 +198,16 @@ function DashboardSortableRow<TItem extends SortableItemBase>({
   disabled,
   className,
   renderItem,
+  label,
+  handleVariant,
 }: {
   item: TItem;
   index: number;
   disabled?: boolean;
   className?: string;
   renderItem: (args: SortableRenderArgs<TItem>) => ReactNode;
+  label?: string;
+  handleVariant: "rail" | "button";
 }) {
   const {
     attributes,
@@ -172,11 +230,17 @@ function DashboardSortableRow<TItem extends SortableItemBase>({
       ref={setActivatorNodeRef}
       type="button"
       variant="ghost"
-      className="justify-center items-center self-stretch p-0 border-border/50 border-r rounded-none w-11 h-full min-h-16 text-muted-foreground touch-none cursor-grab active:cursor-grabbing"
+      size="icon"
+      className={cn(
+        "text-muted-foreground touch-none cursor-grab active:cursor-grabbing",
+        handleVariant === "rail"
+          ? "justify-center items-center self-stretch p-0 border-border/50 border-r rounded-none w-11 h-full min-h-16"
+          : "size-11",
+      )}
       disabled={disabled}
-      aria-label="Drag to reorder"
       {...attributes}
       {...listeners}
+      aria-label={label ? `Drag ${label} to reorder` : "Drag to reorder"}
     >
       <DotsSixVerticalIcon />
     </Button>

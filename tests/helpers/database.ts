@@ -12,6 +12,7 @@ const legacyMigrations = [
 export async function createTestDatabase({
   authRateLimits = false,
   authMfa = true,
+  currentSchema = true,
 } = {}) {
   const client = new PGlite();
   for (const migration of legacyMigrations) {
@@ -40,6 +41,17 @@ export async function createTestDatabase({
         "utf8",
       ),
     );
+  }
+  // Historical baseline tests opt out; application tests use retired Home schema.
+  if (currentSchema) {
+    for (const migration of ["0001_home_hero", "0004_retire_testimonials"]) {
+      await client.exec(
+        await readFile(
+          new URL(`../../drizzle/${migration}.sql`, import.meta.url),
+          "utf8",
+        ),
+      );
+    }
   }
   return { client, db: drizzle(client, { schema }) };
 }
