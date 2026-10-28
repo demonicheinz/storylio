@@ -15,12 +15,16 @@ export function Logo({
   loading?: "eager" | "lazy";
 }) {
   return (
-    <span className={cn("inline-flex shrink-0", className)}>
+    <span
+      className={cn("inline-flex shrink-0", className)}
+      style={{ width: size, height: size }}
+    >
       <Image
         src={logoLight}
         alt={alt}
         width={size}
         height={size}
+        style={{ width: size, height: size }}
         loading={loading}
         className="dark:hidden block object-contain"
       />
@@ -29,6 +33,7 @@ export function Logo({
         alt={alt}
         width={size}
         height={size}
+        style={{ width: size, height: size }}
         loading={loading}
         className="hidden dark:block object-contain"
       />
