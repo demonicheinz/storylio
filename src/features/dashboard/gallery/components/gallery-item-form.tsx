@@ -91,13 +91,19 @@ import {
   type GalleryItemActionValues,
   galleryItemActionSchema,
 } from "@/features/dashboard/gallery/validations";
+import {
+  DashboardSelect,
+  DashboardStatusFilter,
+  DashboardViewToggle,
+} from "@/features/dashboard/shared/components/filter-controls";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import {
   DashboardSortableList,
   verticalListSortingStrategy,
 } from "@/features/dashboard/shared/components/sortable-list";
+import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
+import { useDashboardFilter } from "@/features/dashboard/shared/hooks/use-dashboard-filter";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
-import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
 import type { ActionResult } from "@/lib/action-result";
 import {
   getDefaultItemsPerPage,
@@ -297,7 +303,6 @@ function GalleryItemActions({
             type="button"
             size="icon"
             variant="ghost"
-            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
             aria-label={`Open actions for ${getItemTitle(item)}`}
           />
         }
@@ -575,7 +580,15 @@ function GalleryItemDialog({
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="bottom-0 z-10 sticky bg-popover py-4 border-border border-t">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
             <Button type="submit" disabled={isPending}>
               {isPending ? (
                 <SpinnerIcon
@@ -664,40 +677,9 @@ function GalleryDeleteButton({
   );
 }
 
-function GalleryStatCard({
-  label,
-  value,
-  icon,
-  className,
-  iconClassName,
-}: {
-  label: string;
-  value: number;
-  icon: ReactNode;
-  className?: string;
-  iconClassName?: string;
-}) {
-  return (
-    <Card className={dashboardStyles.statCard}>
-      <CardContent className={dashboardStyles.statContent}>
-        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
-          {icon}
-        </div>
-        <div>
-          <p className={cn("font-heading font-bold text-xl", className)}>
-            {value}
-          </p>
-          <p className="text-[11px] text-muted-foreground">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function FilterDropdown({
   label,
   value,
-  displayValue,
   options,
   onValueChange,
 }: {
@@ -707,44 +689,28 @@ function FilterDropdown({
   options: Array<{ value: string; label: string }>;
   onValueChange: (value: string) => void;
 }) {
+  if (label === "Visibility")
+    return (
+      <DashboardStatusFilter
+        label={label}
+        value={value}
+        options={options}
+        onValueChange={onValueChange}
+      />
+    );
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
-          />
-        }
-      >
-        <span className="min-w-0 text-left">
-          <span className="block text-[10px] text-muted-foreground leading-none">
-            {label}
-          </span>
-          <span className="block mt-1 font-medium text-xs truncate">
-            {displayValue}
-          </span>
-        </span>
-        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
-          {options.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
-              {option.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <DashboardSelect
+      label={label}
+      value={value}
+      options={options}
+      onValueChange={onValueChange}
+    />
   );
 }
 
 function CompactFilterDropdown({
   label,
   value,
-  displayValue,
   options,
   onValueChange,
 }: {
@@ -754,31 +720,25 @@ function CompactFilterDropdown({
   options: Array<{ value: string; label: string }>;
   onValueChange: (value: string) => void;
 }) {
+  if (label === "Visibility")
+    return (
+      <div className="col-span-2">
+        <DashboardStatusFilter
+          label={label}
+          value={value}
+          options={options}
+          onValueChange={onValueChange}
+        />
+      </div>
+    );
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="flex-1 justify-between bg-input/35 px-3 rounded-xl min-w-0"
-          />
-        }
-      >
-        <span className="text-xs truncate">{displayValue || label}</span>
-        <CaretDownIcon className="size-3.5 text-muted-foreground shrink-0" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
-          {options.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
-              {option.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <DashboardSelect
+      compact
+      label={label}
+      value={value}
+      options={options}
+      onValueChange={onValueChange}
+    />
   );
 }
 
@@ -805,17 +765,21 @@ function GalleryGrid({
             selectedIds.has(item.id) && "border-brand-soft/60 bg-brand/5",
             batchMode ? "cursor-pointer" : "cursor-zoom-in",
           )}
-          onClick={() => {
-            if (batchMode) {
-              onToggleItem(item.id);
-              return;
-            }
-
-            onSelectItem(item);
-          }}
+          onClick={batchMode ? () => onToggleItem(item.id) : undefined}
         >
           <div className="relative bg-muted/35 aspect-square overflow-hidden">
             <GalleryThumbnail imageUrl={item.imageUrl} caption={item.caption} />
+            {!batchMode && (
+              <button
+                type="button"
+                className="absolute inset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                aria-label={`Preview ${getItemTitle(item)}`}
+                onClick={(event) => {
+                  event.currentTarget.focus();
+                  onSelectItem(item);
+                }}
+              />
+            )}
             {batchMode && (
               <div
                 className="top-3 left-3 z-10 absolute"
@@ -829,7 +793,7 @@ function GalleryGrid({
               </div>
             )}
             <div
-              className="top-3 right-3 absolute opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity"
+              className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
               <GalleryItemActions item={item} />
@@ -849,7 +813,7 @@ function GalleryGrid({
                 )}
               </div>
               <h2
-                className="mt-2 font-heading font-semibold text-base truncate leading-snug"
+                className="mt-2 font-sans font-semibold text-base truncate leading-snug"
                 title={getItemTitle(item)}
               >
                 {getItemTitle(item)}
@@ -914,7 +878,10 @@ function GalleryListRow({
         type="button"
         className="flex items-center gap-3 p-3 min-w-0 text-left disabled:cursor-pointer"
         disabled={batchMode}
-        onClick={(event) => blurBeforeOpen(event, () => onSelectItem(item))}
+        onClick={(event) => {
+          event.currentTarget.focus();
+          onSelectItem(item);
+        }}
       >
         <div className="relative bg-muted/35 border border-border/50 rounded-xl w-20 h-14 overflow-hidden shrink-0">
           <GalleryThumbnail
@@ -991,7 +958,6 @@ function GalleryPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="rounded-xl size-8"
         disabled={page <= 1}
         onClick={() => onPageChange(Math.max(1, page - 1))}
         aria-label="Previous page"
@@ -1007,7 +973,6 @@ function GalleryPagination({
             type="button"
             size="icon"
             variant={pageNumber === page ? "default" : "outline"}
-            className="rounded-xl size-8"
             onClick={() => onPageChange(pageNumber)}
             aria-current={pageNumber === page ? "page" : undefined}
           >
@@ -1019,7 +984,6 @@ function GalleryPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="rounded-xl size-8"
         disabled={page >= pageCount}
         onClick={() => onPageChange(Math.min(pageCount, page + 1))}
         aria-label="Next page"
@@ -1078,14 +1042,7 @@ function ItemsPerPageDropdown({
       )}
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="bg-input/35 rounded-xl"
-            />
-          }
+          render={<Button type="button" variant="outline" size="sm" />}
         >
           {value}
           <CaretDownIcon className="size-3.5" />
@@ -1096,7 +1053,11 @@ function ItemsPerPageDropdown({
             onValueChange={(nextValue) => onValueChange(Number(nextValue))}
           >
             {options.map((option) => (
-              <DropdownMenuRadioItem key={option} value={String(option)}>
+              <DropdownMenuRadioItem
+                key={option}
+                value={String(option)}
+                closeOnClick={true}
+              >
                 {option}
               </DropdownMenuRadioItem>
             ))}
@@ -1136,7 +1097,6 @@ function GalleryBatchActionsBar({
         <Button
           type="button"
           size="sm"
-          className="rounded-xl"
           disabled={isPending || selectedCount === 0}
           onClick={onShow}
         >
@@ -1147,7 +1107,6 @@ function GalleryBatchActionsBar({
           type="button"
           size="sm"
           variant="outline"
-          className="bg-input/35 rounded-xl"
           disabled={isPending || selectedCount === 0}
           onClick={onHide}
         >
@@ -1161,7 +1120,6 @@ function GalleryBatchActionsBar({
                 type="button"
                 size="sm"
                 variant="destructive"
-                className="rounded-xl"
                 disabled={isPending || selectedCount === 0}
               />
             }
@@ -1196,7 +1154,6 @@ function GalleryBatchActionsBar({
           type="button"
           size="sm"
           variant="ghost"
-          className="rounded-xl"
           disabled={isPending}
           onClick={onCancel}
         >
@@ -1211,10 +1168,14 @@ function GalleryDetailDrawer({
   item,
   direction,
   onClose,
+  returnFocus,
+  open,
 }: {
   item: DashboardGalleryItem;
   direction: "down" | "right";
   onClose: () => void;
+  returnFocus: React.RefObject<HTMLElement | null>;
+  open: boolean;
 }) {
   const aspectRatio = getGalleryAspectRatio(item);
 
@@ -1240,17 +1201,18 @@ function GalleryDetailDrawer({
 
   return (
     <Drawer
-      open
+      open={open}
       swipeDirection={direction}
       showSwipeHandle
       onOpenChange={(open) => !open && onClose()}
     >
       <DrawerContent
+        finalFocus={returnFocus}
         className={cn(
           "p-0 overflow-hidden",
           direction === "right"
-            ? "h-dvh before:inset-y-0! before:right-0! before:left-0! before:rounded-l-4xl! before:rounded-r-none!"
-            : "max-h-[86vh] before:inset-x-0! before:top-2! before:bottom-0! before:rounded-b-none!",
+            ? "h-dvh before:inset-y-0! before:right-0! before:left-0!"
+            : "max-h-[86vh] before:inset-x-0! before:top-2! before:bottom-0!",
         )}
       >
         <DrawerHeader className="sr-only p-0">
@@ -1272,7 +1234,7 @@ function GalleryDetailDrawer({
               />
             </div>
             <h3
-              className="mt-4 font-heading font-semibold text-xl truncate leading-tight"
+              className="mt-4 font-semibold text-xl truncate leading-tight"
               title={getItemTitle(item)}
             >
               {getItemTitle(item)}
@@ -1358,9 +1320,16 @@ function GalleryDetailDrawer({
 export function GalleryManager({ items }: GalleryManagerProps) {
   const router = useRouter();
   const [isReordering, startReorderTransition] = useTransition();
+  const [reorderMode, setReorderMode] = useState(false);
+  const [reorderRevision, setReorderRevision] = useState(0);
+  const detailTriggerRef = useRef<HTMLElement | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [query, setQuery] = useState("");
-  const [visibility, setVisibility] = useState<VisibilityFilter>("all");
+  const [visibility, setVisibility] = useDashboardFilter<VisibilityFilter>(
+    "visibility",
+    ["all", "visible", "hidden"],
+    "all",
+  );
   const [category, setCategory] = useState("all");
   const [sortMode, setSortMode] = useState<SortMode>("order-asc");
   const [itemsPerPage, setItemsPerPage] = useState<number>(
@@ -1373,6 +1342,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
   const [selectedItem, setSelectedItem] = useState<DashboardGalleryItem | null>(
     null,
   );
+  const [detailOpen, setDetailOpen] = useState(false);
   const [drawerDirection, setDrawerDirection] = useState<"down" | "right">(
     "down",
   );
@@ -1563,6 +1533,13 @@ export function GalleryManager({ items }: GalleryManagerProps) {
   };
 
   const handleReorder = (nextItems: DashboardGalleryItem[]) => {
+    if (
+      !reorderMode ||
+      isReordering ||
+      nextItems.length !== items.length ||
+      new Set(nextItems.map((item) => item.id)).size !== items.length
+    )
+      return;
     startReorderTransition(async () => {
       const result = await actionReorderGalleryItems(
         nextItems.map((item, index) => ({
@@ -1578,9 +1555,34 @@ export function GalleryManager({ items }: GalleryManagerProps) {
         });
         router.refresh();
       } else {
+        setReorderRevision((value) => value + 1);
         toast.add({ title: result.error, type: "error" });
       }
     });
+  };
+
+  const openItemDetails = (item: DashboardGalleryItem) => {
+    detailTriggerRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    setSelectedItem(item);
+    setDetailOpen(true);
+  };
+
+  const toggleReorderMode = () => {
+    if (reorderMode) {
+      setReorderMode(false);
+      return;
+    }
+    setQuery("");
+    setVisibility("all");
+    setCategory("all");
+    setSortMode("order-asc");
+    setPage(1);
+    setViewMode("list");
+    clearSelection();
+    setReorderMode(true);
   };
 
   return (
@@ -1594,89 +1596,149 @@ export function GalleryManager({ items }: GalleryManagerProps) {
         </div>
         <GalleryItemDialog
           trigger={
-            <Button
-              size="icon"
-              className="md:px-4 rounded-full md:rounded-3xl md:w-auto md:h-9 size-10 shrink-0"
-            >
+            <Button className="md:px-4 md:w-auto shrink-0">
               <PlusIcon data-icon="inline-start" />
-              <span className="sr-only md:not-sr-only">Add Gallery Item</span>
+              <span>Add Gallery Item</span>
             </Button>
           }
         />
       </div>
 
-      <div className={dashboardStyles.statGrid}>
-        <GalleryStatCard
-          label="Total Items"
-          value={stats.total}
-          icon={<ImageIcon />}
-          className="text-sky-300"
-          iconClassName="bg-sky-500/12 text-sky-300"
-        />
-        <GalleryStatCard
-          label="Visible"
-          value={stats.visible}
-          icon={<EyeIcon />}
-          className="text-emerald-300"
-          iconClassName="bg-emerald-500/12 text-emerald-300"
-        />
-        <GalleryStatCard
-          label="Hidden"
-          value={stats.hidden}
-          icon={<EyeSlashIcon />}
-          className="text-fuchsia-300"
-          iconClassName="bg-fuchsia-500/12 text-fuchsia-300"
-        />
-        <GalleryStatCard
-          label="Categories"
-          value={stats.categories}
-          icon={<FolderIcon />}
-          className="text-amber-300"
-          iconClassName="bg-amber-500/12 text-amber-300"
-        />
+      <DashboardSummary
+        items={[
+          { label: "Images", value: stats.total },
+          { label: "Visible", value: stats.visible },
+          { label: "Hidden", value: stats.hidden },
+          { label: "Categories", value: stats.categories },
+        ]}
+      />
+
+      <div className="flex flex-wrap justify-between items-center gap-3">
+        <p className="text-muted-foreground text-sm" role="status">
+          {reorderMode
+            ? `Reordering all ${items.length} images, including hidden items. Changes save as you move items.`
+            : "Reorder clears filters and shows all images in display order."}
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={toggleReorderMode}
+          aria-pressed={reorderMode}
+          disabled={isReordering || items.length < 2}
+        >
+          {reorderMode ? "Done reordering" : "Reorder"}
+        </Button>
       </div>
 
-      <Card className={dashboardStyles.toolbarCard}>
-        <CardContent className={dashboardStyles.toolbarContent}>
-          <div className="md:hidden gap-3 grid">
-            <div className="relative min-w-0">
-              <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
-              <Input
-                ref={mobileSearchInputRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search gallery items..."
-                className="bg-input/45 pr-14 pl-9 rounded-2xl h-10"
-                aria-label="Search gallery items"
-              />
-              <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
-                ⌘ K
-              </Kbd>
+      {!reorderMode && (
+        <Card className={dashboardStyles.toolbarCard}>
+          <CardContent className={dashboardStyles.toolbarContent}>
+            <div className="md:hidden gap-3 grid">
+              <div className="relative min-w-0">
+                <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
+                <Input
+                  ref={mobileSearchInputRef}
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search gallery items..."
+                  className="pr-14 pl-9"
+                  aria-label="Search gallery items"
+                />
+                <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
+                  ⌘ K
+                </Kbd>
+              </div>
+              <div className="items-end gap-3 grid grid-cols-2 min-w-0">
+                <CompactFilterDropdown
+                  label="Visibility"
+                  value={visibility}
+                  displayValue={
+                    visibility === "visible"
+                      ? "Visible"
+                      : visibility === "hidden"
+                        ? "Hidden"
+                        : ""
+                  }
+                  onValueChange={(value) =>
+                    setVisibility(value as VisibilityFilter)
+                  }
+                  options={[
+                    { value: "all", label: "All" },
+                    { value: "visible", label: "Visible" },
+                    { value: "hidden", label: "Hidden" },
+                  ]}
+                />
+                <CompactFilterDropdown
+                  label="Category"
+                  value={category}
+                  displayValue={category === "all" ? "" : category}
+                  onValueChange={setCategory}
+                  options={[
+                    { value: "all", label: "All Categories" },
+                    ...categories.map((itemCategory) => ({
+                      value: String(itemCategory),
+                      label: String(itemCategory),
+                    })),
+                  ]}
+                />
+                <DashboardViewToggle
+                  value={viewMode}
+                  onValueChange={handleViewModeChange}
+                />
+                <Button
+                  type="button"
+                  variant={batchMode ? "secondary" : "outline"}
+                  size="sm"
+                  className="shrink-0"
+                  onClick={toggleBatchMode}
+                >
+                  {batchMode ? "Cancel" : "Select"}
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2 min-w-0">
-              <CompactFilterDropdown
-                label="All"
-                value={visibility}
-                displayValue={
-                  visibility === "visible"
-                    ? "Visible"
-                    : visibility === "hidden"
-                      ? "Hidden"
-                      : ""
-                }
-                onValueChange={(value) =>
-                  setVisibility(value as VisibilityFilter)
-                }
-                options={[
-                  { value: "all", label: "All" },
-                  { value: "visible", label: "Visible" },
-                  { value: "hidden", label: "Hidden" },
-                ]}
-              />
-              <CompactFilterDropdown
-                label="All category"
+
+            <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_minmax(160px,220px)_160px_auto] min-w-0">
+              <div className="md:col-span-full">
+                <FilterDropdown
+                  label="Visibility"
+                  value={visibility}
+                  displayValue={
+                    visibility === "all"
+                      ? "All"
+                      : visibility === "visible"
+                        ? "Visible"
+                        : "Hidden"
+                  }
+                  onValueChange={(value) =>
+                    setVisibility(value as VisibilityFilter)
+                  }
+                  options={[
+                    { value: "all", label: "All" },
+                    { value: "visible", label: "Visible" },
+                    { value: "hidden", label: "Hidden" },
+                  ]}
+                />
+              </div>
+
+              <div className="relative md:col-span-2 xl:col-span-1 min-w-0">
+                <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
+                <Input
+                  ref={desktopSearchInputRef}
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search gallery items..."
+                  className="pr-14 pl-9"
+                  aria-label="Search gallery items"
+                />
+                <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
+                  ⌘ K
+                </Kbd>
+              </div>
+
+              <FilterDropdown
+                label="Category"
                 value={category}
-                displayValue={category === "all" ? "" : category}
+                displayValue={category === "all" ? "All Categories" : category}
                 onValueChange={setCategory}
                 options={[
                   { value: "all", label: "All Categories" },
@@ -1686,146 +1748,44 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   })),
                 ]}
               />
-              <div className="grid grid-cols-2 bg-background/35 ml-auto p-1 border border-border/60 rounded-xl w-fit shrink-0">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  className="rounded-lg size-8"
-                  onClick={() => handleViewModeChange("grid")}
-                  aria-label="Grid view"
-                  aria-pressed={viewMode === "grid"}
-                >
-                  <GridFourIcon />
-                </Button>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  className="rounded-lg size-8"
-                  onClick={() => handleViewModeChange("list")}
-                  aria-label="List view"
-                  aria-pressed={viewMode === "list"}
-                >
-                  <ListBulletsIcon />
-                </Button>
-              </div>
-              <Button
-                type="button"
-                variant={batchMode ? "secondary" : "outline"}
-                size="sm"
-                className="bg-input/35 rounded-xl h-10 shrink-0"
-                onClick={toggleBatchMode}
-              >
-                {batchMode ? "Cancel" : "Select"}
-              </Button>
-            </div>
-          </div>
-
-          <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_170px_140px_auto] min-w-0">
-            <div className="relative md:col-span-2 xl:col-span-1 min-w-0">
-              <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
-              <Input
-                ref={desktopSearchInputRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search gallery items..."
-                className="bg-input/45 pr-14 pl-9 rounded-2xl h-11"
-                aria-label="Search gallery items"
+              <FilterDropdown
+                label="Sort by"
+                value={sortMode}
+                displayValue={
+                  sortMode === "order-asc"
+                    ? "Order (asc)"
+                    : sortMode === "order-desc"
+                      ? "Order (desc)"
+                      : sortMode === "created-desc"
+                        ? "Newest"
+                        : "Oldest"
+                }
+                onValueChange={(value) => setSortMode(value as SortMode)}
+                options={[
+                  { value: "order-asc", label: "Order (asc)" },
+                  { value: "order-desc", label: "Order (desc)" },
+                  { value: "created-desc", label: "Newest" },
+                  { value: "created-asc", label: "Oldest" },
+                ]}
               />
-              <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
-                ⌘ K
-              </Kbd>
-            </div>
-            <FilterDropdown
-              label="Visibility"
-              value={visibility}
-              displayValue={
-                visibility === "all"
-                  ? "All"
-                  : visibility === "visible"
-                    ? "Visible"
-                    : "Hidden"
-              }
-              onValueChange={(value) =>
-                setVisibility(value as VisibilityFilter)
-              }
-              options={[
-                { value: "all", label: "All" },
-                { value: "visible", label: "Visible" },
-                { value: "hidden", label: "Hidden" },
-              ]}
-            />
-            <FilterDropdown
-              label="Category"
-              value={category}
-              displayValue={category === "all" ? "All Categories" : category}
-              onValueChange={setCategory}
-              options={[
-                { value: "all", label: "All Categories" },
-                ...categories.map((itemCategory) => ({
-                  value: String(itemCategory),
-                  label: String(itemCategory),
-                })),
-              ]}
-            />
-            <FilterDropdown
-              label="Sort by"
-              value={sortMode}
-              displayValue={
-                sortMode === "order-asc"
-                  ? "Order (asc)"
-                  : sortMode === "order-desc"
-                    ? "Order (desc)"
-                    : sortMode === "created-desc"
-                      ? "Newest"
-                      : "Oldest"
-              }
-              onValueChange={(value) => setSortMode(value as SortMode)}
-              options={[
-                { value: "order-asc", label: "Order (asc)" },
-                { value: "order-desc", label: "Order (desc)" },
-                { value: "created-desc", label: "Newest" },
-                { value: "created-asc", label: "Oldest" },
-              ]}
-            />
-            <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
-              <div className="grid grid-cols-2 bg-background/35 p-1 border border-border/60 rounded-2xl w-fit">
+              <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
+                <DashboardViewToggle
+                  value={viewMode}
+                  onValueChange={handleViewModeChange}
+                />
                 <Button
                   type="button"
-                  size="icon"
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  className="rounded-lg size-8"
-                  onClick={() => handleViewModeChange("grid")}
-                  aria-label="Grid view"
-                  aria-pressed={viewMode === "grid"}
+                  variant={batchMode ? "secondary" : "outline"}
+                  className="shrink-0"
+                  onClick={toggleBatchMode}
                 >
-                  <GridFourIcon />
-                </Button>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  className="rounded-lg size-8"
-                  onClick={() => handleViewModeChange("list")}
-                  aria-label="List view"
-                  aria-pressed={viewMode === "list"}
-                >
-                  <ListBulletsIcon />
+                  {batchMode ? "Cancel" : "Select"}
                 </Button>
               </div>
-              <Button
-                type="button"
-                variant={batchMode ? "secondary" : "outline"}
-                className="bg-input/35 rounded-2xl h-11 shrink-0"
-                onClick={toggleBatchMode}
-              >
-                {batchMode ? "Cancel" : "Select"}
-              </Button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className={dashboardStyles.toolbarCard}>
         <CardContent className={dashboardStyles.toolbarContent}>
@@ -1881,31 +1841,37 @@ export function GalleryManager({ items }: GalleryManagerProps) {
               items={paginatedItems}
               batchMode={batchMode}
               selectedIds={selectedIds}
-              onSelectItem={setSelectedItem}
+              onSelectItem={openItemDetails}
               onToggleItem={toggleItemSelection}
             />
           ) : (
             <DashboardSortableList
-              items={paginatedItems}
-              disabled={isReordering || batchMode}
+              key={reorderRevision}
+              items={reorderMode ? filteredItems : paginatedItems}
+              disabled={
+                !reorderMode ||
+                isReordering ||
+                batchMode ||
+                filteredItems.length !== items.length
+              }
               className={dashboardStyles.sortableRows}
               strategy={verticalListSortingStrategy}
               onReorder={handleReorder}
               renderItem={({ item, handle, isDragging }) => (
                 <GalleryListRow
                   item={item}
-                  handle={handle}
+                  handle={reorderMode ? handle : null}
                   isDragging={isDragging}
                   batchMode={batchMode}
                   selected={selectedIds.has(item.id)}
-                  onSelectItem={setSelectedItem}
+                  onSelectItem={openItemDetails}
                   onToggleItem={toggleItemSelection}
                 />
               )}
             />
           )}
 
-          {filteredItems.length > 0 && (
+          {!reorderMode && filteredItems.length > 0 && (
             <GalleryPagination
               firstIndex={firstIndex}
               lastIndex={lastIndex}
@@ -1923,9 +1889,11 @@ export function GalleryManager({ items }: GalleryManagerProps) {
 
       {selectedItem && (
         <GalleryDetailDrawer
+          open={detailOpen}
           item={selectedItem}
           direction={drawerDirection}
-          onClose={() => setSelectedItem(null)}
+          onClose={() => setDetailOpen(false)}
+          returnFocus={detailTriggerRef}
         />
       )}
     </div>

@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HomeContentManager } from "@/features/dashboard/home/components/home-section-form";
 import { db } from "@/lib/db";
 import { HomeSectionType } from "@/lib/db/enums";
+import { HOME_HERO_ID } from "@/lib/home-hero";
 
 async function getHomeSections() {
   return db.query.homeSection.findMany({
@@ -43,10 +44,9 @@ export default function HomeManagePage() {
     <div className="flex flex-col gap-5 min-w-0">
       <div className="flex justify-between items-start gap-4">
         <div className="min-w-0">
-          <h1 className="font-heading font-bold text-3xl">Home</h1>
+          <h1 className="font-heading font-semibold text-3xl">Home</h1>
           <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
-            Manage Home page approach phases, client or technology logos, and
-            testimonials.
+            Edit the Hero, Approach, and Tech stack on the public Home page.
           </p>
         </div>
       </div>
@@ -68,7 +68,7 @@ function HomeContentSkeleton() {
     >
       <span className="sr-only">Loading Home content...</span>
       <div aria-hidden="true" className="flex gap-2">
-        {["phases", "logos", "testimonials"].map((tab) => (
+        {["hero", "phases", "logos", "legacy"].map((tab) => (
           <Skeleton key={tab} className="w-28 h-9 motion-reduce:animate-none" />
         ))}
       </div>
@@ -97,9 +97,12 @@ async function HomeManageContent() {
   const logos = sections.filter(
     (section) => section.type === HomeSectionType.LOGO,
   );
+  const headline =
+    sections.find((section) => section.id === HOME_HERO_ID)?.label ?? "";
 
   return (
     <HomeContentManager
+      headline={headline}
       phases={phases.map((section) => ({
         ...section,
         type: "PHASE",

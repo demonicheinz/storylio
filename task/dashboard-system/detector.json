@@ -1,0 +1,39 @@
+[
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "D:\\GitHub\\storylio\\src\\features\\dashboard\\overview\\overview.module.css",
+    "line": 16,
+    "snippet": "font-size: 30px is off the DESIGN.md type ramp",
+    "advisory": true,
+    "ignoreValue": "30px"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "D:\\GitHub\\storylio\\src\\features\\dashboard\\overview\\overview.module.css",
+    "line": 311,
+    "snippet": "font-size: 24px is off the DESIGN.md type ramp",
+    "advisory": true,
+    "ignoreValue": "24px"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "D:\\GitHub\\storylio\\src\\features\\dashboard\\shell\\dashboard-shell.module.css",
+    "line": 7,
+    "snippet": "font-size: 1.875rem is off the DESIGN.md type ramp",
+    "advisory": true,
+    "ignoreValue": "1.875rem",
+    "importedBy": ["dashboard-sidebar-provider.tsx"]
+  }
+]

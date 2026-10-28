@@ -383,8 +383,32 @@ export async function actionReorderGalleryItems(
     return actionError("Invalid gallery order.");
   }
 
+  const ids = new Set(parsed.data.map((item) => item.id));
+  if (
+    parsed.data.length === 0 ||
+    ids.size !== parsed.data.length ||
+    new Set(parsed.data.map((item) => item.order)).size !==
+      parsed.data.length ||
+    parsed.data.some((item) => item.order >= parsed.data.length)
+  ) {
+    return actionError("Submit every gallery item once in display order.");
+  }
+
   try {
-    await db.transaction(async (tx) => {
+    const reordered = await db.transaction(async (tx) => {
+      // Keep collection membership stable until the complete order is saved.
+      await tx.execute(
+        sql`LOCK TABLE ${galleryItemTable} IN SHARE ROW EXCLUSIVE MODE`,
+      );
+      const collection = await tx.query.galleryItem.findMany({
+        columns: { id: true },
+      });
+      if (
+        collection.length !== ids.size ||
+        collection.some((item) => !ids.has(item.id))
+      ) {
+        return false;
+      }
       for (const item of parsed.data) {
         const [updatedItem] = await tx
           .update(galleryItemTable)
@@ -393,7 +417,14 @@ export async function actionReorderGalleryItems(
           .returning({ id: galleryItemTable.id });
         if (!updatedItem) throw new Error("Gallery item not found.");
       }
+      return true;
     });
+
+    if (!reordered) {
+      return actionError(
+        "Gallery changed. Refresh and reorder the full collection.",
+      );
+    }
 
     revalidateGalleryPaths();
 

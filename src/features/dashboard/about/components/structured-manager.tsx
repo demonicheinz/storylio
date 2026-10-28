@@ -63,6 +63,12 @@ import {
   actionUpdateSkillCategory,
   actionUpdateWorkExperience,
 } from "@/features/dashboard/about/structured-actions";
+import {
+  educationSchema,
+  skillCategorySchema,
+  skillSchema,
+  workExperienceSchema,
+} from "@/features/dashboard/about/validations";
 import { DashboardSortableList } from "@/features/dashboard/shared/components/sortable-list";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { cn } from "@/lib/utils";
@@ -201,6 +207,11 @@ function EditDialog({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [formError, setFormError] = useState<string>();
+  const [currentValues, setCurrentValues] = useState<Record<string, unknown>>(
+    item ?? {},
+  );
   const config = configs[kind];
   const fieldValue = (field: string) => {
     const value = item?.[field];
@@ -237,6 +248,39 @@ function EditDialog({
     data.isCurrent = data.isCurrent === "on";
     data.order = Number(data.order || 0);
     if (categoryId) data.categoryId = categoryId;
+    setFieldErrors({});
+    setFormError(undefined);
+    const schema =
+      kind === "experience"
+        ? workExperienceSchema
+        : kind === "education"
+          ? educationSchema
+          : kind === "category"
+            ? skillCategorySchema
+            : skillSchema;
+    const parsed = schema.safeParse(data);
+    if (!parsed.success) {
+      setFieldErrors(
+        parsed.error.flatten().fieldErrors as Record<string, string[]>,
+      );
+      setFormError("Please fix the highlighted fields.");
+      return;
+    }
+    const start = String(data.startDate ?? data.startYear ?? "");
+    const end = String(data.endDate ?? data.endYear ?? "");
+    if (
+      !data.isCurrent &&
+      /^(\d{4}|\d{4}-\d{2})$/.test(start) &&
+      start.length === end.length &&
+      start > end
+    ) {
+      setFieldErrors({
+        [kind === "experience" ? "endDate" : "endYear"]: [
+          "End must be on or after the start.",
+        ],
+      });
+      return;
+    }
     startTransition(async () => {
       const result =
         kind === "experience"
@@ -258,18 +302,38 @@ function EditDialog({
         toast.add({ title: result.message, type: "success" });
         setOpen(false);
         router.refresh();
-      } else toast.add({ title: result.error, type: "error" });
+      } else {
+        setFieldErrors(result.fieldErrors ?? {});
+        setFormError(result.error);
+      }
     });
   };
 
   return (
     <>
-      <div className="contents" onClick={() => setOpen(true)}>
+      <div
+        className="contents"
+        onClick={() => {
+          setFieldErrors({});
+          setFormError(undefined);
+          setCurrentValues(item ?? {});
+          setOpen(true);
+        }}
+      >
         {trigger}
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[calc(100vh-2rem)] overflow-x-hidden overflow-y-auto">
-          <form onSubmit={submit} className="flex flex-col gap-5 min-w-0">
+          <form
+            noValidate
+            onSubmit={submit}
+            onChange={(event) =>
+              setCurrentValues(
+                Object.fromEntries(new FormData(event.currentTarget).entries()),
+              )
+            }
+            className="flex flex-col gap-5 min-w-0"
+          >
             <DialogHeader>
               <DialogTitle>
                 {item ? "Edit" : "Add"} {config.title}
@@ -279,6 +343,39 @@ function EditDialog({
                 publicly.
               </DialogDescription>
             </DialogHeader>
+            {kind !== "skill" && (
+              <div
+                className="flex flex-wrap gap-x-5 gap-y-1 text-muted-foreground text-xs"
+                aria-live="polite"
+              >
+                {(["En", "Id"] as const).map((language) => {
+                  const fields = config.fields.filter((field) =>
+                    field.endsWith(language),
+                  );
+                  const filled = fields.filter((field) => {
+                    const value = currentValues[field];
+                    return Array.isArray(value)
+                      ? value.some((entry) => String(entry).trim())
+                      : String(value ?? "").trim();
+                  }).length;
+                  const errorCount = fields.filter(
+                    (field) => fieldErrors[field]?.length,
+                  ).length;
+                  return (
+                    <p key={language}>
+                      {language === "En" ? "English" : "Indonesia"}: {filled}/
+                      {fields.length} optional fields filled
+                      {errorCount > 0 ? ` · ${errorCount} errors` : ""}
+                    </p>
+                  );
+                })}
+              </div>
+            )}
+            {formError && (
+              <p role="alert" className="text-destructive text-sm">
+                {formError}
+              </p>
+            )}
             <div className="gap-4 grid sm:grid-cols-2 min-w-0">
               {config.fields.map((field) => (
                 <div key={field} className={getFieldClassName(field)}>
@@ -290,6 +387,9 @@ function EditDialog({
                       defaultValue={fieldValue(field)}
                       wrap="soft"
                       className={getTextareaClassName(field)}
+                      disabled={pending}
+                      aria-invalid={!!fieldErrors[field]?.length}
+                      aria-describedby={`${kind}-${field}-error`}
                     />
                   ) : (
                     <Input
@@ -298,7 +398,45 @@ function EditDialog({
                       required={field === config.required}
                       defaultValue={fieldValue(field)}
                       className="min-w-0 truncate"
+                      disabled={pending}
+                      type={
+                        (field === "startDate" || field === "endDate") &&
+                        (!fieldValue(field) ||
+                          /^\d{4}-\d{2}$/.test(fieldValue(field)))
+                          ? "month"
+                          : "text"
+                      }
+                      placeholder={
+                        field.endsWith("Date")
+                          ? "YYYY-MM"
+                          : field.endsWith("Year")
+                            ? "YYYY"
+                            : undefined
+                      }
+                      inputMode={field.endsWith("Year") ? "numeric" : undefined}
+                      aria-invalid={!!fieldErrors[field]?.length}
+                      aria-describedby={`${kind}-${field}-help ${kind}-${field}-error`}
                     />
+                  )}
+                  {(field.endsWith("Date") || field.endsWith("Year")) && (
+                    <p
+                      id={`${kind}-${field}-help`}
+                      className="text-muted-foreground text-xs"
+                    >
+                      {field.endsWith("Date")
+                        ? "Month and year, if known. Existing date text is preserved."
+                        : "Year, if known. Existing year text is preserved."}{" "}
+                      Leave blank when unknown.
+                    </p>
+                  )}
+                  {fieldErrors[field]?.[0] && (
+                    <p
+                      id={`${kind}-${field}-error`}
+                      role="alert"
+                      className="text-destructive text-sm"
+                    >
+                      {fieldErrors[field][0]}
+                    </p>
                   )}
                 </div>
               ))}
@@ -308,6 +446,7 @@ function EditDialog({
                 <Switch
                   name="isCurrent"
                   defaultChecked={Boolean(item?.isCurrent)}
+                  disabled={pending}
                 />{" "}
                 <span className="text-sm">Current role</span>
               </label>
@@ -316,11 +455,20 @@ function EditDialog({
               <Switch
                 name="isVisible"
                 defaultChecked={item?.isVisible ?? true}
+                disabled={pending}
               />{" "}
               <span className="text-sm">Visible publicly</span>
             </label>
             <input type="hidden" name="order" value={item?.order ?? 0} />
-            <DialogFooter>
+            <DialogFooter className="bottom-0 sticky bg-card py-3">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending}
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
               <Button type="submit" disabled={pending}>
                 {pending ? "Saving..." : "Save"}
               </Button>
@@ -333,25 +481,7 @@ function EditDialog({
 }
 
 function VisibilityBadge({ isVisible }: { isVisible: boolean }) {
-  return (
-    <Badge
-      variant={isVisible ? "default" : "secondary"}
-      className={cn(
-        "gap-1.5",
-        isVisible
-          ? "bg-emerald-500/12 text-emerald-300"
-          : "bg-amber-500/12 text-amber-300",
-      )}
-    >
-      <span
-        className={cn(
-          "rounded-full size-1.5",
-          isVisible ? "bg-emerald-300" : "bg-amber-300",
-        )}
-      />
-      {isVisible ? "Visible" : "Hidden"}
-    </Badge>
-  );
+  return <Badge variant="secondary">{isVisible ? "Visible" : "Hidden"}</Badge>;
 }
 
 function SkillLevel({ value }: { value: string }) {
@@ -372,7 +502,7 @@ function SectionHeader({
   return (
     <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-4">
       <div className="min-w-0">
-        <h2 className="font-heading font-semibold text-xl">{title}</h2>
+        <h2 className="font-semibold text-lg">{title}</h2>
         <p className="text-muted-foreground text-sm leading-6">{subtitle}</p>
       </div>
       {action}
@@ -456,10 +586,10 @@ function ManagedList({
     kind === "skill" ? "Category" : kind === "category" ? "Skills" : "Period";
   const metaColumnLabel = kind === "skill" ? "Level" : "Visibility";
   return (
-    <div className={cn(dashboardStyles.listSurface, "rounded-3xl bg-card/55")}>
+    <div className={dashboardStyles.listSurface}>
       <div
         className={cn(
-          "hidden lg:grid px-4 tracking-[0.18em]",
+          "hidden lg:grid px-4",
           dashboardStyles.listHeader,
           kind === "skill"
             ? "grid-cols-[44px_minmax(0,1.5fr)_minmax(0,1fr)_minmax(8rem,0.8fr)_7rem]"
@@ -496,7 +626,7 @@ function ManagedList({
           >
             <div className="flex self-stretch">{handle}</div>
             <div className="p-4 lg:py-3 lg:pr-4 min-w-0">
-              <p className="font-heading font-semibold truncate">
+              <p className="font-semibold text-sm wrap-anywhere">
                 {title(item)}
               </p>
               {subtitle(item) && (
@@ -637,7 +767,7 @@ export function AboutStructuredManager({
             <EditDialog
               kind="experience"
               trigger={
-                <Button className="rounded-2xl w-full sm:w-auto">
+                <Button className="w-full sm:w-auto">
                   <PlusIcon data-icon="inline-start" />
                   Add experience
                 </Button>
@@ -651,7 +781,7 @@ export function AboutStructuredManager({
           render={<Link href="/about#work-experience" target="_blank" />}
           nativeButton={false}
           variant="link"
-          className="px-0 w-fit text-brand-soft"
+          className="px-0 w-fit"
         >
           View on public page
           <ArrowSquareOutIcon data-icon="inline-end" />
@@ -670,7 +800,7 @@ export function AboutStructuredManager({
             <EditDialog
               kind="education"
               trigger={
-                <Button className="rounded-2xl w-full sm:w-auto">
+                <Button className="w-full sm:w-auto">
                   <PlusIcon data-icon="inline-start" />
                   Add education
                 </Button>
@@ -684,7 +814,7 @@ export function AboutStructuredManager({
           render={<Link href="/about#education-history" target="_blank" />}
           nativeButton={false}
           variant="link"
-          className="px-0 w-fit text-brand-soft"
+          className="px-0 w-fit"
         >
           View on public page
           <ArrowSquareOutIcon data-icon="inline-end" />
@@ -703,10 +833,7 @@ export function AboutStructuredManager({
             <EditDialog
               kind="category"
               trigger={
-                <Button
-                  variant="outline"
-                  className="rounded-2xl w-full sm:w-auto"
-                >
+                <Button variant="outline" className="w-full sm:w-auto">
                   <PlusIcon data-icon="inline-start" />
                   Add category
                 </Button>
@@ -717,7 +844,7 @@ export function AboutStructuredManager({
                 kind="skill"
                 categoryId={firstCategory.id}
                 trigger={
-                  <Button className="rounded-2xl w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto">
                     <PlusIcon data-icon="inline-start" />
                     Add skill
                   </Button>
@@ -729,7 +856,7 @@ export function AboutStructuredManager({
       />
       <div className="flex flex-col gap-3 min-w-0">
         <div className="min-w-0">
-          <h3 className="font-heading font-semibold text-base">Categories</h3>
+          <h3 className="font-semibold text-base">Categories</h3>
           <p className="text-muted-foreground text-sm">
             Organize skill groups, descriptions, and category order.
           </p>
@@ -738,7 +865,7 @@ export function AboutStructuredManager({
       </div>
       <div className="flex flex-col gap-3 min-w-0">
         <div className="min-w-0">
-          <h3 className="font-heading font-semibold text-base">Skills</h3>
+          <h3 className="font-semibold text-base">Skills</h3>
           <p className="text-muted-foreground text-sm">
             Manage individual skills and their assigned category metadata.
           </p>
@@ -750,7 +877,7 @@ export function AboutStructuredManager({
         render={<Link href="/about#technical-skills" target="_blank" />}
         nativeButton={false}
         variant="link"
-        className="px-0 w-fit text-brand-soft"
+        className="px-0 w-fit"
       >
         View on public page
         <ArrowSquareOutIcon data-icon="inline-end" />

@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ChatCircleTextIcon,
   DotsThreeVerticalIcon,
-  EyeIcon,
   ImageIcon,
   PencilSimpleIcon,
   PlusIcon,
@@ -13,6 +12,7 @@ import {
   TrashIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactElement } from "react";
 import { useState, useTransition } from "react";
@@ -69,6 +69,7 @@ import {
   actionDeleteTestimonial,
   actionReorderHomeSections,
   actionReorderTestimonials,
+  actionSetHeroHeadline,
   actionUpdateHomeSection,
   actionUpdateTestimonial,
 } from "@/features/dashboard/home/actions";
@@ -81,12 +82,15 @@ import {
   type TestimonialActionValues,
   testimonialActionSchema,
 } from "@/features/dashboard/home/validations";
+import { DashboardSelect } from "@/features/dashboard/shared/components/filter-controls";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import {
   DashboardSortableList,
   verticalListSortingStrategy,
 } from "@/features/dashboard/shared/components/sortable-list";
+import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
+import { DEFAULT_HOME_HERO } from "@/lib/home-hero";
 import { getHomeLogoSettings } from "@/lib/home-technologies";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -113,6 +117,7 @@ export type DashboardTestimonial = {
 };
 
 type HomeContentManagerProps = {
+  headline: string;
   phases: DashboardHomeSection[];
   testimonials: DashboardTestimonial[];
   logos: DashboardHomeSection[];
@@ -132,36 +137,107 @@ function HomeLogoStatus({ logo }: { logo: DashboardHomeSection }) {
   );
 }
 
-function HomeStatCard({
-  icon: Icon,
-  iconClassName,
-  label,
-  value,
-  description,
-  className,
-}: {
-  icon: typeof StackIcon;
-  iconClassName: string;
-  label: string;
-  value: number;
-  description: string;
-  className?: string;
-}) {
+function HeroHeadlineForm({ headline }: { headline: string }) {
+  const router = useRouter();
+  const [value, setValue] = useState(headline);
+  const [savedValue, setSavedValue] = useState(headline);
+  const [error, setError] = useState<string>();
+  const [pending, startTransition] = useTransition();
+  const dirty = value !== savedValue;
+
   return (
-    <Card className={dashboardStyles.statCard}>
-      <CardContent className={dashboardStyles.statContent}>
-        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
-          <Icon className="size-5" />
-        </div>
-        <div className="min-w-0">
-          <p className={cn("font-heading font-bold text-xl", className)}>
-            {value}
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <h2>Hero</h2>
+        </CardTitle>
+        <CardDescription>
+          The headline opens the public Home page.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setError(undefined);
+            startTransition(async () => {
+              try {
+                const result = await actionSetHeroHeadline({ headline: value });
+                if (!result.success) {
+                  setError(result.fieldErrors?.headline?.[0] ?? result.error);
+                  return;
+                }
+                setSavedValue(value.trim());
+                setValue(value.trim());
+                toast.add({
+                  title: result.message ?? "Headline saved.",
+                  type: "success",
+                });
+                router.refresh();
+              } catch {
+                setError("Could not save the headline. Try again.");
+              }
+            });
+          }}
+        >
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="hero-headline">Headline</Label>
+            <Input
+              id="hero-headline"
+              value={value}
+              maxLength={160}
+              disabled={pending}
+              aria-invalid={!!error}
+              aria-describedby="hero-headline-help hero-headline-error"
+              placeholder={DEFAULT_HOME_HERO.headline}
+              onChange={(event) => {
+                setValue(event.target.value);
+                setError(undefined);
+              }}
+            />
+            <p
+              id="hero-headline-help"
+              className="text-muted-foreground text-xs"
+            >
+              Up to 160 characters. Leave empty to use the existing default:{" "}
+              {DEFAULT_HOME_HERO.headline}
+            </p>
+            <p
+              id="hero-headline-error"
+              role="alert"
+              className="text-destructive text-sm"
+            >
+              {error}
+            </p>
+          </div>
+          <p className="text-muted-foreground text-sm">
+            The subheadline uses your profile bio.{" "}
+            <Link
+              href="/dashboard/settings"
+              className="text-primary underline underline-offset-4"
+            >
+              Edit bio in Settings
+            </Link>
+            .
           </p>
-          <p className="text-[11px] text-muted-foreground">{label}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground/80">
-            {description}
-          </p>
-        </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" disabled={pending || !dirty}>
+              {pending ? "Saving..." : "Save headline"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending || !dirty}
+              onClick={() => {
+                setValue(savedValue);
+                setError(undefined);
+              }}
+            >
+              Discard changes
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );
@@ -348,35 +424,29 @@ function HomeSectionDialog({
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              <fieldset className="flex flex-col gap-2" disabled={isPending}>
-                <legend className="mb-2 font-medium text-sm">
-                  Logo category
-                </legend>
-                <div className="gap-3 grid grid-cols-2">
-                  {(["TECHNOLOGY", "CLIENT"] as const).map((value) => (
-                    <label
-                      key={value}
-                      className="flex items-center gap-2 p-3 border border-border rounded-xl min-h-11 text-sm cursor-pointer"
-                    >
-                      <input
-                        type="radio"
-                        value={value}
-                        className="accent-primary"
-                        {...register("category", {
-                          onChange: (event) => {
-                            if (event.target.value === "CLIENT")
-                              setValue("showOnHome", false, {
-                                shouldDirty: true,
-                              });
-                          },
-                        })}
-                      />
-                      {value === "TECHNOLOGY" ? "Technology" : "Client"}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-              <div className="flex justify-between items-center gap-4 p-3 border border-border rounded-xl min-h-11">
+              <DashboardSelect<"TECHNOLOGY" | "CLIENT">
+                label="Logo category"
+                value={category ?? "TECHNOLOGY"}
+                options={[
+                  { value: "TECHNOLOGY", label: "Technology" },
+                  { value: "CLIENT", label: "Client" },
+                ]}
+                disabled={isPending}
+                onValueChange={(value) => {
+                  setValue("category", value, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                  if (value === "CLIENT")
+                    setValue("showOnHome", false, { shouldDirty: true });
+                }}
+              />
+              {errors.category?.message && (
+                <p className="text-destructive text-sm">
+                  {errors.category.message}
+                </p>
+              )}
+              <div className="flex justify-between items-center gap-4 py-3">
                 <Label htmlFor={`${type}-show-home`}>
                   Show in Home tech stack
                 </Label>
@@ -539,7 +609,7 @@ function HomeSectionActions({
             type="button"
             variant="ghost"
             size="icon"
-            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
+            className="text-foreground"
             aria-label={`Open actions for ${section.label}`}
           />
         }
@@ -610,7 +680,7 @@ function HomeContentList({
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col justify-center items-center gap-4 bg-background/30 p-6 border border-border/70 border-dashed rounded-2xl min-h-72 text-center">
+      <div className={dashboardStyles.emptyState}>
         {type === "LOGO" ? (
           <ImageIcon className="size-12 text-muted-foreground/50" />
         ) : (
@@ -648,7 +718,7 @@ function HomeContentList({
             "xl:items-center grid grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(320px,1fr)_180px_56px] min-w-0",
             dashboardStyles.listRow,
             isDragging
-              ? "relative z-10 border-brand-soft/60 bg-background/70 opacity-80 shadow-[0_0_52px_rgba(139,92,246,0.18)]"
+              ? "relative z-10 bg-muted opacity-80"
               : "hover:border-brand-soft/35",
           )}
         >
@@ -678,9 +748,9 @@ function HomeContentList({
             )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 min-w-0">
-                <h2 className="font-heading font-semibold text-lg truncate">
+                <h3 className="font-semibold text-sm wrap-anywhere">
                   {item.label}
-                </h2>
+                </h3>
               </div>
               {type === "LOGO" && <HomeLogoStatus logo={item} />}
               {type !== "LOGO" && (
@@ -806,8 +876,8 @@ function TestimonialDialog({
               {isEdit ? "Edit Testimonial" : "Add Testimonial"}
             </DialogTitle>
             <DialogDescription>
-              Manage the quote, author details, public visibility, avatar, and
-              display order.
+              Manage the legacy quote, author details, stored visibility flag,
+              avatar, and display order.
             </DialogDescription>
           </DialogHeader>
 
@@ -897,12 +967,12 @@ function TestimonialDialog({
             )}
           </div>
 
-          <div className="flex justify-between items-center gap-4 bg-background/35 p-4 border border-border/60 rounded-2xl">
+          <div className="flex justify-between items-center gap-4 py-4">
             <div>
-              <Label htmlFor="isVisible">Visible publicly</Label>
+              <Label htmlFor="isVisible">Legacy visibility flag</Label>
               <p className="mt-1 text-muted-foreground text-xs leading-5">
-                Hidden testimonials stay editable here but are not shown on the
-                Home page.
+                Stored for compatibility. Testimonials are not used on the
+                public Home page, regardless of this flag.
               </p>
             </div>
             <Switch
@@ -1070,7 +1140,7 @@ function TestimonialActions({
             type="button"
             size="icon"
             variant="ghost"
-            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
+            className="text-foreground"
             aria-label={`Open actions for ${testimonial.name}`}
           />
         }
@@ -1134,12 +1204,12 @@ function TestimonialList({
 
   if (testimonials.length === 0) {
     return (
-      <div className="flex flex-col justify-center items-center gap-4 bg-background/25 border border-border/70 border-dashed rounded-2xl min-h-72 text-center">
+      <div className={dashboardStyles.emptyState}>
         <ChatCircleTextIcon className="size-12 text-muted-foreground/50" />
         <div>
           <p className="font-medium">No testimonials yet</p>
           <p className="mt-1 text-muted-foreground text-sm">
-            Add client quotes to power the Home page social proof.
+            Store legacy quotes here. Testimonials are not used on public Home.
           </p>
         </div>
         <TestimonialDialog
@@ -1169,11 +1239,7 @@ function TestimonialList({
                 "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(320px,1fr)_120px_180px_56px] xl:items-center",
                 dashboardStyles.listRow,
               ].join(" "),
-              isDragging
-                ? "relative z-10 border-brand-soft/60 bg-background/70 opacity-80"
-                : testimonial.isVisible
-                  ? "hover:border-brand-soft/35"
-                  : "border-dashed opacity-65 hover:border-brand-soft/35 hover:opacity-100",
+              isDragging ? "relative z-10 bg-muted opacity-80" : "",
             ].join(" ")}
           >
             <div className="flex self-stretch row-span-2 xl:row-span-1">
@@ -1187,9 +1253,9 @@ function TestimonialList({
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
-                  <h2 className="font-heading font-semibold xl:text-sm text-base wrap-break-words line-clamp-2 leading-snug">
+                  <h3 className="font-semibold text-sm wrap-break-words line-clamp-2 leading-snug">
                     {testimonial.name}
-                  </h2>
+                  </h3>
                 </div>
                 {title && (
                   <p className="mt-1 text-muted-foreground text-sm truncate">
@@ -1205,8 +1271,8 @@ function TestimonialList({
               </div>
             </div>
             <div className="hidden xl:flex items-center p-3">
-              <Badge variant={testimonial.isVisible ? "default" : "outline"}>
-                {testimonial.isVisible ? "Visible" : "Hidden"}
+              <Badge variant="secondary">
+                {testimonial.isVisible ? "Legacy flag: on" : "Legacy flag: off"}
               </Badge>
             </div>
             <div className="hidden xl:flex items-center p-3 text-muted-foreground text-sm whitespace-nowrap">
@@ -1216,8 +1282,8 @@ function TestimonialList({
               <TestimonialActions testimonial={testimonial} />
             </div>
             <div className="xl:hidden flex flex-wrap items-center gap-2 col-start-2 px-4 pb-4">
-              <Badge variant={testimonial.isVisible ? "default" : "outline"}>
-                {testimonial.isVisible ? "Visible" : "Hidden"}
+              <Badge variant="secondary">
+                {testimonial.isVisible ? "Legacy flag: on" : "Legacy flag: off"}
               </Badge>
               <span className="text-muted-foreground text-xs">
                 Created {formatDate(testimonial.createdAt)}
@@ -1231,74 +1297,49 @@ function TestimonialList({
 }
 
 export function HomeContentManager({
+  headline,
   logos,
   phases,
   testimonials,
 }: HomeContentManagerProps) {
-  const visibleTestimonials = testimonials.filter(
-    (testimonial) => testimonial.isVisible,
-  ).length;
-
   return (
-    <Tabs defaultValue="approach" className="flex flex-col gap-5 min-w-0">
-      <div className={dashboardStyles.statGrid}>
-        <HomeStatCard
-          icon={StackIcon}
-          label="Approach"
-          value={phases.length}
-          description="Process phases"
-          iconClassName="bg-sky-500/12 text-sky-300"
-        />
-        <HomeStatCard
-          icon={ChatCircleTextIcon}
-          label="Testimonials"
-          value={testimonials.length}
-          description="Client quotes"
-          iconClassName="bg-emerald-500/12 text-emerald-300"
-        />
-        <HomeStatCard
-          icon={EyeIcon}
-          label="Visible"
-          value={visibleTestimonials}
-          description="Shown publicly"
-          iconClassName="bg-violet-500/12 text-violet-300"
-        />
-        <HomeStatCard
-          icon={ImageIcon}
-          label="Tech / Client"
-          value={logos.length}
-          description="Logo items"
-          iconClassName="bg-amber-500/12 text-amber-300"
-        />
-      </div>
-
-      <TabsList className="content-center grid grid-cols-3 bg-card/55 p-1.5 border border-border/60 rounded-2xl w-full md:w-fit min-w-0 md:min-w-96 h-auto min-h-12">
-        <TabsTrigger
-          value="approach"
-          className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
-        >
+    <Tabs defaultValue="hero" className="flex flex-col gap-5 min-w-0">
+      <DashboardSummary
+        items={[
+          { label: "Approach phases", value: phases.length },
+          { label: "Stored logos", value: logos.length },
+          {
+            label: "Legacy testimonials",
+            value: testimonials.length,
+            description: "Not used on public Home",
+          },
+        ]}
+      />
+      <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full sm:w-fit h-auto">
+        <TabsTrigger value="hero">Hero</TabsTrigger>
+        <TabsTrigger value="approach" className="text-xs sm:text-sm">
           Approach
         </TabsTrigger>
-        <TabsTrigger
-          value="testimonials"
-          className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
-        >
-          Testimonials
+        <TabsTrigger value="logos" className="text-xs sm:text-sm">
+          Tech stack
         </TabsTrigger>
-        <TabsTrigger
-          value="logos"
-          className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
-        >
-          Tech / Client
+        <TabsTrigger value="testimonials" className="text-xs sm:text-sm">
+          Legacy quotes
         </TabsTrigger>
       </TabsList>
+
+      <TabsContent value="hero">
+        <HeroHeadlineForm headline={headline} />
+      </TabsContent>
 
       <TabsContent value="approach">
         <Card>
           <CardHeader>
             <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
               <div>
-                <CardTitle className="font-semibold">My Approach</CardTitle>
+                <CardTitle>
+                  <h2>Approach</h2>
+                </CardTitle>
                 <CardDescription>
                   Manage the phase cards shown on the Home page.
                 </CardDescription>
@@ -1330,12 +1371,14 @@ export function HomeContentManager({
           <CardHeader>
             <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
               <div>
-                <CardTitle className="font-semibold">Testimonials</CardTitle>
+                <CardTitle>
+                  <h2>Testimonials (legacy)</h2>
+                </CardTitle>
                 <CardDescription>
                   {testimonials.length}{" "}
                   {testimonials.length === 1 ? "testimonial" : "testimonials"}{" "}
-                  in the CMS. Hidden testimonials are not shown on the Home
-                  page.
+                  stored in the CMS. These records are not used on the public
+                  Home page.
                 </CardDescription>
               </div>
               <TestimonialDialog
@@ -1359,8 +1402,8 @@ export function HomeContentManager({
           <CardHeader>
             <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
               <div>
-                <CardTitle className="font-semibold">
-                  Tech / Client Logos
+                <CardTitle>
+                  <h2>Tech stack</h2>
                 </CardTitle>
                 <CardDescription>
                   Choose technologies for the Home stack and keep client logos
@@ -1383,11 +1426,32 @@ export function HomeContentManager({
               type="LOGO"
               items={logos}
               emptyLabel="No logos yet"
-              emptyDescription="Add client or technology logos for the Home page."
+              emptyDescription="Add technologies for the public stack. Client logos remain stored separately."
             />
           </CardContent>
         </Card>
       </TabsContent>
+      <nav
+        aria-label="Other Home content"
+        className="pt-4 border-t text-muted-foreground text-sm"
+      >
+        <p>Other Home sections use published content from these editors:</p>
+        <div className="flex flex-wrap gap-4 mt-2">
+          <Link
+            className="text-primary underline underline-offset-4"
+            href="/dashboard/projects"
+          >
+            Projects
+          </Link>
+          <Link
+            className="text-primary underline underline-offset-4"
+            href="/dashboard/posts"
+          >
+            Writing and Notes
+          </Link>
+        </div>
+        <p className="mt-2 text-xs">Notes are posts with the notes tag.</p>
+      </nav>
     </Tabs>
   );
 }

@@ -33,7 +33,26 @@ import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 type EntityActionData = { id: string };
 type OrderTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-/** Backend for the forthcoming hero editor; no dashboard fields are added yet. */
+/** Save only the headline; the profile bio is owned by Settings. */
+export async function actionSetHeroHeadline(
+  input: Pick<HomeHeroActionInput, "headline">,
+): Promise<ActionResult> {
+  const authResult = await requireSession();
+  if (authResult) return authResult;
+  const parsed = parseInput(
+    homeHeroActionSchema.pick({ headline: true }),
+    input,
+  );
+  if (!parsed.success) return parsed.result;
+  try {
+    await saveHomeHeadline(db, parsed.data.headline);
+    revalidateHomePaths();
+    return actionSuccess(undefined, "Headline saved.");
+  } catch {
+    return actionError("Could not save the headline. Try again.");
+  }
+}
+
 export async function actionUpdateHomeHero(
   input: HomeHeroActionInput,
 ): Promise<ActionResult> {

@@ -26,8 +26,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -36,6 +35,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import {
+  actionAutosaveProject,
   actionPublishProject,
   actionSaveProjectDraft,
 } from "@/features/dashboard/projects/actions";
@@ -154,24 +154,6 @@ function getDefaults(project?: ProjectEditorProject): ProjectFormValues {
   };
 }
 
-function getSubmitLabels(status: ProjectFormValues["status"]) {
-  if (status === "published") {
-    return {
-      draft: "Move to Draft",
-      draftPending: "Moving...",
-      publish: "Update Published",
-      publishPending: "Updating...",
-    };
-  }
-
-  return {
-    draft: "Save Draft",
-    draftPending: "Saving...",
-    publish: "Publish",
-    publishPending: "Publishing...",
-  };
-}
-
 function ProjectStatusBadge({
   status,
   compact = false,
@@ -186,15 +168,15 @@ function ProjectStatusBadge({
       className={cn(
         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-xs",
         isPublished
-          ? "bg-emerald-500/12 text-emerald-300"
-          : "bg-amber-500/12 text-amber-300",
+          ? "bg-success/10 text-success"
+          : "bg-muted text-muted-foreground",
         compact && "px-2 py-0.5",
       )}
     >
       <span
         className={cn(
           "rounded-full size-1.5",
-          isPublished ? "bg-emerald-300" : "bg-amber-300",
+          isPublished ? "bg-success" : "bg-muted-foreground",
         )}
       />
       {isPublished ? "Published" : "Draft"}
@@ -202,24 +184,33 @@ function ProjectStatusBadge({
   );
 }
 
-function AutosaveStatusPill({ status }: { status: AutosaveStatus }) {
-  if (status === "idle") {
-    return null;
-  }
-
+function AutosaveStatusPill({
+  status,
+  isDirty,
+  isNew,
+}: {
+  status: AutosaveStatus;
+  isDirty: boolean;
+  isNew: boolean;
+}) {
   return (
     <span
+      role="status"
+      aria-live="polite"
       className={cn(
-        "inline-flex items-center bg-surface/55 px-2.5 py-1 rounded-full w-fit text-muted-foreground text-xs",
-        status === "saving" && "text-brand-soft",
+        "text-muted-foreground text-sm",
         status === "failed" && "text-destructive",
       )}
     >
       {status === "saving"
-        ? "Autosaving..."
-        : status === "saved"
-          ? "Autosaved"
-          : "Autosave failed"}
+        ? "Saving…"
+        : status === "failed"
+          ? "Save failed. Your changes are still here."
+          : isDirty
+            ? "Unsaved changes"
+            : isNew && status !== "saved"
+              ? "Not saved yet"
+              : "All changes saved"}
     </span>
   );
 }
@@ -238,8 +229,9 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
   >(null);
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>("idle");
   const [slugEdited, setSlugEdited] = useState(mode === "edit");
-  const manualSaveVersion = useRef(0);
-  const autosaveInFlight = useRef(false);
+  const manualSavePending = useRef(false);
+  const validationStatus = useRef<"draft" | "published" | null>(null);
+  const autosaveInFlight = useRef<Promise<void> | null>(null);
   const defaults = useMemo(() => getDefaults(project), [project]);
 
   const {
@@ -253,7 +245,12 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
     setValue,
     watch,
   } = useForm<ProjectFormInput, unknown, ProjectFormValues>({
-    resolver: zodResolver(projectFormSchema),
+    resolver: (values, context, options) =>
+      zodResolver(projectFormSchema)(
+        { ...values, status: validationStatus.current ?? values.status },
+        context,
+        options,
+      ),
     defaultValues: defaults,
   });
 
@@ -266,7 +263,14 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
   const structuredScreenshots = watch("structuredScreenshots") ?? [];
   const slugRegistration = register("slug");
   const isPending = pendingAction !== null;
-  const submitLabels = getSubmitLabels(status);
+  const primaryStatus =
+    status === "published" || mode === "create" ? "published" : "draft";
+  const primaryLabel =
+    status === "published"
+      ? "Save changes"
+      : mode === "create"
+        ? "Publish"
+        : "Save draft";
 
   useEffect(() => {
     if (!slugEdited) {
@@ -308,109 +312,116 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
     }
   };
 
-  const autosaveDraft = useCallback(async () => {
+  // Advance the saved baseline without replacing edits made during the request.
+  const acceptSaved = useCallback(
+    (snapshot: ProjectFormInput, savedStatus: "draft" | "published") => {
+      const current = structuredClone(getValues());
+      reset({ ...snapshot, status: savedStatus });
+      reset({ ...current, status: savedStatus }, { keepDefaultValues: true });
+    },
+    [getValues, reset],
+  );
+
+  const autosave = useCallback(() => {
     if (
       mode !== "edit" ||
       !project?.id ||
       !isDirty ||
-      pendingAction !== null ||
+      manualSavePending.current ||
       autosaveInFlight.current
-    ) {
+    )
       return;
-    }
-
-    const parsed = projectFormSchema.safeParse({
-      ...getValues(),
-      status: "draft",
-    });
-
+    const snapshot = structuredClone(getValues());
+    const parsed = projectFormSchema.safeParse(snapshot);
     if (!parsed.success) {
       setAutosaveStatus("failed");
       return;
     }
 
-    const versionAtStart = manualSaveVersion.current;
-    autosaveInFlight.current = true;
     setAutosaveStatus("saving");
-
-    const result = await actionSaveProjectDraft(parsed.data, project.id);
-
-    autosaveInFlight.current = false;
-
-    if (versionAtStart !== manualSaveVersion.current) {
-      return;
-    }
-
-    if (result.success) {
-      const nextValues = {
-        ...parsed.data,
-        status: result.data?.status ?? "draft",
-      } satisfies ProjectFormValues;
-
-      reset(nextValues);
-      setAutosaveStatus("saved");
-      router.refresh();
-      return;
-    }
-
-    setAutosaveStatus("failed");
-  }, [getValues, isDirty, mode, pendingAction, project?.id, reset, router]);
+    const request = (async () => {
+      try {
+        const result = await actionAutosaveProject(parsed.data, project.id);
+        if (result.success && result.data) {
+          acceptSaved(snapshot, result.data.status);
+          setAutosaveStatus("saved");
+        } else {
+          setAutosaveStatus("failed");
+        }
+      } catch {
+        setAutosaveStatus("failed");
+      } finally {
+        autosaveInFlight.current = null;
+      }
+    })();
+    autosaveInFlight.current = request;
+  }, [acceptSaved, getValues, isDirty, mode, project?.id]);
 
   useEffect(() => {
-    if (mode !== "edit") {
-      return;
-    }
-
-    const interval = window.setInterval(() => {
-      autosaveDraft();
-    }, 30_000);
-
+    if (mode !== "edit") return;
+    const interval = window.setInterval(autosave, 30_000);
     return () => window.clearInterval(interval);
-  }, [autosaveDraft, mode]);
+  }, [autosave, mode]);
 
-  const submitWithStatus = (nextStatus: "draft" | "published") =>
-    handleSubmit(async (values) => {
-      manualSaveVersion.current += 1;
-      setPendingAction(nextStatus === "published" ? "publish" : "draft");
-      setAutosaveStatus("idle");
-
-      const payload = {
-        ...values,
-        status: nextStatus,
-      };
-
-      const result =
-        nextStatus === "published"
-          ? await actionPublishProject(payload, project?.id)
-          : await actionSaveProjectDraft(payload, project?.id);
-
-      if (result.success) {
-        const message =
-          result.message ??
-          (nextStatus === "published" ? "Project published." : "Draft saved.");
-
-        toast.add({ title: message, type: "success" });
-
-        if (result.data) {
-          setValue("status", result.data.status);
-
+  const submitWithStatus = (nextStatus: "draft" | "published") => async () => {
+    // Lock synchronously: React state alone cannot prevent two clicks or a timer race.
+    if (manualSavePending.current) return;
+    manualSavePending.current = true;
+    setPendingAction(nextStatus === "published" ? "publish" : "draft");
+    try {
+      // Capture and validate the latest values only after the older write finishes.
+      await autosaveInFlight.current;
+      validationStatus.current = nextStatus;
+      await handleSubmit(async (values) => {
+        const snapshot = structuredClone(getValues());
+        const payload = { ...values, status: nextStatus };
+        const result =
+          nextStatus === "published"
+            ? await actionPublishProject(payload, project?.id)
+            : await actionSaveProjectDraft(payload, project?.id);
+        if (result.success && result.data) {
+          acceptSaved(snapshot, result.data.status);
+          setAutosaveStatus("saved");
+          toast.add({
+            title:
+              status === "published" && nextStatus === "published"
+                ? "Changes saved."
+                : (result.message ?? "Saved."),
+            type: "success",
+          });
           if (mode === "create") {
             router.replace(`/dashboard/projects/${result.data.id}/edit`);
           } else {
-            reset({
-              ...values,
-              status: result.data.status,
-            });
             router.refresh();
           }
+        } else if (!result.success) {
+          setAutosaveStatus("failed");
+          applyFieldErrors(result.fieldErrors);
+          toast.add({ title: result.error, type: "error" });
         }
-      } else {
-        applyFieldErrors(result.fieldErrors);
-        toast.add({ title: result.error, type: "error" });
-      }
-
+      })();
+    } catch {
+      setAutosaveStatus("failed");
+      toast.add({
+        title: "Could not save. Your changes are still here; try again.",
+        type: "error",
+      });
+    } finally {
+      validationStatus.current = null;
+      manualSavePending.current = false;
       setPendingAction(null);
-    });
+    }
+  };
+
+  const moveToDraft = () => {
+    if (
+      window.confirm(
+        "Move this project to draft? It will no longer be public. Your current edits will be saved.",
+      )
+    ) {
+      void submitWithStatus("draft")();
+    }
+  };
 
   const handlePreview = () => {
     if (!slug) {
@@ -422,8 +433,14 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
   };
 
   return (
-    <form className="flex flex-col gap-6">
-      <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
+    <form
+      className="flex flex-col gap-6 min-w-0"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void submitWithStatus(status)();
+      }}
+    >
+      <div className="top-14 z-20 sticky flex xl:flex-row flex-col xl:justify-between xl:items-center gap-4 bg-background py-4 border-border border-b min-w-0">
         <div className="flex flex-col gap-2">
           <Button
             role="link"
@@ -436,65 +453,83 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
             Projects
           </Button>
           <div className="min-w-0">
-            <h1 className="font-heading font-bold text-3xl wrap-break-word">
+            <h1 className="wrap-break-word">
               {mode === "create" ? "New Project" : "Edit Project"}
             </h1>
             <p className="mt-2 max-w-2xl text-muted-foreground wrap-break-word">
               Shape portfolio case studies, visuals, links, and publish state.
             </p>
-            {mode === "edit" && (
-              <div className="mt-3">
-                <AutosaveStatusPill status={autosaveStatus} />
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="sm:flex sm:flex-wrap sm:justify-end sm:items-center gap-2 grid grid-cols-2 w-full sm:w-auto min-w-0 sm:min-w-0">
-          <div className="flex justify-start sm:justify-center col-span-2 sm:col-span-1">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <div className="flex flex-wrap items-center gap-3 sm:mr-2 w-full sm:w-auto">
             <ProjectStatusBadge status={status} />
+            <AutosaveStatusPill
+              status={isPending ? "saving" : autosaveStatus}
+              isDirty={isDirty}
+              isNew={mode === "create"}
+            />
           </div>
           <Button
             type="button"
             variant="outline"
             onClick={handlePreview}
             disabled={!slug || isPending}
-            className="min-w-0"
           >
             <EyeIcon data-icon="inline-start" />
             Preview
           </Button>
+          {status === "draft" && (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isPending}
+              onClick={submitWithStatus(
+                mode === "create" ? "draft" : "published",
+              )}
+            >
+              {mode === "create" ? (
+                <FloppyDiskIcon data-icon="inline-start" />
+              ) : (
+                <PaperPlaneTiltIcon data-icon="inline-start" />
+              )}
+              {mode === "create" ? "Save draft" : "Publish"}
+            </Button>
+          )}
           <Button
             type="button"
-            variant="secondary"
-            onClick={submitWithStatus("draft")}
+            onClick={submitWithStatus(primaryStatus)}
             disabled={isPending}
-            className="min-w-0"
           >
-            {pendingAction === "draft" ? (
+            {isPending ? (
               <SpinnerIcon data-icon="inline-start" className="animate-spin" />
             ) : (
               <FloppyDiskIcon data-icon="inline-start" />
             )}
-            {pendingAction === "draft"
-              ? submitLabels.draftPending
-              : submitLabels.draft}
+            {isPending ? "Saving…" : primaryLabel}
           </Button>
-          <Button
-            type="button"
-            onClick={submitWithStatus("published")}
-            disabled={isPending}
-            className="col-span-2 sm:col-span-1 min-w-0"
-          >
-            {pendingAction === "publish" ? (
-              <SpinnerIcon data-icon="inline-start" className="animate-spin" />
-            ) : (
-              <PaperPlaneTiltIcon data-icon="inline-start" />
-            )}
-            {pendingAction === "publish"
-              ? submitLabels.publishPending
-              : submitLabels.publish}
-          </Button>
+          {status === "published" && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-label="Publishing options"
+                  />
+                }
+                disabled={isPending}
+              >
+                <CaretDownIcon />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={moveToDraft}>
+                  Move to draft…
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
@@ -530,7 +565,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
         </div>
 
         <div className="flex flex-col gap-6">
-          <Card>
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Details</CardTitle>
               <CardDescription>
@@ -589,7 +624,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 />
                 <p
                   className={cn(
-                    "text-muted-foreground text-xs",
+                    "text-muted-foreground text-sm",
                     errors.description && "text-destructive",
                   )}
                 >
@@ -608,7 +643,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 />
                 <p
                   className={cn(
-                    "text-muted-foreground text-xs",
+                    "text-muted-foreground text-sm",
                     errors.contribution && "text-destructive",
                   )}
                 >
@@ -643,59 +678,20 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 <ProjectStatusBadge status={status} compact />
               </CardAction>
               <CardDescription>
-                Keep projects as drafts until they are ready for the portfolio.
+                {status === "published"
+                  ? "Saved edits update the published project directly."
+                  : "Drafts stay private until you publish."}
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5 min-w-0">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Controller
-                  control={control}
-                  name="status"
-                  render={({ field }) => (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={
-                          <Button
-                            id="status"
-                            type="button"
-                            variant="outline"
-                            className="justify-between bg-input/50 px-3 rounded-3xl w-full h-9 font-normal"
-                          />
-                        }
-                        disabled={isPending}
-                      >
-                        <ProjectStatusBadge status={field.value} compact />
-                        <CaretDownIcon data-icon="inline-end" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
-                        <DropdownMenuRadioGroup
-                          value={field.value}
-                          onValueChange={(value) =>
-                            field.onChange(value as ProjectFormValues["status"])
-                          }
-                        >
-                          <DropdownMenuRadioItem value="draft">
-                            <ProjectStatusBadge status="draft" compact />
-                          </DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="published">
-                            <ProjectStatusBadge status="published" compact />
-                          </DropdownMenuRadioItem>
-                        </DropdownMenuRadioGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                />
-              </div>
-
               <Controller
                 control={control}
                 name="isFeatured"
                 render={({ field }) => (
-                  <div className="flex justify-between items-start gap-4 bg-background/35 p-4 border border-border/60 rounded-2xl">
+                  <div className="flex justify-between items-start gap-4 py-2">
                     <div>
                       <Label htmlFor="isFeatured">Featured project</Label>
-                      <p className="mt-1 text-muted-foreground text-xs leading-5">
+                      <p className="mt-1 text-muted-foreground text-sm leading-5">
                         Featured projects are prioritized on Home and Projects
                         pages.
                       </p>
@@ -712,7 +708,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Links & Stack</CardTitle>
               <CardDescription>
@@ -737,7 +733,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                     />
                   )}
                 />
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-sm">
                   Type comma + space to create a tech stack tag.
                 </p>
               </div>
@@ -780,10 +776,10 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                 control={control}
                 name="isClosedSource"
                 render={({ field }) => (
-                  <div className="flex justify-between items-start gap-4 bg-background/35 p-4 border border-border/60 rounded-2xl">
+                  <div className="flex justify-between items-start gap-4 py-2">
                     <div>
                       <Label htmlFor="isClosedSource">Closed source</Label>
-                      <p className="mt-1 text-muted-foreground text-xs leading-5">
+                      <p className="mt-1 text-muted-foreground text-sm leading-5">
                         Hide GitHub button even if repository URL is empty or
                         unavailable.
                       </p>
@@ -800,7 +796,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Media</CardTitle>
               <CardDescription>
@@ -856,7 +852,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                     })
                   }
                 />
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-sm">
                   Optional. Project cards use this first, then fall back to the
                   cover image.
                 </p>
@@ -887,7 +883,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                     })
                   }
                 />
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-sm">
                   Used when this project is shared on social platforms.
                   Recommended ratio: 1200×630.
                 </p>
@@ -911,7 +907,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
                     />
                   )}
                 />
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground text-sm">
                   {structuredScreenshots.length}{" "}
                   {structuredScreenshots.length === 1
                     ? "screenshot"

@@ -43,39 +43,24 @@ function formatDelta(value?: number) {
 }
 
 function UmamiStatCard({
-  inverseTrend = false,
   label,
   stat,
   value,
 }: {
-  inverseTrend?: boolean;
   label: string;
   stat: UmamiAnalytics["pageviews"];
   value: string;
 }) {
-  const change = stat.change ?? (stat.value !== undefined ? 0 : undefined);
+  const change = stat.change;
   const delta = formatDelta(change);
-  const isPositive = (change ?? 0) > 0;
-  const isNegative = (change ?? 0) < 0;
-  const isGood = inverseTrend ? isNegative : isPositive;
-  const isBad = inverseTrend ? isPositive : isNegative;
 
   return (
-    <div className="bg-background/40 p-4 border border-border/70 rounded-2xl">
+    <div className="py-2">
       <p className="text-muted-foreground text-sm">{label}</p>
-      <p className="mt-2 font-heading font-semibold text-2xl md:text-3xl">
-        {value}
-      </p>
+      <p className="mt-1 font-semibold tabular-nums text-lg">{value}</p>
       {delta && (
-        <p
-          className={cn(
-            "inline-flex mt-3 px-2 py-1 rounded-full font-medium text-xs",
-            isGood && "bg-emerald-500/15 text-emerald-300",
-            isBad && "bg-destructive/15 text-destructive",
-            !isGood && !isBad && "bg-muted text-muted-foreground",
-          )}
-        >
-          {delta}
+        <p className="mt-1 text-muted-foreground text-xs">
+          {delta} vs previous period
         </p>
       )}
     </div>
@@ -92,8 +77,8 @@ function UmamiMetricList({
   title: string;
 }) {
   return (
-    <div className="bg-background/40 p-4 border border-border/70 rounded-2xl">
-      <h3 className="font-heading font-semibold">{title}</h3>
+    <div>
+      <h3 className="font-medium">{title}</h3>
       {items.length > 0 ? (
         <div className="mt-3 divide-y divide-border/60">
           {items.map((item) => (
@@ -136,44 +121,29 @@ export function UmamiPanelClient({
 
   if (analytics.status !== "available") {
     return (
-      <Card className="bg-card/55 shadow-sm border-border/70">
-        <CardHeader className="sm:flex-row sm:justify-between sm:items-start gap-3">
-          <div>
-            <CardTitle>Traffic Analytics</CardTitle>
-            <CardDescription>
-              Umami API and embed are optional. Local analytics remain
-              available.
-            </CardDescription>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="rounded-2xl w-fit"
-            disabled={isPending}
-            onClick={refreshAnalytics}
-          >
-            <ArrowClockwiseIcon
-              data-icon="inline-start"
-              className={cn(isPending && "animate-spin")}
-            />
-            {isPending ? "Refreshing..." : "Retry"}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-background/40 p-6 border border-dashed rounded-2xl">
-            <p className="font-medium">
-              {analytics.status === "error"
-                ? "Umami metrics are temporarily unavailable"
-                : "Umami API is not configured"}
-            </p>
-            <p className="mt-2 text-muted-foreground text-sm">
-              {analytics.status === "error"
-                ? `${analytics.error ?? "The API request failed."} Local analytics remain available.`
-                : "Configure UMAMI_API_URL, UMAMI_USERNAME, UMAMI_PASSWORD, and UMAMI_WEBSITE_ID to load optional self-hosted traffic metrics."}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <section
+        aria-label="Optional Umami traffic"
+        className="flex flex-wrap justify-between items-center gap-3 py-3 border-t"
+      >
+        <p className="text-muted-foreground text-sm" role="status">
+          {analytics.status === "error"
+            ? "Optional Umami traffic is temporarily unavailable."
+            : "Optional Umami traffic is not configured."}{" "}
+          Local analytics remain available.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={isPending}
+          onClick={refreshAnalytics}
+        >
+          <ArrowClockwiseIcon
+            data-icon="inline-start"
+            className={cn(isPending && "animate-spin")}
+          />
+          {isPending ? "Refreshing..." : "Retry"}
+        </Button>
+      </section>
     );
   }
 
@@ -195,7 +165,6 @@ export function UmamiPanelClient({
         analytics.pageviews.value?.toLocaleString("en-US") ?? "Unavailable",
     },
     {
-      inverseTrend: true,
       label: "Bounce rate",
       stat: analytics.bounceRate,
       value:
@@ -211,11 +180,13 @@ export function UmamiPanelClient({
   ];
 
   return (
-    <Card className="bg-card/55 shadow-sm border-border/70">
+    <Card>
       <CardHeader className="sm:flex-row sm:justify-between sm:items-start gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <CardTitle>Umami Traffic Analytics</CardTitle>
+            <CardTitle>
+              <h2>Umami traffic</h2>
+            </CardTitle>
             <Badge>Connected</Badge>
           </div>
           <CardDescription>
@@ -226,7 +197,6 @@ export function UmamiPanelClient({
           <Button
             type="button"
             variant="outline"
-            className="rounded-2xl"
             disabled={isPending}
             onClick={refreshAnalytics}
           >
@@ -241,7 +211,6 @@ export function UmamiPanelClient({
               role="link"
               render={<Link href={shareUrl} target="_blank" />}
               nativeButton={false}
-              className="rounded-2xl"
               variant="outline"
             >
               Open Umami
@@ -284,46 +253,12 @@ export function UmamiPanelClient({
 
 export function UmamiPanelSkeleton() {
   return (
-    <Card className="bg-card/55 shadow-sm border-border/70">
-      <CardHeader>
-        <CardTitle>Umami Traffic Analytics</CardTitle>
-        <CardDescription>
-          Loading optional self-hosted traffic metrics.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="gap-3 grid md:grid-cols-2 xl:grid-cols-5">
-          {["Visitors", "Visits", "Views", "Bounce rate", "Visit duration"].map(
-            (label) => (
-              <div
-                key={label}
-                className="bg-background/40 p-4 border border-border/70 rounded-2xl"
-              >
-                <p className="text-muted-foreground text-sm">{label}</p>
-                <div className="bg-muted mt-3 rounded-xl w-20 h-8 animate-pulse" />
-                <div className="bg-muted mt-3 rounded-full w-14 h-6 animate-pulse" />
-              </div>
-            ),
-          )}
-        </div>
-        <div className="gap-4 grid xl:grid-cols-2">
-          {["Top Pages", "Top Referrers", "Environment", "Location"].map(
-            (label) => (
-              <div
-                key={label}
-                className="bg-background/40 p-4 border border-border/70 rounded-2xl"
-              >
-                <h3 className="font-heading font-semibold">{label}</h3>
-                <div className="gap-3 grid mt-4">
-                  <div className="bg-muted rounded h-4 animate-pulse" />
-                  <div className="bg-muted rounded w-4/5 h-4 animate-pulse" />
-                  <div className="bg-muted rounded w-2/3 h-4 animate-pulse" />
-                </div>
-              </div>
-            ),
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    <p
+      role="status"
+      aria-busy="true"
+      className="py-3 border-t text-muted-foreground text-sm"
+    >
+      Loading optional Umami traffic…
+    </p>
   );
 }

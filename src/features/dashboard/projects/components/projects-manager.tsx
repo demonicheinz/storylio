@@ -70,6 +70,7 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
+  DrawerTrigger,
 } from "@/components/ui/drawer";
 import {
   DropdownMenu,
@@ -86,8 +87,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { toast } from "@/components/ui/toast";
+import {
+  DashboardMultiFilter,
+  DashboardSelect,
+  DashboardStatusFilter,
+} from "@/features/dashboard/shared/components/filter-controls";
+import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
+import { useDashboardFilter } from "@/features/dashboard/shared/hooks/use-dashboard-filter";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
-import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
 import type { ActionResult } from "@/lib/action-result";
 import { ProjectStatus } from "@/lib/db/enums";
 import {
@@ -129,7 +136,7 @@ type FeaturedFilter = "all" | "featured" | "standard";
 type SortMode = "order" | "updated" | "created" | "title";
 
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
-  { value: "all", label: "All Status" },
+  { value: "all", label: "All" },
   { value: "published", label: "Published" },
   { value: "draft", label: "Draft" },
 ];
@@ -177,14 +184,14 @@ function ProjectStatusBadge({
         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-xs",
         published
           ? "bg-emerald-500/12 text-emerald-300"
-          : "bg-amber-500/12 text-amber-300",
+          : "bg-muted text-muted-foreground",
         compact && "px-2 py-0.5",
       )}
     >
       <span
         className={cn(
           "rounded-full size-1.5",
-          published ? "bg-emerald-300" : "bg-amber-300",
+          published ? "bg-success" : "bg-muted-foreground",
         )}
       />
       {published ? "Published" : "Draft"}
@@ -221,7 +228,7 @@ function ProjectThumbnail({
           onError={() => setFailed(true)}
         />
       ) : (
-        <div className="flex justify-center items-center bg-[radial-gradient(circle_at_20%_20%,rgba(139,92,246,0.28),transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(10,10,20,0.96))] h-full text-muted-foreground">
+        <div className="flex justify-center items-center bg-muted h-full text-muted-foreground">
           <BriefcaseIcon className="size-8" />
         </div>
       )}
@@ -229,45 +236,9 @@ function ProjectThumbnail({
   );
 }
 
-function ProjectsStatCard({
-  label,
-  value,
-  description,
-  icon,
-  iconClassName,
-  className,
-}: {
-  label: string;
-  value: string | number;
-  description: string;
-  icon: ReactNode;
-  iconClassName: string;
-  className?: string;
-}) {
-  return (
-    <Card className={dashboardStyles.statCard}>
-      <CardContent className={dashboardStyles.statContent}>
-        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <p className={cn("font-heading font-bold text-xl", className)}>
-            {value}
-          </p>
-          <p className="text-[11px] text-muted-foreground">{label}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground/80">
-            {description}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function FilterDropdown<T extends string>({
   label,
   value,
-  displayValue,
   options,
   onValueChange,
 }: {
@@ -277,99 +248,44 @@ function FilterDropdown<T extends string>({
   options: Array<{ value: T; label: string }>;
   onValueChange: (value: T) => void;
 }) {
+  if (label === "Status")
+    return (
+      <DashboardStatusFilter
+        label={label}
+        value={value}
+        options={options}
+        onValueChange={onValueChange}
+      />
+    );
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
-          />
-        }
-      >
-        <span className="min-w-0 text-left">
-          <span className="block text-[10px] text-muted-foreground leading-none">
-            {label}
-          </span>
-          <span className="block mt-1 font-medium text-xs truncate">
-            {displayValue}
-          </span>
-        </span>
-        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuRadioGroup
-          value={value}
-          onValueChange={(nextValue) => onValueChange(nextValue as T)}
-        >
-          {options.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
-              {option.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <DashboardSelect
+      label={label}
+      value={value}
+      options={options}
+      onValueChange={onValueChange}
+    />
   );
 }
 
 function TechStackDropdown({
   techStacks,
   selectedTechStacks,
-  onToggleTechStack,
-  onClear,
+  onValueChange,
 }: {
   techStacks: string[];
   selectedTechStacks: string[];
-  onToggleTechStack: (techStack: string) => void;
-  onClear: () => void;
+  onValueChange: (values: string[]) => void;
 }) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
-          />
-        }
-      >
-        <span className="min-w-0 text-left">
-          <span className="block text-[10px] text-muted-foreground leading-none">
-            Tech stack
-          </span>
-          <span className="block mt-1 font-medium text-xs truncate">
-            {selectedTechStacks.length === 0
-              ? "All Tech"
-              : `${selectedTechStacks.length} selected`}
-          </span>
-        </span>
-        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-60">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Filter by tech stack</DropdownMenuLabel>
-          <DropdownMenuItem onClick={onClear}>All Tech</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {techStacks.length === 0 ? (
-            <DropdownMenuItem disabled>No tech stack yet</DropdownMenuItem>
-          ) : (
-            techStacks.map((techStack) => (
-              <DropdownMenuCheckboxItem
-                key={techStack}
-                checked={selectedTechStacks.includes(techStack)}
-                onCheckedChange={() => onToggleTechStack(techStack)}
-                closeOnClick={false}
-              >
-                {techStack}
-              </DropdownMenuCheckboxItem>
-            ))
-          )}
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="min-w-40">
+      <DashboardMultiFilter
+        label="Tech stack"
+        values={selectedTechStacks}
+        options={techStacks}
+        onValueChange={onValueChange}
+        emptyLabel="All technologies"
+      />
+    </div>
   );
 }
 
@@ -386,7 +302,6 @@ function ViewToggle({
         type="button"
         size="icon"
         variant={viewMode === "list" ? "default" : "ghost"}
-        className="rounded-lg size-8"
         onClick={() => onViewModeChange("list")}
         aria-label="List view"
         aria-pressed={viewMode === "list"}
@@ -397,7 +312,6 @@ function ViewToggle({
         type="button"
         size="icon"
         variant={viewMode === "grid" ? "default" : "ghost"}
-        className="rounded-lg size-8"
         onClick={() => onViewModeChange("grid")}
         aria-label="Grid view"
         aria-pressed={viewMode === "grid"}
@@ -428,7 +342,7 @@ function TechPills({
         <Badge
           key={tech}
           variant="outline"
-          className="max-w-28 text-[11px] truncate"
+          className="max-w-28 text-xs truncate"
         >
           {tech}
         </Badge>
@@ -455,7 +369,6 @@ function ProjectActions({
             type="button"
             size="icon"
             variant="ghost"
-            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
             aria-label={`Open actions for ${project.title}`}
           />
         }
@@ -465,6 +378,9 @@ function ProjectActions({
       <DropdownMenuContent align={align} className="w-44">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Project</DropdownMenuLabel>
+          <DropdownMenuLabel>
+            Created {formatDateTime(project.createdAt)}
+          </DropdownMenuLabel>
           {isPublished(project) && (
             <DropdownMenuItem
               render={
@@ -529,7 +445,7 @@ function ProjectsGrid({
               sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
             />
             <div
-              className="top-3 right-3 absolute opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity"
+              className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
               <ProjectActions project={project} />
@@ -554,14 +470,14 @@ function ProjectsGrid({
             >
               <ProjectStatusBadge project={project} compact />
               {project.isFeatured && (
-                <Badge className="px-2 rounded-full h-5 text-[11px]">
+                <Badge variant="secondary" className="px-2 text-xs">
                   featured
                 </Badge>
               )}
             </div>
           </div>
           <div className="flex flex-col p-4 min-h-56">
-            <h2 className="mt-2 font-heading font-semibold text-base wrap-break-word line-clamp-2 leading-snug">
+            <h2 className="mt-2 font-sans font-semibold text-base wrap-break-word line-clamp-2 leading-snug">
               {project.title}
             </h2>
             <p className="mt-1 text-muted-foreground text-xs truncate">
@@ -600,7 +516,7 @@ function ProjectListRow({
   return (
     <div
       className={cn(
-        "xl:items-center grid grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px] bg-background/30 border border-border/70 rounded-2xl min-w-0 overflow-hidden",
+        "xl:items-center grid grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(0,1fr)_130px_160px_56px] min-w-0 overflow-hidden",
         selected && "border-brand-soft/60 bg-brand/5",
         batchMode && "cursor-pointer",
         isDragging &&
@@ -639,10 +555,10 @@ function ProjectListRow({
             <span
               className={cn(
                 "xl:hidden rounded-full size-2 shrink-0",
-                isPublished(project) ? "bg-emerald-300" : "bg-amber-300",
+                isPublished(project) ? "bg-success" : "bg-muted-foreground",
               )}
             />
-            <h2 className="font-heading font-semibold xl:text-sm text-base wrap-break-word line-clamp-2 leading-snug">
+            <h2 className="font-sans font-semibold xl:text-sm text-base wrap-break-word line-clamp-2 leading-snug">
               {project.title}
             </h2>
           </div>
@@ -667,14 +583,11 @@ function ProjectListRow({
         <div className="flex flex-wrap items-center gap-2">
           <ProjectStatusBadge project={project} compact />
           {project.isFeatured && (
-            <Badge className="px-2 rounded-full h-5 text-[11px]">
+            <Badge variant="secondary" className="px-2 text-xs">
               featured
             </Badge>
           )}
         </div>
-      </div>
-      <div className="hidden xl:block p-3 text-muted-foreground text-sm">
-        {formatDateTime(project.createdAt)}
       </div>
       <div className="hidden xl:block p-3 text-muted-foreground text-sm">
         {formatDateTime(project.updatedAt)}
@@ -687,7 +600,9 @@ function ProjectListRow({
       <div className="xl:hidden flex flex-wrap items-center gap-2 col-start-2 px-4 pb-4">
         <ProjectStatusBadge project={project} compact />
         {project.isFeatured && (
-          <Badge className="px-2 rounded-full h-5 text-[11px]">featured</Badge>
+          <Badge variant="secondary" className="px-2 text-xs">
+            featured
+          </Badge>
         )}
         <span className="text-muted-foreground text-xs">
           Updated {formatDate(project.updatedAt)}
@@ -741,7 +656,7 @@ function SortableProjectListRow({
             type="button"
             variant="ghost"
             size="icon"
-            className="justify-center items-center p-0 border-border/50 border-r rounded-none w-full h-full min-h-24 text-muted-foreground touch-none cursor-grab active:cursor-grabbing disabled:cursor-not-allowed"
+            className="justify-center items-center p-0 w-full h-full min-h-24 touch-none cursor-grab active:cursor-grabbing disabled:cursor-not-allowed"
             disabled={disabled}
             aria-label={`Drag ${project.title} to reorder`}
             {...attributes}
@@ -759,14 +674,13 @@ function ProjectsListHeader() {
   return (
     <div
       className={cn(
-        "hidden xl:grid grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px]",
+        "hidden xl:grid grid-cols-[44px_minmax(0,1fr)_130px_160px_56px]",
         dashboardStyles.listHeader,
       )}
     >
       <div />
       <div>Title</div>
       <div>Status</div>
-      <div>Created at</div>
       <div>Updated at</div>
       <div className="text-right">Actions</div>
     </div>
@@ -832,6 +746,7 @@ function ProjectsList({
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (!canReorder || isPending) return;
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -860,7 +775,7 @@ function ProjectsList({
     return (
       <div className={dashboardStyles.listSurface}>
         <ProjectsListHeader />
-        <div className="flex flex-col gap-3 p-3 min-w-0">
+        <div className="flex flex-col divide-y divide-border min-w-0">
           {projects.map((project) => (
             <ProjectListRow
               key={project.id}
@@ -889,7 +804,7 @@ function ProjectsList({
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col gap-3 p-3 min-w-0">
+          <div className="flex flex-col divide-y divide-border min-w-0">
             {projects.map((project) => (
               <SortableProjectListRow
                 key={project.id}
@@ -934,7 +849,6 @@ function ProjectsPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="rounded-xl size-8"
         disabled={page <= 1}
         onClick={() => onPageChange(Math.max(1, page - 1))}
         aria-label="Previous page"
@@ -950,7 +864,6 @@ function ProjectsPagination({
             type="button"
             size="icon"
             variant={pageNumber === page ? "default" : "outline"}
-            className="rounded-xl size-8"
             onClick={() => onPageChange(pageNumber)}
             aria-current={pageNumber === page ? "page" : undefined}
           >
@@ -962,7 +875,6 @@ function ProjectsPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="rounded-xl size-8"
         disabled={page >= pageCount}
         onClick={() => onPageChange(Math.min(pageCount, page + 1))}
         aria-label="Next page"
@@ -1021,14 +933,7 @@ function ItemsPerPageDropdown({
       )}
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="bg-input/35 rounded-xl"
-            />
-          }
+          render={<Button type="button" variant="outline" size="sm" />}
         >
           {value}
           <CaretDownIcon className="size-3.5" />
@@ -1039,7 +944,11 @@ function ItemsPerPageDropdown({
             onValueChange={(nextValue) => onValueChange(Number(nextValue))}
           >
             {options.map((option) => (
-              <DropdownMenuRadioItem key={option} value={String(option)}>
+              <DropdownMenuRadioItem
+                key={option}
+                value={String(option)}
+                closeOnClick={true}
+              >
                 {option}
               </DropdownMenuRadioItem>
             ))}
@@ -1080,7 +989,6 @@ function ProjectsBatchActionsBar({
         <Button
           type="button"
           size="sm"
-          className="rounded-xl"
           disabled={isPending || selectedCount === 0}
           onClick={onPublish}
         >
@@ -1091,7 +999,6 @@ function ProjectsBatchActionsBar({
           type="button"
           size="sm"
           variant="outline"
-          className="bg-input/35 rounded-xl"
           disabled={isPending || selectedCount === 0}
           onClick={onMoveToDraft}
         >
@@ -1104,7 +1011,6 @@ function ProjectsBatchActionsBar({
                 type="button"
                 size="sm"
                 variant="destructive"
-                className="rounded-xl"
                 disabled={isPending || selectedCount === 0}
               />
             }
@@ -1137,7 +1043,6 @@ function ProjectsBatchActionsBar({
           type="button"
           size="sm"
           variant="ghost"
-          className="rounded-xl"
           disabled={isPending}
           onClick={onCancel}
         >
@@ -1152,8 +1057,16 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   const router = useRouter();
   const [items, setItems] = useState(projects);
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [featured, setFeatured] = useState<FeaturedFilter>("all");
+  const [status, setStatus] = useDashboardFilter<StatusFilter>(
+    "status",
+    ["all", "published", "draft"],
+    "all",
+  );
+  const [featured, setFeatured] = useDashboardFilter<FeaturedFilter>(
+    "featured",
+    ["all", "featured", "standard"],
+    "all",
+  );
   const [selectedTechStacks, setSelectedTechStacks] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>("order");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -1165,6 +1078,8 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBatchPending, startBatchTransition] = useTransition();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersTriggerRef = useRef<HTMLButtonElement>(null);
+  const [reorderMode, setReorderMode] = useState(false);
   const [draftStatus, setDraftStatus] = useState<StatusFilter>(status);
   const [draftFeatured, setDraftFeatured] = useState<FeaturedFilter>(featured);
   const [draftTechStacks, setDraftTechStacks] =
@@ -1441,6 +1356,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     sortOptions.find((option) => option.value === sortMode)?.label ??
     "Order asc";
   const canReorder =
+    reorderMode &&
     viewMode === "list" &&
     !batchMode &&
     sortMode === "order" &&
@@ -1448,299 +1364,312 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     featured === "all" &&
     selectedTechStacks.length === 0 &&
     query.trim().length === 0 &&
-    filteredProjects.length <= itemsPerPage;
+    filteredProjects.length === items.length;
+
+  const toggleReorderMode = () => {
+    if (reorderMode) {
+      setReorderMode(false);
+      return;
+    }
+    resetFilters();
+    setQuery("");
+    clearSelection();
+    setPage(1);
+    setViewMode("list");
+    setReorderMode(true);
+  };
 
   const handleReorder = (nextProjects: DashboardProject[]) => {
     setItems(nextProjects);
   };
 
   return (
-    <div className={dashboardStyles.page}>
-      <div className="flex justify-between items-start gap-4">
-        <div className="min-w-0">
-          <h1 className="font-heading font-bold text-3xl">Projects</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
-            Manage portfolio drafts, published case studies, media, and display
-            order.
-          </p>
-        </div>
-        <Button
-          role="link"
-          render={<Link href="/dashboard/projects/new" />}
-          nativeButton={false}
-          size="icon"
-          className="md:px-4 rounded-full md:rounded-3xl md:w-auto md:h-9 size-10 shrink-0"
-        >
-          <PlusIcon data-icon="inline-start" />
-          <span className="sr-only md:not-sr-only">New Project</span>
-        </Button>
-      </div>
-
-      <div className={dashboardStyles.statGrid}>
-        <ProjectsStatCard
-          label="Total Projects"
-          value={stats.total}
-          description="All time"
-          icon={<BriefcaseIcon />}
-          iconClassName="bg-sky-500/12 text-sky-300"
-          className="text-sky-300"
-        />
-        <ProjectsStatCard
-          label="Published"
-          value={stats.published}
-          description={`${stats.total ? Math.round((stats.published / stats.total) * 100) : 0}% of total`}
-          icon={<EyeIcon />}
-          iconClassName="bg-emerald-500/12 text-emerald-300"
-          className="text-emerald-300"
-        />
-        <ProjectsStatCard
-          label="Drafts"
-          value={stats.drafts}
-          description={`${stats.total ? Math.round((stats.drafts / stats.total) * 100) : 0}% of total`}
-          icon={<PencilSimpleIcon />}
-          iconClassName="bg-amber-500/12 text-amber-300"
-          className="text-amber-300"
-        />
-        <ProjectsStatCard
-          label="Featured"
-          value={stats.featured}
-          description="Home and projects priority"
-          icon={<SparkleIcon />}
-          iconClassName="bg-fuchsia-500/12 text-fuchsia-300"
-          className="text-fuchsia-300"
-        />
-      </div>
-
-      <Card className={dashboardStyles.toolbarCard}>
-        <CardContent className={dashboardStyles.toolbarContent}>
-          <div className="md:hidden gap-3 grid">
-            <div className="flex gap-2 min-w-0">
-              <div className="relative flex-1 min-w-0">
-                <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
-                <Input
-                  ref={mobileSearchInputRef}
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search projects..."
-                  className="bg-input/45 pr-14 pl-9 rounded-2xl h-10"
-                  aria-label="Search projects"
-                />
-                <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
-                  ⌘ K
-                </Kbd>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="bg-input/35 rounded-2xl h-10 shrink-0"
-                onClick={(event) => blurBeforeOpen(event, openFilters)}
-              >
-                <FunnelSimpleIcon data-icon="inline-start" />
-                Filters
-              </Button>
-              <Button
-                type="button"
-                variant={batchMode ? "secondary" : "outline"}
-                className="bg-input/35 rounded-2xl h-10 shrink-0"
-                onClick={toggleBatchMode}
-              >
-                {batchMode ? "Cancel" : "Select"}
-              </Button>
-            </div>
-          </div>
-
-          <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_140px_140px_160px_auto] min-w-0">
-            <div className="relative md:col-span-2 xl:col-span-1 min-w-0">
-              <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
-              <Input
-                ref={desktopSearchInputRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search projects..."
-                className="bg-input/45 pr-14 pl-9 rounded-2xl h-11"
-                aria-label="Search projects"
-              />
-              <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
-                ⌘ K
-              </Kbd>
-            </div>
-            <FilterDropdown
-              label="Status"
-              value={status}
-              displayValue={statusDisplay}
-              options={statusOptions}
-              onValueChange={setStatus}
-            />
-            <FilterDropdown
-              label="Featured"
-              value={featured}
-              displayValue={featuredDisplay}
-              options={featuredOptions}
-              onValueChange={setFeatured}
-            />
-            <TechStackDropdown
-              techStacks={techStacks}
-              selectedTechStacks={selectedTechStacks}
-              onToggleTechStack={toggleTechStack}
-              onClear={() => setSelectedTechStacks([])}
-            />
-            <FilterDropdown
-              label="Sort by"
-              value={sortMode}
-              displayValue={sortDisplay}
-              options={sortOptions}
-              onValueChange={setSortMode}
-            />
-            <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
-              <ViewToggle
-                viewMode={viewMode}
-                onViewModeChange={handleViewModeChange}
-              />
-              <Button
-                type="button"
-                variant={batchMode ? "secondary" : "outline"}
-                className="bg-input/35 rounded-2xl h-11 shrink-0"
-                onClick={toggleBatchMode}
-              >
-                {batchMode ? "Cancel" : "Select"}
-              </Button>
-            </div>
-          </div>
-          {selectedTechStacks.length > 0 && (
-            <div className="hidden md:flex flex-wrap items-center gap-2 mt-3">
-              <span className="text-muted-foreground text-xs">
-                Active tech:
-              </span>
-              {selectedTechStacks.map((techStack) => (
-                <Button
-                  key={techStack}
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="px-2.5 rounded-full h-7 text-xs"
-                  onClick={() => toggleTechStack(techStack)}
-                >
-                  {techStack}
-                  <span className="ml-1 text-muted-foreground">×</span>
-                </Button>
-              ))}
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="px-2.5 rounded-full h-7 text-xs"
-                onClick={() => setSelectedTechStacks([])}
-              >
-                Clear
-              </Button>
-            </div>
-          )}
-          {!canReorder && viewMode === "list" && (
-            <p className="mt-3 text-muted-foreground text-xs">
-              {batchMode
-                ? "Reordering is paused while selecting projects."
-                : "Reordering is available only in list view with order sorting, no active filters, and all projects visible on one page."}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {batchMode && (
-        <ProjectsBatchActionsBar
-          selectedCount={selectedIds.size}
-          isPending={isBatchPending}
-          onPublish={() =>
-            runBatchAction(
-              actionPublishProjects,
-              "Selected projects published.",
-            )
-          }
-          onMoveToDraft={() =>
-            runBatchAction(
-              actionMoveProjectsToDraft,
-              "Selected projects moved to draft.",
-            )
-          }
-          onDelete={() =>
-            runBatchAction(actionDeleteProjects, "Selected projects deleted.")
-          }
-          onCancel={clearSelection}
-        />
-      )}
-
-      {filteredProjects.length === 0 ? (
-        <div className={dashboardStyles.emptyState}>
-          <BriefcaseIcon className="size-12 text-muted-foreground/50" />
-          <div>
-            <p className="font-medium">No projects found</p>
-            <p className="mt-1 text-muted-foreground text-sm">
-              Adjust the filters or create a new portfolio entry.
+    <Drawer
+      open={filtersOpen}
+      onOpenChange={handleFiltersOpenChange}
+      swipeDirection="down"
+      showSwipeHandle
+    >
+      <div className={dashboardStyles.page}>
+        <div className="flex justify-between items-start gap-4">
+          <div className="min-w-0">
+            <h1 className="font-heading font-bold text-3xl">Projects</h1>
+            <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
+              Manage portfolio drafts, published case studies, media, and
+              display order.
             </p>
           </div>
           <Button
             role="link"
             render={<Link href="/dashboard/projects/new" />}
             nativeButton={false}
+            className="md:px-4 md:w-auto shrink-0"
           >
             <PlusIcon data-icon="inline-start" />
-            New Project
+            <span>New Project</span>
           </Button>
         </div>
-      ) : (
-        <>
-          {viewMode === "grid" ? (
-            <>
-              <div className="hidden md:block">
-                <ProjectsGrid
-                  projects={paginatedProjects}
-                  batchMode={batchMode}
-                  selectedIds={selectedIds}
-                  onToggleProject={toggleProjectSelection}
-                />
-              </div>
-              <div className="md:hidden">
-                <ProjectsList
-                  projects={paginatedProjects}
-                  canReorder={false}
-                  batchMode={batchMode}
-                  selectedIds={selectedIds}
-                  onReorder={handleReorder}
-                  onToggleProject={toggleProjectSelection}
-                />
-              </div>
-            </>
-          ) : (
-            <ProjectsList
-              projects={paginatedProjects}
-              canReorder={canReorder}
-              batchMode={batchMode}
-              selectedIds={selectedIds}
-              onReorder={handleReorder}
-              onToggleProject={toggleProjectSelection}
-            />
-          )}
 
-          <ProjectsPagination
-            firstIndex={firstIndex}
-            lastIndex={lastIndex}
-            total={filteredProjects.length}
-            page={currentPage}
-            pageCount={pageCount}
-            itemsPerPage={itemsPerPage}
-            itemsPerPageOptions={itemsPerPageOptions}
-            onPageChange={setPage}
-            onItemsPerPageChange={setItemsPerPage}
+        <DashboardSummary
+          items={[
+            { label: "Projects", value: stats.total },
+            { label: "Published", value: stats.published },
+            { label: "Drafts", value: stats.drafts },
+            {
+              label: "Marked featured",
+              value: stats.featured,
+              description: "Includes drafts",
+            },
+          ]}
+        />
+
+        <div className="flex flex-wrap justify-between items-center gap-3">
+          <p className="text-muted-foreground text-sm" role="status">
+            {reorderMode
+              ? `Reordering all ${items.length} projects. Changes save as you move items.`
+              : "Reorder clears filters and shows all projects in display order."}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={toggleReorderMode}
+            aria-pressed={reorderMode}
+            disabled={items.length < 2}
+          >
+            {reorderMode ? "Done reordering" : "Reorder"}
+          </Button>
+        </div>
+
+        {!reorderMode && (
+          <Card className={dashboardStyles.toolbarCard}>
+            <CardContent className={dashboardStyles.toolbarContent}>
+              <div className="md:hidden gap-3 grid">
+                <div className="flex flex-wrap gap-2 min-w-0">
+                  <div className="relative min-w-0 basis-full">
+                    <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
+                    <Input
+                      ref={mobileSearchInputRef}
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Search projects..."
+                      className="pr-14 pl-9"
+                      aria-label="Search projects"
+                    />
+                    <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
+                      ⌘ K
+                    </Kbd>
+                  </div>
+                  <DrawerTrigger
+                    render={
+                      <Button
+                        ref={filtersTriggerRef}
+                        type="button"
+                        variant="outline"
+                      />
+                    }
+                  >
+                    <FunnelSimpleIcon data-icon="inline-start" />
+                    Filters
+                  </DrawerTrigger>
+                  <Button
+                    type="button"
+                    variant={batchMode ? "secondary" : "outline"}
+                    className="shrink-0"
+                    onClick={toggleBatchMode}
+                  >
+                    {batchMode ? "Cancel" : "Select"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(180px,1fr)_140px_minmax(180px,1fr)_150px_auto] min-w-0">
+                <div className="md:col-span-full">
+                  <FilterDropdown
+                    label="Status"
+                    value={status}
+                    displayValue={statusDisplay}
+                    options={statusOptions}
+                    onValueChange={setStatus}
+                  />
+                </div>
+
+                <div className="relative md:col-span-2 xl:col-span-1 min-w-0">
+                  <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
+                  <Input
+                    ref={desktopSearchInputRef}
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search projects..."
+                    className="pr-14 pl-9"
+                    aria-label="Search projects"
+                  />
+                  <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
+                    ⌘ K
+                  </Kbd>
+                </div>
+
+                <FilterDropdown
+                  label="Featured"
+                  value={featured}
+                  displayValue={featuredDisplay}
+                  options={featuredOptions}
+                  onValueChange={setFeatured}
+                />
+                <TechStackDropdown
+                  techStacks={techStacks}
+                  selectedTechStacks={selectedTechStacks}
+                  onValueChange={setSelectedTechStacks}
+                />
+                <FilterDropdown
+                  label="Sort by"
+                  value={sortMode}
+                  displayValue={sortDisplay}
+                  options={sortOptions}
+                  onValueChange={setSortMode}
+                />
+                <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
+                  <ViewToggle
+                    viewMode={viewMode}
+                    onViewModeChange={handleViewModeChange}
+                  />
+                  <Button
+                    type="button"
+                    variant={batchMode ? "secondary" : "outline"}
+                    className="shrink-0"
+                    onClick={toggleBatchMode}
+                  >
+                    {batchMode ? "Cancel" : "Select"}
+                  </Button>
+                </div>
+              </div>
+              {selectedTechStacks.length > 0 && (
+                <div className="hidden md:flex flex-wrap items-center gap-2 mt-3">
+                  <span className="text-muted-foreground text-xs">
+                    Active tech:
+                  </span>
+                  {selectedTechStacks.map((techStack) => (
+                    <Button
+                      key={techStack}
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="px-2.5"
+                      onClick={() => toggleTechStack(techStack)}
+                    >
+                      {techStack}
+                      <span className="ml-1 text-muted-foreground">×</span>
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="px-2.5"
+                    onClick={() => setSelectedTechStacks([])}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {batchMode && (
+          <ProjectsBatchActionsBar
+            selectedCount={selectedIds.size}
+            isPending={isBatchPending}
+            onPublish={() =>
+              runBatchAction(
+                actionPublishProjects,
+                "Selected projects published.",
+              )
+            }
+            onMoveToDraft={() =>
+              runBatchAction(
+                actionMoveProjectsToDraft,
+                "Selected projects moved to draft.",
+              )
+            }
+            onDelete={() =>
+              runBatchAction(actionDeleteProjects, "Selected projects deleted.")
+            }
+            onCancel={clearSelection}
           />
-        </>
-      )}
+        )}
 
-      <Drawer
-        open={filtersOpen}
-        onOpenChange={handleFiltersOpenChange}
-        swipeDirection="down"
-        showSwipeHandle
-      >
-        <DrawerContent className="before:top-2 before:bottom-0 before:inset-x-0 p-0 before:rounded-t-4xl before:rounded-b-none">
+        {filteredProjects.length === 0 ? (
+          <div className={dashboardStyles.emptyState}>
+            <BriefcaseIcon className="size-12 text-muted-foreground/50" />
+            <div>
+              <p className="font-medium">No projects found</p>
+              <p className="mt-1 text-muted-foreground text-sm">
+                Adjust the filters or create a new portfolio entry.
+              </p>
+            </div>
+            <Button
+              role="link"
+              render={<Link href="/dashboard/projects/new" />}
+              nativeButton={false}
+            >
+              <PlusIcon data-icon="inline-start" />
+              New Project
+            </Button>
+          </div>
+        ) : (
+          <>
+            {viewMode === "grid" ? (
+              <>
+                <div className="hidden md:block">
+                  <ProjectsGrid
+                    projects={paginatedProjects}
+                    batchMode={batchMode}
+                    selectedIds={selectedIds}
+                    onToggleProject={toggleProjectSelection}
+                  />
+                </div>
+                <div className="md:hidden">
+                  <ProjectsList
+                    projects={paginatedProjects}
+                    canReorder={false}
+                    batchMode={batchMode}
+                    selectedIds={selectedIds}
+                    onReorder={handleReorder}
+                    onToggleProject={toggleProjectSelection}
+                  />
+                </div>
+              </>
+            ) : (
+              <ProjectsList
+                projects={reorderMode ? filteredProjects : paginatedProjects}
+                canReorder={canReorder}
+                batchMode={batchMode}
+                selectedIds={selectedIds}
+                onReorder={handleReorder}
+                onToggleProject={toggleProjectSelection}
+              />
+            )}
+
+            {!reorderMode && (
+              <ProjectsPagination
+                firstIndex={firstIndex}
+                lastIndex={lastIndex}
+                total={filteredProjects.length}
+                page={currentPage}
+                pageCount={pageCount}
+                itemsPerPage={itemsPerPage}
+                itemsPerPageOptions={itemsPerPageOptions}
+                onPageChange={setPage}
+                onItemsPerPageChange={setItemsPerPage}
+              />
+            )}
+          </>
+        )}
+
+        <DrawerContent
+          finalFocus={filtersTriggerRef}
+          className="before:top-2 before:bottom-0 before:inset-x-0 p-0"
+        >
           <DrawerHeader>
             <DrawerTitle>Filters</DrawerTitle>
             <DrawerDescription>
@@ -1777,7 +1706,6 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
                   type="button"
                   size="sm"
                   variant={draftTechStacks.length === 0 ? "default" : "outline"}
-                  className="rounded-xl"
                   onClick={() => setDraftTechStacks([])}
                 >
                   All Tech
@@ -1792,7 +1720,6 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
                         ? "default"
                         : "outline"
                     }
-                    className="rounded-xl"
                     onClick={() => toggleDraftTechStack(techStack)}
                   >
                     {techStack}
@@ -1813,25 +1740,16 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
           </div>
           <DrawerFooter>
             <div className="gap-2 grid grid-cols-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-2xl"
-                onClick={resetFilters}
-              >
+              <Button type="button" variant="outline" onClick={resetFilters}>
                 Reset filters
               </Button>
-              <Button
-                type="button"
-                className="rounded-2xl"
-                onClick={applyFilters}
-              >
+              <Button type="button" onClick={applyFilters}>
                 Apply filters
               </Button>
             </div>
           </DrawerFooter>
         </DrawerContent>
-      </Drawer>
-    </div>
+      </div>
+    </Drawer>
   );
 }

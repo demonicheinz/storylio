@@ -1,58 +1,17 @@
-import {
-  ArticleIcon,
-  ChatCircleIcon,
-  EyeIcon,
-  FolderOpenIcon,
-  ImageIcon,
-} from "@phosphor-icons/react/dist/ssr";
+import { EyeIcon } from "@phosphor-icons/react/dist/ssr";
 import { asc } from "drizzle-orm";
 import Link from "next/link";
 import { connection } from "next/server";
-import type { ComponentType } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getAboutContentUncached } from "@/features/about/data";
 import { AboutContentForm } from "@/features/dashboard/about/components/content-form";
 import { AboutStructuredManager } from "@/features/dashboard/about/components/structured-manager";
 import { DashboardRouteBoundary } from "@/features/dashboard/shared/components/route-boundary";
+import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
-import { cn } from "@/lib/utils";
-
-type StatCardProps = {
-  icon: ComponentType<{ className?: string }>;
-  label: string;
-  value: number;
-  description: string;
-  iconClassName: string;
-};
-
-function AboutStatCard({
-  icon: Icon,
-  label,
-  value,
-  description,
-  iconClassName,
-}: StatCardProps) {
-  return (
-    <Card className={dashboardStyles.statCard}>
-      <CardContent className={dashboardStyles.statContent}>
-        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
-          <Icon className="size-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="font-heading font-bold text-xl">{value}</p>
-          <p className="text-[11px] text-muted-foreground">{label}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground/80">
-            {description}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function DashboardAboutPage() {
   return (
@@ -107,7 +66,7 @@ async function DashboardAboutContent() {
     <div className={dashboardStyles.page}>
       <div className={dashboardStyles.header}>
         <div className="min-w-0">
-          <h1 className="font-heading font-bold text-3xl">About</h1>
+          <h1 className="font-heading font-semibold text-3xl">About</h1>
           <p className="mt-2 text-muted-foreground">
             Manage bilingual About content and its structured public sections.
           </p>
@@ -117,7 +76,6 @@ async function DashboardAboutContent() {
           render={<Link href="/about" target="_blank" />}
           nativeButton={false}
           variant="outline"
-          className="rounded-2xl"
         >
           <EyeIcon data-icon="inline-start" />
           Preview About Page
@@ -125,60 +83,31 @@ async function DashboardAboutContent() {
       </div>
 
       <Tabs defaultValue="content" className="flex flex-col gap-5 min-w-0">
-        <div className={dashboardStyles.statGrid}>
-          <AboutStatCard
-            icon={ArticleIcon}
-            label="Content"
-            value={aboutContent ? 1 : 0}
-            description="About record"
-            iconClassName="bg-sky-500/12 text-sky-300"
-          />
-          <AboutStatCard
-            icon={FolderOpenIcon}
-            label="Experience"
-            value={experiences.length}
-            description="Work entries"
-            iconClassName="bg-emerald-500/12 text-emerald-300"
-          />
-          <AboutStatCard
-            icon={ImageIcon}
-            label="Education"
-            value={education.length}
-            description="History entries"
-            iconClassName="bg-violet-500/12 text-violet-300"
-          />
-          <AboutStatCard
-            icon={ChatCircleIcon}
-            label="Skills"
-            value={skillsCount}
-            description={`${visibleSkillsCount} of ${skillsCount} visible`}
-            iconClassName="bg-amber-500/12 text-amber-300"
-          />
-        </div>
+        <DashboardSummary
+          items={[
+            { label: "Work entries", value: experiences.length },
+            { label: "Education entries", value: education.length },
+            {
+              label: "Skills visible",
+              value: `${visibleSkillsCount} of ${skillsCount}`,
+            },
+          ]}
+        />
 
-        <TabsList className="content-center grid grid-cols-4 bg-card/55 p-1.5 border border-border/60 rounded-2xl w-full xl:w-fit min-w-0 xl:min-w-lg h-auto min-h-12">
-          <TabsTrigger
-            value="content"
-            className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
-          >
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full sm:w-fit h-auto">
+          <TabsTrigger value="content" className="min-w-0 text-xs sm:text-sm">
             Content
           </TabsTrigger>
           <TabsTrigger
             value="experience"
-            className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
+            className="min-w-0 text-xs sm:text-sm"
           >
             Experience
           </TabsTrigger>
-          <TabsTrigger
-            value="education"
-            className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
-          >
+          <TabsTrigger value="education" className="min-w-0 text-xs sm:text-sm">
             Education
           </TabsTrigger>
-          <TabsTrigger
-            value="skills"
-            className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
-          >
+          <TabsTrigger value="skills" className="min-w-0 text-xs sm:text-sm">
             Skills
           </TabsTrigger>
         </TabsList>

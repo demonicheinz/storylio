@@ -72,6 +72,11 @@ import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
+import {
+  DashboardSelect,
+  DashboardViewToggle,
+} from "@/features/dashboard/shared/components/filter-controls";
+import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { uploadFile as uploadImageFile } from "@/features/dashboard/shared/utils/upload";
 import {
@@ -175,7 +180,7 @@ function FormatBadge({ format }: { format: string }) {
     <Badge
       variant="secondary"
       className={cn(
-        "text-[10px]",
+        "text-xs",
         normalizedFormat === "jpg" || normalizedFormat === "jpeg"
           ? "bg-sky-500/12 text-sky-300"
           : normalizedFormat === "png"
@@ -207,15 +212,16 @@ function MediaActionsMenu({
   onCopy: (url: string) => void;
   onDelete: (item: MediaItem) => void;
 }) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
           <Button
+            ref={triggerRef}
             type="button"
             size="icon"
             variant="ghost"
-            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
             aria-label={`Open actions for ${item.filename}`}
           />
         }
@@ -223,7 +229,12 @@ function MediaActionsMenu({
         <DotsThreeVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuItem onClick={() => onSelect(item)}>
+        <DropdownMenuItem
+          onClick={() => {
+            triggerRef.current?.focus();
+            onSelect(item);
+          }}
+        >
           <ImageIcon data-icon="inline-start" />
           Details
         </DropdownMenuItem>
@@ -259,41 +270,9 @@ function MediaActionsMenu({
   );
 }
 
-function MediaStatCard({
-  label,
-  value,
-  description,
-  icon,
-  iconClassName,
-}: {
-  label: string;
-  value: string | number;
-  description: string;
-  icon: ReactNode;
-  iconClassName: string;
-}) {
-  return (
-    <Card className={dashboardStyles.statCard}>
-      <CardContent className={dashboardStyles.statContent}>
-        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <p className="font-heading font-bold text-xl">{value}</p>
-          <p className="text-[11px] text-muted-foreground">{label}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground/80">
-            {description}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function FilterDropdown<T extends string>({
   label,
   value,
-  displayValue,
   options,
   onValueChange,
 }: {
@@ -304,39 +283,12 @@ function FilterDropdown<T extends string>({
   onValueChange: (value: T) => void;
 }) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            className="justify-between bg-input/35 px-3 rounded-2xl w-full min-w-0 h-11"
-          />
-        }
-      >
-        <span className="min-w-0 text-left">
-          <span className="block text-[10px] text-muted-foreground leading-none">
-            {label}
-          </span>
-          <span className="block mt-1 font-medium text-xs truncate">
-            {displayValue}
-          </span>
-        </span>
-        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuRadioGroup
-          value={value}
-          onValueChange={(nextValue) => onValueChange(nextValue as T)}
-        >
-          {options.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
-              {option.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <DashboardSelect
+      label={label}
+      value={value}
+      options={options}
+      onValueChange={onValueChange}
+    />
   );
 }
 
@@ -348,30 +300,7 @@ function ViewToggle({
   onViewModeChange: (mode: ViewMode) => void;
 }) {
   return (
-    <div className="justify-self-end grid grid-cols-2 bg-background/35 p-1 border border-border/60 rounded-xl w-fit shrink-0">
-      <Button
-        type="button"
-        size="icon"
-        variant={viewMode === "grid" ? "default" : "ghost"}
-        className="rounded-lg size-8"
-        onClick={() => onViewModeChange("grid")}
-        aria-label="Grid view"
-        aria-pressed={viewMode === "grid"}
-      >
-        <GridFourIcon />
-      </Button>
-      <Button
-        type="button"
-        size="icon"
-        variant={viewMode === "list" ? "default" : "ghost"}
-        className="rounded-lg size-8"
-        onClick={() => onViewModeChange("list")}
-        aria-label="List view"
-        aria-pressed={viewMode === "list"}
-      >
-        <ListBulletsIcon />
-      </Button>
-    </div>
+    <DashboardViewToggle value={viewMode} onValueChange={onViewModeChange} />
   );
 }
 
@@ -384,6 +313,7 @@ function MediaDetailDrawer({
   onRename,
   onCopy,
   onDelete,
+  returnFocus,
 }: {
   children?: ReactNode;
   item: MediaItem | null;
@@ -393,6 +323,7 @@ function MediaDetailDrawer({
   onRename: (item: MediaItem) => void;
   onCopy: (url: string) => void;
   onDelete: (item: MediaItem) => void;
+  returnFocus: React.RefObject<HTMLElement | null>;
 }) {
   const aspectRatio = item ? getMediaAspectRatio(item) : 1;
   const metadata = item
@@ -416,11 +347,12 @@ function MediaDetailDrawer({
       }}
     >
       <DrawerContent
+        finalFocus={returnFocus}
         className={cn(
           "p-0 overflow-hidden",
           direction === "right"
-            ? "h-dvh before:inset-y-0! before:right-0! before:left-0! before:rounded-l-4xl! before:rounded-r-none!"
-            : "max-h-[86vh] before:inset-x-0! before:top-2! before:bottom-0! before:rounded-b-none!",
+            ? "h-dvh before:inset-y-0! before:right-0! before:left-0!"
+            : "max-h-[86vh] before:inset-x-0! before:top-2! before:bottom-0!",
         )}
       >
         <DrawerHeader className="sr-only p-0">
@@ -452,7 +384,7 @@ function MediaDetailDrawer({
               </div>
 
               <h2
-                className="mt-4 font-heading font-semibold text-xl truncate leading-tight"
+                className="mt-4 font-semibold text-xl truncate leading-tight"
                 title={item.filename}
               >
                 {item.filename}
@@ -564,28 +496,6 @@ function MediaCard({
         isSelectionMode ? "cursor-pointer" : "cursor-zoom-in",
         isSelected ? "border-primary/70" : "border-border/70",
       )}
-      role="button"
-      tabIndex={0}
-      aria-pressed={isSelected}
-      onClick={() => {
-        if (isSelectionMode) {
-          onToggleSelection(item);
-          return;
-        }
-
-        onSelect(item);
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          if (isSelectionMode) {
-            onToggleSelection(item);
-            return;
-          }
-
-          onSelect(item);
-        }
-      }}
     >
       <div className="relative bg-muted/35 aspect-square overflow-hidden">
         <Image
@@ -595,12 +505,21 @@ function MediaCard({
           className="object-cover"
           sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
         />
+        <button
+          type="button"
+          className="absolute inset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+          aria-label={`${isSelectionMode ? "Select" : "Preview"} ${item.filename}`}
+          aria-pressed={isSelectionMode ? isSelected : undefined}
+          onClick={(event) => {
+            event.currentTarget.focus();
+            if (isSelectionMode) onToggleSelection(item);
+            else onSelect(item);
+          }}
+        />
         <div
           className={cn(
             "top-3 left-3 absolute transition-opacity",
-            isSelectionMode || isSelected
-              ? "opacity-100"
-              : "opacity-0 group-hover:opacity-100",
+            isSelectionMode || isSelected ? "opacity-100" : "hidden",
           )}
           onClick={(event) => event.stopPropagation()}
         >
@@ -608,11 +527,10 @@ function MediaCard({
             checked={isSelected}
             onCheckedChange={() => onToggleSelection(item)}
             aria-label={`Select ${item.filename}`}
-            className="bg-background/80 backdrop-blur border-border/70"
           />
         </div>
         <div
-          className="top-3 right-3 absolute opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity"
+          className="top-3 right-3 absolute"
           onClick={(event) => event.stopPropagation()}
         >
           <MediaActionsMenu
@@ -630,7 +548,7 @@ function MediaCard({
         <p className="font-medium text-xs truncate" title={item.filename}>
           {item.filename}
         </p>
-        <div className="flex items-center gap-1.5 min-w-0 text-[10px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0 text-muted-foreground text-xs">
           <FormatBadge format={item.format} />
           <span className="shrink-0">{formatBytes(item.size)}</span>
           <span aria-hidden="true">·</span>
@@ -675,28 +593,6 @@ function MediaListRow({
           : "xl:grid-cols-[minmax(0,1fr)_110px_120px_130px_92px]",
         isSelected && "bg-primary/5",
       )}
-      role="button"
-      tabIndex={0}
-      aria-pressed={isSelected}
-      onClick={() => {
-        if (isSelectionMode) {
-          onToggleSelection(item);
-          return;
-        }
-
-        onSelect(item);
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          if (isSelectionMode) {
-            onToggleSelection(item);
-            return;
-          }
-
-          onSelect(item);
-        }
-      }}
     >
       {isSelectionMode && (
         <div
@@ -710,7 +606,17 @@ function MediaListRow({
           />
         </div>
       )}
-      <div className="flex items-center gap-3 min-w-0">
+      <button
+        type="button"
+        className="flex items-center gap-3 min-w-0 text-left"
+        aria-label={`${isSelectionMode ? "Select" : "Preview"} ${item.filename}`}
+        aria-pressed={isSelectionMode ? isSelected : undefined}
+        onClick={(event) => {
+          event.currentTarget.focus();
+          if (isSelectionMode) onToggleSelection(item);
+          else onSelect(item);
+        }}
+      >
         <div className="relative bg-muted/35 border border-border/50 rounded-xl w-20 h-14 overflow-hidden shrink-0">
           <Image
             src={item.url}
@@ -728,7 +634,7 @@ function MediaListRow({
             {item.publicId}
           </p>
         </div>
-      </div>
+      </button>
       <div className="hidden xl:block">
         <FormatBadge format={item.format} />
       </div>
@@ -800,7 +706,6 @@ function MediaPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="rounded-xl size-8"
         disabled={page <= 1}
         onClick={() => onPageChange(Math.max(1, page - 1))}
         aria-label="Previous page"
@@ -816,7 +721,6 @@ function MediaPagination({
             type="button"
             size="icon"
             variant={pageNumber === page ? "default" : "outline"}
-            className="rounded-xl size-8"
             onClick={() => onPageChange(pageNumber)}
             aria-current={pageNumber === page ? "page" : undefined}
           >
@@ -828,7 +732,6 @@ function MediaPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="rounded-xl size-8"
         disabled={page >= pageCount}
         onClick={() => onPageChange(Math.min(pageCount, page + 1))}
         aria-label="Next page"
@@ -887,14 +790,7 @@ function MediaItemsPerPageDropdown({
       )}
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="bg-input/35 rounded-xl"
-            />
-          }
+          render={<Button type="button" variant="outline" size="sm" />}
         >
           {value}
           <CaretDownIcon className="size-3.5" />
@@ -905,7 +801,11 @@ function MediaItemsPerPageDropdown({
             onValueChange={(nextValue) => onValueChange(Number(nextValue))}
           >
             {options.map((option) => (
-              <DropdownMenuRadioItem key={option} value={String(option)}>
+              <DropdownMenuRadioItem
+                key={option}
+                value={String(option)}
+                closeOnClick={true}
+              >
                 {option}
               </DropdownMenuRadioItem>
             ))}
@@ -917,6 +817,7 @@ function MediaItemsPerPageDropdown({
 }
 
 export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
+  const detailTriggerRef = useRef<HTMLElement | null>(null);
   const [media, setMedia] = useState(initialMedia);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -1026,11 +927,16 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
       setIsDragging(false);
 
       const files = Array.from(e.dataTransfer.files);
+      if (isUploading) return;
+      if (files.length > 1) {
+        toast.add({ title: "Upload one image at a time.", type: "error" });
+        return;
+      }
       if (files.length > 0) {
         uploadFile(files[0]);
       }
     },
-    [uploadFile],
+    [uploadFile, isUploading],
   );
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -1072,6 +978,10 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
 
   const openMediaDetails = useCallback(
     (item: MediaItem) => {
+      detailTriggerRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
       scheduleOverlayOpen(() => setSelectedMedia(item));
     },
     [scheduleOverlayOpen],
@@ -1356,44 +1266,19 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
         <Button
           onClick={() => inputRef.current?.click()}
           disabled={isUploading}
-          size="icon"
-          className="md:px-4 rounded-full md:rounded-3xl md:w-auto md:h-9 size-10 shrink-0"
+          className="md:px-4 md:w-auto shrink-0"
         >
           <CloudArrowUpIcon data-icon="inline-start" />
-          <span className="sr-only md:not-sr-only">Upload</span>
+          <span>Upload</span>
         </Button>
       </div>
 
-      <div className={dashboardStyles.statGrid}>
-        <MediaStatCard
-          label="Total Images"
-          value={stats.total}
-          description="Stored in Cloudinary"
-          icon={<ImageIcon />}
-          iconClassName="bg-sky-500/12 text-sky-300"
-        />
-        <MediaStatCard
-          label="Storage Used"
-          value={formatBytes(stats.totalSize)}
-          description="Original uploaded size"
-          icon={<CloudArrowUpIcon />}
-          iconClassName="bg-emerald-500/12 text-emerald-300"
-        />
-        <MediaStatCard
-          label="Optimized Metadata"
-          value={`${stats.optimized}/${stats.total}`}
-          description="Dimensions and blur ready"
-          icon={<CopyIcon />}
-          iconClassName="bg-fuchsia-500/12 text-fuchsia-300"
-        />
-        <MediaStatCard
-          label="Large Files"
-          value={stats.largeFiles}
-          description="Larger than 2MB"
-          icon={<DownloadSimpleIcon />}
-          iconClassName="bg-amber-500/12 text-amber-300"
-        />
-      </div>
+      <DashboardSummary
+        items={[
+          { label: "Images", value: stats.total },
+          { label: "Storage", value: formatBytes(stats.totalSize) },
+        ]}
+      />
 
       <input
         ref={inputRef}
@@ -1414,10 +1299,10 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search media..."
-                className="bg-input/45 pr-14 pl-9 rounded-2xl h-11"
+                className="pr-14 pl-9"
                 aria-label="Search media"
               />
-              <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
+              <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
                 ⌘ K
               </Kbd>
             </div>
@@ -1451,6 +1336,16 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
                 onViewModeChange={handleViewModeChange}
               />
             </div>
+            {!isSelectionMode && media.length > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsSelectionMode(true)}
+                disabled={filteredMedia.length === 0}
+              >
+                Select media
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -1469,9 +1364,9 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
               }
             }}
             className={cn(
-              "hidden md:flex flex-col justify-center items-center gap-2 mb-4 p-5 border border-dashed rounded-2xl transition-all duration-200 cursor-pointer",
+              "flex items-center gap-3 mb-4 p-3 border border-dashed rounded-xl transition-colors cursor-pointer",
               isDragging
-                ? "border-primary bg-primary/5 shadow-[0_0_24px_-4px] shadow-primary/20"
+                ? "border-primary bg-primary/5"
                 : "border-border hover:border-primary/50 hover:bg-muted/20",
               isUploading && "pointer-events-none opacity-50",
             )}
@@ -1485,20 +1380,18 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
               </>
             ) : (
               <>
-                <ImageIcon className="size-8 text-muted-foreground" />
-                <div className="text-center">
-                  <p className="font-medium text-sm">
-                    Drop an image here or click to upload
-                  </p>
+                <CloudArrowUpIcon className="size-5 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="font-medium text-sm">Upload one image</p>
                   <p className="mt-1 text-muted-foreground text-xs">
-                    JPG, PNG, WebP, GIF — max 10MB
+                    Drop here or choose a file. JPG, PNG, WebP, GIF · max 10MB
                   </p>
                 </div>
               </>
             )}
           </div>
 
-          {media.length > 0 && (
+          {media.length > 0 && isSelectionMode && (
             <div className="flex md:flex-row flex-col md:justify-between md:items-center gap-3 bg-background/35 mb-4 p-3 border border-border/70 rounded-2xl">
               <div className="min-w-0">
                 <p className="font-medium text-sm">
@@ -1643,6 +1536,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
       </Card>
 
       <MediaDetailDrawer
+        returnFocus={detailTriggerRef}
         item={selectedMedia}
         direction={drawerDirection}
         isPending={isPending}

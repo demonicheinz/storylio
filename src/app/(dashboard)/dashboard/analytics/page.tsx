@@ -1,12 +1,6 @@
-import {
-  ArticleIcon,
-  ChartLineIcon,
-  EyeIcon,
-  FolderIcon,
-  ImagesIcon,
-  QuotesIcon,
-} from "@phosphor-icons/react/dist/ssr";
+import { ChartLineIcon, EyeIcon } from "@phosphor-icons/react/dist/ssr";
 import { desc, eq, gte, sum } from "drizzle-orm";
+import Link from "next/link";
 import { connection } from "next/server";
 import { type ReactNode, Suspense } from "react";
 import {
@@ -24,6 +18,7 @@ import {
   UmamiPanelClient,
   UmamiPanelSkeleton,
 } from "@/features/dashboard/analytics/components/umami-panel";
+import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { db } from "@/lib/db";
 import { PostStatus, ProjectStatus } from "@/lib/db/enums";
@@ -35,16 +30,7 @@ import {
   viewEvent,
 } from "@/lib/db/schema";
 import { getUmamiAnalytics } from "@/lib/umami";
-import { cn, formatDate } from "@/lib/utils";
 import AnalyticsLoading from "./loading";
-
-type AnalyticsStatCardProps = {
-  label: string;
-  value: number;
-  description: string;
-  icon: ReactNode;
-  iconClassName: string;
-};
 
 type RankedContent = {
   id: string;
@@ -169,33 +155,6 @@ async function getAnalyticsData() {
   };
 }
 
-function AnalyticsStatCard({
-  description,
-  icon,
-  iconClassName,
-  label,
-  value,
-}: AnalyticsStatCardProps) {
-  return (
-    <Card className={dashboardStyles.statCard}>
-      <CardContent className={dashboardStyles.statContent}>
-        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <p className="font-heading font-bold text-xl">
-            {value.toLocaleString("en-US")}
-          </p>
-          <p className="text-[11px] text-muted-foreground">{label}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground/80">
-            {description}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function EmptyState({
   description,
   icon,
@@ -227,20 +186,28 @@ function ViewsTimeline({
       month: "short",
       day: "numeric",
       year: "numeric",
+      timeZone: "UTC",
     }),
     label: point.date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
+      timeZone: "UTC",
     }),
     views: point.views,
   }));
 
   return (
-    <Card className="bg-card/55 shadow-sm border-border/70">
+    <Card>
       <CardHeader>
-        <CardTitle>Views Over Time</CardTitle>
+        <CardTitle>
+          <h2>Views over 30 days</h2>
+        </CardTitle>
         <CardDescription>
-          Locally tracked post and project views from the last 30 days.
+          {timeline
+            .reduce((total, point) => total + point.views, 0)
+            .toLocaleString("en-US")}{" "}
+          locally tracked post and project views across 30 UTC calendar days,
+          including today. Today is incomplete.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -251,7 +218,7 @@ function ViewsTimeline({
             description="New public content views will appear here."
           />
         ) : (
-          <div className="bg-background/40 p-4 border border-border/70 rounded-2xl">
+          <div className="min-w-0">
             <ViewsTimelineChart data={chartData} />
           </div>
         )}
@@ -263,9 +230,11 @@ function ViewsTimeline({
 function RankingChart({
   items,
   title,
+  kind,
 }: {
   items: RankedContent[];
   title: string;
+  kind: "posts" | "projects";
 }) {
   function shortenTitle(value: string) {
     return value.length > 20 ? `${value.slice(0, 19).trimEnd()}...` : value;
@@ -278,10 +247,15 @@ function RankingChart({
   }));
 
   return (
-    <Card className="bg-card/55 shadow-sm border-border/70">
+    <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>Top five items by local view count.</CardDescription>
+        <CardTitle>
+          <h2>{title}</h2>
+        </CardTitle>
+        <CardDescription>
+          Top five items by lifetime local view counter. Open a title to edit
+          it.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
@@ -291,8 +265,31 @@ function RankingChart({
             description="Content will appear here after it is created."
           />
         ) : (
-          <div className="bg-background/40 p-4 border border-border/70 rounded-2xl">
+          <div className="min-w-0">
             <ContentRankingChart data={chartData} />
+            <ol className="mt-4 divide-y divide-border">
+              {items.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex justify-between gap-3 py-3 text-sm"
+                >
+                  <div className="min-w-0">
+                    <Link
+                      href={`/dashboard/${kind}/${item.id}/edit`}
+                      className="underline underline-offset-4 wrap-anywhere"
+                    >
+                      {item.title}
+                    </Link>
+                    <p className="mt-1 text-muted-foreground text-xs">
+                      {item.status.toLowerCase()}
+                    </p>
+                  </div>
+                  <span className="tabular-nums shrink-0">
+                    {item.viewCount.toLocaleString("en-US")} views
+                  </span>
+                </li>
+              ))}
+            </ol>
           </div>
         )}
       </CardContent>
@@ -307,59 +304,39 @@ function ContentBreakdown({
 }) {
   const groups = [
     {
-      icon: <ArticleIcon />,
       label: "Posts",
-      meta: `${data.publishedPosts} published · ${data.draftPosts} drafts`,
+      description: `${data.publishedPosts} published · ${data.draftPosts} drafts`,
       value: data.totalPosts,
     },
     {
-      icon: <FolderIcon />,
       label: "Projects",
-      meta: `${data.publishedProjects} published`,
+      description: `${data.publishedProjects} published`,
       value: data.totalProjects,
     },
     {
-      icon: <ImagesIcon />,
       label: "Gallery",
-      meta: "Public visual archive",
+      description: "Stored gallery items, including hidden items",
       value: data.galleryItems,
     },
     {
-      icon: <QuotesIcon />,
       label: "Testimonials",
-      meta: "Home page quotes",
+      description: "Legacy records; not used on public Home",
       value: data.testimonials,
     },
   ];
 
   return (
-    <Card className="bg-card/55 shadow-sm border-border/70">
+    <Card>
       <CardHeader>
-        <CardTitle>Content Breakdown</CardTitle>
+        <CardTitle>
+          <h2>Content inventory</h2>
+        </CardTitle>
         <CardDescription>
-          A compact inventory of dashboard content health.
+          Current stored records and publication status.
         </CardDescription>
       </CardHeader>
-      <CardContent className="gap-3 grid md:grid-cols-2 xl:grid-cols-4">
-        {groups.map((item) => (
-          <div
-            key={item.label}
-            className="flex items-center gap-3 bg-background/40 p-4 border border-border/70 rounded-2xl min-w-0"
-          >
-            <div className="flex justify-center items-center bg-primary/10 rounded-2xl size-10 text-primary shrink-0">
-              {item.icon}
-            </div>
-            <div className="min-w-0">
-              <p className="font-heading font-bold text-xl">
-                {item.value.toLocaleString("en-US")}
-              </p>
-              <p className="text-muted-foreground text-xs">{item.label}</p>
-              <p className="mt-0.5 text-[10px] text-muted-foreground/80 truncate">
-                {item.meta}
-              </p>
-            </div>
-          </div>
-        ))}
+      <CardContent>
+        <DashboardSummary items={groups} />
       </CardContent>
     </Card>
   );
@@ -371,11 +348,13 @@ function RecentViews({
   items: Awaited<ReturnType<typeof getAnalyticsData>>["recentViews"];
 }) {
   return (
-    <Card className="bg-card/55 shadow-sm border-border/70">
+    <Card>
       <CardHeader>
-        <CardTitle>Recent Views</CardTitle>
+        <CardTitle>
+          <h2>Recent view events</h2>
+        </CardTitle>
         <CardDescription>
-          Latest privacy-friendly local content view events.
+          Latest local events across all recorded history. Times shown in UTC.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -386,11 +365,11 @@ function RecentViews({
             description="Events appear after published posts or projects are viewed."
           />
         ) : (
-          <div className="bg-background/40 border border-border/70 rounded-2xl divide-y divide-border/60">
+          <div className="divide-y divide-border">
             {items.map((event) => (
               <div
                 key={event.id}
-                className="flex justify-between items-center gap-3 px-4 py-3"
+                className="flex flex-wrap justify-between items-center gap-3 py-3"
               >
                 <div className="min-w-0">
                   <p className="font-medium text-sm truncate">
@@ -400,9 +379,17 @@ function RecentViews({
                     {event.type} view
                   </p>
                 </div>
-                <span className="text-muted-foreground text-xs shrink-0">
-                  {formatDate(event.createdAt)}
-                </span>
+                <time
+                  dateTime={event.createdAt.toISOString()}
+                  className="text-muted-foreground text-xs shrink-0"
+                >
+                  {event.createdAt.toLocaleString("en-US", {
+                    timeZone: "UTC",
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}{" "}
+                  UTC
+                </time>
               </div>
             ))}
           </div>
@@ -437,64 +424,37 @@ async function AnalyticsContent() {
 
   const stats = [
     {
-      label: "Local Views",
+      label: "Lifetime local views",
       value: data.postViews + data.projectViews,
-      description: "Post and project view counters.",
-      icon: <EyeIcon />,
-      iconClassName: "bg-sky-500/12 text-sky-300",
+      description: "Stored post and project counters",
     },
     {
-      label: "Tracked Events",
+      label: "Lifetime tracked events",
       value: data.totalViewEvents,
-      description: "Privacy-friendly local events.",
-      icon: <ChartLineIcon />,
-      iconClassName: "bg-emerald-500/12 text-emerald-300",
-    },
-    {
-      label: "Published Posts",
-      value: data.publishedPosts,
-      description: `${data.draftPosts} drafts still hidden.`,
-      icon: <ArticleIcon />,
-      iconClassName: "bg-fuchsia-500/12 text-fuchsia-300",
-    },
-    {
-      label: "Published Projects",
-      value: data.publishedProjects,
-      description: `${data.totalProjects} total portfolio items.`,
-      icon: <FolderIcon />,
-      iconClassName: "bg-amber-500/12 text-amber-300",
+      description: "Stored local event records",
     },
   ];
 
   return (
     <div className={dashboardStyles.page}>
       <div>
-        <h1 className="font-heading font-bold text-3xl">Analytics</h1>
+        <h1 className="font-heading font-semibold text-3xl">Analytics</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
           Measure public traffic, local content performance, and recent view
           activity across Storylio.
         </p>
       </div>
 
-      <Suspense fallback={<UmamiPanelSkeleton />}>
-        <UmamiPanelSection />
-      </Suspense>
-
       <section className="flex flex-col gap-4">
         <div>
-          <h2 className="font-heading font-semibold text-xl">
-            Local Content Analytics
-          </h2>
+          <h2 className="font-semibold text-lg">Lifetime local analytics</h2>
           <p className="mt-1 text-muted-foreground text-sm">
-            Database-backed metrics that work without external analytics.
+            Database counters and event records have different collection
+            histories. Neither represents unique visitors or a 30-day total.
           </p>
         </div>
 
-        <div className={dashboardStyles.statGrid}>
-          {stats.map((stat) => (
-            <AnalyticsStatCard key={stat.label} {...stat} />
-          ))}
-        </div>
+        <DashboardSummary items={stats} />
       </section>
 
       <div className="gap-6 grid xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
@@ -503,11 +463,18 @@ async function AnalyticsContent() {
       </div>
 
       <div className="gap-6 grid xl:grid-cols-2">
-        <RankingChart items={data.topPosts} title="Top Posts" />
-        <RankingChart items={data.topProjects} title="Top Projects" />
+        <RankingChart items={data.topPosts} title="Top posts" kind="posts" />
+        <RankingChart
+          items={data.topProjects}
+          title="Top projects"
+          kind="projects"
+        />
       </div>
 
       <ContentBreakdown data={data} />
+      <Suspense fallback={<UmamiPanelSkeleton />}>
+        <UmamiPanelSection />
+      </Suspense>
     </div>
   );
 }

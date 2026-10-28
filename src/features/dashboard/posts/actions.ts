@@ -219,13 +219,31 @@ export async function actionUpdatePost(
   postId: string,
   input: PostActionInput,
 ): Promise<ActionResult<PostActionData>> {
+  return updatePost(postId, input, false);
+}
+
+// Autosave edits the live record, but publication changes require an explicit action.
+export async function actionAutosavePost(
+  input: PostActionInput,
+  postId: string,
+): Promise<ActionResult<PostActionData>> {
+  return updatePost(postId, input, true);
+}
+
+async function updatePost(
+  postId: string,
+  input: PostActionInput,
+  preservePublication: boolean,
+): Promise<ActionResult<PostActionData>> {
   try {
     await getActionSession();
   } catch {
     return actionError("Unauthorized");
   }
 
-  const parsed = parsePostInput(input);
+  const parsed = parsePostInput(
+    preservePublication ? { ...input, status: "draft" } : input,
+  );
   if (!parsed.success) {
     return parsed.result;
   }
@@ -243,12 +261,23 @@ export async function actionUpdatePost(
       columns: {
         id: true,
         slug: true,
+        status: true,
         publishedAt: true,
       },
     });
 
     if (!existingPost) {
       return actionError("Post not found.");
+    }
+
+    if (
+      preservePublication &&
+      existingPost.status === PostStatus.PUBLISHED &&
+      !parsed.data.content.trim()
+    ) {
+      return actionError("Please fix the highlighted fields.", {
+        content: ["Content is required before publishing"],
+      });
     }
 
     const duplicateSlug = await ensureUniqueSlug(parsed.data.slug, postId);
@@ -265,8 +294,16 @@ export async function actionUpdatePost(
           excerpt: parsed.data.excerpt || null,
           content: parsed.data.content,
           coverImage: parsed.data.coverImage ?? null,
-          status: toPostStatus(parsed.data.status),
-          publishedAt: toPublishedAt(parsed.data, existingPost.publishedAt),
+          // Omit both fields so a stale client cannot publish, unpublish, or reschedule.
+          ...(preservePublication
+            ? {}
+            : {
+                status: toPostStatus(parsed.data.status),
+                publishedAt: toPublishedAt(
+                  parsed.data,
+                  existingPost.publishedAt,
+                ),
+              }),
         })
         .where(eq(postTable.id, postId))
         .returning({
