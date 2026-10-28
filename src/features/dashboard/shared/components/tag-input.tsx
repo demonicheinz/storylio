@@ -1,6 +1,8 @@
 "use client";
 
 import { TagIcon, XIcon } from "@phosphor-icons/react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useTagInput } from "@/hooks/use-tag-input";
 import { cn } from "@/lib/utils";
 
@@ -33,27 +35,30 @@ export function TagsInput({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-1.5 bg-input/50 px-2 py-1 border border-transparent rounded-3xl min-w-0 min-h-9 transition-[color,box-shadow,background-color]",
-        "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30",
+        "flex flex-wrap items-center gap-1.5 bg-surface px-2 py-1 border border-input rounded-md min-w-0 min-h-9 transition-[border-color,box-shadow]",
+        "focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40",
         disabled && "pointer-events-none opacity-50",
       )}
     >
       {tags.map((tag) => (
-        <span
+        <Badge
           key={tag}
-          className="inline-flex items-center gap-1 bg-secondary px-2 py-0.5 rounded-full max-w-36 font-medium text-[11px] text-secondary-foreground truncate"
+          variant="secondary"
+          className="gap-1 pr-0 rounded-md max-w-full h-auto"
         >
           <TagIcon className="size-3 shrink-0" />
           <span className="truncate">{tag}</span>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-xs"
+            disabled={disabled}
             onClick={() => removeTag(tag)}
-            className="opacity-50 hover:opacity-100 ml-0.5 p-0.5 rounded-full transition-opacity shrink-0"
             aria-label={`Remove ${tag}`}
           >
-            <XIcon className="size-2.5" />
-          </button>
-        </span>
+            <XIcon />
+          </Button>
+        </Badge>
       ))}
       <input
         id={id}
