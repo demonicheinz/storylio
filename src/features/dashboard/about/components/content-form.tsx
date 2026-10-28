@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowSquareOutIcon,
   FloppyDiskIcon,
-  InfoIcon,
   SpinnerIcon,
 } from "@phosphor-icons/react";
 import dynamic from "next/dynamic";
@@ -26,6 +25,7 @@ import {
 } from "@/features/dashboard/about/validations";
 import { DashboardSelect } from "@/features/dashboard/shared/components/filter-controls";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
+import { useAboutDraftGuard } from "./use-about-draft-guard";
 
 const MdxEditor = dynamic(
   () =>
@@ -37,7 +37,7 @@ const MdxEditor = dynamic(
     loading: () => (
       <Textarea
         readOnly
-        className="min-h-80 font-mono text-sm"
+        className="min-h-48 font-mono text-sm"
         value="Loading editor..."
       />
     ),
@@ -98,11 +98,14 @@ export function AboutContentForm({
   const router = useRouter();
   const [activeLanguage, setActiveLanguage] = useState<Language>("en");
   const [isPending, startTransition] = useTransition();
+  const [saved, setSaved] = useState(false);
   const {
     control,
-    formState: { errors },
+    clearErrors,
+    formState: { errors, isDirty },
     handleSubmit,
     register,
+    reset,
     setError,
     watch,
   } = useForm<AboutContentActionInput, unknown, AboutContentActionValues>({
@@ -110,6 +113,7 @@ export function AboutContentForm({
     defaultValues: getDefaults(content),
   });
   const watchedValues = watch();
+  useAboutDraftGuard(isDirty);
 
   const applyFieldErrors = (fieldErrors?: Record<string, string[]>) => {
     if (!fieldErrors) {
@@ -129,19 +133,29 @@ export function AboutContentForm({
   const onSubmit = handleSubmit(
     (values) => {
       startTransition(async () => {
-        const result = await actionUpdateAboutContent(values);
+        try {
+          const result = await actionUpdateAboutContent(values);
 
-        if (result.success) {
+          if (result.success) {
+            toast.add({
+              title: result.message ?? "About content updated.",
+              type: "success",
+            });
+            reset(values);
+            setSaved(true);
+            router.refresh();
+            return;
+          }
+
+          applyFieldErrors(result.fieldErrors);
+          toast.add({ title: result.error, type: "error" });
+        } catch {
           toast.add({
-            title: result.message ?? "About content updated.",
-            type: "success",
+            title:
+              "Could not save About. Your changes are still here; try again.",
+            type: "error",
           });
-          router.refresh();
-          return;
         }
-
-        applyFieldErrors(result.fieldErrors);
-        toast.add({ title: result.error, type: "error" });
       });
     },
     (invalid) => {
@@ -162,44 +176,28 @@ export function AboutContentForm({
 
   return (
     <form className="flex flex-col gap-5 min-w-0" onSubmit={onSubmit}>
-      <Card>
-        <CardContent className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 px-4">
-          <div className="flex gap-3 min-w-0">
-            <div className="flex justify-center items-center size-9 text-muted-foreground shrink-0">
-              <InfoIcon className="size-4" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-medium">Profile content lives in Settings</p>
-              <p className="text-muted-foreground text-sm leading-5">
-                Display name, tagline, avatar, short bio, and social links are
-                managed from Profile Settings. This tab only controls the public
-                About page narrative.
-              </p>
-            </div>
-          </div>
-          <Button
-            role="link"
-            render={<Link href="/dashboard/settings" />}
-            nativeButton={false}
-            variant="outline"
-            className="w-full sm:w-auto shrink-0"
-          >
-            Go to Profile Settings
-            <ArrowSquareOutIcon data-icon="inline-end" />
-          </Button>
-        </CardContent>
-      </Card>
+      <p className="text-muted-foreground text-sm leading-6">
+        Edit your About narrative here. Name, avatar, bio, and social links live
+        in{" "}
+        <Link
+          href="/dashboard/settings"
+          className="text-link underline underline-offset-4"
+        >
+          Profile Settings <ArrowSquareOutIcon className="inline size-3" />
+        </Link>
+        .
+      </p>
 
       <Card className={dashboardStyles.surface}>
         <CardContent className="flex flex-col gap-6 p-5 sm:p-6">
           {!content && (
-            <div className="bg-background/30 p-4 border border-border/70 border-dashed rounded-2xl">
+            <div className="text-muted-foreground text-sm">
               <p className="font-medium text-foreground">
                 About content has not been created yet.
               </p>
               <p className="text-muted-foreground text-sm leading-6">
-                The public About page currently uses its static fallback. Your
-                first save will create the singleton CMS record.
+                The public page uses its default content until you save your own
+                narrative.
               </p>
             </div>
           )}
@@ -209,10 +207,18 @@ export function AboutContentForm({
             onValueChange={(value) => setActiveLanguage(value as Language)}
             className="gap-6"
           >
-            <div className="flex md:flex-row flex-col md:justify-between md:items-end gap-3">
-              <div className="min-w-0">
-                <Label>Editing language</Label>
-                <TabsList aria-label="Editing language">
+            <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-3">
+              <div className="flex flex-col items-start gap-1.5 min-w-0">
+                <span
+                  id="about-editing-language"
+                  className="text-muted-foreground text-xs"
+                >
+                  Editing language
+                </span>
+                <TabsList
+                  aria-labelledby="about-editing-language"
+                  className="[&>button]:px-2 [&>button]:min-h-11"
+                >
                   {(["en", "id"] as const).map((language) => (
                     <TabsTrigger
                       key={language}
@@ -232,6 +238,7 @@ export function AboutContentForm({
                   <fieldset disabled={isPending} className="md:w-64 min-w-0">
                     <DashboardSelect
                       label="Default public language"
+                      triggerClassName="min-h-13!"
                       value={field.value ?? "en"}
                       options={[
                         { value: "en", label: "English" },
@@ -265,10 +272,7 @@ export function AboutContentForm({
                     <p className="font-medium">
                       {languageLabels[language]}: {filled}/3 fields filled
                     </p>
-                    <p className="text-muted-foreground text-xs">
-                      Empty fields are optional; public language fallback still
-                      applies.
-                    </p>
+
                     {invalid.length > 0 && (
                       <ul
                         className="mt-2 text-destructive text-sm"
@@ -281,7 +285,7 @@ export function AboutContentForm({
                               className="text-left underline underline-offset-4"
                               onClick={() => setActiveLanguage(language)}
                             >
-                              {fieldLabels[field]}: {errors[field]?.message}
+                              {fieldLabels[field]} needs attention
                             </button>
                           </li>
                         ))}
@@ -292,6 +296,11 @@ export function AboutContentForm({
               })}
             </div>
 
+            <p className="text-muted-foreground text-xs">
+              Fields are optional. An empty translation uses the other language
+              when available. To paste a Markdown document, switch the editor to
+              Source mode first.
+            </p>
             <TabsContent
               key={activeLanguage}
               value={activeLanguage}
@@ -324,14 +333,27 @@ export function AboutContentForm({
 
               <div className="gap-5 grid xl:grid-cols-2 min-w-0">
                 <div className="flex flex-col gap-2 min-w-0">
-                  <Label>How I Work ({languageLabels[activeLanguage]})</Label>
+                  <span
+                    id={`${howIWorkName}-label`}
+                    className="font-medium text-sm leading-none"
+                  >
+                    How I Work ({languageLabels[activeLanguage]})
+                  </span>
                   <Controller
                     control={control}
                     name={howIWorkName}
                     render={({ field }) => (
                       <MdxEditor
+                        variant="compact"
+                        id={field.name}
+                        ariaLabelledBy={`${field.name}-label`}
+                        ariaLabel={`${fieldLabels[field.name as keyof typeof fieldLabels]} (${languageLabels[activeLanguage]})`}
+                        placeholder="Write this section..."
                         value={field.value ?? ""}
-                        onChange={field.onChange}
+                        onChange={(markdown) => {
+                          field.onChange(markdown);
+                          clearErrors(field.name);
+                        }}
                         disabled={isPending}
                         error={errors[howIWorkName]?.message}
                       />
@@ -343,14 +365,27 @@ export function AboutContentForm({
                 </div>
 
                 <div className="flex flex-col gap-2 min-w-0">
-                  <Label>What I Value ({languageLabels[activeLanguage]})</Label>
+                  <span
+                    id={`${whatIValueName}-label`}
+                    className="font-medium text-sm leading-none"
+                  >
+                    What I Value ({languageLabels[activeLanguage]})
+                  </span>
                   <Controller
                     control={control}
                     name={whatIValueName}
                     render={({ field }) => (
                       <MdxEditor
+                        variant="compact"
+                        id={field.name}
+                        ariaLabelledBy={`${field.name}-label`}
+                        ariaLabel={`${fieldLabels[field.name as keyof typeof fieldLabels]} (${languageLabels[activeLanguage]})`}
+                        placeholder="Write this section..."
                         value={field.value ?? ""}
-                        onChange={field.onChange}
+                        onChange={(markdown) => {
+                          field.onChange(markdown);
+                          clearErrors(field.name);
+                        }}
                         disabled={isPending}
                         error={errors[whatIValueName]?.message}
                       />
@@ -366,15 +401,40 @@ export function AboutContentForm({
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button type="submit" className="w-full sm:w-fit" disabled={isPending}>
-          {isPending ? (
-            <SpinnerIcon data-icon="inline-start" className="animate-spin" />
-          ) : (
-            <FloppyDiskIcon data-icon="inline-start" />
-          )}
-          {isPending ? "Saving..." : "Save Content"}
-        </Button>
+      <div className="bottom-0 z-10 sticky flex flex-wrap justify-between items-center gap-3 bg-background py-3 border-border border-t">
+        <p role="status" className="text-muted-foreground text-xs">
+          {isPending
+            ? "Saving both languages..."
+            : isDirty
+              ? "Unsaved changes - saves both languages"
+              : saved
+                ? "All changes saved"
+                : "Save applies to both languages"}
+        </p>
+        <div className="sm:flex gap-2 grid grid-cols-2 w-full sm:w-auto">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!isDirty || isPending}
+            onClick={() => {
+              if (window.confirm("Discard unsaved About content?")) reset();
+            }}
+          >
+            Discard changes
+          </Button>
+          <Button
+            type="submit"
+            className="sm:w-fit min-w-0"
+            disabled={isPending || !isDirty}
+          >
+            {isPending ? (
+              <SpinnerIcon data-icon="inline-start" className="animate-spin" />
+            ) : (
+              <FloppyDiskIcon data-icon="inline-start" />
+            )}
+            {isPending ? "Saving..." : "Save Content"}
+          </Button>
+        </div>
       </div>
     </form>
   );

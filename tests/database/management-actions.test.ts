@@ -204,10 +204,13 @@ describe("management actions against PostgreSQL", () => {
     ]);
 
     expect(
-      await actionReorderSkills([
-        { id: "first", order: 1 },
-        { id: "second", order: 0 },
-      ]),
+      await actionReorderSkills(
+        [
+          { id: "second", order: 0 },
+          { id: "first", order: 1 },
+        ],
+        "category",
+      ),
     ).toMatchObject({ success: true });
     const committed = await fixture.db.query.skill.findMany({
       orderBy: asc(schema.skill.id),
@@ -227,11 +230,17 @@ describe("management actions against PostgreSQL", () => {
     effects.updateTag.mockClear();
     vi.spyOn(console, "error").mockImplementation(() => {});
     expect(
-      await actionReorderSkills([
-        { id: "first", order: 9 },
-        { id: "missing", order: 0 },
-      ]),
-    ).toMatchObject({ success: false, error: "Failed to update order." });
+      await actionReorderSkills(
+        [
+          { id: "missing", order: 0 },
+          { id: "first", order: 1 },
+        ],
+        "category",
+      ),
+    ).toMatchObject({
+      success: false,
+      error: "The skill list changed. Refresh and try again.",
+    });
     expect(
       await fixture.db.query.skill.findMany({ orderBy: asc(schema.skill.id) }),
     ).toEqual(committed);

@@ -58,7 +58,10 @@ async function DashboardAboutContent() {
   );
   const visibleSkillsCount = categories.reduce(
     (total, category) =>
-      total + category.skills.filter((skill) => skill.isVisible).length,
+      total +
+      (category.isVisible
+        ? category.skills.filter((skill) => skill.isVisible).length
+        : 0),
     0,
   );
 
@@ -94,25 +97,22 @@ async function DashboardAboutContent() {
           ]}
         />
 
-        <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full sm:w-fit h-auto">
-          <TabsTrigger value="content" className="min-w-0 text-xs sm:text-sm">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 [&>button]:px-2 w-full sm:w-fit h-auto [&>button]:min-h-11">
+          <TabsTrigger value="content" className="min-w-0 text-sm">
             Content
           </TabsTrigger>
-          <TabsTrigger
-            value="experience"
-            className="min-w-0 text-xs sm:text-sm"
-          >
+          <TabsTrigger value="experience" className="min-w-0 text-sm">
             Experience
           </TabsTrigger>
-          <TabsTrigger value="education" className="min-w-0 text-xs sm:text-sm">
+          <TabsTrigger value="education" className="min-w-0 text-sm">
             Education
           </TabsTrigger>
-          <TabsTrigger value="skills" className="min-w-0 text-xs sm:text-sm">
+          <TabsTrigger value="skills" className="min-w-0 text-sm">
             Skills
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="content">
+        <TabsContent value="content" keepMounted>
           <AboutContentForm content={aboutContent ?? undefined} />
         </TabsContent>
         <TabsContent value="experience">

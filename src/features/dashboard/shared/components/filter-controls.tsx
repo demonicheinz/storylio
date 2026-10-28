@@ -96,6 +96,7 @@ export function DashboardSelect<T extends string>({
   disabled,
   compact = false,
   id,
+  triggerClassName,
 }: {
   label: string;
   value: T;
@@ -104,6 +105,7 @@ export function DashboardSelect<T extends string>({
   disabled?: boolean;
   compact?: boolean;
   id?: string;
+  triggerClassName?: string;
 }) {
   const generatedId = useId();
   const controlId = id ?? generatedId;
@@ -123,7 +125,7 @@ export function DashboardSelect<T extends string>({
         <SelectTrigger
           id={controlId}
           size={compact ? "sm" : "default"}
-          className="w-full"
+          className={`w-full ${triggerClassName ?? ""}`}
         >
           <SelectValue />
         </SelectTrigger>
