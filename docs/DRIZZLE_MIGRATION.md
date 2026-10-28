@@ -1,7 +1,7 @@
 # Drizzle migration and database administration
 
 Storylio uses Drizzle ORM 0.45.4, Drizzle Kit 0.31.11, and the existing Neon
-WebSocket driver. Better Auth remains on the 1.6 maintenance line with its
+WebSocket driver. Better Auth uses the 1.7 maintenance line with its
 Drizzle adapter. The application does not generate an ORM client on install.
 
 ## What stays compatible
@@ -20,6 +20,16 @@ Drizzle adapter. The application does not generate an ORM client on install.
 
 Schema and relation definitions live in `src/lib/db/schema.ts`. Client-safe
 enum constants live in `src/lib/db/enums.ts`. There is no Prisma query adapter.
+
+## Pending authentication rate-limit table
+
+`0002_auth_rate_limits.sql` adds the `RateLimit` table with a unique key and a
+timestamp index. Production Better Auth requests use this shared storage, so
+apply the reviewed migration before deploying the corresponding auth changes.
+It preserves every existing user, password hash, session and passkey. Local auth
+tests apply it only to PGlite fixtures; implementation work has not applied it to
+dev, staging or prod. Use `db:status` and the matching environment's `db:migrate`
+script when rollout is authorized. Do not run the baseline migration again.
 
 ## Existing databases: inspect, then adopt
 
@@ -89,9 +99,39 @@ bun run db:seed
 ```
 
 The native Drizzle migrator creates the schema and records the initial
-migration. Seed functions are in `scripts/seeds/`. They retain their previous
-content and idempotent behavior, including preservation of existing owner
-credentials and passkeys.
+migration. `db:seed` now opens a terminal menu rather than running all seed
+functions automatically. Choose one or more numbered groups, or `all`. Enter
+profile name, role, headline/subheadline and public links when selecting owner.
+Review the environment, profile changes and content groups before confirming.
+No database connection is opened for cancel or `--dry-run`.
+
+Menu option 8 adds three Storylio work notes with the exact `notes` tag. It
+creates missing posts only and preserves all existing content, draft status,
+tags and view counts. This is separate from option 6, which restores demo posts.
+CLI writes do not invalidate a running Next.js cache. Hard-refresh the local dev
+page after a seed; revalidate or rebuild a deployed app through its usual workflow.
+
+Owner email/password still come from the matching Infisical environment.
+Creating an owner no longer hardcodes a name, bio or social links. An omitted
+name defaults to the first login email's local part. Existing profiles are
+preserved unless you explicitly opt into applying the entered fields. Only
+those fields change; credentials, verification status, sessions and passkeys
+remain intact. The Home subheadline reuses the existing bio column. Demo content
+is separately selectable and keeps its established idempotent seed behavior.
+
+```powershell
+bun run db:seed -- --dry-run
+bun run db:seed:preview
+bun run db:seed:production
+```
+
+The new `0001_home_hero.sql` migration adds `HERO` to HomeSectionType. It stores
+the editable headline in a singleton HomeSection; it changes no existing rows,
+profile columns or credentials. Apply it with the environment's normal
+`db:migrate` script before saving a custom headline through the seeder or the
+forthcoming dashboard editor. It was tested in isolated PGlite databases; this
+task does not apply it to dev, staging or prod. Existing Home reads continue
+working before the migration with the default headline and current profile bio.
 
 Do not run the seed as part of adopting an existing database. Existing content
 does not need to be recreated for the ORM change.

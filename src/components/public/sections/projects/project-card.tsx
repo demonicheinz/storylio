@@ -2,125 +2,94 @@ import {
   ArrowUpRightIcon,
   GithubLogoIcon,
 } from "@phosphor-icons/react/dist/ssr";
-import Link from "next/link";
-import { ProjectCover } from "@/components/public/sections/projects/project-cover";
-import type { ProjectListItem } from "@/components/public/sections/projects/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { FlowButton } from "@/components/common/flow-button";
+import { TiltedCard } from "@/components/common/tilted-card";
+import styles from "@/components/public/public-page.module.css";
+import { ProjectCover } from "./project-cover";
+import projectStyles from "./projects.module.css";
+import type { ProjectListItem } from "./types";
 
-type ProjectCardProps = {
+export function ProjectCard({
+  project,
+  featured = project.isFeatured,
+}: {
   project: ProjectListItem;
-};
-
-export function ProjectCard({ project }: ProjectCardProps) {
-  const cardImage = project.thumbnailImageUrl ?? project.coverImage;
-  const visibleTech = project.techStack.slice(0, 3);
-  const remainingTech = project.techStack.length - visibleTech.length;
-
+  featured?: boolean;
+}) {
+  const href = `/projects/${project.slug}`;
   return (
-    <article className="group/project flex flex-col bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] hover:shadow-[0_0_72px_rgba(139,92,246,0.15)] backdrop-blur-xl p-3 border border-border/40 hover:border-brand-soft/45 rounded-3xl h-full overflow-hidden transition-[border-color,box-shadow,transform] hover:-translate-y-1 duration-300">
-      <Link
-        href={`/projects/${project.slug}`}
-        aria-label={project.title}
-        className="relative rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
-      >
-        <ProjectCover
-          src={cardImage}
-          alt={project.title}
-          className="aspect-video"
-          sizes="(min-width: 1280px) 536px, (min-width: 768px) calc(50vw - 2.5rem), calc(100vw - 2rem)"
-        />
-        {project.isFeatured && (
-          <Badge className="top-3 left-3 absolute bg-brand-soft/90 shadow-[0_8px_24px_rgba(10,10,20,0.35)] backdrop-blur px-3 rounded-full text-primary-foreground pointer-events-none">
-            Featured
-          </Badge>
+    <article
+      className={`${styles.card} ${projectStyles.projectCard}`}
+      data-project-card
+      data-featured={featured || undefined}
+      data-tilt-target
+    >
+      <div className={`${styles.cardMedia} ${projectStyles.media}`}>
+        <TiltedCard>
+          <ProjectCover
+            src={project.thumbnailImageUrl ?? project.coverImage}
+            alt={project.title}
+            appearance="home"
+            className="aspect-video"
+            loading={featured ? "eager" : "lazy"}
+            sizes="(min-width:1328px) 400px, (min-width:1200px) 31vw, (min-width:768px) 46vw, 94vw"
+          />
+        </TiltedCard>
+        {featured && (
+          <span className={projectStyles.featureBadge}>Featured</span>
         )}
-      </Link>
-
-      <div className="flex flex-col flex-1 px-3 pt-4 pb-3">
-        <div className="flex items-center gap-1.5 mb-3.5 max-w-full overflow-hidden">
-          {visibleTech.map((tech) => (
-            <Badge
-              key={`${project.id}-${tech}`}
-              variant="outline"
-              className="bg-background/35 border-border/90 rounded-full text-foreground/85"
-            >
-              {tech}
-            </Badge>
-          ))}
-          {remainingTech > 0 && (
-            <Badge
-              variant="outline"
-              className="bg-background/35 border-border/90 rounded-full text-foreground/85 shrink-0"
-              aria-label={`${remainingTech} more technologies`}
-            >
-              +{remainingTech}
-            </Badge>
-          )}
-        </div>
-
-        <Link
-          href={`/projects/${project.slug}`}
-          className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60 w-fit"
+      </div>
+      <div className={styles.cardBody}>
+        <h2 className={`${styles.cardTitle} ${projectStyles.title}`}>
+          {project.title}
+        </h2>
+        <p
+          className={`${styles.cardCopy} ${projectStyles.description}`}
+          aria-hidden={project.description ? undefined : true}
         >
-          <h2 className="font-heading font-semibold text-foreground group-hover/project:text-brand-soft text-2xl leading-tight transition-colors">
-            {project.title}
-          </h2>
-        </Link>
-        <p className="mt-3 text-muted-foreground text-sm line-clamp-3 leading-6.5">
-          {project.description ?? "A selected project from Heinz's archive."}
+          {project.description}
         </p>
-
-        <div className="flex flex-wrap items-center gap-2 mt-auto pt-5">
-          <Button
-            role="link"
-            render={<Link href={`/projects/${project.slug}`} />}
-            nativeButton={false}
-            size="sm"
-            className="rounded-full"
-          >
-            View case
-            <ArrowUpRightIcon data-icon="inline-end" />
-          </Button>
-
-          {project.liveUrl && (
-            <Button
-              role="link"
-              render={
-                <Link
-                  href={project.liveUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`Open ${project.title} live site`}
-                />
-              }
-              nativeButton={false}
-              size="icon"
-              variant="outline"
-              className="bg-surface/70 border-border/60 rounded-full"
+        <ul
+          className={`${styles.tags} ${projectStyles.stack}`}
+          aria-label="Technology stack"
+        >
+          {project.techStack.slice(0, 3).map((tech) => (
+            <li key={tech} className={styles.tag}>
+              {tech}
+            </li>
+          ))}
+          {project.techStack.length > 3 && (
+            <li
+              className={styles.tag}
+              aria-label={`${project.techStack.length - 3} more technologies`}
             >
-              <ArrowUpRightIcon />
-            </Button>
+              +{project.techStack.length - 3}
+            </li>
           )}
-
-          {!project.isClosedSource && project.githubUrl && (
-            <Button
-              role="link"
-              render={
-                <Link
-                  href={project.githubUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={`Open ${project.title} GitHub repository`}
-                />
-              }
-              nativeButton={false}
-              size="icon"
-              variant="outline"
-              className="bg-surface/70 border-border/60 rounded-full"
+        </ul>
+        <div className={`${styles.cardActions} ${projectStyles.actions}`}>
+          <FlowButton href={href}>Read case study</FlowButton>
+          {project.liveUrl && (
+            <a
+              href={project.liveUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={`${styles.link} ${projectStyles.secondaryAction}`}
+              aria-label={`Open ${project.title} live site`}
             >
-              <GithubLogoIcon />
-            </Button>
+              Live site <ArrowUpRightIcon aria-hidden="true" size={16} />
+            </a>
+          )}
+          {!project.isClosedSource && project.githubUrl && (
+            <a
+              href={project.githubUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={`${styles.link} ${projectStyles.secondaryAction}`}
+              aria-label={`Open ${project.title} GitHub repository`}
+            >
+              <GithubLogoIcon aria-hidden="true" size={18} /> Source
+            </a>
           )}
         </div>
       </div>

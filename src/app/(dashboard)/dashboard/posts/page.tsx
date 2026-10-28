@@ -4,6 +4,7 @@ import {
   type DashboardPost,
   PostsManager,
 } from "@/features/dashboard/posts/components/posts-manager";
+import { DashboardRouteBoundary } from "@/features/dashboard/shared/components/route-boundary";
 import { db } from "@/lib/db";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
 
@@ -47,7 +48,15 @@ async function getPosts(): Promise<DashboardPost[]> {
   }));
 }
 
-export default async function PostsPage() {
+export default function PostsPage() {
+  return (
+    <DashboardRouteBoundary title="Posts">
+      <PostsContent />
+    </DashboardRouteBoundary>
+  );
+}
+
+async function PostsContent() {
   await connection();
 
   const posts = await getPosts();

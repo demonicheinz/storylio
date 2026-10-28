@@ -6,10 +6,17 @@ import {
   useMotionValueEvent,
   useScroll,
 } from "motion/react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
-import { useState } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import GooeyNav from "@/components/common/gooey-nav";
+import { useReducedMotion } from "@/hooks/use-reduced-motion";
+import { getPublicNavIndex } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 export type FloatingNavItem = {
@@ -30,9 +37,30 @@ export const FloatingNav = ({
   const pathname = usePathname();
   const { scrollYProgress } = useScroll();
   const [visible, setVisible] = useState(initiallyVisible);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const reducedMotion = useReducedMotion();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const activeIndex = getPublicNavIndex(
+    pathname,
+    navItems.map((item) => item.link),
+  );
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const sync = () =>
+      setTheme(root.classList.contains("dark") ? "dark" : "light");
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   useMotionValueEvent(scrollYProgress, "change", (current) => {
     if (typeof current === "number") {
+      if (containerRef.current?.querySelector(":focus-visible")) {
+        setVisible(true);
+        return;
+      }
       const direction = current - (scrollYProgress.getPrevious() ?? 0);
 
       if (scrollYProgress.get() < 0.05) {
@@ -48,57 +76,53 @@ export const FloatingNav = ({
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        initial={{
-          opacity: 1,
-          y: -100,
-        }}
+        ref={containerRef}
+        onFocusCapture={() => setVisible(true)}
+        initial={false}
         animate={{
-          y: visible ? 0 : -100,
+          y: visible || reducedMotion ? 0 : -100,
           opacity: visible ? 1 : 0,
         }}
         transition={{
-          duration: 0.2,
+          duration: reducedMotion ? 0 : 0.2,
         }}
+        style={{ pointerEvents: visible ? "auto" : "none" }}
         className={cn(
-          "top-5 z-50 fixed inset-x-0 flex justify-center items-center mx-auto max-w-fit",
+          "top-5 z-50 fixed inset-x-0 flex justify-center items-center mx-auto max-w-[calc(100vw-2rem)] sm:max-w-fit",
           className,
         )}
       >
-        <div className="flex justify-center items-center gap-4 bg-card/80 shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)] backdrop-blur-md px-2 py-2 border rounded-2xl">
-          <div className="flex items-center gap-2">
-            {navItems.map((navItem) => {
-              const isActive =
-                navItem.link === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(navItem.link);
-
-              return (
-                <Link
-                  key={navItem.link}
-                  href={navItem.link}
-                  prefetch={true}
-                  aria-current={isActive ? "page" : undefined}
-                  className={cn(
-                    "relative flex items-center gap-1 px-3 py-2 rounded-2xl font-bold text-foreground text-sm transition-all duration-200",
-                    isActive
-                      ? "bg-brand-soft/10 text-brand-soft"
-                      : "text-neutral-50 hover:bg-brand-soft/10 hover:text-brand-soft",
-                  )}
-                >
-                  {navItem.icon && (
-                    <span className="flex justify-center items-center sm:mr-1.5 size-4.5 [&>svg]:size-4.5">
-                      {navItem.icon}
-                    </span>
-                  )}
-                  <span className="hidden sm:block">{navItem.name}</span>
-                  {isActive && (
-                    <span className="-bottom-px absolute inset-x-0 bg-linear-to-r from-transparent via-brand-soft to-transparent mx-auto w-1/2 h-px" />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+        <GooeyNav
+          items={navItems.map((item) => ({
+            label: item.name,
+            href: item.link,
+            icon: item.icon,
+          }))}
+          activeIndex={activeIndex}
+          theme={theme}
+          color={theme === "dark" ? "#f2fbfe" : "#000b27"}
+          activeTextColor={theme === "dark" ? "#000b27" : "#f2fbfe"}
+          colors={["#068ce6"]}
+          compactOnMobile
+          animationTime={400}
+          particleCount={7}
+          timeVariance={100}
+          spread={24}
+          gooeyness={0.3}
+          wobble={0.2}
+          style={
+            {
+              "--gn-frame":
+                "color-mix(in oklch, var(--surface) 96%, transparent)",
+              "--gn-frame-edge": "var(--border)",
+              "--gn-frame-highlight":
+                "color-mix(in oklch, var(--glow) 6%, transparent)",
+              "--gn-frame-shadow": "0 12px 28px -12px rgb(0 11 39 / 35%)",
+              "--gn-ink": "var(--foreground)",
+              "--gn-muted": "var(--muted-foreground)",
+            } as CSSProperties
+          }
+        />
       </motion.div>
     </AnimatePresence>
   );

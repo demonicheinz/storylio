@@ -6,7 +6,7 @@ async (page) => {
     if (request.headers().rsc === "1") {
       requests.push({
         path: new URL(request.url()).pathname,
-        prefetch: request.headers()["next-router-prefetch"] === "1",
+        prefetch: request.headers()["next-router-prefetch"] !== undefined,
       });
     }
   };
@@ -21,7 +21,7 @@ async (page) => {
   await page.route("**/*", delayRsc);
   try {
     await page.goto(origin);
-    await page.getByRole("link", { name: "About", exact: true }).waitFor();
+    await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "About", exact: true }).waitFor();
     await page.evaluate(() => {
       window.__publicNavigationProbe = { loading: [], visible: false };
       window.__publicNavigationObserver = new MutationObserver(() => {
@@ -57,7 +57,7 @@ async (page) => {
     return results;
   } finally {
     page.off("request", onRequest);
-    await page.unroute("**/*", delayRsc);
+    await page.unrouteAll({ behavior: "wait" });
     await page.evaluate(() => {
       window.__publicNavigationObserver?.disconnect();
       delete window.__publicNavigationObserver;

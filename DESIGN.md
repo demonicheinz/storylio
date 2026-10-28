@@ -1,0 +1,599 @@
+---
+version: 1
+name: Storylio Planet
+description: "Linear-inspired hierarchy adapted to Storylio: navy surfaces and blue accents sampled from the planet hero, with the existing Clash Display, Satoshi, and JetBrains Mono fonts."
+
+palette:
+  accent: "oklch(0.6249 0.1668 248.04)"
+  accent-light: "oklch(0.7803 0.1169 233.01)"
+  accent-dark: "oklch(0.5216 0.1282 243.85)"
+  night: "oklch(0.1594 0.0622 259.15)"
+  lunar-surface: "oklch(0.1904 0.043 247.77)"
+  glow: "oklch(0.9822 0.0103 219.59)"
+
+# The default documented canvas is dark; CSS :root provides the light theme.
+colors:
+  primary: "{palette.accent}"
+  on-primary: "{palette.night}"
+  primary-hover: "{palette.accent-light}"
+  primary-focus: "{palette.accent-light}"
+  link: "{palette.accent-light}"
+  ink: "{palette.glow}"
+  ink-muted: "oklch(0.72 0.025 247.77)"
+  canvas: "oklch(0.11 0.018 259.15)"
+  surface-1: "oklch(0.155 0.023 259.15)"
+  surface-2: "oklch(0.195 0.028 259.15)"
+  surface-3: "oklch(0.235 0.03 259.15)"
+  surface-4: "oklch(0.275 0.032 259.15)"
+  hairline: "oklch(0.28 0.025 259.15)"
+  hairline-strong: "oklch(0.46 0.03 259.15)"
+  input-border: "{colors.hairline-strong}"
+  interaction: "{colors.surface-2}"
+  interaction-hover: "{colors.surface-3}"
+  semantic-success: "oklch(0.75 0.14 155)"
+  semantic-warning: "oklch(0.82 0.14 80)"
+  semantic-error: "oklch(0.72 0.16 25)"
+  asset-ink-light: "#f2fbfe"
+  asset-ink-dark: "#000b27"
+  asset-accent: "#068ce6"
+  orb-wash-light: "#67c6f1"
+  orb-wash-dark: "#006c9b"
+
+typography:
+  display-xl:
+    fontFamily: Clash Display
+    fontSize: 80px
+    fontWeight: 600
+    lineHeight: 1.05
+    letterSpacing: -2.4px
+  display-lg:
+    fontFamily: Clash Display
+    fontSize: 56px
+    fontWeight: 600
+    lineHeight: 1.1
+    letterSpacing: -1.4px
+  display-md:
+    fontFamily: Clash Display
+    fontSize: 40px
+    fontWeight: 600
+    lineHeight: 1.15
+    letterSpacing: -1px
+  page-title:
+    fontFamily: Clash Display
+    fontSize: 40px
+    fontSizeFrom768: 56px
+    fontWeight: 600
+    lineHeight: 1.15
+    lineHeightFrom768: 1.1
+    letterSpacing: -0.025em
+  section-title:
+    fontFamily: Clash Display
+    fontSize: 36px
+    fontSizeFrom768: 48px
+    fontWeight: 600
+    lineHeight: 1.15
+    letterSpacing: -0.025em
+  card-title:
+    fontFamily: Clash Display
+    fontSize: 22px
+    fontWeight: 500
+    lineHeight: 1.25
+    letterSpacing: -0.02em
+  featured-title:
+    fontFamily: Clash Display
+    fontSize: 28px
+    fontSizeFrom1024: 40px
+    fontWeight: 500
+    lineHeight: 1.15
+    letterSpacing: -0.02em
+  body-lg:
+    fontFamily: Satoshi
+    fontSize: 18px
+    fontWeight: 400
+    lineHeight: 1.6
+    letterSpacing: 0
+  body:
+    fontFamily: Satoshi
+    fontSize: 16px
+    fontWeight: 400
+    lineHeight: 1.6
+    letterSpacing: 0
+  body-sm:
+    fontFamily: Satoshi
+    fontSize: 14px
+    fontWeight: 400
+    lineHeight: 1.5
+    letterSpacing: 0
+  caption:
+    fontFamily: Satoshi
+    fontSize: 12px
+    fontWeight: 400
+    lineHeight: 1.5
+    letterSpacing: 0
+  button:
+    fontFamily: Satoshi
+    fontSize: 14px
+    fontWeight: 500
+    lineHeight: 1.2
+    letterSpacing: 0
+  mono:
+    fontFamily: JetBrains Mono
+    fontSize: 13px
+    fontWeight: 400
+    lineHeight: 1.5
+    letterSpacing: 0
+
+rounded:
+  xs: 4px
+  sm: 6px
+  md: 8px
+  lg: 12px
+  xl: 16px
+  xxl: 24px
+  pill: 9999px
+
+spacing:
+  xxs: 4px
+  xs: 8px
+  sm: 12px
+  md: 16px
+  lg: 24px
+  xl: 32px
+  xxl: 48px
+  section: 96px
+
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.on-primary}"
+    typography: "{typography.button}"
+    rounded: "{rounded.md}"
+    padding: 8px 14px
+  button-secondary:
+    backgroundColor: "{colors.surface-2}"
+    textColor: "{colors.ink}"
+    typography: "{typography.button}"
+    rounded: "{rounded.md}"
+    padding: 8px 14px
+  content-card:
+    backgroundColor: "{colors.surface-1}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.lg}"
+    padding: 24px
+  media-panel:
+    backgroundColor: "{colors.surface-1}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.xl}"
+    padding: 24px
+  text-input:
+    backgroundColor: "{colors.surface-1}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.md}"
+    padding: 8px 12px
+---
+
+# Storylio design system
+
+Storylio borrows Linear's restrained hierarchy, compact controls, and separation
+through surfaces and hairline borders. Its identity comes from the planet in
+`public/images/home-hero.avif`: deep navy, lunar blue surfaces, a clear blue rim,
+and a pale cyan highlight. The portfolio's projects, writing, and photography
+remain the content; Linear's product screenshots and pricing layouts are not
+templates for these pages.
+
+The hero image is the intended visual anchor. Its horizon supplies the strongest
+light; surrounding interface surfaces stay quiet. Energy: 2/5, rhythm: 3/5,
+motion: 1/5. Preserve the existing font identity and let the image carry the
+atmosphere instead of repeating glow across cards and controls.
+
+## Token ownership
+
+`src/app/globals.css` is the runtime source for colors and radii. This document
+records their roles and the component design direction. Font loading stays in
+`src/lib/font.ts`. Responsive public typography is defined by the
+`--public-type-*` variables in `globals.css` and consumed by the shared
+`SectionHeading` and public CSS modules. The recipes above document those roles;
+this Markdown does not generate CSS. Spacing and component recipes remain guidance.
+
+The six `palette` samples map to fixed `--planet-*` variables. Semantic variables
+map those samples to usable roles in `:root` (light) and `.dark` (dark). The app
+currently applies `.dark` in `src/app/layout.tsx`; defining a light palette does
+not add a theme switcher.
+
+The approved public navy canvas and surfaces are global semantic tokens. Auth
+and dashboard consume the same roles; public chrome does not redefine their
+colors. Raw planet samples stay fixed and are not the dark elevation ramp.
+
+### Brand and interaction
+
+| Role / CSS token | Light | Dark | Purpose |
+| --- | --- | --- | --- |
+| `--brand` | Accent | Accent | Original rim-light sample; brand graphics and decoration |
+| `--brand-soft`, `--link` | Accent dark | Accent light | Readable inline emphasis, links, and highlighted words |
+| `--brand-hover` | Accent dark | Accent light | Brand hover state |
+| `--primary` | Accent dark | Accent | Filled primary controls |
+| `--primary-hover` | `oklch(0.465 0.115 243.85)` | Accent light | Opaque filled-control hover |
+| `--primary-foreground` | Glow | Night | Text and icons on primary fills |
+| `--ring` | Accent dark | Accent light | Keyboard focus |
+| `--glow` | Glow | Glow | Restrained hero/edge highlight, never body text on light |
+
+The sampled accent remains unchanged. Light-mode primary controls use its darker
+variant for readable labels; their hover takes one further step darker. Dark-mode
+buttons pair the sampled blue with navy labels. White labels on that blue lack
+enough contrast for small text. Keep foreground and fill paired on hover too.
+
+`--accent` is **shadcn's interaction background**, not the brand accent. It is a
+low-chroma tint for selected menu items and subtle hover fills, paired with
+`--accent-foreground`. `--accent-hover` is the next step of that tint. Do not use
+`bg-accent` as a substitute for the primary CTA.
+
+`--brand-soft` retains its existing name for compatibility. It adapts per theme
+because existing components use it for text as well as decoration. Use `--link`
+for new inline links; underline links in running text.
+
+### Surfaces and text
+
+| CSS token | Light | Dark |
+| --- | --- | --- |
+| `--background` | `oklch(0.985 0.003 247.77)` | `oklch(0.11 0.018 259.15)` |
+| `--foreground` | `oklch(0.23 0.035 259.15)` | Glow |
+| `--surface`, `--card`, `--sidebar` | `oklch(1 0 0)` | `oklch(0.155 0.023 259.15)` |
+| `--surface-2` | `oklch(0.965 0.007 247.77)` | `oklch(0.195 0.028 259.15)` |
+| `--surface-3`, dark `--popover` | `oklch(0.945 0.012 247.77)` | `oklch(0.235 0.03 259.15)` |
+| `--surface-4` | `oklch(0.94 0.018 247.77)` | `oklch(0.275 0.032 259.15)` |
+| `--muted-foreground` | `oklch(0.47 0.025 250)` | `oklch(0.72 0.025 247.77)` |
+| `--border` | `oklch(0.89 0.014 247.77)` | `oklch(0.28 0.025 259.15)` |
+| `--border-hover` | `oklch(0.64 0.035 247.77)` | `oklch(0.46 0.03 259.15)` |
+| `--input` | `oklch(0.64 0.035 247.77)` | `var(--border-hover)` |
+
+`--surface-hover`, `--secondary`, and `--muted` alias surface 2.
+`--surface-border` and `--sidebar-border` alias the decorative border.
+`--popover` is white in light mode and surface 3 in dark mode. Foreground tokens
+for cards, popovers, secondary controls, and the sidebar follow `--foreground`.
+Sidebar action, interaction, and focus tokens follow their main equivalents.
+
+Use the surface ladder to express depth: canvas → content → hover → popover.
+Borders distinguish regions without making every card glow. `--border` is a
+quiet separator; use the stronger `--input` for a form-field boundary. Text stays
+on opaque surfaces where possible. Opacity, image overlays, and composited fills
+need their own contrast check.
+
+### Status and charts
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| `--success` | `oklch(0.46 0.12 155)` | `oklch(0.75 0.14 155)` |
+| `--warning` | `oklch(0.5 0.1 75)` | `oklch(0.82 0.14 80)` |
+| `--destructive` | `oklch(0.52 0.2 25)` | `oklch(0.72 0.16 25)` |
+| `--info` | Link | Link |
+
+Status colors describe real outcomes, accompanied by text or icons. They are not
+secondary marketing accents. Article callouts use these same semantic variables.
+Filled destructive controls pair `--destructive` with
+`--destructive-foreground` (white in light mode, night in dark mode).
+
+`--chart-1` through `--chart-5` form a sequential blue scale. These are suitable
+for ordered values, not five unrelated categories. Charts still need labels,
+markers, or patterns; adjacent colors alone do not communicate a series.
+
+## Typography and geometry
+
+- **Clash Display** / `font-heading`: hero and section headings, weight 500–600.
+- **Satoshi** / `font-sans`: paragraphs, navigation, labels, and controls.
+- **JetBrains Mono** / `font-mono`: code, identifiers, and technical values.
+
+All three remain locally hosted variable fonts. Do not load Linear's proprietary
+fonts or substitute Inter/Geist. The approved Home hierarchy is the reference for
+every public route. Use named roles, rather than choosing a font size separately
+for About, an archive, or article content.
+
+| Role | Below 768px | From 768px | Weight | Line height | Tracking |
+| --- | --- | --- | --- | --- | --- |
+| Page title / H1 | 40px | 56px | 600 | 1.15 / 1.1 | -0.025em |
+| Section heading / H2 | 36px | 48px | 600 | 1.15 | -0.025em |
+| Item title / H3 or card title | 22px | 22px | 500 | 1.25 | -0.02em |
+
+These sizes are rem-based in CSS (2.5/3.5rem, 2.25/3rem, 1.375rem respectively)
+and follow the reader's root font size. The 768px breakpoint is shared; do not
+add a different breakpoint or size to a route. Body copy and metadata keep their
+existing Satoshi roles (16px body, 18px lead, 14px secondary, 12px caption).
+
+Use `SectionHeading` for section H2s. It owns the family, size, weight, line height,
+and tracking. Its `className` is for layout and spacing, not `text-*` or alternate
+type sizes. The older `Heading` component delegates `variant="section"` H2s to
+this component; its generic `size` prop does not override section typography.
+About, Home, related content, interface details, and Markdown H2s follow this
+same scale. Article/study H3s, institution names, work titles, and skill categories
+use the item role. Heading levels describe structure: archive cards can be H2s
+and still use the item role visually.
+
+Keep public headings plain in `--foreground`. No slash prefixes, decorative
+underlines, gradient bars, or highlighted words. Distinguish sections from items
+through the scale, weight, and spacing. Keep existing section and item spacing;
+do not decorate a weak hierarchy instead of fixing the type roles. Native links
+inside content retain their functional hover/focus treatment.
+
+Explicit exceptions are limited to existing roles:
+
+- Home's compact tech-stack block uses `SectionHeading size="compact"` at the
+  item scale, preserving its approved composition.
+- A featured Blog card uses 28px below 1024px and 40px from 1024px via
+  `--public-type-feature-size`. Projects uses one uniform card grid: all titles
+  stay 22px; featured projects are ordered first and identified by a small navy
+  badge with blue text on the cover, without a larger layout or title.
+  Projects card titles clamp to two lines with natural height; descriptions
+  reserve up to three lines, including missing descriptions. Technology and
+  action rows align at the bottom of cards in the same grid row. Show the first
+  three saved technologies plus a noninteractive `+N` count. Full text remains
+  in the DOM/detail page; filtering still matches the full saved technology list.
+- Empty-state headings use `--public-type-state-size` (28px, weight 500), rather
+  than competing with the page's real H1. TOC and footer navigation labels are
+  controls, not section titles.
+- The footer invitation remains a display CTA at the page-title sizes, with its
+  existing 1.1 line height; its logo wordmark is an illustration. Neither follows
+  H2 section sizing.
+
+The reserved `display-*` presets above are not alternate page or section sizes.
+Changes to the public hierarchy must update the tokens, this role table, and
+the browser typography check together. Dashboard/auth typography is independent.
+
+Projects' Read case study action uses FlowButton: Satoshi 14px/500, a minimum
+44px target, and a fixed 8px radius in all states. Its outlined navy surface gains
+a blue circular sweep and exchanges arrows on hover or visible keyboard focus.
+Reduced motion removes the movement. Live/source actions remain secondary text
+links. Cover-only TiltedCard movement follows the parent link or an explicitly
+marked card container; titles and controls remain stable.
+
+The Projects archive shows six results per page in the same 3/2/1 column grid.
+Pagination appears only when filtered results span multiple pages; page controls
+preserve stack/query state and use 44px targets. Mobile shows Previous, current
+page/total, and Next; larger screens also show numbered links with ellipses.
+
+Use a 4px spacing unit, 24px card interiors, 32–48px between related blocks, and
+64–96px between sections. Content containers generally cap at 1280px; reading
+columns stay near 65–75 characters. Let content determine the grid.
+
+The runtime radius base is `--radius: 0.75rem` (12px). With the default 16px root
+font size, Tailwind `rounded-xs/sm/md/lg/xl/2xl/3xl/4xl` resolve to
+4/6/8/12/16/24/32/48px. Use 8px controls, 12px cards, and 16px media panels as
+the target recipes. `rounded-full` is for avatars, small status indicators, and
+segmented controls. Existing explicit pill classes remain until migrated.
+
+## Components, hero, and states
+
+Primary controls use `bg-primary text-primary-foreground` and the paired hover
+token `hover:bg-primary-hover`. Secondary controls use the quiet secondary fill;
+menu selection uses `bg-accent text-accent-foreground`. Prefer theme-aware tokens
+over raw blue, purple, white, or black utilities.
+
+A shared utilities-layer rule maps existing default shadcn buttons and linked
+badges to `--primary-hover`. This keeps their hover fill opaque even where the
+component still declares `hover:bg-primary/80`, which reduces label contrast.
+New component variants should use the explicit semantic hover utility directly.
+
+The Home CTA is an explicit material exception: VenomButton uses the upstream
+exteestudio symbiote renderer and 3D cursor, adapted to black navy rubber with
+restrained cool blue reflections. Keep its Satoshi
+label at the project's button typography (14px, weight 500), with at least a
+44px target and 12px/24px padding. Its pill geometry belongs to this effect;
+other controls keep their existing radius tokens. The renderer reads dimensions
+and font from the real navigation link. Touch, reduced motion and unavailable
+WebGL keep the CSS link. Its thin pale-blue rim travels around the pill once
+every 5 seconds, brightens on hover/focus, and stops under reduced motion.
+The text and full-size pill exist in the server-rendered link. The Home entrance
+reveals this link on a fixed schedule while its renderer prepares. Crossfade to WebGL in
+180ms once the first complete frame is ready; the rim pauses and fades out.
+The scene is transparent and scoped to the CTA area;
+it releases cursor ownership and pauses rendering when offscreen, hidden, or
+unfocused, then resumes at full size without replaying the intro. A visible
+paused button keeps a stable 2D snapshot of its WebGL material; offscreen buttons
+hide that snapshot. Resume replaces it only after the next complete WebGL frame.
+GPU resources
+are retained for this pause and freed on unmount, reduced motion, or context
+loss. Use no growth or delayed-label entrance, including on the initial mount.
+Begin loading the engine and font immediately for a visible desktop CTA;
+keep the engine deferred for touch and reduced motion. Cache the two cursor
+rasters and distance fields per browser module; GPU textures remain per scene.
+Submit all three shader programs before validation, share the vertex shader,
+and poll completion over animation frames when parallel compilation is available.
+Idle probes use 1–2 short strands every 4–6 seconds; cursor interaction retains
+the original physics. Keep the hero text horizontally centered above the horizon.
+
+Home uses Lenis for gentle wheel interpolation (lerp 0.14) on fine-pointer,
+hover-capable devices without reduced motion. It drives native window scrolling
+from the existing Motion frame loop, with no transformed page wrapper. The
+deferred engine is destroyed when leaving Home or changing those preferences.
+Hidden documents and unfocused windows suspend its clock and discard pending
+inertia. Touch stays native; nested dialogs/listboxes and `data-lenis-prevent`
+regions keep native input. No smoothing is applied to dashboard routes.
+
+Home's anchors, back-to-top and footer focus reveal use the same page-scroll
+adapter. Native CSS smoothing is disabled only while Lenis owns interpolation.
+Other public pages retain native smooth anchors; reduced motion uses direct
+scrolling. Hash history and target focus remain owned by the existing link
+handler. The root `data-scroll-behavior="smooth"` attribute lets Next.js keep
+route transitions immediate.
+
+Cards use `bg-card text-card-foreground` with a 1px decorative border. Dropdowns
+use `bg-popover text-popover-foreground`. Inputs use surface fill, `border-input`,
+`text-foreground`, and `placeholder:text-muted-foreground`. Focus must remain
+visible with a ring/outline and offset; check the composited result if the ring
+uses opacity. Errors include a readable message, not only a red border.
+
+Use `home-hero.avif` as a hero-local image when implementing the hero. Keep the
+planet horizon and astronaut visible where the crop permits. Put text over a
+quiet region of sky and add a local navy scrim when needed for legibility. Fade
+the image into `--background`; do not apply the image or its glow to the whole
+site. Light layouts can host an explicitly dark hero with its own foreground.
+
+At small widths, stack content, reduce display type toward 36–40px, and preserve
+reading order. Touch controls should provide at least 44px targets. Preserve
+loading, empty, disabled, validation, and keyboard states during migration.
+New motion should respect reduced-motion preferences.
+
+## Adoption status
+
+### Public navigation
+
+The floating public navbar uses `GooeyNav` inside the existing scroll-visibility
+wrapper. Its frame follows the surface, border, foreground, and muted-text
+tokens. Dark mode pairs a pale `#f2fbfe` pill with navy `#000b27` ink; light mode
+reverses that pairing. Blue `#068ce6` is reserved for transition particles.
+
+This is one deliberate interactive motion accent: 7 particles, a 400ms travel
+time with 100ms variance, 24px spread, 0.3 gooeyness, and 0.2 wobble. It does not
+loop while idle. Route state follows the URL, including detail and preview
+routes. Links use Next.js client navigation with global Partial Prefetching.
+Public navbar links also prepare their cached URL-specific content; uncached
+request-time data stays streamed behind a route-local boundary. Mobile shows
+five visible text labels with icons hidden below 640px, using 13px text and 6px
+horizontal padding to fit a 320px viewport. Desktop retains icons and labels.
+Link targets are at least 44px high and wide.
+
+Reduced-motion preferences switch to a static pill immediately, including
+changes made while the page is open. Unavailable/lost WebGL uses the same static
+fallback; the renderer can recover after context restoration. Keyboard focus
+keeps the floating wrapper visible and has a visible outline.
+
+### Logos and avatars
+
+Logo artwork stays in `src/assets/logo/` as SVG files. `Logo` selects the dark
+or light artwork using the theme classes and keeps dimensions and alternative
+text consistent. The asset hex colors above are the fixed export colors used by
+the SVGs and the WebGL shader, which accepts hex input. The optional orb wash
+uses a blue ramp; the default orb remains monochrome.
+
+`ProfileAvatar` displays a supplied image when it loads, and uses `LiveOrb` for
+missing or failed images. Old URLs for the removed bundled portrait are treated
+as empty without making a request. The orb is static CSS by default: no canvas,
+WebGL context, theme observer, or animation loop. The large About profile opts
+into animation; reduced motion and unavailable WebGL retain a still fallback.
+Static automatic-theme orbs use foreground/background tokens directly, including
+the server-rendered frame.
+
+`public/images/` contains only `home-hero.avif`. Existing favicon files are
+managed separately in `src/app/` and `public/metadata/`.
+
+### Home adoption — October 25, 2026
+
+Home now uses the supplied planet hero, the approved Venom CTA, three selected
+projects, a readable ordered approach, technology logos, latest writing, and
+personal notes. Notes come from published posts with the exact tag `notes` and
+are hidden when empty; testimonials are no longer queried on Home.
+
+`public-chrome.module.css` shares the approved Home dark palette across all public
+navigation, content, and footers: near-black canvas (`oklch(0.11 0.018 259.15)`), quiet
+surface (`oklch(0.155 0.023 259.15)`), next surface
+(`oklch(0.195 0.028 259.15)`), and border (`oklch(0.28 0.025 259.15)`).
+One navy hue connects the surfaces; lightness separates their roles. The scope
+exists throughout the public shell; dashboard tokens stay independent.
+The shared footer uses surface-2 in both themes, retaining
+enough separation from the canvas for its curtain reveal.
+
+The hero serves the original 2560×1441 AVIF with `unoptimized` and preload,
+avoiding another lossy encode of the roughly 80KB asset. No blur is applied.
+A navy scrim starts opaque at the top, falls to 40% behind the heading and
+22% near the planet rim, then 28% at the bottom. A separate fade joins the
+image to the page canvas. Mobile cropping and the source resolution still
+limit detail on high-density displays.
+
+Hero type is Clash Display 56px/600 on desktop and 40px/600 on mobile.
+The initial hero entrance runs once: dark canvas, scene/nav, staggered headline,
+subheadline, then CTA. CSS starts at first paint and completes within about 1.8s;
+WebGL readiness never blocks the sequence. Headline words blur from 5px over 1s,
+with an initial 350ms delay and at most 400ms total stagger. Scroll, focus, click,
+window blur or hidden document finish the entrance; reduced motion shows it directly.
+Returning to the viewport or browser does not replay it.
+
+Gravity stars sit above the hero image scrim and fade out toward the planet.
+Use 40 desktop stars and 24 below 640px, 1.1px base size, 2.8 glow, 0.85 layer
+opacity, speed 0.15, and a small crisp core. Disable connecting lines and cursor
+gravity. Pause while offscreen, unfocused or hidden; reduced motion keeps a
+static sky. The image itself remains sharp beneath the separate scrim.
+
+Home section groups use the shared MotionReveal already used by About, Projects
+and Blog: opacity and 24px vertical travel, 550ms, once, with an 80px viewport
+inset. Each section's heading and content enter together. Do not restore per-card
+blur or an independent heading animation.
+
+Section headings retain the project's existing 48px/36px helper sizes.
+Card titles use 22px/500; body uses 16px or 18px; secondary copy 14px;
+metadata 12px. Font loading and control sizes remain unchanged. The large
+decorative footer wordmark is a graphic exception: Clash Display at a fluid
+80–280px, rather than a new heading size.
+
+Projects and writing share a 1280px container, 24px gap, and 3/2/1 columns
+at 1200px/768px/mobile. Cards use radius-xl (16px), covers radius-md (8px),
+with a border instead of glow. Cover appearance="home" keeps legacy page
+variants separate. Home covers adapt the supplied tilted-card spring/glare:
+projects tilt up to 4° at 1.02 scale; writing up to 2.5° at 1.01 scale.
+Text remains stationary, and the whole card stays a native navigation link.
+No flip, tooltip, gyroscope, floating or intro. Touch/reduced motion stay static;
+offscreen/hidden/unfocused covers stop their animation frames.
+Missing media has an honest text fallback.
+
+Tech logos stay in one row: at most 6 at 1200px+, 4 at 768–1199px, 3 below 768px.
+More entries rotate in filled groups every 5 seconds while visible and active;
+the last group can overlap the previous group to avoid empty slots. The supplied
+920ms clip/blur wipe runs with 110ms per-slot staggering; logo content changes at
+the fully clipped point. The wipe repeats indefinitely, including when all logos
+fit in one group; completing a full set restarts at the first group.
+No visible previous/next, pause/play, or pagination controls. Hover/focus pause
+rotation; swipe or a focused row's left/right/Home/End keys change groups.
+Reduced motion disables autoplay/wipes but keeps manual access to every logo.
+Dashboard logo category and Home visibility determine selection; the old label
+list is only a compatibility default for unconfigured records.
+
+Hero's public contract uses `headline` and `subheadline`. A singleton HERO
+HomeSection holds the headline; the existing profile bio supplies the subheadline
+without renaming or discarding its database column. The future dashboard editor
+will use these names and the prepared authenticated action. Empty values use
+the defaults in `home-hero.ts`. The only hero CTA is the Venom “Selected projects”
+anchor with smooth scrolling; no secondary bottom link remains.
+Hero fallback copy is personal and direct: “I’m Heinz. I build web apps.” Home's section
+labels are “Projects I’ve built”, “How I work”, “My usual stack”, “Writing”, and
+“Notes from building”. Home's footer invitation is “Got something in mind?
+Let’s talk.” All public routes share this footer and its back-to-top control;
+there is no second floating control.
+
+The Home footer adopts the reference
+columns and oversized wordmark; desktop curtain reveal is enabled only when
+its measured height fits the viewport. Short screens, mobile, reduced motion,
+and SSR use normal flow. Wordmark parallax and small staggered reveals use
+the existing Motion dependency. Keyboard focus reveals clipped footer links.
+
+The token system also covers shared heading styling, radii, selection/caret
+colors, quiet scrollbars, and semantic article callouts.
+
+### Public adoption — October 26, 2026
+
+All public routes extend the approved Home world. `public-page.module.css` owns
+the 1280px page container, 56px/40px page title, 18px/16px introduction, 44px
+filters, 3/2/1 archive grid, quiet media cards and truthful empty states. The
+planet and gravity stars remain local to Home. Collection counts are supporting
+metadata rather than decorative statistic cards. All public routes share the
+approved navy footer; Lenis remains Home-only.
+
+About uses a sticky profile and section navigation alongside a reading column.
+Experience, education and skills use separated rows. Language controls preserve
+English/Indonesian content, query state and prefetch. Mobile stacks profile and
+story without a floating side menu.
+
+Projects use a wide featured work and archive cards with the approved cover tilt.
+Case studies place title/contribution above a full-width cover, followed by MDX
+and a quiet sticky TOC. Screenshots retain captions and lightbox. Writing uses
+the same archive cards; notes without covers remain text-led. Articles use a
+bounded reading column, real publication metadata, optional cover, related posts
+and adjacent navigation. `public-detail.module.css` owns these reading recipes.
+
+Gallery retains native-aspect masonry and lightbox with minimal frames; captions
+appear on hover/focus, and remain visible with touch/reduced motion. Preserve
+source dimensions, blur placeholders and lazy loading. Status pages use the same
+canvas/type with clear recovery actions. Skeletons match the new content shapes
+and do not add a looping entrance.
+
+The dashboard has not been redesigned. Existing control/card recipes elsewhere
+can be adopted when those surfaces are edited. Theme previews alone do not prove
+contrast for all authored images, article embeds, popovers or editor content.

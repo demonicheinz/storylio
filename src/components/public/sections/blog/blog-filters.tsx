@@ -1,53 +1,97 @@
 "use client";
-
-import { TagIcon } from "@phosphor-icons/react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useOptimistic, useTransition } from "react";
+import { MultiSelectContent } from "@/components/common/multi-select/content";
+import { MultiSelect } from "@/components/common/multi-select/context";
+import {
+  MultiSelectEmpty,
+  MultiSelectItem,
+  MultiSelectList,
+} from "@/components/common/multi-select/list";
+import {
+  MultiSelectSearch,
+  MultiSelectTrigger,
+} from "@/components/common/multi-select/trigger";
 import { FilterLink } from "@/components/public/filter-link";
-
-type BlogFiltersProps = {
+import { buildWritingFilterHref } from "@/lib/writing-filters";
+import styles from "./blog.module.css";
+export function BlogFilters({
+  tags,
+  selectedTag,
+  resultCount,
+  totalPosts,
+}: {
   tags: string[];
   selectedTag?: string;
-};
-
-export function BlogFilters({ tags, selectedTag }: BlogFiltersProps) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const getFilterHref = (tag?: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (tag) {
-      params.set("tag", tag);
-    } else {
-      params.delete("tag");
-    }
-
-    const query = params.toString();
-
-    return query ? `${pathname}?${query}` : pathname;
-  };
-
+  resultCount: number;
+  totalPosts: number;
+}) {
+  const pathname = usePathname(),
+    search = useSearchParams().toString(),
+    router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [selected, setSelected] = useOptimistic(selectedTag ?? "");
+  const notes = selectedTag === "notes";
+  const href = (tag?: string) => buildWritingFilterHref(pathname, search, tag);
+  const update = (next: string[]) =>
+    startTransition(() => {
+      const tag = next[0] ?? "";
+      setSelected(tag);
+      router.push(href(tag || undefined), { scroll: false });
+    });
   return (
-    <div className="bg-background/65 sm:bg-surface/55 backdrop-blur-xl -mx-4 sm:mx-0 px-4 sm:px-5 py-3.5 sm:border border-border/30 border-y sm:rounded-3xl">
-      <div className="flex items-center gap-2 mb-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-[0.24em]">
-        <TagIcon className="text-brand-soft" size={16} />
-        Filter by topic
-      </div>
-
-      <div className="[&::-webkit-scrollbar]:hidden flex gap-2 pb-1 overflow-x-auto scrollbar-none">
-        <FilterLink href={getFilterHref()} active={!selectedTag}>
-          All
+    <div className={styles.toolbar}>
+      <nav className={styles.formats} aria-label="Writing formats">
+        <FilterLink href={href()} active={!notes}>
+          Articles
         </FilterLink>
-        {tags.map((tag) => {
-          const isActive = selectedTag === tag;
-
-          return (
-            <FilterLink key={tag} href={getFilterHref(tag)} active={isActive}>
-              {tag}
-            </FilterLink>
-          );
-        })}
-      </div>
+        <FilterLink href={href("notes")} active={notes}>
+          Notes
+        </FilterLink>
+      </nav>
+      <p
+        className={styles.result}
+        role="status"
+        aria-live="polite"
+        aria-busy={pending}
+      >
+        {pending
+          ? "Updating…"
+          : `${resultCount}${selectedTag && !notes ? ` of ${totalPosts}` : ""} ${notes ? "notes" : resultCount === 1 ? "article" : "articles"}`}
+      </p>
+      {!notes && (
+        <div className={styles.topic}>
+          <MultiSelect
+            selectionMode="single"
+            value={selected ? [selected] : []}
+            onValueChange={update}
+          >
+            <MultiSelectTrigger
+              label="Filter topic"
+              fieldLabel="Topic"
+              emptyLabel="All topics"
+              clearLabel="Reset topic"
+              onClear={() => update([])}
+            />
+            <MultiSelectContent>
+              <MultiSelectSearch
+                label="Search topics"
+                placeholder="Search topics…"
+              />
+              <MultiSelectList ariaLabel="Topics">
+                {[...new Set([...tags, ...(selected ? [selected] : [])])]
+                  .sort((a, b) => a.localeCompare(b))
+                  .map((tag) => (
+                    <MultiSelectItem key={tag} value={tag}>
+                      {tag}
+                    </MultiSelectItem>
+                  ))}
+              </MultiSelectList>
+              <MultiSelectEmpty>No topics found.</MultiSelectEmpty>
+            </MultiSelectContent>
+          </MultiSelect>
+        </div>
+      )}
     </div>
   );
 }

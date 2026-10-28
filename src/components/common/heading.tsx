@@ -1,4 +1,5 @@
 import type { ElementType, ReactNode } from "react";
+import { SectionHeading } from "@/components/common/section-heading";
 import { cn } from "@/lib/utils";
 
 export type HeadingLevel = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
@@ -9,6 +10,7 @@ export type HeadingVariant = "default" | "section" | "page" | "feature";
 
 export interface HeadingProps {
   level?: HeadingLevel;
+  /** Generic headings only; section headings always use the public type scale. */
   size?: HeadingSize;
   variant?: HeadingVariant;
   title?: string;
@@ -47,6 +49,16 @@ export function Heading({
 }: HeadingProps) {
   const Component: ElementType = level;
 
+  if (level === "h2" && variant === "section") {
+    return (
+      <SectionHeading id={id} className={cn("mb-6", className)}>
+        {title && `${title}${highlight ? ` ${highlight}` : ""}`}
+        {title && children != null && " "}
+        {children}
+      </SectionHeading>
+    );
+  }
+
   return (
     <Component
       id={id}
@@ -57,13 +69,7 @@ export function Heading({
       )}
     >
       {title && (
-        <span
-          className={
-            variant === "section"
-              ? "relative inline-block border-b-2 border-brand-soft pb-1 after:absolute after:-bottom-0.5 after:left-0 after:h-0.5 after:w-full after:bg-linear-to-r after:from-border after:via-brand-soft after:to-border"
-              : ""
-          }
-        >
+        <span>
           {title}{" "}
           {highlight && <span className="text-brand-soft">{highlight}</span>}
         </span>

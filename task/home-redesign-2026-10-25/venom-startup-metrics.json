@@ -1,0 +1,42 @@
+{
+  "production-cursor-before": [
+    {
+      "linkToReadyMs": 624.4000000059605,
+      "preparationToReadyMs": 160.60000000149012,
+      "cursorPreparationMs": 50.600000001490116,
+      "shaderStatusMs": 0.10000000149011612
+    },
+    {
+      "linkToReadyMs": 494.80000000447035,
+      "preparationToReadyMs": 85.30000000447035,
+      "cursorPreparationMs": 36.30000000447035,
+      "shaderStatusMs": 0
+    },
+    {
+      "linkToReadyMs": 490.8999999985099,
+      "preparationToReadyMs": 102.19999999552965,
+      "cursorPreparationMs": 44.69999999552965,
+      "shaderStatusMs": 0
+    }
+  ],
+  "production-cursor-after": [
+    {
+      "linkToReadyMs": 482,
+      "preparationToReadyMs": 128.70000000298023,
+      "cursorPreparationMs": 37.5,
+      "shaderStatusMs": 0
+    },
+    {
+      "linkToReadyMs": 574.2000000029802,
+      "preparationToReadyMs": 87.70000000298023,
+      "cursorPreparationMs": 30.5,
+      "shaderStatusMs": 0
+    },
+    {
+      "linkToReadyMs": 492.30000000447035,
+      "preparationToReadyMs": 116.80000000447035,
+      "cursorPreparationMs": 23.5,
+      "shaderStatusMs": 0
+    }
+  ]
+}

@@ -50,7 +50,7 @@ Storylio is a single-owner portfolio and content management system built with Ne
 
 - **Single-owner** — web registration disabled; owner account seeded once via CLI
 - **Email + password** — credential login with configurable min/max password length
-- **GitHub OAuth** — optional; appears only when credentials are configured; supports `OWNER_GITHUB_ID` guard for strictest account restriction
+- **GitHub OAuth** — optional; requires OAuth credentials and the pinned `OWNER_GITHUB_ID`
 - **Passkey** — WebAuthn/FIDO2 support via BetterAuth passkey plugin (biometrics, PIN, or hardware security key)
 - **Content Security Policy** — strict CSP headers with environment-aware `unsafe-eval`, Cloudinary and Umami origins allowlisted
 - **Route protection** — all `/dashboard/*` routes protected via `proxy.ts` with owner email allowlist
@@ -218,9 +218,9 @@ GitHub OIDC configuration, and Vercel secret sync.
 | Variable | Description |
 |----------|-------------|
 | `CLOUDINARY_FOLDER` | Upload folder name; defaults to `storylio` |
-| `GITHUB_CLIENT_ID` | Enables GitHub sign-in when paired with secret |
-| `GITHUB_CLIENT_SECRET` | Enables GitHub sign-in when paired with client ID |
-| `OWNER_GITHUB_ID` | Restricts GitHub OAuth to one specific GitHub account |
+| `GITHUB_CLIENT_ID` | GitHub OAuth client ID; requires secret and owner ID |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret; requires client ID and owner ID |
+| `OWNER_GITHUB_ID` | Required numeric GitHub owner account ID for OAuth |
 | `RESEND_REPLY_TO` | Reply-to address for outgoing emails |
 | `UMAMI_WEBSITE_ID` | Enables public Umami tracking script |
 | `UMAMI_SCRIPT_URL` | Custom script URL; defaults to Umami Cloud |
@@ -252,9 +252,18 @@ bun run db:check         # Check local Drizzle migration history
 bun run db:baseline      # Verify an existing schema; read-only by default
 bun run db:status        # Report applied/pending migrations and baseline requirements
 bun run db:migrate       # Apply migrations to an empty or already-baselined database
-bun run db:seed          # Seed owner account and initial content
+bun run db:seed          # Interactive seed menu (dev)
 bun run db:studio        # Open Drizzle Studio
 ```
+
+The seed menu lets you select groups (owner, Home, About, or individual demo
+content), enter profile text and review the plan before connecting to the
+database. `bun run db:seed -- --dry-run` previews it without writing. Use
+`:preview` for staging and `:production` for prod. Login credentials stay in
+Infisical; supplied profile fields update an existing owner only when explicitly
+selected in the menu. Blank optional answers preserve saved fields. Demo posts
+and projects still replace matching demo slugs when selected. See
+[database/seeder guide](docs/DRIZZLE_MIGRATION.md).
 
 ---
 
@@ -340,7 +349,151 @@ It verifies that filter variants are not prefetched on page load, hover/focus
 warms the selected destination without navigating, clicking reuses that prefetch,
 and resetting to All preserves unrelated query parameters.
 
+For the public GooeyNav checks, start the local app and use a fresh isolated
+session. The check needs the published `/projects/storylio` fixture. It verifies
+client navigation, active routes, Back/Forward, mobile target sizes, theme
+changes, keyboard focus, reduced motion, and WebGL fallback/context recovery:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-gooey open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:gooey-nav
+bunx --no-install playwright-cli -s=storylio-gooey close
+```
+
+For the Home Venom CTA, use the existing local app. This checks the Satoshi
+label and 44px target, a complete first rendered frame, cached cursor assets,
+the orbiting CSS rim during pending shaders, the handover without resizing,
+compilation without the parallel extension, shader failure cleanup, transparent
+WebGL rendering, motion, native link
+navigation, cursor cleanup, full-size resume after scrolling, window blur and
+document visibility changes, live reduced motion, context
+loss, no-WebGL fallback, and touch. The no-WebGL override uses a separate page:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-venom open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:venom
+bunx --no-install playwright-cli -s=storylio-venom close
+```
+
+For Home's entrance and stars, use a separate session against the local app:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-home open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:hero
+bunx --no-install playwright-cli -s=storylio-home close
+```
+
+This checks finite entrance timing, visible star cores above the hero scrim,
+desktop/mobile layout, reduced motion, the CTA anchor, and the retained Venom
+appearance with no rendering loop while paused. Scroll and browser focus changes
+must not replay the entrance.
+
+In the same Home browser session, `bun run test:browser:home-scroll` checks Lenis
+wheel interpolation, anchor history/focus, footer back-to-top, nested native
+scrolling, focus interruption, route cleanup/Back, and touch/reduced-motion
+fallbacks. Lenis runs only on Home with a fine pointer and hover, uses Motion's
+frame loop, and leaves native window scrolling and the fixed footer intact.
+
+For the complete public redesign integration check, open a production session:
+
+```bash
+bunx --no-install playwright-cli -s=storylio-public open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:public-redesign
+bunx --no-install playwright-cli -s=storylio-public close
+```
+
+This checks collection grids, shared footers, native scrolling outside Home,
+case-study contents/screenshots, article content, gallery category/lightbox,
+empty filters, and cold missing-route HTTP 404. It needs the published Storylio
+project, writing and gallery fixtures. `tests/browser/public-surface.js` checks
+the current public route at 1440/768/390/320px, including heading visibility and
+footer keyboard focus. Existing filter, About-language and GooeyNav checks
+remain separate so prefetch behavior and navigation can be inspected directly.
+
+The public typography check compares every route with Home at
+1440/1024/768/390/320px. It covers page/section/item roles, featured cards,
+heading-decoration scoping, root font scaling, overflow, and article heading copy actions:
+
+```powershell
+bunx --no-install playwright-cli -s=storylio-type open http://localhost:3000 --config=playwright-cli.config.json
+bunx --no-install playwright-cli -s=storylio-type run-code --filename=tests/browser/public-typography.js
+bunx --no-install playwright-cli -s=storylio-type close
+```
+
+Use published Home, About, project and article fixtures. The article fixture is
+`building-storylio-with-server-first-pages`. Typography roles and approved
+exceptions are documented in [DESIGN.md](DESIGN.md#typography-and-geometry).
+
 ## Integrations
+
+Projects' searchable multi-select is adapted from BeUI's motion multi-select;
+the MIT notice is retained in `src/components/common/multi-select/LICENSE`.
+Selection uses AND matching and repeated `tech` query parameters. The search
+field searches technology names only; the X in the trigger resets the stack.
+Run `tests/browser/projects-polish.js` through an isolated Playwright CLI session
+to check responsive layout, multi-selection, keyboard/focus, reset, URL state,
+empty results, and Back/Forward behavior against the published demo fixtures.
+`tests/browser/project-cards-motion.js` checks the uniform Featured badge layout,
+cover tilt, stable text, Flow Button focus/hover/reduced-motion behavior, hidden
+pagination for the three demo projects, and filter-driven page reset. Database
+pagination is covered with fourteen in-memory PGlite fixtures in
+`tests/database/public-project-pagination.test.ts`; no live seed data is needed.
+`tests/browser/project-card-content.js` verifies natural title height with a
+two-line limit, three-line description slots, aligned card footers, three
+technology tags plus an overflow count, and browser-only long-text fixtures.
+`tests/browser/project-detail-polish.js` checks the earlier mobile cover,
+bounded reading width, responsive TOC keyboard/anchor behavior, heading wrapping,
+44px copy targets, lightbox focus restoration, and single-neighbor navigation.
+`tests/browser/code-block-scroll.js` checks the shared MDX code block's 12px
+radius, Shift + wheel, native horizontal wheel, ordinary vertical page scrolling,
+zoom modifiers, and short-code fallback with Lenis and reduced motion.
+`tests/browser/project-depth-carousel.js` verifies the screenshot stack at
+320–1440px with normal/reduced motion: keyboard controls, pointer drag, caption
+and counter updates, lightbox synchronization/focus, and vertical wheel scrolling.
+`tests/browser/project-depth-touch.js` checks horizontal swipe, tap-to-open, and
+native vertical panning in a separate Chromium touch context. Both use the
+published `/projects/storylio` demo screenshots and never write CMS data.
+Run it against `/projects/storylio` with an isolated Playwright CLI session:
+
+```powershell
+bunx --no-install playwright-cli -s=project-detail open http://localhost:3000/projects/storylio --config=playwright-cli.config.json
+bunx --no-install playwright-cli -s=project-detail run-code --filename=tests/browser/project-detail-polish.js
+bunx --no-install playwright-cli -s=project-detail close
+```
+
+Cache and Partial Prefetching policy, public tag invalidation, and protected
+route boundaries are documented in [CACHE_AND_PREFETCH.md](docs/CACHE_AND_PREFETCH.md).
+
+Writing's default archive excludes the reserved `notes` tag; the Notes format
+keeps the existing `/blog?tag=notes` URL. Notes on Home and the archive open a
+complete reading dialog with close and copy-link controls. Shared links use
+`/blog?tag=notes&note=<slug>`; old `/blog/<note-slug>` links redirect there.
+`tests/browser/expandable-notes.js` checks responsive dialogs, hash/query history,
+focus restoration, direct/legacy links, in-place Home reading and Lenis locking.
+`tests/browser/writing-archive.js` and `tests/browser/article-reading.js` verify
+the matching archive and article reading layouts. Use published demo content in
+an isolated CLI session; the tests do not edit CMS records.
+
+`tests/browser/gallery-polish.js` verifies the Gallery layout at five widths,
+single-category search/reset/history, image zoom, keyboard focus, and scrollable
+long captions with Lenis locked. `tests/browser/gallery-touch.js` checks lightbox
+swipe, zoom controls, and native page panning in a separate touch context. Run
+both with `playwright-cli run-code --filename=...` against the local server.
+
+`tests/browser/sign-in-polish.js` covers the one-column sign-in page, short-screen
+scrolling, password reveal, field errors, provider failures, and safe return URLs.
+`tests/browser/sign-in-passkey.js` checks conditional WebAuthn cancellation and
+late challenges. Both intercept authentication requests and use browser fixtures;
+they never authenticate a real account or send email.
+
+`tests/browser/auth-sky.js` checks the auth-only Earth background, star animation
+pause/resume and reduced motion, responsive layering, and shared global surface
+tokens. Dashboard colors are checked with disposable token consumers, without
+signing in or changing CMS records.
+
+`tests/browser/auth-entrance.js` verifies the short auth entrance on desktop and
+mobile, interaction/reduced-motion completion, no replay on blur/focus, and the
+Home navbar staying visible independently of the hero introduction.
 
 ### UI primitives
 
@@ -371,15 +524,42 @@ Web registration is disabled. The owner account is created once via `bun run db:
 
 Dashboard access and all CMS mutations require the signed-in email to be listed in `OWNER_EMAIL`. Before changing the login email in Settings, add the new address to `OWNER_EMAIL` and redeploy.
 
-GitHub sign-in is available only when both `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are set. Set `OWNER_GITHUB_ID` for the strictest possible guard — limiting GitHub OAuth to a single numeric GitHub account ID.
+GitHub sign-in requires `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and
+`OWNER_GITHUB_ID`. The owner ID is checked against the provider profile on every
+OAuth flow and when creating a linked account. If it is missing, GitHub sign-in
+is disabled; email/password and existing passkeys remain available.
 
-**Preview environments:** BetterAuth automatically derives allowed Vercel Preview origins (`*.vercel.app`) from each request. Keep `BETTER_AUTH_URL` pointed at the production HTTPS origin in both Production and Preview environments, and use the same `BETTER_AUTH_SECRET` wherever sessions must remain compatible.
+**Preview environments:** BetterAuth accepts the canonical auth host and exact
+deployment/branch hosts from `VERCEL_URL` and `VERCEL_BRANCH_URL`. It does not trust
+every `*.vercel.app` project. Localhost wildcard access is development-only. Keep
+`BETTER_AUTH_URL` pointed at the production HTTPS origin in Production and Preview,
+and retain the same `BETTER_AUTH_SECRET` wherever existing sessions must work.
+
+Login return URLs are limited to dashboard paths. Changing the login email first
+requires approval at the current address, followed by verification at the new
+address; both must be in `OWNER_EMAIL`. The endpoint and user-update hooks enforce
+that allowlist, including calls outside the Settings form.
+
+Production authentication uses database-backed rate limits. Apply the reviewed
+`drizzle/0002_auth_rate_limits.sql` through the matching `db:migrate` script before
+deploying this auth configuration. It adds only the `RateLimit` table and indexes;
+it does not alter users, password hashes, sessions, or passkeys. Development does
+not enable throttling. Password sign-in allows five attempts per minute per
+client/path; passkey and social endpoints have separate rules in `src/lib/auth.ts`.
 
 **GitHub OAuth in Preview:** GitHub OAuth Apps only support a single fixed callback URL. For Preview sign-in, create a separate OAuth App and set its callback to a stable branch Preview URL:
 
 ```
 https://<preview-domain>.vercel.app/api/auth/callback/github
 ```
+
+### Error monitoring
+
+Sentry error reporting is wired but disabled until explicitly configured. It
+covers browser/server errors and recovery boundaries, while Vercel keeps runtime
+logs and Umami keeps visitor analytics. Replay, tracing and Sentry Logs are off.
+See `docs/MONITORING.md` for Infisical/Vercel variables, source-map upload controls,
+privacy filtering and local verification. Normal 404s are not reported as errors.
 
 ### Umami
 
@@ -429,12 +609,34 @@ bun run db:backfill-media -- --force
 
 ---
 
+## Home redesign verification
+
+With the local app already running:
+
+```powershell
+bunx --no-install playwright-cli -s=storylio-home open http://localhost:3000 --config=playwright-cli.config.json
+bun run test:browser:home
+bun run test:browser:home-interactions
+bunx --no-install playwright-cli -s=storylio-home close
+```
+
+Checks cover 320–1440px layouts, short screens, light/dark, reduced motion,
+keyboard footer focus, touch navigation, failed media, server-rendered markup,
+Back navigation, footer scoping and missing-post HTTP 404. Each scenario owns
+and closes its page/context. The interactions suite also checks the single-row
+6/4/3 technology limits, button-free wipe rotation, pause conditions, keyboard
+and touch swipes, and static text with restrained cover tilt. Captures are in
+`.playwright-cli/`.
+
+For personal notes and technology logos, see
+[Home content guide](task/home-redesign-2026-10-25/content-guide.md).
+
 ## CMS Capabilities
 
 - **Posts & Projects** — drafts, publishing, validation, cover images, and public cache revalidation
 - **Gallery** — image upload with cropping, captions, categories, and drag-and-drop ordering; items can be hidden without deletion
 - **Testimonials** — manageable from the dashboard with ordering and visibility toggle
-- **Home sections** — approach phases and client logos are fully editable from the dashboard
+- **Home sections** — editable approach phases and logo images/order, with technology/client categories and Home stack visibility
 - **About** — structured bilingual content (Indonesian / English) with ordering support
 - **Media Library** — metadata-rich storage with Cloudinary sync; referenced media is protected from accidental deletion
 - **Analytics** — 24-hour deduplicated local view events combined with optional Umami traffic metrics

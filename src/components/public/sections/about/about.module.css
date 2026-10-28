@@ -1,0 +1,329 @@
+.layout {
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr);
+  max-width: 1120px;
+  gap: 64px;
+  padding-top: 144px;
+}
+.sidebar {
+  position: sticky;
+  top: 112px;
+  align-self: start;
+  min-width: 0;
+  max-height: calc(100svh - 136px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding: 4px;
+  margin: -4px;
+}
+.content {
+  min-width: 0;
+  max-width: 65ch;
+}
+.content h2 {
+  width: fit-content;
+  margin-bottom: 24px;
+}
+.content h2::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin-top: 16px;
+  background: linear-gradient(
+    to right,
+    color-mix(in oklch, var(--link) 45%, transparent),
+    color-mix(in oklch, var(--link) 12%, transparent) 65%,
+    transparent
+  );
+}
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  text-align: center;
+}
+.profileMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+}
+.location {
+  justify-content: center;
+  max-width: 100%;
+  text-wrap: balance;
+}
+.profileLanguages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+.profileLanguages span + span::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--border-hover);
+}
+.sidebarNav {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.sidebarNav ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebarNav :is(a, button) {
+  min-height: 44px;
+  text-align: left;
+  font-size: 14px;
+}
+.bio {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.role {
+  margin-top: 12px;
+  color: var(--muted-foreground);
+  font-size: 18px;
+  line-height: 1.5;
+}
+.socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 16px;
+}
+.language {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.languageNav {
+  align-self: flex-start;
+}
+.language p {
+  color: var(--muted-foreground);
+  font-size: 18px;
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+.row {
+  padding-block: 28px;
+  border-top: 1px solid var(--border);
+}
+.row h3 {
+  font-family: var(--font-heading);
+  font-size: var(--public-type-item-size);
+  font-weight: var(--public-type-item-weight);
+  line-height: var(--public-type-item-leading);
+  letter-spacing: var(--public-type-item-tracking);
+}
+.row p {
+  color: var(--muted-foreground);
+  line-height: 1.75;
+}
+.row ul {
+  line-height: 1.75;
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .layout {
+    gap: 32px;
+    grid-template-columns: 192px minmax(0, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  .layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-top: 112px;
+  }
+  .sidebar {
+    position: static;
+    align-self: stretch;
+    max-height: none;
+    overflow: visible;
+  }
+  .profileMeta {
+    gap: 12px;
+  }
+  .avatar,
+  .avatar [data-slot="live-orb"] {
+    width: 96px !important;
+    height: 96px !important;
+  }
+  .bio {
+    gap: 16px;
+  }
+  .role {
+    margin-top: 8px;
+  }
+  .socials {
+    margin-top: 12px;
+  }
+  .identity {
+    text-align: center;
+  }
+  .socials {
+    justify-content: center;
+  }
+  .language {
+    gap: 16px;
+    text-align: left;
+  }
+  .sidebarNav {
+    display: none;
+  }
+  .language p {
+    font-size: 16px;
+  }
+}
+
+.section {
+  margin-top: 64px;
+  scroll-margin-top: 112px;
+}
+.principles {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+.principle + .principle {
+  padding-top: 32px;
+}
+.timeline {
+  margin-left: 5px;
+}
+.timelineItem {
+  position: relative;
+  padding: 0 0 32px 28px;
+}
+.timelineItem:last-child {
+  padding-bottom: 0;
+}
+.timelineItem::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: -4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--link);
+  background: var(--link);
+}
+.timelineItem:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 16px;
+  bottom: -7px;
+  left: 0;
+  width: 1px;
+  background: var(--border);
+}
+.educationItem {
+  padding-bottom: 24px;
+}
+.educationItem + .educationItem {
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.educationItem:last-child {
+  padding-bottom: 0;
+}
+.period {
+  margin-bottom: 8px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.timelineItem h3,
+.educationItem h3,
+.skillGroup h3 {
+  font-family: var(--font-heading);
+  color: var(--foreground);
+  font-size: var(--public-type-item-size);
+  font-weight: var(--public-type-item-weight);
+  line-height: var(--public-type-item-leading);
+  letter-spacing: var(--public-type-item-tracking);
+}
+.timelineRole {
+  margin-block: 8px 16px;
+  color: var(--link);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.timelineDescription {
+  margin-block: 12px 16px;
+  color: var(--muted-foreground);
+  font-size: 16px;
+  line-height: 1.75;
+}
+.skillGroup {
+  padding-bottom: 24px;
+}
+.skillGroup + .skillGroup {
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+.skillGroup:last-child {
+  padding-bottom: 0;
+}
+.skillGroup p {
+  margin-top: 8px;
+  color: var(--muted-foreground);
+  font-size: 16px;
+  line-height: 1.75;
+}
+@media (max-width: 767px) {
+  .section {
+    margin-top: 48px;
+  }
+}
+
+.sidebarNav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted-foreground);
+  transition: color 160ms;
+}
+.sidebarNav a::before {
+  content: "";
+  width: 16px;
+  height: 1px;
+  flex-shrink: 0;
+  background: var(--border-hover);
+  transition:
+    width 220ms ease-out,
+    background-color 160ms;
+}
+.sidebarNav a:hover,
+.sidebarNav a[aria-current] {
+  color: var(--link);
+}
+.sidebarNav a[aria-current]::before {
+  width: 24px;
+  background: var(--link);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebarNav a,
+  .sidebarNav a::before {
+    transition: none;
+  }
+}

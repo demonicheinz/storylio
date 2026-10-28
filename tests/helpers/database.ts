@@ -9,7 +9,7 @@ const legacyMigrations = [
   "20260620000000_add_gallery_item_size",
 ];
 
-export async function createTestDatabase() {
+export async function createTestDatabase({ authRateLimits = false } = {}) {
   const client = new PGlite();
   for (const migration of legacyMigrations) {
     const ddl = await readFile(
@@ -20,6 +20,15 @@ export async function createTestDatabase() {
       "utf8",
     );
     await client.exec(ddl);
+  }
+  // Apply the new additive auth table on top of archived legacy fixtures.
+  if (authRateLimits) {
+    await client.exec(
+      await readFile(
+        new URL("../../drizzle/0002_auth_rate_limits.sql", import.meta.url),
+        "utf8",
+      ),
+    );
   }
   return { client, db: drizzle(client, { schema }) };
 }

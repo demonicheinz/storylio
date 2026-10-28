@@ -5,8 +5,8 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { asc } from "drizzle-orm";
 import { cacheLife, cacheTag } from "next/cache";
+import { HomeFooter } from "@/components/public/sections/home/home-footer";
 import { db } from "@/lib/db";
-import { cn } from "@/lib/utils";
 
 export interface FooterProps {
   copyrightName?: string;
@@ -22,7 +22,12 @@ async function getSocialProfile() {
 
   return db.query.user
     .findFirst({
-      columns: { github: true, instagram: true, twitter: true },
+      columns: {
+        github: true,
+        instagram: true,
+        twitter: true,
+        publicEmail: true,
+      },
       orderBy: (table) => [asc(table.createdAt)],
     })
     .then((row) => row ?? null);
@@ -39,7 +44,6 @@ export async function Footer({
   copyrightName = "Heinz",
   copyrightYear,
   showSocialMedia = true,
-  className = "",
 }: FooterProps) {
   const [year, profile] = await Promise.all([
     copyrightYear ?? getCurrentYear(),
@@ -66,38 +70,11 @@ export async function Footer({
   );
 
   return (
-    <footer
-      className={cn(
-        "bg-background/80 backdrop-blur-md py-6 md:py-8 border-t w-full",
-        className,
-      )}
-    >
-      <div className="mx-auto px-4 max-w-6xl">
-        <div className="items-center gap-4 md:gap-6 grid grid-cols-1 md:grid-cols-2">
-          <div className="flex justify-center md:justify-start items-center h-full">
-            <p className="text-muted-foreground text-sm md:text-left text-center">
-              &copy; {year} {copyrightName}. All rights reserved.
-            </p>
-          </div>
-
-          {showSocialMedia && socialLinks.length > 0 && (
-            <div className="flex justify-center md:justify-end items-center gap-3 h-full">
-              {socialLinks.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={item.label}
-                  className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                >
-                  <item.icon className="size-5" />
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </footer>
+    <HomeFooter
+      year={year}
+      name={copyrightName}
+      socialLinks={socialLinks.map(({ href, label }) => ({ href, label }))}
+      email={profile?.publicEmail}
+    />
   );
 }

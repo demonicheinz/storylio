@@ -36,6 +36,7 @@ import {
 } from "@/lib/db/schema";
 import { getUmamiAnalytics } from "@/lib/umami";
 import { cn, formatDate } from "@/lib/utils";
+import AnalyticsLoading from "./loading";
 
 type AnalyticsStatCardProps = {
   label: string;
@@ -422,7 +423,15 @@ async function UmamiPanelSection() {
   );
 }
 
-export default async function AnalyticsPage() {
+export default function AnalyticsPage() {
+  return (
+    <Suspense fallback={<AnalyticsLoading />}>
+      <AnalyticsContent />
+    </Suspense>
+  );
+}
+
+async function AnalyticsContent() {
   await connection();
   const data = await getAnalyticsData();
 

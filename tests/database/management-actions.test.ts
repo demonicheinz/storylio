@@ -12,6 +12,7 @@ import {
 import { actionUpdateAboutContent } from "../../src/features/dashboard/about/actions";
 import { actionReorderSkills } from "../../src/features/dashboard/about/structured-actions";
 import {
+  actionCreateHomeSection,
   actionCreateTestimonial,
   actionUpdateHomeSection,
   actionUpdateTestimonial,
@@ -22,6 +23,10 @@ import {
   actionDeleteMediaBatch,
 } from "../../src/features/dashboard/media/actions";
 import * as schema from "../../src/lib/db/schema";
+import {
+  getHomeLogoSettings,
+  selectHomeTechnologies,
+} from "../../src/lib/home-technologies";
 import { createTestDatabase } from "../helpers/database";
 
 type TestDatabase = Awaited<ReturnType<typeof createTestDatabase>>;
@@ -30,6 +35,7 @@ const effects = vi.hoisted(() => ({
   db: undefined as TestDatabase["db"] | undefined,
   getActionSession: vi.fn(),
   revalidatePath: vi.fn(),
+  updateTag: vi.fn(),
   deleteFromCloudinary: vi.fn(),
 }));
 
@@ -45,7 +51,9 @@ vi.mock("@/lib/auth-session", () => ({
 }));
 vi.mock("next/cache", () => ({
   revalidatePath: effects.revalidatePath,
+  updateTag: effects.updateTag,
   cacheLife: vi.fn(),
+  cacheTag: vi.fn(),
 }));
 vi.mock("@/lib/cloudinary", () => ({
   deleteFromCloudinary: effects.deleteFromCloudinary,
@@ -78,6 +86,75 @@ afterAll(async () => {
 });
 
 describe("management actions against PostgreSQL", () => {
+  it("persists custom technology visibility while preserving phase content and cache invalidation", async () => {
+    const created = await actionCreateHomeSection({
+      type: "LOGO",
+      label: "Astro",
+      category: "TECHNOLOGY",
+      showOnHome: true,
+      content: "Original note",
+      imageUrl: "https://example.test/astro.svg",
+    });
+    if (!created.success || !created.data)
+      throw new Error("Expected a created technology");
+    const id = created.data.id;
+    const read = () =>
+      fixture.db.query.homeSection.findFirst({
+        where: eq(schema.homeSection.id, id),
+      });
+    const visible = await read();
+    expect(getHomeLogoSettings(visible!)).toEqual({
+      category: "TECHNOLOGY",
+      showOnHome: true,
+      description: "Original note",
+    });
+    expect(selectHomeTechnologies([visible!])).toHaveLength(1);
+    expect(
+      await actionUpdateHomeSection(id, {
+        type: "LOGO",
+        label: "Astro",
+        category: "TECHNOLOGY",
+        showOnHome: false,
+        content: "Original note",
+        imageUrl: "https://example.test/astro.svg",
+      }),
+    ).toMatchObject({ success: true });
+    expect(selectHomeTechnologies([(await read())!])).toHaveLength(0);
+    expect(
+      await actionUpdateHomeSection(id, {
+        type: "PHASE",
+        label: "Build",
+        content: "Actual process description",
+      }),
+    ).toMatchObject({ success: true });
+    expect(await read()).toMatchObject({
+      type: "PHASE",
+      content: "Actual process description",
+      imageUrl: null,
+    });
+    expect(effects.updateTag).toHaveBeenCalledWith("public-home");
+  });
+
+  it("lets built-in technology logos be configured without an uploaded image", async () => {
+    const created = await actionCreateHomeSection({
+      type: "LOGO",
+      label: "Next.js",
+      category: "TECHNOLOGY",
+      showOnHome: true,
+    });
+    expect(created.success).toBe(true);
+  });
+
+  it("expires public Home data after a testimonial changes", async () => {
+    const result = await actionCreateTestimonial({
+      name: "Author",
+      content: "Updated quote",
+      order: 0,
+    });
+    expect(result.success).toBe(true);
+    expect(effects.updateTag).toHaveBeenCalledWith("public-home");
+  });
+
   it("updates the newest About row, breaks ties by ID, and removes duplicates", async () => {
     const createdAt = new Date("2020-01-01T00:00:00Z");
     const newest = new Date("2021-01-01T00:00:00Z");
@@ -155,6 +232,7 @@ describe("management actions against PostgreSQL", () => {
     expect(effects.revalidatePath).toHaveBeenCalledWith("/about");
 
     effects.revalidatePath.mockClear();
+    effects.updateTag.mockClear();
     vi.spyOn(console, "error").mockImplementation(() => {});
     expect(
       await actionReorderSkills([
@@ -166,6 +244,7 @@ describe("management actions against PostgreSQL", () => {
       await fixture.db.query.skill.findMany({ orderBy: asc(schema.skill.id) }),
     ).toEqual(committed);
     expect(effects.revalidatePath).not.toHaveBeenCalled();
+    expect(effects.updateTag).not.toHaveBeenCalled();
   });
 
   it("blocks single and batch media deletion for literal content references", async () => {
@@ -225,6 +304,7 @@ describe("management actions against PostgreSQL", () => {
     expect(await fixture.db.$count(schema.media)).toBe(2);
     expect(effects.deleteFromCloudinary).not.toHaveBeenCalled();
     expect(effects.revalidatePath).not.toHaveBeenCalled();
+    expect(effects.updateTag).not.toHaveBeenCalled();
   });
 
   it("inserts, appends, and moves testimonials without gaps in their order", async () => {
@@ -360,6 +440,7 @@ describe("management actions against PostgreSQL", () => {
         }),
       ).toEqual(before);
       expect(effects.revalidatePath).not.toHaveBeenCalled();
+      expect(effects.updateTag).not.toHaveBeenCalled();
     } finally {
       await fixture.client.exec(
         'ALTER TABLE "HomeSection" DROP CONSTRAINT management_test_label',

@@ -22,7 +22,7 @@ import {
 import { useRouter } from "next/navigation";
 import { type ComponentType, useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileAvatar } from "@/components/common/profile-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,6 +69,7 @@ import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 type LinkedAccount = {
+  id: string;
   providerId: string;
   accountId: string;
   createdAt: Date;
@@ -119,17 +120,6 @@ function getProfileDefaults(
   };
 }
 
-function getInitials(name?: string | null) {
-  return (
-    name
-      ?.split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join("") || "AH"
-  );
-}
-
 function ProfileAvatarUpload({
   image,
   name,
@@ -144,12 +134,12 @@ function ProfileAvatarUpload({
   return (
     <div className="flex flex-col items-center gap-3 text-center">
       <div className="relative">
-        <Avatar className="bg-background/60 shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-border/70 size-30">
-          <AvatarImage src={image} alt={name || "Profile avatar"} />
-          <AvatarFallback className="font-heading text-4xl">
-            {getInitials(name)}
-          </AvatarFallback>
-        </Avatar>
+        <ProfileAvatar
+          src={image}
+          name={name}
+          size={120}
+          className="bg-background/60 shadow-[0_18px_60px_rgba(0,0,0,0.18)] border border-border/70"
+        />
         <span className="right-1 bottom-1 z-10 absolute flex justify-center items-center bg-primary shadow-lg rounded-full ring-4 ring-card size-10 text-primary-foreground">
           <UploadSimpleIcon className="size-5" />
         </span>
@@ -531,7 +521,8 @@ function ChangeEmailForm({ currentEmail }: { currentEmail: string }) {
 
       if (result.success) {
         toast.add({
-          title: result.message ?? "Check your new email for confirmation.",
+          title:
+            result.message ?? "Check your current email to approve the change.",
           type: "success",
         });
         reset();
@@ -567,8 +558,8 @@ function ChangeEmailForm({ currentEmail }: { currentEmail: string }) {
             {...register("newEmail")}
           />
           <p className="text-muted-foreground text-xs">
-            Changing your login email requires verification. A confirmation link
-            will be sent to the new email address.
+            Approve the change from your current email, then verify the new
+            address. Both addresses must be listed in OWNER_EMAIL.
           </p>
           {errors.newEmail?.message && (
             <p className="text-destructive text-sm">
@@ -847,9 +838,10 @@ function ConnectedProviders({
                 onClick={() => {
                   startTransition(async () => {
                     try {
-                      await authClient.unlinkAccount({
-                        providerId: account.providerId,
+                      const { error } = await authClient.unlinkAccount({
+                        accountId: account.id,
                       });
+                      if (error) throw new Error(error.message);
                       toast.add({
                         title: `${account.providerId} unlinked successfully. Please refresh the page.`,
                         type: "success",
@@ -1339,7 +1331,8 @@ export function SettingsManager({
               <CardTitle>Email</CardTitle>
               <CardDescription>
                 Your login email is used for authentication. Changing it
-                requires verification via the new address.
+                requires approval from your current address, then verification
+                of the new address.
               </CardDescription>
             </CardHeader>
             <CardContent>

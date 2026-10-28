@@ -48,7 +48,7 @@ export function useScrollToTop({
   const scrollToTop = useCallback(() => {
     window.scrollTo({
       top: 0,
-      behavior: "smooth",
+      behavior: "auto",
     });
   }, []);
   useEffect(() => {

@@ -12,9 +12,10 @@ import type { ComponentType } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getAboutContent } from "@/features/about/data";
+import { getAboutContentUncached } from "@/features/about/data";
 import { AboutContentForm } from "@/features/dashboard/about/components/content-form";
 import { AboutStructuredManager } from "@/features/dashboard/about/components/structured-manager";
+import { DashboardRouteBoundary } from "@/features/dashboard/shared/components/route-boundary";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
@@ -53,12 +54,20 @@ function AboutStatCard({
   );
 }
 
-export default async function DashboardAboutPage() {
+export default function DashboardAboutPage() {
+  return (
+    <DashboardRouteBoundary title="About">
+      <DashboardAboutContent />
+    </DashboardRouteBoundary>
+  );
+}
+
+async function DashboardAboutContent() {
   await connection();
   await getActionSession();
 
   const [aboutContent, experiences, education, categories] = await Promise.all([
-    getAboutContent(),
+    getAboutContentUncached(),
     db.query.workExperience
       .findMany({
         orderBy: (table) => [asc(table.order), asc(table.createdAt)],

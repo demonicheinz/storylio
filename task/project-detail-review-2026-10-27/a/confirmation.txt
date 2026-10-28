@@ -1,0 +1,31 @@
+### Result
+{"results":[{"width":1440,"p":{"width":909.75,"font":"16px","lineHeight":"32px","lineChars":[125,97]},"h2":{"width":909.75,"font":"48px","wrap":"normal","wordBreak":"normal","textWrap":"balance"},"screenshots":[{"name":"Open Storylio screenshot 1","opacity":"1","visible":true},{"name":"Open Storylio screenshot 2","opacity":"1","visible":true},{"name":"Open Storylio screenshot 3","opacity":"1","visible":true}]},{"width":768,"p":{"width":720,"font":"16px","lineHeight":"32px","lineChars":[103,99,19]},"h2":{"width":720,"font":"48px","wrap":"normal","wordBreak":"normal","textWrap":"balance"},"screenshots":[{"name":"Open Storylio screenshot 1","opacity":"1","visible":true},{"name":"Open Storylio screenshot 2","opacity":"1","visible":true},{"name":"Open Storylio screenshot 3","opacity":"1","visible":true}]},{"width":390,"p":{"width":358,"font":"16px","lineHeight":"32px","lineChars":[54,48,45,43,29]},"h2":{"width":358,"font":"36px","wrap":"normal","wordBreak":"normal","textWrap":"balance"},"screenshots":[{"name":"Open Storylio screenshot 1","opacity":"1","visible":true},{"name":"Open Storylio screenshot 2","opacity":"1","visible":true},{"name":"Open Storylio screenshot 3","opacity":"1","visible":true}]},{"width":320,"p":{"width":288,"font":"16px","lineHeight":"32px","lineChars":[43,31,38,34,34,38]},"h2":{"width":288,"font":"36px","wrap":"normal","wordBreak":"normal","textWrap":"balance"},"screenshots":[{"name":"Open Storylio screenshot 1","opacity":"1","visible":true},{"name":"Open Storylio screenshot 2","opacity":"1","visible":true},{"name":"Open Storylio screenshot 3","opacity":"1","visible":true}]}],"lightbox":{"closeButtonCount":1,"closedAfterEscape":true}}
+### Ran Playwright code
+```js
+await (async page => {
+ const results=[];
+ for(const [name,width,height] of [['desktop',1440,1000],['tablet',768,1024],['mobile',390,844],['small-mobile',320,740]]){
+  await page.setViewportSize({width,height});
+  const target=page.locator('#project-screenshots');
+  await target.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(800);
+  await page.screenshot({path:`task/project-detail-review-2026-10-27/a/${name}-${width}-interface.png`});
+  results.push(await page.evaluate(()=>{
+   const prose=document.querySelector('main [class*="prose"]'); const p=prose.querySelector('p'); const h=prose.querySelector('h2');
+   const s=getComputedStyle(p);const hs=getComputedStyle(h);
+   const walker=document.createTreeWalker(p,NodeFilter.SHOW_TEXT); const lines=new Map(); let n;
+   while(n=walker.nextNode()){for(let i=0;i<n.textContent.length;i++){const r=document.createRange();r.setStart(n,i);r.setEnd(n,i+1);const rect=r.getBoundingClientRect();if(rect.width){const key=rect.top.toFixed(1);lines.set(key,(lines.get(key)||'')+n.textContent[i]);}}}
+   return {width:innerWidth,p:{width:p.getBoundingClientRect().width,font:s.fontSize,lineHeight:s.lineHeight,lineChars:[...lines.values()].map(x=>x.length)},h2:{width:h.getBoundingClientRect().width,font:hs.fontSize,wrap:hs.overflowWrap,wordBreak:hs.wordBreak,textWrap:hs.textWrap},screenshots:[...document.querySelectorAll('section[aria-labelledby="project-screenshots"] button')].map(e=>({name:e.getAttribute('aria-label'),opacity:getComputedStyle(e.parentElement).opacity,visible:e.getBoundingClientRect().height>0}))};
+  }));
+ }
+ const open=page.getByRole('button',{name:'Open Storylio screenshot 1'});
+ await open.click();
+ await page.waitForTimeout(350);
+ const lightboxBefore=await page.getByRole('button',{name:'Close',exact:true}).count();
+ await page.screenshot({path:'task/project-detail-review-2026-10-27/a/small-mobile-320-lightbox.png'});
+ await page.keyboard.press('Escape');
+ await page.waitForTimeout(350);
+ return {results,lightbox:{closeButtonCount:lightboxBefore,closedAfterEscape:await page.getByRole('button',{name:'Close',exact:true}).count()===0}};
+}
+)(page);
+```

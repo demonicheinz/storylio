@@ -13,7 +13,8 @@ import {
   type FloatingNavItem,
 } from "@/components/common/floating-nav";
 import { RouteMotion } from "@/components/common/motion";
-import { ScrollToTop } from "@/components/common/scroll-to-top";
+import { PublicStarfield } from "@/components/common/public-starfield";
+import styles from "./public-chrome.module.css";
 
 const navItems: FloatingNavItem[] = [
   {
@@ -45,16 +46,21 @@ const navItems: FloatingNavItem[] = [
 
 export function PublicChrome({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <ScrollToTop />
+    <div
+      data-public-chrome
+      className={`flex flex-col min-h-screen ${styles.chrome}`}
+    >
+      <Suspense fallback={null}>
+        <PublicStarfield />
+      </Suspense>
       <Suspense fallback={null}>
         <FloatingNav navItems={navItems} />
       </Suspense>
-      <main className="flex-1">
+      <div className="flex-1">
         <Suspense fallback={null}>
           <RouteMotion>{children}</RouteMotion>
         </Suspense>
-      </main>
+      </div>
     </div>
   );
 }

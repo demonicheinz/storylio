@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { PostEditor } from "@/features/dashboard/posts/components/post-editor";
+import { DashboardRouteBoundary } from "@/features/dashboard/shared/components/route-boundary";
 import { db } from "@/lib/db";
 import { PostStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
@@ -43,7 +44,15 @@ async function getPost(id: string) {
     .then((row) => (row ? flattenPostTags(row) : null));
 }
 
-export default async function EditPostPage({ params }: EditPostPageProps) {
+export default function EditPostPage(props: EditPostPageProps) {
+  return (
+    <DashboardRouteBoundary title="Edit post">
+      <EditPostContent {...props} />
+    </DashboardRouteBoundary>
+  );
+}
+
+async function EditPostContent({ params }: EditPostPageProps) {
   await connection();
 
   const { id } = await params;

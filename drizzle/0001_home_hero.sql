@@ -1,0 +1,1 @@
+ALTER TYPE "public"."HomeSectionType" ADD VALUE 'HERO';

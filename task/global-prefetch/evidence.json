@@ -1,0 +1,136 @@
+{
+  "next_version": "16.4.2",
+  "cache_components": true,
+  "partial_prefetching": true,
+  "unit_integration": {
+    "files": 14,
+    "tests": 102,
+    "passed": true
+  },
+  "production_build": {
+    "passed": true,
+    "generated_routes": 35
+  },
+  "production_public_navigation": [
+    {
+      "round": 1,
+      "path": "/about",
+      "skeletonShown": true,
+      "navigationRequests": 1
+    },
+    {
+      "round": 1,
+      "path": "/projects",
+      "skeletonShown": false,
+      "navigationRequests": 0
+    },
+    {
+      "round": 1,
+      "path": "/blog",
+      "skeletonShown": false,
+      "navigationRequests": 0
+    },
+    {
+      "round": 1,
+      "path": "/gallery",
+      "skeletonShown": false,
+      "navigationRequests": 0
+    },
+    {
+      "round": 1,
+      "path": "/",
+      "skeletonShown": false,
+      "navigationRequests": 0
+    },
+    {
+      "round": 2,
+      "path": "/about",
+      "skeletonShown": false,
+      "navigationRequests": 0
+    },
+    {
+      "round": 2,
+      "path": "/projects",
+      "skeletonShown": false,
+      "navigationRequests": 0
+    },
+    {
+      "round": 2,
+      "path": "/blog",
+      "skeletonShown": false,
+      "navigationRequests": 0
+    },
+    {
+      "round": 2,
+      "path": "/gallery",
+      "skeletonShown": false,
+      "navigationRequests": 0
+    },
+    {
+      "round": 2,
+      "path": "/",
+      "skeletonShown": false,
+      "navigationRequests": 0
+    }
+  ],
+  "production_about_language": {
+    "injectedRscDelayMs": 800,
+    "results": [
+      {
+        "language": "id",
+        "elapsedMs": 55,
+        "navigationRequests": 0
+      },
+      {
+        "language": "en",
+        "elapsedMs": 42,
+        "navigationRequests": 0
+      },
+      {
+        "language": "id",
+        "elapsedMs": 40,
+        "navigationRequests": 0
+      }
+    ]
+  },
+  "language_prefetch_warmup_after_headers_ms": 1000,
+  "production_filters": [
+    {
+      "path": "/projects",
+      "value": "Framer Motion",
+      "keyboardValue": "Next.js",
+      "hover": "passed",
+      "focus": "passed",
+      "queryPreserved": true
+    },
+    {
+      "path": "/blog",
+      "value": "Architecture",
+      "keyboardValue": "Dashboard",
+      "hover": "passed",
+      "focus": "passed",
+      "queryPreserved": true
+    }
+  ],
+  "production_auth_smoke": {
+    "passed": true,
+    "checks": [
+      "sign-in form",
+      "password visibility toggle and hydration",
+      "unauthenticated dashboard redirect",
+      "anonymous session",
+      "OG PNG response",
+      "no browser runtime errors"
+    ]
+  },
+  "development": {
+    "client_navigation": true,
+    "keyboard_focus": true,
+    "scroll_visibility": true,
+    "exceptions": [],
+    "navigation_diagnostics": []
+  },
+  "database_schema_changed": false,
+  "live_database_index_catalog_checked": false,
+  "live_authenticated_dashboard_browser_checked": false
+}

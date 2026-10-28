@@ -5,12 +5,13 @@ import {
   XLogoIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import page from "@/components/public/public-page.module.css";
 import { person, socialLinks } from "@/components/public/sections/about/data";
 import {
   type AboutLanguage,
   LanguageIntro,
 } from "@/components/public/sections/about/language-intro";
-import { Button } from "@/components/ui/button";
+import styles from "./about.module.css";
 
 const icons = {
   github: GithubLogoIcon,
@@ -60,37 +61,28 @@ export function BioSection({
     return item;
   });
   return (
-    <div className="flex flex-col gap-8 md:py-2">
-      <div className="flex flex-col items-center md:items-start">
-        <p className="mb-3 font-semibold text-brand-soft text-xs uppercase tracking-[0.28em]">
-          About Heinz
-        </p>
-        <h1 className="font-heading font-bold text-[34px] text-foreground sm:text-[48px] md:text-[56px] md:text-left text-center leading-none">
+    <div className={styles.bio}>
+      <div className={styles.identity}>
+        <h1 id="page-title" className={page.title}>
           {name}
         </h1>
-        <p className="mt-3 text-[20px] text-brand-soft sm:text-[28px] md:text-[32px] md:text-left text-center">
-          {role}
-        </p>
+        <p className={styles.role}>{role}</p>
 
-        <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-6 mb-2">
+        <div className={styles.socials}>
           {links.map((item) => {
             const Icon = icons[item.icon];
 
             return (
-              <Button
-                role="link"
+              <Link
                 key={item.name}
-                variant="outline"
-                size="sm"
-                className="bg-surface/70 backdrop-blur border-border/60 rounded-full"
-                render={
-                  <Link href={item.link} target="_blank" rel="noreferrer" />
-                }
-                nativeButton={false}
+                className={page.link}
+                href={item.link}
+                target="_blank"
+                rel="noreferrer"
               >
                 <Icon data-icon="inline-start" />
                 <span>{item.name}</span>
-              </Button>
+              </Link>
             );
           })}
         </div>

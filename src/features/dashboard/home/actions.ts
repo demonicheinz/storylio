@@ -1,16 +1,19 @@
 "use server";
 
 import { and, desc, eq, gt, gte, lt, lte, ne, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import {
+  type HomeHeroActionInput,
   type HomeSectionActionInput,
   type HomeSectionActionValues,
+  homeHeroActionSchema,
   homeSectionActionSchema,
   reorderSchema,
   type TestimonialActionInput,
   testimonialActionSchema,
 } from "@/features/dashboard/home/validations";
 import { flattenFieldErrors } from "@/features/dashboard/shared/utils/flatten-field-errors";
+import { saveHomeHeadline } from "@/features/home/hero-content";
 import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
@@ -19,10 +22,50 @@ import { HomeSectionType } from "@/lib/db/enums";
 import {
   homeSection as homeSectionTable,
   testimonial as testimonialTable,
+  user as userTable,
 } from "@/lib/db/schema";
+import {
+  getHomeLogoSettings,
+  serializeHomeLogoSettings,
+} from "@/lib/home-technologies";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type EntityActionData = { id: string };
 type OrderTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/** Backend for the forthcoming hero editor; no dashboard fields are added yet. */
+export async function actionUpdateHomeHero(
+  input: HomeHeroActionInput,
+): Promise<ActionResult> {
+  let session: Awaited<ReturnType<typeof getActionSession>>;
+  try {
+    session = await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+  const parsed = parseInput(homeHeroActionSchema, input);
+  if (!parsed.success) return parsed.result;
+  try {
+    await db.transaction(async (tx) => {
+      const rows = await tx
+        .update(userTable)
+        .set({ bio: parsed.data.subheadline || null })
+        .where(eq(userTable.id, session.user.id))
+        .returning({ id: userTable.id });
+      if (rows.length === 0) throw new Error("Profile not found");
+      await saveHomeHeadline(tx, parsed.data.headline);
+    });
+    updateTag(PUBLIC_CACHE_TAGS.profile);
+    revalidateHomePaths();
+    revalidatePath("/dashboard/settings");
+    revalidatePath("/about");
+    return actionSuccess(undefined, "Home hero updated.");
+  } catch {
+    return actionError(
+      "Could not save the hero. Ensure database migrations are up to date.",
+    );
+  }
+}
 
 async function requireSession(): Promise<ActionResult | null> {
   try {
@@ -34,6 +77,7 @@ async function requireSession(): Promise<ActionResult | null> {
 }
 
 function revalidateHomePaths() {
+  updateTag(PUBLIC_CACHE_TAGS.home);
   revalidatePath("/dashboard/home");
   revalidatePath("/dashboard");
   revalidatePath("/");
@@ -121,10 +165,20 @@ function toHomeSectionType(type: HomeSectionActionValues["type"]) {
 }
 
 function getHomeSectionData(values: HomeSectionActionValues) {
+  const settings = getHomeLogoSettings(values);
+  const content =
+    values.type === "LOGO" &&
+    (values.category !== undefined || values.showOnHome !== undefined)
+      ? serializeHomeLogoSettings({
+          category: values.category ?? settings.category,
+          showOnHome: values.showOnHome ?? settings.showOnHome,
+          description: settings.description,
+        })
+      : values.content || null;
   return {
     type: toHomeSectionType(values.type),
     label: values.label,
-    content: values.content || null,
+    content,
     imageUrl: values.type === "LOGO" ? (values.imageUrl ?? null) : null,
     order: values.order,
   };

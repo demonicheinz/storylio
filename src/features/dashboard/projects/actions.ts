@@ -1,7 +1,7 @@
 "use server";
 
 import { and, desc, eq, gt, gte, inArray, lt, lte, ne, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import {
   type ProjectActionInput,
@@ -17,8 +17,8 @@ import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { ProjectStatus } from "@/lib/db/enums";
 import { projectScreenshot, project as projectTable } from "@/lib/db/schema";
-
 import { getMdxSafetyError } from "@/lib/mdx-safety";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -54,6 +54,7 @@ function toProjectStatus(status: ProjectActionValues["status"]) {
 }
 
 function revalidateProjectPaths(slug: string, oldSlug?: string) {
+  updateTag(PUBLIC_CACHE_TAGS.projects);
   revalidatePath("/dashboard/projects");
   revalidatePath("/dashboard");
   revalidatePath("/projects");
@@ -66,6 +67,7 @@ function revalidateProjectPaths(slug: string, oldSlug?: string) {
 }
 
 function revalidateProjectsCollection() {
+  updateTag(PUBLIC_CACHE_TAGS.projects);
   revalidatePath("/dashboard/projects");
   revalidatePath("/dashboard");
   revalidatePath("/projects");

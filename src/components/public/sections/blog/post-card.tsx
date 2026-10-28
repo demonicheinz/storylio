@@ -1,89 +1,64 @@
-import { ArrowUpRightIcon } from "@phosphor-icons/react/dist/ssr";
-import Link from "next/link";
-import { BlogCover } from "@/components/public/sections/blog/blog-cover";
-import type { BlogPostListItem } from "@/components/public/sections/blog/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { FlowButton } from "@/components/common/flow-button";
+import { TiltedCard } from "@/components/common/tilted-card";
+import page from "@/components/public/public-page.module.css";
 import { calculateReadingTime, formatDate } from "@/lib/utils";
-
-type PostCardProps = {
+import styles from "./blog.module.css";
+import { BlogCover } from "./blog-cover";
+import type { BlogPostListItem } from "./types";
+export function PostCard({
+  post,
+  featured = false,
+}: {
   post: BlogPostListItem;
-};
-
-export function PostCard({ post }: PostCardProps) {
-  const publishedAt = post.publishedAt ?? post.createdAt;
-  const visibleTags = post.tags.slice(0, 3);
-  const remainingTags = post.tags.length - visibleTags.length;
-
+  featured?: boolean;
+}) {
+  const href = `/blog/${post.slug}`;
   return (
-    <article className="group/post md:items-center grid md:grid-cols-[minmax(260px,0.62fr)_minmax(0,1fr)] bg-surface/65 shadow-[0_0_48px_rgba(139,92,246,0.08)] hover:shadow-[0_0_64px_rgba(139,92,246,0.14)] backdrop-blur-xl p-3 border border-border/40 hover:border-brand-soft/45 rounded-3xl overflow-hidden transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 duration-300">
-      <Link
-        href={`/blog/${post.slug}`}
-        aria-label={post.title}
-        className="rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60"
-      >
-        <BlogCover
-          src={post.coverImage}
-          alt={post.title}
-          className="aspect-video"
-          sizes="(min-width: 1024px) 380px, (min-width: 768px) 38vw, calc(100vw - 2rem)"
-        />
-      </Link>
-
-      <div className="flex flex-col px-3 md:px-6 md:py-4 pt-4 pb-3 min-w-0">
-        <div className="flex flex-wrap items-center gap-2 mb-3 text-muted-foreground text-xs">
-          <span>{formatDate(publishedAt)}</span>
-          <span className="text-border">/</span>
+    <article className={page.card} data-post-card data-tilt-target>
+      {post.coverImage && (
+        <div className={page.cardMedia}>
+          <TiltedCard amplitude={2.5} scale={1.01}>
+            <BlogCover
+              src={post.coverImage}
+              alt={post.title}
+              appearance="home"
+              className="aspect-video"
+              loading={featured ? "eager" : "lazy"}
+              sizes="(min-width:1328px) 400px, (min-width:1200px) 31vw, (min-width:768px) 46vw, 94vw"
+            />
+          </TiltedCard>
+        </div>
+      )}
+      <div className={page.cardBody}>
+        <div className={page.meta}>
+          <time dateTime={(post.publishedAt ?? post.createdAt).toISOString()}>
+            {formatDate(post.publishedAt ?? post.createdAt)}
+          </time>
           <span>{calculateReadingTime(post.content)} min read</span>
-          <span className="text-border">/</span>
-          <span>{post.viewCount} views</span>
         </div>
-
-        <Link
-          href={`/blog/${post.slug}`}
-          className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-soft/60 w-fit"
+        <h2 className={`${page.cardTitle} ${styles.title}`}>{post.title}</h2>
+        <p
+          className={`${page.cardCopy} ${styles.excerpt}`}
+          aria-hidden={post.excerpt ? undefined : true}
         >
-          <h2 className="font-heading font-semibold text-foreground group-hover/post:text-brand-soft text-2xl leading-tight transition-colors">
-            {post.title}
-          </h2>
-        </Link>
-        <p className="mt-3 text-muted-foreground text-sm line-clamp-2 leading-6.5">
-          {post.excerpt ?? "A note from the Storylio writing archive."}
+          {post.excerpt}
         </p>
-
-        <div className="flex items-center gap-1.5 mt-4 max-w-full overflow-hidden">
-          {visibleTags.map((tag) => (
-            <Badge
-              key={tag.id}
-              variant="outline"
-              className="bg-background/35 border-border/60 rounded-full text-foreground/85"
-            >
+        <ul className={`${page.tags} ${styles.topics}`} aria-label="Topics">
+          {post.tags.slice(0, 3).map((tag) => (
+            <li key={tag.id} className={page.tag}>
               {tag.name}
-            </Badge>
+            </li>
           ))}
-          {remainingTags > 0 && (
-            <Badge
-              variant="outline"
-              className="bg-background/35 border-border/60 rounded-full text-foreground/85 shrink-0"
-              aria-label={`${remainingTags} more topics`}
+          {post.tags.length > 3 && (
+            <li
+              className={page.tag}
+              aria-label={`${post.tags.length - 3} more topics`}
             >
-              +{remainingTags}
-            </Badge>
+              +{post.tags.length - 3}
+            </li>
           )}
-        </div>
-
-        <div className="mt-auto pt-5">
-          <Button
-            role="link"
-            render={<Link href={`/blog/${post.slug}`} />}
-            nativeButton={false}
-            size="sm"
-            className="rounded-full"
-          >
-            Read article
-            <ArrowUpRightIcon data-icon="inline-end" />
-          </Button>
-        </div>
+        </ul>
+        <FlowButton href={href}>Read article</FlowButton>
       </div>
     </article>
   );

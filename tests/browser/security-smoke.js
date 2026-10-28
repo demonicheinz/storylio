@@ -31,7 +31,7 @@ async (page) => {
     );
     await page.context().clearCookies();
     await page.goto(`${origin}/sign-in`);
-    await page.getByRole("button", { name: "Sign In", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Sign in", exact: true }).waitFor();
     check(await page.getByLabel("Email").isVisible(), "Email field is missing");
 
     const password = page.getByLabel("Password", { exact: true });

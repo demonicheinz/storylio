@@ -1,0 +1,20 @@
+### Result
+{"before":"Storylio — Storylio","after":"[Human] Assessment B","mutable":true,"scriptPresent":1,"headless":true}
+### Ran Playwright code
+```js
+await (async page => {
+  const before = await page.title();
+  await page.evaluate(() => {
+    document.title = '[Human] Assessment B';
+    const script = document.createElement('script');
+    script.id = 'assessment-b-preflight';
+    script.textContent = 'window.__assessmentBMutable = true';
+    document.body.appendChild(script);
+  });
+  return { before, after: await page.title(), mutable: await page.evaluate(() => window.__assessmentBMutable === true), scriptPresent: await page.locator('#assessment-b-preflight').count(), headless: true };
+}
+)(page);
+```
+### Page
+- Page URL: http://localhost:3102/projects/storylio
+- Page Title: [Human] Assessment B

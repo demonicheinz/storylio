@@ -19,6 +19,7 @@ import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { session as sessionTable, user as userTable } from "@/lib/db/schema";
 import { isOwnerEmail } from "@/lib/owner-guard";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type ProfileSettingsActionData = {
   id: string;
@@ -38,7 +39,7 @@ export type DashboardSessionItem = {
 };
 
 function revalidateSettingsPaths() {
-  updateTag("public-profile");
+  updateTag(PUBLIC_CACHE_TAGS.profile);
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
   revalidatePath("/");
@@ -251,7 +252,7 @@ export async function actionChangeEmail(
 
     return actionSuccess(
       undefined,
-      "A confirmation email has been sent to your new email address. Click the link to confirm the change.",
+      "Check your current email to approve the change, then verify the new address.",
     );
   } catch (error) {
     const message =

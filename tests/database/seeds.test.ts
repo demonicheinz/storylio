@@ -35,7 +35,13 @@ afterEach(async () => {
 
 describe("PostgreSQL seed integration", () => {
   it("creates one owner and keeps the original ID and credential on repeated seeds", async () => {
-    const first = await seedOwner(seedDb);
+    const first = await seedOwner(seedDb, {
+      profile: {
+        name: "Fixture Owner",
+        tagline: "Web developer",
+        subheadline: "An owner-supplied introduction.",
+      },
+    });
     const [credential] = await db.query.account.findMany();
     expect(credential).toMatchObject({
       userId: first.id,
@@ -56,9 +62,10 @@ describe("PostgreSQL seed integration", () => {
       expect.objectContaining({
         id: first.id,
         email: "seed.owner@example.test",
-        name: "Ahmad Haizul Amany",
+        name: "Fixture Owner",
         emailVerified: true,
-        tagline: "Full Stack Developer",
+        tagline: "Web developer",
+        bio: "An owner-supplied introduction.",
       }),
     ]);
   });
@@ -108,8 +115,8 @@ describe("PostgreSQL seed integration", () => {
         id: owner.id,
         createdAt: owner.createdAt,
         image: owner.image,
-        emailVerified: true,
-        name: "Ahmad Haizul Amany",
+        emailVerified: false,
+        name: "Existing owner",
       }),
     ]);
     expect(await db.query.account.findMany()).toEqual([credential]);

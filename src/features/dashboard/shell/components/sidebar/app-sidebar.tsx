@@ -11,10 +11,10 @@ import {
   ImageIcon,
   ImagesIcon,
 } from "@phosphor-icons/react";
-import Image from "next/image";
 import Link from "next/link";
 import type * as React from "react";
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/common/logo";
 import {
   Sidebar,
   SidebarContent,
@@ -90,14 +90,7 @@ function AppSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
               tooltip="Storylio"
             >
               <div className="flex justify-center items-center rounded-xl size-9 aspect-square">
-                <Image
-                  src="/images/logo.png"
-                  alt="Logo"
-                  width={28}
-                  height={28}
-                  className="size-7 object-contain"
-                  priority
-                />
+                <Logo alt="" />
               </div>
               <div className="flex-1 grid text-left leading-tight">
                 <span className="font-heading font-semibold text-[15px] truncate">

@@ -1,26 +1,32 @@
-import { and, asc, desc, eq, isNull, lte, or } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
-import { MotionReveal, PublicBackground } from "@/components/common";
+import { cacheLife, cacheTag } from "next/cache";
+import { Suspense } from "react";
 import {
   ApproachSection,
-  ClientsSection,
   HeroSection,
+  NotesSection,
   RecentPostsSection,
   RecentProjectsSection,
+  TechStackSection,
 } from "@/components/public/sections/home";
+import styles from "@/components/public/sections/home/home.module.css";
 import { db } from "@/lib/db";
-import { PostStatus, ProjectStatus } from "@/lib/db/enums";
+import { ProjectStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
+import { postToTag, tag } from "@/lib/db/schema";
+import { HOME_NOTES_TAG, homePostWhere } from "@/lib/home-content";
+import { HOME_HERO_ID, resolveHomeHero } from "@/lib/home-hero";
+import { selectHomeTechnologies } from "@/lib/home-technologies";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 export const metadata: Metadata = {
   title: "Heinz — Full Stack Developer | Storylio",
   description:
-    "Personal portfolio of Ahmad Haizul Amany, a full stack developer crafting dynamic web experiences with Next.js.",
+    "Web applications, projects and writing by Heinz, a full stack web developer based in Central Java, Indonesia.",
   openGraph: {
     title: "Heinz — Full Stack Developer | Storylio",
-    description:
-      "Dark-space portfolio for web projects, writing, and visual craft by Ahmad Haizul Amany.",
+    description: "Web projects and the decisions behind them, by Heinz.",
     type: "website",
     images: ["/og?title=Heinz&type=page"],
   },
@@ -28,7 +34,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Heinz — Full Stack Developer | Storylio",
     description:
-      "Personal portfolio of Ahmad Haizul Amany, a full stack developer crafting dynamic web experiences with Next.js.",
+      "Web applications, projects and writing by Heinz, a full stack web developer based in Central Java, Indonesia.",
     images: ["/og?title=Heinz&type=page"],
   },
 };
@@ -36,16 +42,57 @@ export const metadata: Metadata = {
 async function getHomeData() {
   "use cache";
   cacheLife("hours");
+  cacheTag(
+    PUBLIC_CACHE_TAGS.home,
+    PUBLIC_CACHE_TAGS.projects,
+    PUBLIC_CACHE_TAGS.posts,
+    PUBLIC_CACHE_TAGS.profile,
+  );
 
   const now = new Date();
-  const [owner, phases, logos, testimonials, recentProjects, recentPosts] =
+  const noteIds = db
+    .select({ postId: postToTag.postId })
+    .from(postToTag)
+    .innerJoin(tag, eq(postToTag.tagId, tag.id))
+    .where(eq(tag.name, HOME_NOTES_TAG));
+  function getPosts(kind: "writing" | "notes") {
+    return db.query.post
+      .findMany({
+        where: (table) => homePostWhere(table, kind, now, noteIds),
+        columns: {
+          id: true,
+          title: true,
+          slug: true,
+          excerpt: true,
+          content: true,
+          coverImage: true,
+          publishedAt: true,
+          createdAt: true,
+        },
+        orderBy: (table) => [desc(table.publishedAt), desc(table.createdAt)],
+        limit: 3,
+        with: {
+          tags: {
+            columns: {},
+            with: { tag: { columns: { id: true, name: true } } },
+            orderBy: orderPostTagsByName,
+          },
+        },
+      })
+      .then((rows) => rows.map((row) => flattenPostTags(row)));
+  }
+
+  const [owner, hero, phases, logos, recentProjects, recentPosts, notes] =
     await Promise.all([
-      db.query.user
-        .findFirst({
-          columns: { name: true, image: true, tagline: true, bio: true },
-          orderBy: (table) => [asc(table.createdAt)],
-        })
-        .then((row) => row ?? null),
+      db.query.user.findFirst({
+        columns: { bio: true },
+        orderBy: (table) => [asc(table.createdAt)],
+      }),
+      // Lookup by ID also works before the additive HERO enum migration is deployed.
+      db.query.homeSection.findFirst({
+        where: (table) => eq(table.id, HOME_HERO_ID),
+        columns: { label: true, type: true },
+      }),
       db.query.homeSection.findMany({
         where: (table) => eq(table.type, "PHASE"),
         columns: { id: true, label: true, content: true, order: true },
@@ -53,19 +100,12 @@ async function getHomeData() {
       }),
       db.query.homeSection.findMany({
         where: (table) => eq(table.type, "LOGO"),
-        columns: { id: true, label: true, imageUrl: true, order: true },
-        orderBy: (table) => [asc(table.order)],
-      }),
-      db.query.testimonial.findMany({
-        where: (table) => eq(table.isVisible, true),
         columns: {
           id: true,
-          name: true,
-          role: true,
-          company: true,
-          avatar: true,
-          content: true,
+          label: true,
+          imageUrl: true,
           order: true,
+          content: true,
         },
         orderBy: (table) => [asc(table.order)],
       }),
@@ -90,99 +130,57 @@ async function getHomeData() {
             asc(table.order),
             desc(table.createdAt),
           ],
-          limit: 4,
+          limit: 3,
         })
         .then((rows) =>
           rows.map((row) => ({ ...row, techStack: row.techStack ?? [] })),
         ),
-      db.query.post
-        .findMany({
-          where: (table) =>
-            and(
-              eq(table.status, PostStatus.PUBLISHED),
-              or(isNull(table.publishedAt), lte(table.publishedAt, now)),
-            ),
-          columns: {
-            id: true,
-            title: true,
-            slug: true,
-            excerpt: true,
-            content: true,
-            coverImage: true,
-            publishedAt: true,
-            createdAt: true,
-          },
-          orderBy: (table) => [desc(table.publishedAt), desc(table.createdAt)],
-          limit: 3,
-          with: {
-            tags: {
-              columns: {},
-              with: {
-                tag: {
-                  columns: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-              orderBy: orderPostTagsByName,
-            },
-          },
-        })
-        .then((rows) => rows.map((row) => flattenPostTags(row))),
+      getPosts("writing"),
+      getPosts("notes"),
     ]);
 
   return {
-    owner,
+    hero: resolveHomeHero(
+      hero?.type === "HERO" ? hero.label : null,
+      owner?.bio,
+    ),
     phases,
     logos,
-    testimonials,
+    notes,
     recentProjects,
     recentPosts,
   };
 }
 
-export default async function HomePage() {
-  const { owner, phases, logos, testimonials, recentProjects, recentPosts } =
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ note?: string | string[] }>;
+}) {
+  const { hero, phases, logos, recentProjects, recentPosts, notes } =
     await getHomeData();
-  const title = "Transforming Concepts into Seamless User Experiences";
-  const description =
-    owner?.bio ??
-    `Hi! I'm Heinz, a ${owner?.tagline ?? "Full Stack Developer"} based in Central Java, Indonesia.`;
 
   return (
-    <div className="flex flex-col flex-1 justify-center items-center">
-      <div className="relative flex flex-col items-center w-full min-h-screen overflow-x-hidden text-white">
-        <PublicBackground variant="home" />
-        <section className="w-full h-screen">
-          <HeroSection
-            title={title}
-            subtitle="Dynamic Web Magic with Next.js"
-            description={description}
-            avatar={owner?.image}
-            avatarAlt={owner?.name ?? "Heinz Avatar"}
-          />
-        </section>
-
-        <div className="z-10 relative mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-350">
-          <div className="flex flex-col gap-10">
-            <MotionReveal>
-              <RecentProjectsSection projects={recentProjects} />
-            </MotionReveal>
-            <MotionReveal>
-              <ApproachSection phases={phases} />
-            </MotionReveal>
-            <MotionReveal>
-              <RecentPostsSection posts={recentPosts} />
-            </MotionReveal>
-            <MotionReveal>
-              <ClientsSection logos={logos} testimonials={testimonials} />
-            </MotionReveal>
-          </div>
-        </div>
-
-        <div className="h-32" />
+    <main className={`${styles.surface} ${styles.page}`} data-home-page>
+      <HeroSection {...hero} />
+      <div className={styles.content}>
+        <RecentProjectsSection projects={recentProjects} />
+        <ApproachSection phases={phases} />
+        <TechStackSection
+          logos={selectHomeTechnologies(logos).map(
+            ({ id, label, imageUrl, order }) => ({
+              id,
+              label,
+              imageUrl,
+              order,
+            }),
+          )}
+        />
+        <RecentPostsSection posts={recentPosts} />
+        <Suspense fallback={null}>
+          <NotesSection posts={notes} searchParams={searchParams} />
+        </Suspense>
       </div>
-    </div>
+    </main>
   );
 }

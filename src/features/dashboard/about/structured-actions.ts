@@ -1,7 +1,7 @@
 "use server";
 
 import { desc, eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import {
   aboutReorderSchema,
   type EducationInput,
@@ -23,11 +23,13 @@ import {
   skillCategory,
   workExperience,
 } from "@/lib/db/schema";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 const tables = { workExperience, education, skillCategory, skill };
 type Model = keyof typeof tables;
 
 function revalidateAbout() {
+  updateTag(PUBLIC_CACHE_TAGS.about);
   revalidatePath("/dashboard/about");
   revalidatePath("/about");
 }

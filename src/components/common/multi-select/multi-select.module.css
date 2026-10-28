@@ -1,0 +1,116 @@
+.field {
+  position: relative;
+}
+.trigger[data-clearable] {
+  padding-right: 52px;
+}
+.clear {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--muted-foreground);
+  border-radius: 8px;
+}
+.clear:hover {
+  color: var(--foreground);
+  background: var(--surface-2);
+}
+.clear:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -3px;
+}
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--foreground);
+  font-size: 14px;
+  text-align: left;
+}
+.trigger:hover {
+  border-color: var(--border-hover);
+}
+.trigger:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.triggerLabel {
+  color: var(--muted-foreground);
+}
+.desktopSummary,
+.mobileSummary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mobileSummary {
+  display: none;
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+.search input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  outline: none;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 16px;
+}
+.search:focus-within {
+  box-shadow: inset 0 -2px var(--ring);
+}
+.selections {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px 0;
+  overflow-x: auto;
+  overscroll-behavior: contain;
+}
+.selection {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding-inline: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--foreground);
+  font-size: 12px;
+}
+.selection:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+@media (max-width: 767px) {
+  .triggerLabel {
+    display: none;
+  }
+  .desktopSummary {
+    display: none;
+  }
+  .mobileSummary {
+    display: block;
+  }
+}

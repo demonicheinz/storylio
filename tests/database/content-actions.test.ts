@@ -31,6 +31,7 @@ const effects = vi.hoisted(() => ({
   db: undefined as Fixture["db"] | undefined,
   session: vi.fn(),
   revalidatePath: vi.fn(),
+  updateTag: vi.fn(),
 }));
 
 // Replace only the production connection. All queries and transactions use
@@ -44,7 +45,10 @@ vi.mock("@/lib/db", () => ({
 vi.mock("@/lib/auth-session", () => ({
   getActionSession: effects.session,
 }));
-vi.mock("next/cache", () => ({ revalidatePath: effects.revalidatePath }));
+vi.mock("next/cache", () => ({
+  revalidatePath: effects.revalidatePath,
+  updateTag: effects.updateTag,
+}));
 
 let fixture: Fixture;
 
@@ -125,6 +129,15 @@ async function seedGallery() {
 }
 
 describe("content actions against legacy PostgreSQL tables", () => {
+  it("expires the matching public caches after content mutations", async () => {
+    actionData(await actionCreatePost(postInput));
+    actionData(await actionCreateProject(projectInput));
+    actionData(await actionCreateGalleryItem(galleryInput));
+    expect(effects.updateTag).toHaveBeenCalledWith("public-posts");
+    expect(effects.updateTag).toHaveBeenCalledWith("public-projects");
+    expect(effects.updateTag).toHaveBeenCalledWith("public-gallery");
+  });
+
   it("normalizes tags, reuses existing tags, and replaces links idempotently", async () => {
     const first = actionData(await actionCreatePost(postInput));
     const second = actionData(
@@ -239,6 +252,7 @@ describe("content actions against legacy PostgreSQL tables", () => {
     );
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
     effects.revalidatePath.mockClear();
+    effects.updateTag.mockClear();
     try {
       const result = await actionUpdateProject(created.id, {
         ...projectInput,
@@ -263,6 +277,7 @@ describe("content actions against legacy PostgreSQL tables", () => {
         beforeScreenshots,
       );
       expect(effects.revalidatePath).not.toHaveBeenCalled();
+      expect(effects.updateTag).not.toHaveBeenCalled();
     } finally {
       await fixture.client.exec(
         'ALTER TABLE "Project" DROP CONSTRAINT test_project_failure',
@@ -320,6 +335,7 @@ describe("content actions against legacy PostgreSQL tables", () => {
     );
     vi.spyOn(console, "error").mockImplementation(() => {});
     effects.revalidatePath.mockClear();
+    effects.updateTag.mockClear();
     const invalid = {
       ...galleryInput,
       imageUrl: "https://example.test/rejected.webp",
@@ -341,6 +357,7 @@ describe("content actions against legacy PostgreSQL tables", () => {
         }),
       ).toEqual(before);
       expect(effects.revalidatePath).not.toHaveBeenCalled();
+      expect(effects.updateTag).not.toHaveBeenCalled();
     } finally {
       await fixture.client.exec(
         'ALTER TABLE "GalleryItem" DROP CONSTRAINT test_gallery_failure',
@@ -363,6 +380,7 @@ describe("content actions against legacy PostgreSQL tables", () => {
     );
     vi.spyOn(console, "error").mockImplementation(() => {});
     effects.revalidatePath.mockClear();
+    effects.updateTag.mockClear();
     expect(
       (
         await actionReorderGalleryItems([
@@ -373,5 +391,6 @@ describe("content actions against legacy PostgreSQL tables", () => {
     ).toBe(false);
     expect(await galleryOrders()).toEqual(before);
     expect(effects.revalidatePath).not.toHaveBeenCalled();
+    expect(effects.updateTag).not.toHaveBeenCalled();
   });
 });

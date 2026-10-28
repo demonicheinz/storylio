@@ -1,23 +1,28 @@
 import { ArrowLeftIcon } from "@phosphor-icons/react/dist/ssr";
 import { and, desc, eq, isNull, lte, or } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { PublicBackground } from "@/components/common";
-import {
-  ArticleHeader,
-  ArticleNavigation,
-  ArticleProgress,
-  ArticleToc,
-  RelatedPosts,
-  ShareButton,
-} from "@/components/public/sections/blog";
-import { Button } from "@/components/ui/button";
+import { notFound, redirect } from "next/navigation";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
+import detail from "@/components/public/public-detail.module.css";
+import page from "@/components/public/public-page.module.css";
+import reading from "@/components/public/reading.module.css";
+import articleStyles from "@/components/public/sections/blog/article.module.css";
+import { ArticleHeader } from "@/components/public/sections/blog/article-header";
+import { ArticleNavigation } from "@/components/public/sections/blog/article-navigation";
+import { ArticleProgress } from "@/components/public/sections/blog/article-progress";
+import { ArticleToc } from "@/components/public/sections/blog/article-toc";
+import { RelatedPosts } from "@/components/public/sections/blog/related-posts";
+import { ShareButton } from "@/components/public/sections/blog/share-button";
 import { db } from "@/lib/db";
 import { PostStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
-import { renderMDX } from "@/lib/mdx";
+import { postToTag, tag } from "@/lib/db/schema";
+import { HOME_NOTES_TAG, homePostWhere } from "@/lib/home-content";
+import { buildNotePermalink } from "@/lib/note-links";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { renderPublicMDX } from "@/lib/public-mdx";
 import { slugify } from "@/lib/utils";
 
 type BlogPostPageProps = {
@@ -29,6 +34,7 @@ type BlogPostPageProps = {
 async function getPostBySlug(slug: string) {
   "use cache";
   cacheLife("minutes");
+  cacheTag(PUBLIC_CACHE_TAGS.posts);
 
   return db.query.post
     .findFirst({
@@ -70,14 +76,16 @@ async function getPostBySlug(slug: string) {
 async function getArticleCompanions(currentPostId: string, tagNames: string[]) {
   "use cache";
   cacheLife("minutes");
+  cacheTag(PUBLIC_CACHE_TAGS.posts);
 
+  const noteIds = db
+    .select({ postId: postToTag.postId })
+    .from(postToTag)
+    .innerJoin(tag, eq(postToTag.tagId, tag.id))
+    .where(eq(tag.name, HOME_NOTES_TAG));
   const posts = await db.query.post
     .findMany({
-      where: (table) =>
-        and(
-          eq(table.status, PostStatus.PUBLISHED),
-          or(isNull(table.publishedAt), lte(table.publishedAt, new Date())),
-        ),
+      where: (table) => homePostWhere(table, "writing", new Date(), noteIds),
       columns: {
         id: true,
         title: true,
@@ -194,7 +202,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function BlogPostPage({ params }: BlogPostPageProps) {
+export default function BlogPostPage(props: BlogPostPageProps) {
+  return (
+    <PublicRouteBoundary variant="post-detail">
+      <BlogPostContent {...props} />
+    </PublicRouteBoundary>
+  );
+}
+
+async function BlogPostContent({ params }: BlogPostPageProps) {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
 
@@ -202,8 +218,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
+  if (post.tags.some((tag) => tag.name === HOME_NOTES_TAG))
+    redirect(buildNotePermalink(post.slug));
+
   const [mdxContent, tocItems, companions] = await Promise.all([
-    renderMDX(post.content),
+    renderPublicMDX(post.content, "post"),
     Promise.resolve(getTocItems(post.content)),
     getArticleCompanions(
       post.id,
@@ -212,41 +231,28 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   ]);
 
   return (
-    <main className="min-h-screen overflow-x-clip">
+    <main className={page.page} data-public-page="article">
       <ArticleProgress />
-      <PublicBackground variant="blog" />
-
-      <article className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 pb-24 w-full max-w-7xl">
-        <div className="flex flex-wrap justify-between items-center gap-3 mb-8">
-          <Button
-            role="link"
-            render={<Link href="/blog" />}
-            nativeButton={false}
-            variant="outline"
-            className="bg-surface/70 backdrop-blur border-border/60 rounded-full"
-          >
-            <ArrowLeftIcon data-icon="inline-start" />
-            Back to writing
-          </Button>
-
+      <article className={`${page.container} ${detail.article}`}>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <Link href="/blog" className={page.link}>
+            <ArrowLeftIcon size={16} aria-hidden="true" /> Back to writing
+          </Link>
           <ShareButton title={post.title} />
         </div>
-
         <ArticleHeader post={post} />
-
-        <div className="items-start gap-10 grid xl:grid-cols-[minmax(0,1fr)_280px] mt-16 md:mt-20">
+        <div
+          className={`${reading.layout} ${articleStyles.body}`}
+          data-has-toc={tocItems.length > 0 || undefined}
+        >
+          <ArticleToc items={tocItems} />
           <section
             aria-label="Article content"
-            className="pl-5 sm:pl-8 lg:pl-10 border-border/30 border-l min-w-0"
+            className={`${reading.prose} storylio-article-content`}
           >
-            <div className="flex flex-col gap-6 prose-invert [&>h2:first-child]:mt-0 [&>h2]:mt-20 [&>h3]:mt-12 [&>h2:first-child]:pt-0 [&>h2]:pt-2 min-w-0 max-w-4xl overflow-hidden storylio-article-content">
-              {mdxContent}
-            </div>
+            {mdxContent}
           </section>
-
-          <ArticleToc items={tocItems} />
         </div>
-
         <RelatedPosts posts={companions.relatedPosts} />
         <ArticleNavigation
           previousPost={companions.previousPost}

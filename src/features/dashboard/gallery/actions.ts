@@ -1,7 +1,7 @@
 "use server";
 
 import { and, desc, eq, gt, gte, inArray, lt, lte, ne, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import {
   type GalleryItemActionInput,
@@ -14,6 +14,7 @@ import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { galleryItem as galleryItemTable } from "@/lib/db/schema";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -43,6 +44,7 @@ function parseGalleryInput(input: unknown) {
 }
 
 function revalidateGalleryPaths() {
+  updateTag(PUBLIC_CACHE_TAGS.gallery);
   revalidatePath("/dashboard/gallery");
   revalidatePath("/dashboard");
   revalidatePath("/gallery");

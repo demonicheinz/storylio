@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import type { ReactElement } from "react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import { ProfileAvatar } from "@/components/common/profile-avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,7 +29,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,6 +87,7 @@ import {
   verticalListSortingStrategy,
 } from "@/features/dashboard/shared/components/sortable-list";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
+import { getHomeLogoSettings } from "@/lib/home-technologies";
 import { cn, formatDate } from "@/lib/utils";
 
 export type DashboardHomeSection = {
@@ -116,6 +117,20 @@ type HomeContentManagerProps = {
   testimonials: DashboardTestimonial[];
   logos: DashboardHomeSection[];
 };
+
+function HomeLogoStatus({ logo }: { logo: DashboardHomeSection }) {
+  const { category, showOnHome } = getHomeLogoSettings(logo);
+  return (
+    <p className="mt-1 text-muted-foreground text-xs">
+      {category === "TECHNOLOGY" ? "Technology" : "Client"}
+      {category === "TECHNOLOGY"
+        ? showOnHome
+          ? " · Shown on Home"
+          : " · Hidden from Home"
+        : " · Saved in dashboard"}
+    </p>
+  );
+}
 
 function HomeStatCard({
   icon: Icon,
@@ -166,6 +181,8 @@ function applyFieldErrors<T extends Record<string, unknown>>(
 
 const homeSectionEmptyDefaults: HomeSectionActionValues = {
   type: "PHASE",
+  category: "TECHNOLOGY",
+  showOnHome: true,
   label: "",
   content: "",
   imageUrl: undefined,
@@ -177,10 +194,14 @@ function getHomeSectionDefaults(
   section?: DashboardHomeSection,
 ): HomeSectionActionValues {
   if (!section) return { ...homeSectionEmptyDefaults, type };
+  const settings = getHomeLogoSettings(section);
   return {
     type: section.type,
     label: section.label,
-    content: section.content ?? "",
+    content:
+      section.type === "LOGO" ? settings.description : (section.content ?? ""),
+    category: settings.category,
+    showOnHome: settings.showOnHome,
     imageUrl: section.imageUrl ?? undefined,
     order: section.order,
   };
@@ -219,6 +240,8 @@ function HomeSectionDialog({
   });
 
   const imageUrl = watch("imageUrl");
+  const category = watch("category");
+  const showOnHome = watch("showOnHome");
   const isEdit = Boolean(section);
   const typeLabel = getTypeLabel(type);
 
@@ -325,6 +348,47 @@ function HomeSectionDialog({
             </div>
           ) : (
             <div className="flex flex-col gap-4">
+              <fieldset className="flex flex-col gap-2" disabled={isPending}>
+                <legend className="mb-2 font-medium text-sm">
+                  Logo category
+                </legend>
+                <div className="gap-3 grid grid-cols-2">
+                  {(["TECHNOLOGY", "CLIENT"] as const).map((value) => (
+                    <label
+                      key={value}
+                      className="flex items-center gap-2 p-3 border border-border rounded-xl min-h-11 text-sm cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        value={value}
+                        className="accent-primary"
+                        {...register("category", {
+                          onChange: (event) => {
+                            if (event.target.value === "CLIENT")
+                              setValue("showOnHome", false, {
+                                shouldDirty: true,
+                              });
+                          },
+                        })}
+                      />
+                      {value === "TECHNOLOGY" ? "Technology" : "Client"}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <div className="flex justify-between items-center gap-4 p-3 border border-border rounded-xl min-h-11">
+                <Label htmlFor={`${type}-show-home`}>
+                  Show in Home tech stack
+                </Label>
+                <Switch
+                  id={`${type}-show-home`}
+                  checked={Boolean(showOnHome)}
+                  disabled={isPending || category === "CLIENT"}
+                  onCheckedChange={(checked) =>
+                    setValue("showOnHome", checked, { shouldDirty: true })
+                  }
+                />
+              </div>
               <div className="flex flex-col gap-2">
                 <Label>Logo image</Label>
                 <ImageUpload
@@ -361,7 +425,9 @@ function HomeSectionDialog({
                   {...register("imageUrl")}
                 />
                 <p className="text-muted-foreground text-xs">
-                  Upload a logo or paste an existing image URL.
+                  Upload a logo or paste an image URL. Next.js, React,
+                  TypeScript, Node.js and PostgreSQL can use their built-in
+                  logos.
                 </p>
               </div>
             </div>
@@ -616,6 +682,7 @@ function HomeContentList({
                   {item.label}
                 </h2>
               </div>
+              {type === "LOGO" && <HomeLogoStatus logo={item} />}
               {type !== "LOGO" && (
                 <p className="mt-1 text-muted-foreground text-sm line-clamp-2">
                   {item.content || "No description yet."}
@@ -666,15 +733,6 @@ function getTestimonialDefaults(
     isVisible: testimonial.isVisible,
     order: testimonial.order,
   };
-}
-
-function getInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
 }
 
 function getTestimonialTitle(testimonial: DashboardTestimonial) {
@@ -1122,17 +1180,11 @@ function TestimonialList({
               {handle}
             </div>
             <div className="flex items-start gap-3 p-4 xl:p-3 xl:pr-4 min-w-0">
-              <Avatar className="size-12 shrink-0">
-                {testimonial.avatar && (
-                  <AvatarImage
-                    src={testimonial.avatar}
-                    alt={testimonial.name}
-                  />
-                )}
-                <AvatarFallback>
-                  {getInitials(testimonial.name) || "T"}
-                </AvatarFallback>
-              </Avatar>
+              <ProfileAvatar
+                src={testimonial.avatar}
+                name={testimonial.name}
+                size={48}
+              />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 min-w-0">
                   <h2 className="font-heading font-semibold xl:text-sm text-base wrap-break-words line-clamp-2 leading-snug">
@@ -1311,7 +1363,8 @@ export function HomeContentManager({
                   Tech / Client Logos
                 </CardTitle>
                 <CardDescription>
-                  Manage logos shown near testimonials on the Home page.
+                  Choose technologies for the Home stack and keep client logos
+                  separate.
                 </CardDescription>
               </div>
               <HomeSectionDialog
