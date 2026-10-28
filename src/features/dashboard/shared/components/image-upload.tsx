@@ -130,6 +130,7 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const uploading = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [cropSource, setCropSource] = useState<string | null>(null);
@@ -154,6 +155,7 @@ export function ImageUpload({
 
   const uploadFile = useCallback(
     async (file: File) => {
+      if (disabled || uploading.current) return;
       setError(null);
 
       const validationError = validateFile(file);
@@ -162,6 +164,7 @@ export function ImageUpload({
         return;
       }
 
+      uploading.current = true;
       setIsUploading(true);
       try {
         const data = await uploadImageFile(file);
@@ -175,14 +178,16 @@ export function ImageUpload({
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
       } finally {
+        uploading.current = false;
         setIsUploading(false);
       }
     },
-    [onChange],
+    [onChange, disabled],
   );
 
   const prepareFile = useCallback(
     (file: File) => {
+      if (disabled || uploading.current) return;
       setError(null);
 
       const validationError = validateFile(file);
@@ -210,28 +215,29 @@ export function ImageUpload({
 
       uploadFile(file);
     },
-    [cropAspect, uploadFile],
+    [cropAspect, uploadFile, disabled],
   );
 
   const handleDrop = useCallback(
-    (e: DragEvent<HTMLDivElement>) => {
+    (e: DragEvent<HTMLButtonElement>) => {
       e.preventDefault();
       setIsDragging(false);
+      if (disabled || uploading.current) return;
 
       const file = e.dataTransfer.files[0];
       if (file) {
         prepareFile(file);
       }
     },
-    [prepareFile],
+    [prepareFile, disabled],
   );
 
-  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+  const handleDragOver = useCallback((e: DragEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setIsDragging(true);
+    if (!uploading.current) setIsDragging(true);
   }, []);
 
-  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = useCallback((e: DragEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsDragging(false);
   }, []);
@@ -316,6 +322,7 @@ export function ImageUpload({
             className="-top-2 -right-2 absolute rounded-full size-7"
             onClick={onRemove}
             disabled={disabled}
+            aria-label="Remove image"
           >
             <XIcon className="size-4" />
           </Button>
@@ -325,22 +332,20 @@ export function ImageUpload({
   }
 
   return (
-    <div className={className}>
-      <div
+    <div
+      className={className}
+      onDragOverCapture={(event) => event.preventDefault()}
+      onDropCapture={(event) => event.preventDefault()}
+    >
+      <button
+        type="button"
+        disabled={disabled || isUploading}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => !disabled && !isUploading && inputRef.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            if (!disabled && !isUploading) {
-              inputRef.current?.click();
-            }
-          }
-        }}
         className={cn(
-          "flex flex-col justify-center items-center gap-3 p-8 border-2 border-dashed rounded-lg transition-colors cursor-pointer",
+          "flex flex-col justify-center items-center gap-3 p-8 border-2 border-dashed rounded-lg focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 w-full transition-colors cursor-pointer",
           isDragging
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/50 hover:bg-muted/30",
@@ -350,28 +355,28 @@ export function ImageUpload({
         {isUploading ? (
           <>
             <CloudArrowUpIcon className="size-10 text-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm">Uploading...</p>
+            <span className="text-muted-foreground text-sm">Uploading...</span>
           </>
         ) : (
           <>
             <ImageIcon className="size-10 text-muted-foreground" />
-            <div className="text-center">
-              <p className="font-medium text-sm">
+            <span className="text-center">
+              <span className="block font-medium text-sm">
                 Drop an image here or click to upload
-              </p>
-              <p className="mt-1 text-muted-foreground text-xs">
+              </span>
+              <span className="block mt-1 text-muted-foreground text-xs">
                 JPG, PNG, WebP, GIF — max {maxSizeLabel}
-              </p>
+              </span>
               {cropAspect && (
-                <p className="inline-flex justify-center items-center gap-1 mt-1 text-brand-soft text-xs">
+                <span className="inline-flex justify-center items-center gap-1 mt-1 text-brand-soft text-xs">
                   <CropIcon size={14} />
                   Crop available before upload
-                </p>
+                </span>
               )}
-            </div>
+            </span>
           </>
         )}
-      </div>
+      </button>
 
       <input
         ref={inputRef}
