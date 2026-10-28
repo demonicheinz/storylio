@@ -22,11 +22,13 @@ export async function createTestDatabase({ authRateLimits = false } = {}) {
     await client.exec(ddl);
   }
   // Apply the new additive auth table on top of archived legacy fixtures.
-  await client.exec(
-    await readFile(
-      new URL("../../drizzle/0002_auth_rate_limits.sql", import.meta.url),
-      "utf8",
-    ),
-  );
+  if (authRateLimits) {
+    await client.exec(
+      await readFile(
+        new URL("../../drizzle/0002_auth_rate_limits.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+  }
   return { client, db: drizzle(client, { schema }) };
 }
