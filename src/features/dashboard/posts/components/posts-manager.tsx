@@ -123,17 +123,15 @@ const sortOptions: Array<{ value: SortMode; label: string }> = [
   { value: "published", label: "Published First" },
 ];
 
-function isPublished(post: DashboardPost) {
+function isPublished(post: DashboardPost, now: number) {
   return (
-    getPostPublicationState(post.status, post.publishedAt, Date.now()) ===
-    "published"
+    getPostPublicationState(post.status, post.publishedAt, now) === "published"
   );
 }
 
-function isScheduled(post: DashboardPost) {
+function isScheduled(post: DashboardPost, now: number) {
   return (
-    getPostPublicationState(post.status, post.publishedAt, Date.now()) ===
-    "scheduled"
+    getPostPublicationState(post.status, post.publishedAt, now) === "scheduled"
   );
 }
 
@@ -147,8 +145,8 @@ function postHref(post: DashboardPost) {
     : `/blog/${post.slug}`;
 }
 
-function getPostViews(post: DashboardPost) {
-  return isPublished(post) ? post.viewCount : 0;
+function getPostViews(post: DashboardPost, now: number) {
+  return isPublished(post, now) ? post.viewCount : 0;
 }
 
 function formatDateTime(value: string | null) {
@@ -164,12 +162,14 @@ function formatDateTime(value: string | null) {
 
 function StatusBadge({
   post,
+  now,
   compact = false,
 }: {
   post: DashboardPost;
+  now: number;
   compact?: boolean;
 }) {
-  const published = isPublished(post);
+  const published = isPublished(post, now);
 
   return (
     <span
@@ -177,13 +177,13 @@ function StatusBadge({
         "inline-flex items-center gap-1.5 bg-surface px-2 border border-border rounded-md h-6 font-medium text-xs",
         published
           ? "text-success"
-          : isScheduled(post)
+          : isScheduled(post, now)
             ? "text-brand-soft"
             : "text-muted-foreground",
         compact && "px-2",
       )}
     >
-      {isScheduled(post) ? (
+      {isScheduled(post, now) ? (
         <ClockIcon className="size-3" aria-hidden />
       ) : (
         <span
@@ -193,7 +193,7 @@ function StatusBadge({
           )}
         />
       )}
-      {isScheduled(post) ? "Scheduled" : published ? "Published" : "Draft"}
+      {isScheduled(post, now) ? "Scheduled" : published ? "Published" : "Draft"}
     </span>
   );
 }
@@ -294,10 +294,12 @@ function ViewToggle({
 
 function PostActions({
   post,
+  now,
   align = "end",
   overlay = false,
 }: {
   post: DashboardPost;
+  now: number;
   align?: "start" | "end";
   overlay?: boolean;
 }) {
@@ -326,7 +328,7 @@ function PostActions({
           <DropdownMenuLabel>
             Created {formatDateTime(post.createdAt)}
           </DropdownMenuLabel>
-          {isPublished(post) && (
+          {isPublished(post, now) && (
             <DropdownMenuItem
               render={<Link href={postHref(post)} target="_blank" />}
             >
@@ -398,11 +400,13 @@ function TagPills({
 
 function PostsGrid({
   posts,
+  now,
   batchMode,
   selectedIds,
   onTogglePost,
 }: {
   posts: DashboardPost[];
+  now: number;
   batchMode: boolean;
   selectedIds: Set<string>;
   onTogglePost: (id: string) => void;
@@ -437,12 +441,12 @@ function PostsGrid({
               className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
-              <PostActions post={post} overlay />
+              <PostActions now={now} post={post} overlay />
             </div>
           </div>
           <div className="flex flex-col flex-1 gap-3 p-4">
             <div className="flex flex-wrap gap-2">
-              <StatusBadge post={post} compact />
+              <StatusBadge now={now} post={post} compact />
               <span className="text-muted-foreground text-xs">
                 {isNote(post) ? "Note" : "Article"}
               </span>
@@ -471,7 +475,7 @@ function PostsGrid({
               </span>
               <span className="inline-flex items-center gap-1 shrink-0">
                 <EyeIcon className="size-3.5" />
-                {getPostViews(post).toLocaleString("en-US")} views
+                {getPostViews(post, now).toLocaleString("en-US")} views
               </span>
             </div>
           </div>
@@ -483,6 +487,7 @@ function PostsGrid({
 
 function PostsList({
   posts,
+  now,
   selectedIds,
   batchMode,
   onTogglePost,
@@ -490,6 +495,7 @@ function PostsList({
   onMobilePostClick,
 }: {
   posts: DashboardPost[];
+  now: number;
   selectedIds: Set<string>;
   batchMode: boolean;
   onTogglePost: (id: string) => void;
@@ -569,10 +575,10 @@ function PostsList({
                 </div>
               </div>
               <div className="p-3">
-                <StatusBadge post={post} />
+                <StatusBadge now={now} post={post} />
               </div>
               <div className="p-3 text-muted-foreground text-sm">
-                {getPostViews(post).toLocaleString("en-US")}
+                {getPostViews(post, now).toLocaleString("en-US")}
               </div>
               <div className="p-3 text-muted-foreground text-sm">
                 <time
@@ -592,7 +598,7 @@ function PostsList({
                 </time>
               </div>
               <div className="flex justify-center p-3">
-                <PostActions post={post} />
+                <PostActions now={now} post={post} />
               </div>
             </div>
           ))}
@@ -646,7 +652,9 @@ function PostsList({
                   <span
                     className={cn(
                       "rounded-full size-2 shrink-0",
-                      isPublished(post) ? "bg-success" : "bg-muted-foreground",
+                      isPublished(post, now)
+                        ? "bg-success"
+                        : "bg-muted-foreground",
                     )}
                   />
                   <h2 className="font-sans font-semibold text-base line-clamp-2 leading-snug">
@@ -667,14 +675,14 @@ function PostsList({
                 onClick={(event) => event.stopPropagation()}
                 onPointerDown={(event) => event.stopPropagation()}
               >
-                <PostActions post={post} />
+                <PostActions now={now} post={post} />
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-3">
-              <StatusBadge post={post} compact />
+              <StatusBadge now={now} post={post} compact />
               <span className="inline-flex items-center gap-1 text-muted-foreground text-xs">
                 <EyeIcon className="size-3.5" />
-                {getPostViews(post).toLocaleString("en-US")} views
+                {getPostViews(post, now).toLocaleString("en-US")} views
               </span>
               <span className="text-muted-foreground text-xs">
                 Updated {formatDate(post.updatedAt)}
@@ -996,15 +1004,15 @@ export function PostsManager({ posts }: PostsManagerProps) {
   );
 
   const stats = useMemo(() => {
-    const published = posts.filter(isPublished).length;
+    const published = posts.filter((post) => isPublished(post, now)).length;
     const drafts = posts.filter((post) => post.status === "DRAFT").length;
 
     return {
       total: posts.length,
       published,
       drafts,
-      scheduled: posts.filter(isScheduled).length,
-      totalViews: posts.reduce((sum, post) => sum + getPostViews(post), 0),
+      scheduled: posts.filter((post) => isScheduled(post, now)).length,
+      totalViews: posts.reduce((sum, post) => sum + getPostViews(post, now), 0),
     };
   }, [posts, now]);
 
@@ -1013,7 +1021,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
 
     return [...posts]
       .filter((post) => {
-        if (status === "published" && !isPublished(post)) {
+        if (status === "published" && !isPublished(post, now)) {
           return false;
         }
 
@@ -1021,7 +1029,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
           return false;
         }
 
-        if (status === "scheduled" && !isScheduled(post)) return false;
+        if (status === "scheduled" && !isScheduled(post, now)) return false;
 
         if (
           selectedTags.length > 0 &&
@@ -1037,9 +1045,9 @@ export function PostsManager({ posts }: PostsManagerProps) {
         return [
           post.title,
           post.slug,
-          isScheduled(post)
+          isScheduled(post, now)
             ? "scheduled"
-            : isPublished(post)
+            : isPublished(post, now)
               ? "published"
               : "draft",
           isNote(post) ? "note" : "article",
@@ -1054,7 +1062,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
         }
 
         if (sortMode === "views") {
-          return getPostViews(b) - getPostViews(a);
+          return getPostViews(b, now) - getPostViews(a, now);
         }
 
         if (sortMode === "title") {
@@ -1499,25 +1507,28 @@ export function PostsManager({ posts }: PostsManagerProps) {
           </CardContent>
         </Card>
 
-        <div
-          className="flex flex-wrap items-center gap-3 text-muted-foreground text-sm"
-          role="status"
-        >
-          <span>
-            {filteredPosts.length} of {posts.length} posts
-          </span>
-          {hasRefinements && (
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              className="px-0"
-              onClick={clearFilters}
-            >
-              Clear filters and search
-            </Button>
-          )}
-        </div>
+        {hasRefinements && (
+          <div
+            className="flex flex-wrap items-center gap-3 text-muted-foreground text-sm"
+            role="status"
+          >
+            <span>
+              {filteredPosts.length}{" "}
+              {filteredPosts.length === 1 ? "post" : "posts"} found
+            </span>
+            {hasRefinements && (
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="px-0"
+                onClick={clearFilters}
+              >
+                Clear filters and search
+              </Button>
+            )}
+          </div>
+        )}
         {batchMode && (
           <BatchActionsBar
             selectedCount={selectedIds.size}
@@ -1563,6 +1574,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
           <>
             {viewMode === "grid" ? (
               <PostsGrid
+                now={now}
                 posts={paginatedPosts}
                 batchMode={batchMode}
                 selectedIds={selectedIds}
@@ -1570,6 +1582,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
               />
             ) : (
               <PostsList
+                now={now}
                 posts={paginatedPosts}
                 selectedIds={selectedIds}
                 batchMode={batchMode}

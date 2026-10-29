@@ -1530,16 +1530,6 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {" "}
-            <Button
-              role="link"
-              render={<Link href="/dashboard/projects/new" />}
-              nativeButton={false}
-              className="md:px-4 md:w-auto shrink-0"
-            >
-              <PlusIcon data-icon="inline-start" />
-              <span>New Project</span>
-            </Button>{" "}
             <Button
               type="button"
               variant="outline"
@@ -1548,6 +1538,15 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               disabled={items.length < 2}
             >
               {reorderMode ? "Done reordering" : "Reorder"}
+            </Button>
+            <Button
+              role="link"
+              render={<Link href="/dashboard/projects/new" />}
+              nativeButton={false}
+              className="md:px-4 md:w-auto shrink-0"
+            >
+              <PlusIcon data-icon="inline-start" />
+              <span>New Project</span>
             </Button>
           </div>
         </div>
@@ -1739,13 +1738,14 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
           </Card>
         )}
 
-        {!reorderMode && (
+        {!reorderMode && hasRefinements && (
           <div
             className="flex flex-wrap items-center gap-3 text-muted-foreground text-sm"
             role="status"
           >
             <span>
-              {filteredProjects.length} of {items.length} projects
+              {filteredProjects.length}{" "}
+              {filteredProjects.length === 1 ? "project" : "projects"} found
             </span>
             {hasRefinements && (
               <Button

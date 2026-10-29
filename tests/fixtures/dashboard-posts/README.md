@@ -17,6 +17,7 @@ In another terminal:
 bunx --no-install playwright-cli -s=posts-polish open http://127.0.0.1:3198 --config=playwright-cli.config.json
 bunx --no-install playwright-cli -s=posts-polish run-code --filename=tests/browser/dashboard-posts.js
 bunx --no-install playwright-cli -s=posts-polish run-code --filename=tests/browser/post-scheduling.js
+bunx --no-install playwright-cli -s=posts-polish run-code --filename=tests/browser/posts-publication-clock.js
 bunx --no-install playwright-cli -s=posts-polish close
 ```
 
@@ -41,3 +42,8 @@ PGlite tests in `tests/database/post-publication.test.ts` and
 `tests/database/editor-autosave.test.ts`. Form baseline reconciliation is covered
 by `tests/public/post-save-reconciliation.test.ts`. The fixture router and filter
 hooks do not emulate full Next navigation/history behavior.
+
+The publication-clock check advances a due post across its deadline and verifies
+the filtered row, Published/Scheduled summaries, view totals and View live action
+advance together. `tests/public/posts-publication-clock.test.ts` separately
+renders the real manager with deliberately conflicting system/shared clock values.
