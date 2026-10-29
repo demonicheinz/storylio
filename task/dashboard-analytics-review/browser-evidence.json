@@ -1,0 +1,56 @@
+{
+  "results": [
+    {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "height": 2265,
+      "headings": [
+        { "text": "Analytics", "font": "30px", "top": 16 },
+        { "text": "Lifetime local analytics", "font": "18px", "top": 108 },
+        { "text": "Views over 30 days", "font": "16px", "top": 262 },
+        { "text": "Recent view events", "font": "16px", "top": 262 },
+        { "text": "Top posts", "font": "16px", "top": 892 },
+        { "text": "Top projects", "font": "16px", "top": 892 },
+        { "text": "Content inventory", "font": "16px", "top": 1634 },
+        { "text": "Umami traffic", "font": "16px", "top": 1817 },
+        { "text": "Top Pages", "font": "14px", "top": 2035 },
+        { "text": "Top Referrers", "font": "14px", "top": 2035 },
+        { "text": "Environment", "font": "14px", "top": 2156 },
+        { "text": "Location", "font": "14px", "top": 2156 }
+      ],
+      "charts": [
+        { "width": 766, "height": 256 },
+        { "width": 562, "height": 256 },
+        { "width": 562, "height": 256 }
+      ],
+      "buttons": [{ "text": "Refresh", "height": 36 }]
+    },
+    {
+      "width": 320,
+      "scrollWidth": 320,
+      "height": 4449,
+      "headings": [
+        { "text": "Analytics", "font": "30px", "top": 16 },
+        { "text": "Lifetime local analytics", "font": "18px", "top": 156 },
+        { "text": "Views over 30 days", "font": "16px", "top": 422 },
+        { "text": "Recent view events", "font": "16px", "top": 864 },
+        { "text": "Top posts", "font": "16px", "top": 1494 },
+        { "text": "Top projects", "font": "16px", "top": 2356 },
+        { "text": "Content inventory", "font": "16px", "top": 3118 },
+        { "text": "Umami traffic", "font": "16px", "top": 3405 },
+        { "text": "Top Pages", "font": "14px", "top": 4051 },
+        { "text": "Top Referrers", "font": "14px", "top": 4172 },
+        { "text": "Environment", "font": "14px", "top": 4256 },
+        { "text": "Location", "font": "14px", "top": 4340 }
+      ],
+      "charts": [
+        { "width": 238, "height": 256 },
+        { "width": 238, "height": 256 },
+        { "width": 238, "height": 256 }
+      ],
+      "buttons": [{ "text": "Refresh", "height": 44 }]
+    }
+  ],
+  "errors": [],
+  "empty": "Analytics\n\nMeasure public traffic, local content performance, and recent view activity across Storylio.\n\nLifetime local analytics\n\nDatabase counters and event records have different collection histories. Neither represents unique visitors or a 30-day total.\n\nLifetime local views\n2283\nStored post and project counters\nLifetime tracked events\n721\nStored local event records\nViews over 30 days\n0 locally tracked post and project views across 30 UTC calendar days, including today. Today is incomplete.\n\nNo recent views\n\nNew public content views will appear here.\n\nRecent view events\nLatest local events across all recorded history. Times shown in UTC.\n\nNo view events yet\n\nEvents appear after published posts or projects are viewed.\n\nTop posts\nTop five items by lifetime local view counter. Open a title to edit it.\n\nNo content yet\n\nContent will appear here after it is created.\n\nTop projects\nTop five items by lifetime local view counter. Open a title to edit it.\n\nNo content yet\n\nContent will appear here after it is created.\n\nContent inventory\nCurrent stored records and publication status.\nPosts\n7\n6 published · 1 drafts\nProjects\n5\n3 published\nGallery\n14\nStored gallery items, including hidden items\n\nOptional Umami traffic is not configured. Local analytics remain available.\n\nRetry"
+}

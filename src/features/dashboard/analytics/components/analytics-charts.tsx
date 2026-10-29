@@ -1,95 +1,57 @@
 "use client";
 
+import { useId } from "react";
 import {
   Area,
   AreaChart,
-  Bar,
-  BarChart,
   CartesianGrid,
-  Cell,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 
-type TimelinePoint = {
-  date: string;
-  label: string;
-  views: number;
-};
+type TimelinePoint = { date: string; label: string; views: number };
 
-type RankingPoint = {
-  name: string;
-  shortName: string;
-  views: number;
-};
-
-type ChartTooltipProps = {
+function ChartTooltip({
+  active,
+  payload,
+}: {
   active?: boolean;
-  label?: string | number;
-  payload?: Array<{
-    color?: string;
-    payload?: TimelinePoint | RankingPoint;
-    value?: number | string;
-  }>;
-};
-
-const chartColors = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
-];
-
-function ChartTooltip({ active, label, payload }: ChartTooltipProps) {
-  const item = payload?.[0];
-
-  if (!active || !item) {
-    return null;
-  }
-
-  const itemPayload = item.payload;
-  const title =
-    itemPayload && "name" in itemPayload
-      ? itemPayload.name
-      : itemPayload && "date" in itemPayload
-        ? itemPayload.date
-        : label;
-
+  payload?: Array<{ value?: number | string; payload?: TimelinePoint }>;
+}) {
+  const point = payload?.[0];
   return (
-    <div className="bg-card shadow-2xl px-4 py-3 border border-border-hover rounded-xl min-w-40 text-card-foreground">
-      <p className="max-w-64 font-medium text-xs leading-5">{title}</p>
-      <div className="flex justify-between items-center gap-6 mt-2 text-sm">
-        <span className="flex items-center gap-2 text-muted-foreground">
-          <span
-            className="rounded-full size-2.5"
-            style={{ backgroundColor: item.color ?? "var(--chart-2)" }}
-          />
-          Views
-        </span>
-        <span className="font-semibold text-foreground">
-          {Number(item.value ?? 0).toLocaleString("en-US")}
-        </span>
-      </div>
+    <div role="status" aria-live="polite" aria-atomic="true">
+      {active && point && (
+        <div className="bg-popover px-3 py-2 border border-border rounded-md text-popover-foreground text-xs">
+          <p>{point.payload?.date}</p>
+          <p className="mt-1 font-semibold tabular-nums">
+            {Number(point.value ?? 0).toLocaleString("en-US")} views
+          </p>
+        </div>
+      )}
     </div>
   );
 }
 
 export function ViewsTimelineChart({ data }: { data: TimelinePoint[] }) {
+  const id = useId();
   return (
-    <div className="w-full min-w-0 h-64 min-h-64">
+    <div className="w-full min-w-0 h-56 sm:h-64">
       <AreaChart
         responsive
+        accessibilityLayer
         data={data}
-        margin={{ left: -20, right: 12, top: 8 }}
+        aria-label="Daily content views over 30 UTC calendar days"
+        title="Daily content views"
+        desc="Use left and right arrow keys to explore dates, or open View daily values below."
+        margin={{ left: -20, right: 8, top: 8 }}
         style={{ width: "100%", height: "100%" }}
       >
         <defs>
-          <linearGradient id="views-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.7} />
-            <stop offset="45%" stopColor="var(--chart-2)" stopOpacity={0.35} />
-            <stop offset="95%" stopColor="var(--chart-5)" stopOpacity={0.04} />
+          <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.25} />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.02} />
           </linearGradient>
         </defs>
         <CartesianGrid
@@ -101,81 +63,39 @@ export function ViewsTimelineChart({ data }: { data: TimelinePoint[] }) {
           dataKey="label"
           axisLine={false}
           tickLine={false}
-          minTickGap={28}
-          tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+          minTickGap={32}
+          tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
         />
         <YAxis
           allowDecimals={false}
           axisLine={false}
           tickLine={false}
-          tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
+          tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
+          tickFormatter={(value) =>
+            Intl.NumberFormat("en-US", { notation: "compact" }).format(value)
+          }
         />
         <Tooltip
           content={<ChartTooltip />}
+          isAnimationActive={false}
           cursor={{ stroke: "var(--border-hover)" }}
         />
         <Area
-          type="monotone"
+          type="linear"
           dataKey="views"
           name="Views"
-          stroke="var(--chart-2)"
+          stroke="var(--primary)"
           strokeWidth={2}
-          fill="url(#views-gradient)"
+          fill={`url(#${id})`}
+          isAnimationActive={false}
           activeDot={{
-            r: 5,
-            fill: "var(--chart-2)",
-            stroke: "var(--primary-foreground)",
+            r: 4,
+            fill: "var(--primary)",
+            stroke: "var(--background)",
             strokeWidth: 2,
           }}
         />
       </AreaChart>
-    </div>
-  );
-}
-
-export function ContentRankingChart({ data }: { data: RankingPoint[] }) {
-  return (
-    <div className="w-full min-w-0 h-64 min-h-64">
-      <BarChart
-        responsive
-        data={data}
-        layout="vertical"
-        margin={{ bottom: 4, left: 4, right: 28, top: 4 }}
-        style={{ width: "100%", height: "100%" }}
-      >
-        <CartesianGrid
-          stroke="var(--border)"
-          strokeDasharray="3 3"
-          horizontal={false}
-        />
-        <XAxis
-          type="number"
-          allowDecimals={false}
-          axisLine={false}
-          tickLine={false}
-          tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-        />
-        <YAxis
-          type="category"
-          dataKey="shortName"
-          width={132}
-          axisLine={false}
-          tickLine={false}
-          tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-        />
-        <Tooltip
-          content={<ChartTooltip />}
-          cursor={{ fill: "var(--muted)", fillOpacity: 0.45 }}
-        />
-        <Bar dataKey="views" name="Views" radius={[0, 8, 8, 0]}>
-          {data.map((item, index) => (
-            <Cell
-              key={item.name}
-              fill={chartColors[index % chartColors.length]}
-            />
-          ))}
-        </Bar>
-      </BarChart>
     </div>
   );
 }

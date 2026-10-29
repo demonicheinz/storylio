@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "results": [
+    { "width": 1440, "contentOverflow": false, "trafficOverflow": false },
+    { "width": 1024, "contentOverflow": false, "trafficOverflow": false },
+    { "width": 768, "contentOverflow": false, "trafficOverflow": false },
+    { "width": 390, "contentOverflow": false, "trafficOverflow": false },
+    { "width": 360, "contentOverflow": false, "trafficOverflow": false },
+    { "width": 320, "contentOverflow": false, "trafficOverflow": false }
+  ],
+  "checks": [
+    "source tabs and keyboard",
+    "30 daily values and chart keyboard tooltip",
+    "responsive content/traffic",
+    "retained data on refresh failure",
+    "partial failure vs empty",
+    "pending lock",
+    "preserved disclosure state",
+    "zero and unconfigured",
+    "reduced-motion loading"
+  ],
+  "errors": []
+}
