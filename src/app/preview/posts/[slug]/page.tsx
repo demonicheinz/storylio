@@ -9,9 +9,10 @@ import { ArticleProgress, ArticleToc } from "@/components/public/sections/blog";
 import { BlogCover } from "@/components/public/sections/blog/blog-cover";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { NotePreview } from "@/features/dashboard/posts/components/note-preview";
+import { getPostPublicationState } from "@/features/dashboard/posts/publication-state";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
-import { PostStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
 import { renderMDX } from "@/lib/mdx";
 import { calculateReadingTime, formatDate, slugify } from "@/lib/utils";
@@ -116,7 +117,29 @@ async function PreviewPostContent({ params }: PreviewPostPageProps) {
     Promise.resolve(getTocItems(content)),
   ]);
   const publishedAt = post.publishedAt ?? post.createdAt;
-  const isPublished = post.status === PostStatus.PUBLISHED;
+  const state = getPostPublicationState(
+    post.status,
+    post.publishedAt?.toISOString(),
+    Date.now(),
+  );
+  const stateLabel =
+    state === "scheduled"
+      ? "Scheduled"
+      : state === "published"
+        ? "Published"
+        : "Draft";
+  if (post.tags.some((tag) => tag.name === "notes")) {
+    return (
+      <NotePreview
+        id={post.id}
+        title={post.title}
+        dateISO={publishedAt.toISOString()}
+        dateLabel={formatDate(publishedAt)}
+        state={stateLabel}
+        body={mdxContent}
+      />
+    );
+  }
 
   return (
     <main className="min-h-screen overflow-x-clip">
@@ -142,7 +165,7 @@ async function PreviewPostContent({ params }: PreviewPostPageProps) {
             <span className="text-border" aria-hidden="true">
               /
             </span>
-            {isPublished ? "Published" : "Draft"}
+            {stateLabel}
           </div>
         </div>
 

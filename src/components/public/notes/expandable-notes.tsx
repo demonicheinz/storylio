@@ -12,7 +12,6 @@ import {
   useRef,
   useState,
 } from "react";
-import reading from "@/components/public/reading.module.css";
 import { ViewCounter } from "@/components/public/sections/blog/view-counter";
 import {
   Dialog,
@@ -24,6 +23,7 @@ import {
 import { toast } from "@/components/ui/toast";
 import { buildNoteHref, buildNotePermalink } from "@/lib/note-links";
 import { lockPageScroll } from "@/lib/page-scroll";
+import { NoteReadingBody } from "./note-reading-body";
 import styles from "./notes.module.css";
 
 export type NoteView = {
@@ -212,57 +212,7 @@ export function ExpandableNotes({
                 </button>
               </div>
             )}
-            <div
-              className={`${reading.prose} ${styles.body}`}
-              data-lenis-prevent
-              data-note-body
-              onClickCapture={(event) => {
-                if (
-                  event.button ||
-                  event.altKey ||
-                  event.ctrlKey ||
-                  event.metaKey ||
-                  event.shiftKey
-                )
-                  return;
-                const link =
-                  event.target instanceof Element
-                    ? event.target.closest("a")
-                    : null;
-                const href = link?.getAttribute("href");
-                if (!href?.startsWith("#")) return;
-                let id: string;
-                try {
-                  id = decodeURIComponent(href.slice(1));
-                } catch {
-                  return;
-                }
-                const target = event.currentTarget.querySelector<HTMLElement>(
-                  `#${CSS.escape(id)}`,
-                );
-                if (!target) return;
-                event.preventDefault();
-                event.stopPropagation();
-                const body = event.currentTarget;
-                body.scrollTo({
-                  top:
-                    body.scrollTop +
-                    target.getBoundingClientRect().top -
-                    body.getBoundingClientRect().top -
-                    16,
-                  behavior: "auto",
-                });
-                if (!target.hasAttribute("tabindex")) {
-                  target.setAttribute("tabindex", "-1");
-                  target.addEventListener(
-                    "blur",
-                    () => target.removeAttribute("tabindex"),
-                    { once: true },
-                  );
-                }
-                target.focus({ preventScroll: true });
-              }}
-            >
+            <NoteReadingBody>
               {active ? (
                 <>
                   {active.body}
@@ -271,7 +221,7 @@ export function ExpandableNotes({
               ) : (
                 <p>This note may have been removed or is not published.</p>
               )}
-            </div>
+            </NoteReadingBody>
           </DialogPrimitive.Popup>
         </DialogPortal>
       </Dialog>

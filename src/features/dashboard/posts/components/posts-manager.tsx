@@ -6,12 +6,12 @@ import {
   CaretLeftIcon,
   CaretRightIcon,
   CheckCircleIcon,
+  CheckSquareIcon,
+  ClockIcon,
   DotsThreeVerticalIcon,
   EyeIcon,
   FileTextIcon,
   FunnelSimpleIcon,
-  GridFourIcon,
-  ListBulletsIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   PlusIcon,
@@ -67,21 +67,25 @@ import {
   actionPublishPosts,
 } from "@/features/dashboard/posts/actions";
 import { PostDeleteButton } from "@/features/dashboard/posts/components/post-delete-button";
+import { getPostPublicationState } from "@/features/dashboard/posts/publication-state";
+import toolbarStyles from "@/features/dashboard/shared/components/collection-toolbar.module.css";
 import {
   DashboardMultiFilter,
   DashboardSelect,
-  DashboardStatusFilter,
+  DashboardViewToggle,
 } from "@/features/dashboard/shared/components/filter-controls";
 import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
 import { useDashboardFilter } from "@/features/dashboard/shared/hooks/use-dashboard-filter";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import type { ActionResult } from "@/lib/action-result";
+import { getPageItems } from "@/lib/archive-pagination";
 import {
   getDefaultItemsPerPage,
   getItemsPerPageOptions,
   paginateItems,
 } from "@/lib/pagination";
 import { cn, formatDate } from "@/lib/utils";
+import { usePublicationClock } from "./use-publication-clock";
 
 export type DashboardPost = {
   id: string;
@@ -120,14 +124,16 @@ const sortOptions: Array<{ value: SortMode; label: string }> = [
 ];
 
 function isPublished(post: DashboardPost) {
-  return post.status === "PUBLISHED" && !isScheduled(post);
+  return (
+    getPostPublicationState(post.status, post.publishedAt, Date.now()) ===
+    "published"
+  );
 }
 
 function isScheduled(post: DashboardPost) {
   return (
-    post.status === "PUBLISHED" &&
-    post.publishedAt !== null &&
-    new Date(post.publishedAt).getTime() > Date.now()
+    getPostPublicationState(post.status, post.publishedAt, Date.now()) ===
+    "scheduled"
   );
 }
 
@@ -168,19 +174,25 @@ function StatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-xs",
+        "inline-flex items-center gap-1.5 bg-surface px-2 border border-border rounded-md h-6 font-medium text-xs",
         published
-          ? "bg-emerald-500/12 text-emerald-300"
-          : "bg-muted text-muted-foreground",
-        compact && "px-2 py-0.5",
+          ? "text-success"
+          : isScheduled(post)
+            ? "text-brand-soft"
+            : "text-muted-foreground",
+        compact && "px-2",
       )}
     >
-      <span
-        className={cn(
-          "rounded-full size-1.5",
-          published ? "bg-success" : "bg-muted-foreground",
-        )}
-      />
+      {isScheduled(post) ? (
+        <ClockIcon className="size-3" aria-hidden />
+      ) : (
+        <span
+          className={cn(
+            "rounded-full size-1.5 shrink-0",
+            published ? "bg-success" : "bg-muted-foreground",
+          )}
+        />
+      )}
       {isScheduled(post) ? "Scheduled" : published ? "Published" : "Draft"}
     </span>
   );
@@ -200,7 +212,7 @@ function PostThumbnail({
   return (
     <div
       className={cn(
-        "relative bg-muted/30 border border-border/60 rounded-2xl aspect-video overflow-hidden",
+        "relative bg-muted/30 border border-border/60 rounded-xl aspect-video overflow-hidden",
         className,
       )}
     >
@@ -234,18 +246,10 @@ function FilterDropdown<T extends string>({
   options: Array<{ value: T; label: string }>;
   onValueChange: (value: T) => void;
 }) {
-  if (label === "Status")
-    return (
-      <DashboardStatusFilter
-        label={label}
-        value={value}
-        options={options}
-        onValueChange={onValueChange}
-      />
-    );
   return (
     <DashboardSelect
       label={label}
+      triggerClassName="min-h-11"
       value={value}
       options={options}
       onValueChange={onValueChange}
@@ -266,6 +270,7 @@ function TagDropdown({
     <div className="min-w-40">
       <DashboardMultiFilter
         label="Tags"
+        labelPlacement="above"
         values={selectedTags}
         options={tags}
         onValueChange={onValueChange}
@@ -283,37 +288,18 @@ function ViewToggle({
   onViewModeChange: (mode: ViewMode) => void;
 }) {
   return (
-    <div className="justify-self-end grid grid-cols-2 bg-background/35 p-1 border border-border/60 rounded-xl w-fit shrink-0">
-      <Button
-        type="button"
-        size="icon"
-        variant={viewMode === "list" ? "default" : "ghost"}
-        onClick={() => onViewModeChange("list")}
-        aria-label="List view"
-        aria-pressed={viewMode === "list"}
-      >
-        <ListBulletsIcon />
-      </Button>
-      <Button
-        type="button"
-        size="icon"
-        variant={viewMode === "grid" ? "default" : "ghost"}
-        onClick={() => onViewModeChange("grid")}
-        aria-label="Grid view"
-        aria-pressed={viewMode === "grid"}
-      >
-        <GridFourIcon />
-      </Button>
-    </div>
+    <DashboardViewToggle value={viewMode} onValueChange={onViewModeChange} />
   );
 }
 
 function PostActions({
   post,
   align = "end",
+  overlay = false,
 }: {
   post: DashboardPost;
   align?: "start" | "end";
+  overlay?: boolean;
 }) {
   return (
     <DropdownMenu>
@@ -322,7 +308,12 @@ function PostActions({
           <Button
             type="button"
             size="icon"
-            variant="ghost"
+            variant={overlay ? "secondary" : "ghost"}
+            className={cn(
+              "size-11",
+              overlay &&
+                "bg-popover/80 border-border shadow-sm hover:bg-surface-hover/90",
+            )}
             aria-label={`Open actions for ${post.title}`}
           />
         }
@@ -340,7 +331,7 @@ function PostActions({
               render={<Link href={postHref(post)} target="_blank" />}
             >
               <EyeIcon data-icon="inline-start" />
-              Preview
+              View live
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
@@ -422,7 +413,7 @@ function PostsGrid({
         <article
           key={post.id}
           className={cn(
-            "group bg-background/45 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)] border border-border/70 hover:border-brand-soft/40 rounded-2xl min-w-0 overflow-hidden transition-[border-color,transform,box-shadow] hover:-translate-y-0.5",
+            "group flex flex-col bg-card border border-border hover:border-border-hover rounded-lg min-w-0 overflow-hidden transition-colors",
             selectedIds.has(post.id) && "border-brand-soft/60 bg-brand/5",
             batchMode && "cursor-pointer",
           )}
@@ -443,24 +434,31 @@ function PostsGrid({
               </div>
             )}
             <div
-              className={cn(
-                "left-3 absolute transition-[top]",
-                batchMode ? "top-11" : "top-3",
-              )}
-            >
-              <StatusBadge post={post} compact />
-            </div>
-            <div
               className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
-              <PostActions post={post} />
+              <PostActions post={post} overlay />
             </div>
           </div>
-          <div className="flex flex-col gap-3 p-4 min-h-48">
+          <div className="flex flex-col flex-1 gap-3 p-4">
+            <div className="flex flex-wrap gap-2">
+              <StatusBadge post={post} compact />
+              <span className="text-muted-foreground text-xs">
+                {isNote(post) ? "Note" : "Article"}
+              </span>
+            </div>
             <div className="min-w-0">
               <h2 className="font-sans font-semibold text-base line-clamp-2 leading-snug">
-                {post.title}
+                {batchMode ? (
+                  post.title
+                ) : (
+                  <Link
+                    href={`/dashboard/posts/${post.id}/edit`}
+                    className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring hover:text-link"
+                  >
+                    {post.title}
+                  </Link>
+                )}
               </h2>
               <p className="mt-1 text-muted-foreground text-xs truncate">
                 {isNote(post) ? "Note" : "Article"} · {post.slug}
@@ -501,17 +499,20 @@ function PostsList({
   const allSelected =
     posts.length > 0 && posts.every((post) => selectedIds.has(post.id));
   const desktopGridColumns = batchMode
-    ? "grid-cols-[44px_minmax(0,1fr)_130px_90px_160px_56px]"
-    : "grid-cols-[minmax(0,1fr)_130px_90px_160px_56px]";
+    ? "grid-cols-[44px_minmax(0,1fr)_130px_90px_180px_68px]"
+    : "grid-cols-[minmax(0,1fr)_130px_90px_180px_68px]";
 
   return (
     <>
       <div className={cn(dashboardStyles.listSurface, "hidden xl:block")}>
         <div
-          className={cn("grid", desktopGridColumns, dashboardStyles.listHeader)}
+          className={cn(
+            "grid border-border border-b font-medium text-muted-foreground text-xs",
+            desktopGridColumns,
+          )}
         >
           {batchMode && (
-            <div>
+            <div className="flex justify-center items-center self-stretch">
               <Checkbox
                 checked={allSelected}
                 onCheckedChange={onTogglePage}
@@ -519,23 +520,20 @@ function PostsList({
               />
             </div>
           )}
-          <div>Title</div>
-          <div>Status</div>
-          <div>Views</div>
-          <div>Updated at</div>
-          <div className="text-right">Actions</div>
+          <div className="py-3 pr-3 pl-34">Title</div>
+          <div className="p-3">Status</div>
+          <div className="p-3">Views</div>
+          <div className="p-3">Updated at</div>
+          <div className="p-3 text-center">Actions</div>
         </div>
         <div className={dashboardStyles.listRows}>
           {posts.map((post) => (
             <div
               key={post.id}
-              className={cn(
-                "items-center grid px-3 py-3 min-w-0",
-                desktopGridColumns,
-              )}
+              className={cn("items-center grid min-w-0", desktopGridColumns)}
             >
               {batchMode && (
-                <div>
+                <div className="flex justify-center items-center self-stretch">
                   <Checkbox
                     checked={selectedIds.has(post.id)}
                     onCheckedChange={() => onTogglePost(post.id)}
@@ -543,7 +541,7 @@ function PostsList({
                   />
                 </div>
               )}
-              <div className="flex items-center gap-3 pr-4 min-w-0">
+              <div className="flex items-center gap-3 p-3 pr-4 min-w-0">
                 <PostThumbnail
                   post={post}
                   className="rounded-xl w-28 h-16 shrink-0"
@@ -551,7 +549,16 @@ function PostsList({
                 />
                 <div className="min-w-0">
                   <h2 className="font-sans font-semibold text-sm line-clamp-2 leading-snug">
-                    {post.title}
+                    {batchMode ? (
+                      post.title
+                    ) : (
+                      <Link
+                        href={`/dashboard/posts/${post.id}/edit`}
+                        className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring hover:text-link"
+                      >
+                        {post.title}
+                      </Link>
+                    )}
                   </h2>
                   <p className="mt-1 text-muted-foreground text-xs truncate">
                     {isNote(post) ? "Note" : "Article"} · {post.slug}
@@ -561,16 +568,30 @@ function PostsList({
                   </div>
                 </div>
               </div>
-              <div>
+              <div className="p-3">
                 <StatusBadge post={post} />
               </div>
-              <div className="text-muted-foreground text-sm">
+              <div className="p-3 text-muted-foreground text-sm">
                 {getPostViews(post).toLocaleString("en-US")}
               </div>
-              <div className="text-muted-foreground text-sm">
-                {formatDateTime(post.updatedAt)}
+              <div className="p-3 text-muted-foreground text-sm">
+                <time
+                  dateTime={post.updatedAt}
+                  className="flex flex-col gap-1 whitespace-nowrap"
+                >
+                  <span>
+                    {new Intl.DateTimeFormat("en-US", {
+                      dateStyle: "medium",
+                    }).format(new Date(post.updatedAt))}
+                  </span>
+                  <span className="text-xs">
+                    {new Intl.DateTimeFormat("en-US", {
+                      timeStyle: "short",
+                    }).format(new Date(post.updatedAt))}
+                  </span>
+                </time>
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-center p-3">
                 <PostActions post={post} />
               </div>
             </div>
@@ -671,6 +692,9 @@ function PostsList({
 
 function BatchActionsBar({
   selectedCount,
+  selectedTitles,
+  outsideViewCount,
+  onTogglePage,
   isPending,
   onPublish,
   onMoveToDraft,
@@ -678,6 +702,9 @@ function BatchActionsBar({
   onClear,
 }: {
   selectedCount: number;
+  selectedTitles: string[];
+  outsideViewCount: number;
+  onTogglePage: () => void;
   isPending: boolean;
   onPublish: () => void;
   onMoveToDraft: () => void;
@@ -691,10 +718,22 @@ function BatchActionsBar({
           {selectedCount} {selectedCount === 1 ? "post" : "posts"} selected
         </p>
         <p className="text-muted-foreground text-xs">
-          Apply publishing changes or remove selected posts.
+          {outsideViewCount > 0
+            ? `${outsideViewCount} selected outside this page. `
+            : ""}
+          Selection includes chosen pages and filters.
         </p>
       </div>
       <div className="sm:flex sm:flex-wrap sm:justify-end gap-2 grid grid-cols-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onTogglePage}
+          disabled={isPending}
+        >
+          Toggle page selection
+        </Button>
         <Button
           type="button"
           size="sm"
@@ -736,6 +775,13 @@ function BatchActionsBar({
                 undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <ul className="space-y-1 max-h-48 overflow-y-auto text-sm">
+              {selectedTitles.map((title, index) => (
+                <li key={`${index}-${title}`} className="wrap-anywhere">
+                  {title}
+                </li>
+              ))}
+            </ul>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
               <AlertDialogAction
@@ -755,7 +801,7 @@ function BatchActionsBar({
           disabled={isPending}
           onClick={onClear}
         >
-          Clear
+          Cancel selection
         </Button>
       </div>
     </div>
@@ -795,22 +841,30 @@ function PostsPagination({
       >
         <CaretLeftIcon />
       </Button>
-      {Array.from({ length: pageCount }).map((_, index) => {
-        const pageNumber = index + 1;
-
-        return (
-          <Button
-            key={pageNumber}
-            type="button"
-            size="icon"
-            variant={pageNumber === page ? "default" : "outline"}
-            onClick={() => onPageChange(pageNumber)}
-            aria-current={pageNumber === page ? "page" : undefined}
-          >
-            {pageNumber}
-          </Button>
-        );
-      })}
+      <span className="md:hidden px-2 text-sm" aria-live="polite">
+        Page {page} of {pageCount}
+      </span>
+      <div className="hidden md:flex items-center gap-1">
+        {getPageItems(page, pageCount).map((value, index) =>
+          value === "ellipsis" ? (
+            <span key={`gap-${index}`} className="px-1" aria-hidden>
+              …
+            </span>
+          ) : (
+            <Button
+              key={value}
+              type="button"
+              size="icon"
+              variant={value === page ? "default" : "outline"}
+              onClick={() => onPageChange(value)}
+              aria-label={`Page ${value}`}
+              aria-current={value === page ? "page" : undefined}
+            >
+              {value}
+            </Button>
+          ),
+        )}
+      </div>
       <Button
         type="button"
         size="icon"
@@ -873,7 +927,14 @@ function ItemsPerPageDropdown({
       )}
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={<Button type="button" variant="outline" size="sm" />}
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label="Items per page"
+            />
+          }
         >
           {value}
           <CaretDownIcon className="size-3.5" />
@@ -901,6 +962,7 @@ function ItemsPerPageDropdown({
 
 export function PostsManager({ posts }: PostsManagerProps) {
   const router = useRouter();
+  const now = usePublicationClock(posts.map((post) => post.publishedAt));
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useDashboardFilter<StatusFilter>(
@@ -944,7 +1006,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
       scheduled: posts.filter(isScheduled).length,
       totalViews: posts.reduce((sum, post) => sum + getPostViews(post), 0),
     };
-  }, [posts]);
+  }, [posts, now]);
 
   const filteredPosts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -1013,7 +1075,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
       });
-  }, [posts, query, selectedTags, sortMode, status]);
+  }, [posts, query, selectedTags, sortMode, status, now]);
 
   const {
     items: paginatedPosts,
@@ -1054,14 +1116,6 @@ export function PostsManager({ posts }: PostsManagerProps) {
 
   const toggleTag = (tag: string) => {
     setSelectedTags((currentTags) =>
-      currentTags.includes(tag)
-        ? currentTags.filter((item) => item !== tag)
-        : [...currentTags, tag],
-    );
-  };
-
-  const toggleDraftTag = (tag: string) => {
-    setDraftTags((currentTags) =>
       currentTags.includes(tag)
         ? currentTags.filter((item) => item !== tag)
         : [...currentTags, tag],
@@ -1188,19 +1242,27 @@ export function PostsManager({ posts }: PostsManagerProps) {
     }
 
     startBatchTransition(async () => {
-      const result = await action(postIds);
+      try {
+        const result = await action(postIds);
 
-      if (result.success) {
+        if (result.success) {
+          toast.add({
+            title: result.message ?? fallbackMessage,
+            type: "success",
+          });
+          clearSelection();
+          router.refresh();
+          return;
+        }
+
+        toast.add({ title: result.error, type: "error" });
+      } catch {
         toast.add({
-          title: result.message ?? fallbackMessage,
-          type: "success",
+          title:
+            "Could not complete the batch action. Selection retained; try again.",
+          type: "error",
         });
-        clearSelection();
-        router.refresh();
-        return;
       }
-
-      toast.add({ title: result.error, type: "error" });
     });
   };
 
@@ -1209,6 +1271,12 @@ export function PostsManager({ posts }: PostsManagerProps) {
   };
 
   const moveSelectedPostsToDraft = () => {
+    if (
+      !window.confirm(
+        "Move selected posts to draft? Public posts will be hidden and schedules cancelled.",
+      )
+    )
+      return;
     runBatchAction(actionMovePostsToDraft, "Selected posts moved to draft.");
   };
 
@@ -1216,6 +1284,26 @@ export function PostsManager({ posts }: PostsManagerProps) {
     runBatchAction(actionDeletePosts, "Selected posts deleted.");
   };
 
+  const activeFilterCount =
+    Number(status !== "all") +
+    selectedTags.length +
+    Number(sortMode !== "newest");
+  const hasRefinements = activeFilterCount > 0 || Boolean(query.trim());
+  const selectedPosts = posts.filter((post) => selectedIds.has(post.id));
+  const outsideViewCount = selectedPosts.filter(
+    (post) => !paginatedPosts.some((row) => row.id === post.id),
+  ).length;
+  const clearFilters = () => {
+    resetFilters();
+    setQuery("");
+  };
+  useEffect(() => {
+    const ids = new Set(posts.map((post) => post.id));
+    setSelectedIds((previous) => {
+      const next = new Set([...previous].filter((id) => ids.has(id)));
+      return next.size === previous.size ? previous : next;
+    });
+  }, [posts]);
   const statusDisplay =
     statusOptions.find((option) => option.value === status)?.label ??
     "All Status";
@@ -1231,7 +1319,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
       showSwipeHandle
     >
       <div className={dashboardStyles.page}>
-        <div className="flex justify-between items-start gap-4">
+        <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-4">
           <div className="min-w-0">
             <h1 className="font-heading font-bold text-3xl">Posts</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
@@ -1260,13 +1348,77 @@ export function PostsManager({ posts }: PostsManagerProps) {
         />
 
         <Card className={dashboardStyles.toolbarCard}>
-          <CardContent className={dashboardStyles.toolbarContent}>
-            <div className="md:hidden gap-3 grid">
-              <div className="flex flex-wrap gap-2 min-w-0">
-                <div className="relative min-w-0 basis-full">
-                  <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
+          <CardContent
+            className={cn(
+              dashboardStyles.toolbarContent,
+              "[&_input]:min-h-11 [&_button]:min-h-11",
+            )}
+          >
+            <div className={cn("md:hidden", toolbarStyles.mobileToolbar)}>
+              <div className={toolbarStyles.mobileRow}>
+                <div className={toolbarStyles.mobileSearch}>
+                  <MagnifyingGlassIcon
+                    className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none"
+                    aria-hidden
+                  />
                   <Input
                     ref={mobileSearchInputRef}
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search..."
+                    className="pr-3 pl-9"
+                    aria-label="Search posts"
+                  />
+                </div>
+                <DrawerTrigger
+                  render={
+                    <Button
+                      ref={filtersTriggerRef}
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="relative p-0 size-11"
+                      aria-label={
+                        activeFilterCount
+                          ? `Filters (${activeFilterCount})`
+                          : "Filters"
+                      }
+                      title="Filters"
+                    />
+                  }
+                >
+                  <FunnelSimpleIcon aria-hidden />
+                  {activeFilterCount > 0 && (
+                    <span
+                      className="-top-1 -right-1 absolute flex justify-center items-center bg-primary px-1 rounded-full min-w-4 h-4 font-semibold text-[10px] text-primary-foreground pointer-events-none"
+                      aria-hidden
+                    >
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </DrawerTrigger>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={batchMode ? "secondary" : "outline"}
+                  className="p-0 size-11"
+                  aria-label={batchMode ? "Exit selection mode" : "Select"}
+                  aria-pressed={batchMode}
+                  title="Select posts"
+                  onClick={toggleBatchMode}
+                >
+                  <CheckSquareIcon aria-hidden />
+                </Button>
+              </div>
+            </div>
+
+            <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(180px,1fr)_130px_minmax(150px,220px)_160px_auto] min-w-0">
+              <div className="flex flex-col gap-1.5 md:col-span-2 xl:col-span-1 min-w-0">
+                <span className="text-muted-foreground text-xs">Search</span>
+                <div className="relative min-w-0">
+                  <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
+                  <Input
+                    ref={desktopSearchInputRef}
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Search posts..."
@@ -1277,31 +1429,8 @@ export function PostsManager({ posts }: PostsManagerProps) {
                     ⌘ K
                   </Kbd>
                 </div>
-                <DrawerTrigger
-                  render={
-                    <Button
-                      ref={filtersTriggerRef}
-                      type="button"
-                      variant="outline"
-                    />
-                  }
-                >
-                  <FunnelSimpleIcon data-icon="inline-start" />
-                  Filters
-                </DrawerTrigger>
-                <Button
-                  type="button"
-                  variant={batchMode ? "secondary" : "outline"}
-                  className="shrink-0"
-                  onClick={toggleBatchMode}
-                >
-                  {batchMode ? "Cancel" : "Select"}
-                </Button>
               </div>
-            </div>
-
-            <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_minmax(160px,220px)_160px_auto] min-w-0">
-              <div className="md:col-span-full">
+              <div className="min-w-0">
                 <FilterDropdown
                   label="Status"
                   value={status}
@@ -1309,21 +1438,6 @@ export function PostsManager({ posts }: PostsManagerProps) {
                   options={statusOptions}
                   onValueChange={setStatus}
                 />
-              </div>
-
-              <div className="relative md:col-span-2 xl:col-span-1 min-w-0">
-                <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
-                <Input
-                  ref={desktopSearchInputRef}
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search posts..."
-                  className="pr-14 pl-9"
-                  aria-label="Search posts"
-                />
-                <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
-                  ⌘ K
-                </Kbd>
               </div>
 
               <TagDropdown
@@ -1385,9 +1499,31 @@ export function PostsManager({ posts }: PostsManagerProps) {
           </CardContent>
         </Card>
 
+        <div
+          className="flex flex-wrap items-center gap-3 text-muted-foreground text-sm"
+          role="status"
+        >
+          <span>
+            {filteredPosts.length} of {posts.length} posts
+          </span>
+          {hasRefinements && (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="px-0"
+              onClick={clearFilters}
+            >
+              Clear filters and search
+            </Button>
+          )}
+        </div>
         {batchMode && (
           <BatchActionsBar
             selectedCount={selectedIds.size}
+            selectedTitles={selectedPosts.map((post) => post.title)}
+            outsideViewCount={outsideViewCount}
+            onTogglePage={togglePageSelection}
             isPending={isBatchPending}
             onPublish={publishSelectedPosts}
             onMoveToDraft={moveSelectedPostsToDraft}
@@ -1400,11 +1536,20 @@ export function PostsManager({ posts }: PostsManagerProps) {
           <div className={dashboardStyles.emptyState}>
             <ArticleIcon className="size-12 text-muted-foreground/50" />
             <div>
-              <p className="font-medium">No posts found</p>
+              <p className="font-medium">
+                {posts.length ? "No posts match these filters" : "No posts yet"}
+              </p>
               <p className="mt-1 text-muted-foreground text-sm">
-                Adjust the filters or create a new article draft.
+                {posts.length
+                  ? "Clear filters or try another search."
+                  : "Create an article or a note when you are ready."}
               </p>
             </div>
+            {posts.length > 0 && (
+              <Button type="button" variant="outline" onClick={clearFilters}>
+                Clear filters and search
+              </Button>
+            )}
             <Button
               role="link"
               render={<Link href="/dashboard/posts/new" />}
@@ -1469,33 +1614,11 @@ export function PostsManager({ posts }: PostsManagerProps) {
               options={statusOptions}
               onValueChange={setDraftStatus}
             />
-            <div>
-              <p className="mb-2 font-medium text-muted-foreground text-xs">
-                Tags
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={draftTags.length === 0 ? "default" : "outline"}
-                  onClick={() => setDraftTags([])}
-                >
-                  All Tags
-                </Button>
-                {tags.map((tag) => (
-                  <Button
-                    key={tag}
-                    type="button"
-                    size="sm"
-                    variant={draftTags.includes(tag) ? "default" : "outline"}
-                    onClick={() => toggleDraftTag(tag)}
-                  >
-                    <TagIcon data-icon="inline-start" />
-                    {tag}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            <TagDropdown
+              tags={tags}
+              selectedTags={draftTags}
+              onValueChange={setDraftTags}
+            />
             <FilterDropdown
               label="Sort by"
               value={draftSort}
@@ -1509,7 +1632,15 @@ export function PostsManager({ posts }: PostsManagerProps) {
           </div>
           <DrawerFooter>
             <div className="gap-2 grid grid-cols-2">
-              <Button type="button" variant="outline" onClick={resetFilters}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setDraftStatus("all");
+                  setDraftTags([]);
+                  setDraftSort("newest");
+                }}
+              >
                 Reset filters
               </Button>
               <Button type="button" onClick={applyFilters}>

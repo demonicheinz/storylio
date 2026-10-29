@@ -85,6 +85,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { toast } from "@/components/ui/toast";
+import toolbarStyles from "@/features/dashboard/shared/components/collection-toolbar.module.css";
 import {
   DashboardMultiFilter,
   DashboardSelect,
@@ -109,7 +110,6 @@ import {
   actionReorderProjects,
 } from "../actions";
 import { ProjectDeleteButton } from "./project-delete-button";
-import toolbarStyles from "./projects-toolbar.module.css";
 
 export type DashboardProject = {
   id: string;

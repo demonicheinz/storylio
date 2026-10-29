@@ -17,12 +17,14 @@ export function MultiSelectTrigger({
   fieldLabel = "Stack",
   emptyLabel = "All technologies",
   clearLabel = "Reset stack",
+  selectionNouns = ["technology", "technologies"],
 }: {
   label: string;
   onClear?: () => void;
   fieldLabel?: string;
   emptyLabel?: string;
   clearLabel?: string;
+  selectionNouns?: readonly [string, string];
 }) {
   const context = useMultiSelectContext("MultiSelectTrigger");
   const count = context.values.length;
@@ -59,7 +61,7 @@ export function MultiSelectTrigger({
             ? emptyLabel
             : context.selectionMode === "single"
               ? context.values[0]
-              : `${count} ${count === 1 ? "technology" : "technologies"}`}
+              : `${count} ${selectionNouns[count === 1 ? 0 : 1]}`}
         </span>
         {count === 0 && (
           <CaretUpDownIcon size={16} aria-hidden="true" className="shrink-0" />

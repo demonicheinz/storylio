@@ -167,6 +167,7 @@ export function DashboardMultiFilter({
         <MultiSelectTrigger
           label={`Filter ${label.toLowerCase()}`}
           fieldLabel={labelPlacement === "above" ? "" : label}
+          selectionNouns={label === "Tags" ? ["tag", "tags"] : undefined}
           emptyLabel={emptyLabel}
           clearLabel={`Reset ${label.toLowerCase()}`}
           onClear={() => onValueChange([])}

@@ -168,12 +168,14 @@ describe("editor autosave publication regression", () => {
           status: "draft",
           content: "Edited while published.",
           tags: ["updated"],
+          publicationIntent: "schedule",
           scheduledPublishDate: "2030-01-01T00:00:00.000Z",
         },
         created.id,
       ),
     );
     expect(saved.status).toBe("published");
+    expect(saved.publishedAt).toBe(publishedAt);
     const row = await fixture.db.query.post.findFirst({
       where: eq(schema.post.id, created.id),
       with: { tags: { with: { tag: true } } },
@@ -182,6 +184,46 @@ describe("editor autosave publication regression", () => {
     expect(row?.publishedAt?.toISOString()).toBe(publishedAt);
     expect(row?.content).toBe("Edited while published.");
     expect(row?.tags.map(({ tag }) => tag.name)).toEqual(["updated"]);
+  });
+
+  it("returns the actual scheduled or draft date despite autosave publication attempts", async () => {
+    const publishedAt = "2099-01-01T00:00:00.000Z";
+    const created = data(
+      await actionCreatePost({ ...input, scheduledPublishDate: publishedAt }),
+    );
+    expect(
+      data(
+        await actionAutosavePost(
+          { ...input, publicationIntent: "now" },
+          created.id,
+        ),
+      ),
+    ).toMatchObject({ status: "published", publishedAt });
+    expect(
+      (
+        await fixture.db.query.post.findFirst({
+          where: eq(schema.post.id, created.id),
+        })
+      )?.publishedAt?.toISOString(),
+    ).toBe(publishedAt);
+    data(await actionSavePostDraft(input, created.id));
+    expect(
+      data(
+        await actionAutosavePost(
+          {
+            ...input,
+            publicationIntent: "schedule",
+            scheduledPublishDate: publishedAt,
+          },
+          created.id,
+        ),
+      ),
+    ).toMatchObject({ status: "draft", publishedAt: null });
+    expect(
+      await fixture.db.query.post.findFirst({
+        where: eq(schema.post.id, created.id),
+      }),
+    ).toMatchObject({ status: "DRAFT", publishedAt: null });
   });
 
   it("saves published project edits directly without moving them to draft", async () => {

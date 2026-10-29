@@ -20,10 +20,11 @@ import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-type PostActionData = {
+export type PostActionData = {
   id: string;
   slug: string;
   status: "draft" | "published";
+  publishedAt: string | null;
 };
 
 const postIdsSchema = z.array(z.string().min(1)).min(1).max(100);
@@ -70,6 +71,10 @@ function toPublishedAt(values: PostActionValues, current?: Date | null) {
     return null;
   }
 
+  if (values.publicationIntent === "now") {
+    return new Date();
+  }
+
   const scheduledPublishDate = parseScheduledPublishDate(
     values.scheduledPublishDate,
   );
@@ -79,6 +84,16 @@ function toPublishedAt(values: PostActionValues, current?: Date | null) {
   }
 
   return current ?? new Date();
+}
+
+function postSaveMessage(post: {
+  status: PostStatus;
+  publishedAt: Date | null;
+}) {
+  if (post.status !== PostStatus.PUBLISHED) return "Draft saved.";
+  return post.publishedAt && post.publishedAt.getTime() > Date.now()
+    ? "Post scheduled."
+    : "Post published.";
 }
 
 function revalidatePostPaths(slug: string, oldSlug?: string) {
@@ -193,6 +208,7 @@ export async function actionCreatePost(
           id: postTable.id,
           slug: postTable.slug,
           status: postTable.status,
+          publishedAt: postTable.publishedAt,
         });
       if (!savedPost) throw new Error("Post not found.");
       await replacePostTags(tx, savedPost.id, parsed.data.tags);
@@ -206,8 +222,9 @@ export async function actionCreatePost(
         id: post.id,
         slug: post.slug,
         status: post.status === PostStatus.PUBLISHED ? "published" : "draft",
+        publishedAt: post.publishedAt?.toISOString() ?? null,
       },
-      post.status === PostStatus.PUBLISHED ? "Post published." : "Draft saved.",
+      postSaveMessage(post),
     );
   } catch (error) {
     console.error("Create post failed:", error);
@@ -310,6 +327,7 @@ async function updatePost(
           id: postTable.id,
           slug: postTable.slug,
           status: postTable.status,
+          publishedAt: postTable.publishedAt,
         });
       if (!savedPost) throw new Error("Post not found.");
       await replacePostTags(tx, savedPost.id, parsed.data.tags);
@@ -323,8 +341,9 @@ async function updatePost(
         id: post.id,
         slug: post.slug,
         status: post.status === PostStatus.PUBLISHED ? "published" : "draft",
+        publishedAt: post.publishedAt?.toISOString() ?? null,
       },
-      post.status === PostStatus.PUBLISHED ? "Post published." : "Draft saved.",
+      postSaveMessage(post),
     );
   } catch (error) {
     console.error("Update post failed:", error);
@@ -385,33 +404,61 @@ export async function actionPublishPosts(
   }
 
   try {
-    const posts = await db.query.post.findMany({
-      where: inArray(postTable.id, parsedIds),
-      columns: { slug: true },
+    const uniqueIds = [...new Set(parsedIds)];
+    let slugs: string[] = [];
+    const outcome = await db.transaction(async (tx) => {
+      const rows = await tx
+        .select()
+        .from(postTable)
+        .where(inArray(postTable.id, uniqueIds))
+        .orderBy(postTable.id)
+        .for("update");
+
+      if (rows.length !== uniqueIds.length) {
+        return actionError(
+          "The selection changed. Refresh and select the posts again. Nothing was published.",
+        );
+      }
+
+      for (const row of rows.filter(
+        (post) => post.status === PostStatus.DRAFT,
+      )) {
+        const parsed = postActionSchema.safeParse({
+          ...row,
+          excerpt: row.excerpt ?? undefined,
+          coverImage: row.coverImage ?? undefined,
+          status: "published",
+        });
+        const problem = !parsed.success
+          ? parsed.error.issues[0]?.message
+          : await getMdxSafetyError(parsed.data.content);
+        if (problem) {
+          return actionError(
+            `Cannot publish "${row.title}": ${problem} No posts were published.`,
+          );
+        }
+      }
+
+      const changed = await tx
+        .update(postTable)
+        .set({ status: PostStatus.PUBLISHED, publishedAt: new Date() })
+        .where(
+          and(
+            inArray(postTable.id, uniqueIds),
+            eq(postTable.status, PostStatus.DRAFT),
+          ),
+        )
+        .returning({ id: postTable.id });
+      slugs = rows.map((post) => post.slug);
+      return actionSuccess(
+        { count: changed.length },
+        changed.length === 1
+          ? "Post published."
+          : `${changed.length} posts published.`,
+      );
     });
-
-    const result = await db
-      .update(postTable)
-      .set({
-        status: PostStatus.PUBLISHED,
-        publishedAt: new Date(),
-      })
-      .where(
-        and(
-          inArray(postTable.id, parsedIds),
-          eq(postTable.status, PostStatus.DRAFT),
-        ),
-      )
-      .returning({ id: postTable.id });
-
-    revalidatePostSlugs(posts.map((post) => post.slug));
-
-    return actionSuccess(
-      { count: result.length },
-      result.length === 1
-        ? "Post published."
-        : `${result.length} posts published.`,
-    );
+    if (outcome.success) revalidatePostSlugs(slugs);
+    return outcome;
   } catch (error) {
     console.error("Publish posts failed:", error);
     return actionError("Failed to publish posts.");

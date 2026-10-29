@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowLeftIcon,
   CaretDownIcon,
+  ClockIcon,
   EyeIcon,
   FloppyDiskIcon,
   PaperPlaneTiltIcon,
@@ -38,16 +39,21 @@ import {
   actionPublishPost,
   actionSavePostDraft,
 } from "@/features/dashboard/posts/actions";
+import { getPostPublicationState } from "@/features/dashboard/posts/publication-state";
+import { reconcilePostSave } from "@/features/dashboard/posts/reconcile-save";
 import {
   type PostFormInput,
   type PostFormValues,
   postFormSchema,
 } from "@/features/dashboard/posts/validations";
 import { DateTimePicker } from "@/features/dashboard/shared/components/date-time-picker";
+import { DashboardSelect } from "@/features/dashboard/shared/components/filter-controls";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { TagsInput } from "@/features/dashboard/shared/components/tag-input";
+import { useUnsavedChangesGuard } from "@/features/dashboard/shared/hooks/use-unsaved-changes-guard";
 import { createSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
+import { usePublicationClock } from "./use-publication-clock";
 
 const MdxEditor = dynamic(
   () =>
@@ -96,6 +102,7 @@ const emptyDefaults: PostFormValues = {
   tags: "",
   status: "draft",
   scheduledPublishDate: undefined,
+  publicationIntent: "keep",
   content: "",
 };
 
@@ -114,6 +121,7 @@ function getDefaults(post?: PostEditorPost): PostFormValues {
     tags: post.tags.join(", "),
     status: post.status,
     scheduledPublishDate: post.publishedAt ?? undefined,
+    publicationIntent: "keep",
     content: post.content,
   };
 }
@@ -121,29 +129,44 @@ function getDefaults(post?: PostEditorPost): PostFormValues {
 function PostStatusBadge({
   status,
   compact = false,
+  publishedAt,
+  now,
 }: {
   status: PostFormValues["status"];
+  publishedAt?: string | null;
+  now: number;
   compact?: boolean;
 }) {
-  const isPublished = status === "published";
+  const state = getPostPublicationState(status, publishedAt, now);
+  const isPublished = state === "published";
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-xs",
+        "inline-flex items-center gap-1.5 bg-surface px-2 border border-border rounded-md h-6 font-medium text-xs",
         isPublished
-          ? "bg-success/10 text-success"
-          : "bg-muted text-muted-foreground",
-        compact && "px-2 py-0.5",
+          ? "text-success"
+          : state === "scheduled"
+            ? "text-brand-soft"
+            : "text-muted-foreground",
+        compact && "px-2",
       )}
     >
-      <span
-        className={cn(
-          "rounded-full size-1.5",
-          isPublished ? "bg-success" : "bg-muted-foreground",
-        )}
-      />
-      {isPublished ? "Published" : "Draft"}
+      {state === "scheduled" ? (
+        <ClockIcon className="size-3" aria-hidden />
+      ) : (
+        <span
+          className={cn(
+            "rounded-full size-1.5",
+            isPublished ? "bg-success" : "bg-muted-foreground",
+          )}
+        />
+      )}
+      {state === "scheduled"
+        ? "Scheduled"
+        : isPublished
+          ? "Published"
+          : "Draft"}
     </span>
   );
 }
@@ -200,7 +223,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
 
   const {
     control,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty, dirtyFields },
     getValues,
     handleSubmit,
     register,
@@ -218,25 +241,56 @@ export function PostEditor({ mode, post }: PostEditorProps) {
     defaultValues: defaults,
   });
 
+  useUnsavedChangesGuard(isDirty, "this post");
+  const [savedSlug, setSavedSlug] = useState(post?.slug ?? "");
+  const [savedPublication, setSavedPublication] = useState<string | null>(
+    post?.publishedAt ?? null,
+  );
+  const schedule = watch("scheduledPublishDate");
+  const publicationIntent = watch("publicationIntent") ?? "keep";
+  const tagsValue = watch("tags") ?? "";
+  const now = usePublicationClock([savedPublication, schedule]);
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const note = getTagArray(tagsValue).includes("notes");
   const title = watch("title");
   const slug = watch("slug");
   const coverImage = watch("coverImage");
   const status = watch("status");
   const slugRegistration = register("slug");
   const isPending = pendingAction !== null;
-  const primaryStatus =
-    status === "published" || mode === "create" ? "published" : "draft";
+  const primaryStatus = status === "published" ? "published" : "draft";
   const primaryLabel =
     status === "published"
-      ? "Save changes"
-      : mode === "create"
-        ? "Publish"
-        : "Save draft";
+      ? publicationIntent === "now"
+        ? "Publish now"
+        : publicationIntent === "schedule"
+          ? "Save schedule"
+          : "Save changes"
+      : "Save draft";
+  const futureSchedule = Boolean(
+    schedule && new Date(schedule).getTime() > now,
+  );
+  const persistedState = getPostPublicationState(status, savedPublication, now);
+  useEffect(() => {
+    if (!post?.id || post.status !== "draft") return;
+    try {
+      const raw = sessionStorage.getItem(`storylio:post-schedule:${post.id}`);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (
+        typeof draft.date === "string" &&
+        !Number.isNaN(Date.parse(draft.date))
+      ) {
+        setValue("scheduledPublishDate", draft.date, { shouldDirty: true });
+        setValue("publicationIntent", "schedule", { shouldDirty: true });
+      }
+    } catch {}
+  }, [post?.id, post?.status, setValue]);
 
   useEffect(() => {
     if (!slugEdited) {
       setValue("slug", createSlug(title), {
-        shouldDirty: true,
+        shouldDirty: title.trim().length > 0,
         shouldValidate: title.trim().length > 0,
       });
     }
@@ -258,36 +312,58 @@ export function PostEditor({ mode, post }: PostEditorProps) {
     window.dispatchEvent(new Event("dashboard-breadcrumb-labels-changed"));
   }, [post?.id, post?.slug, slug, title]);
 
-  const applyFieldErrors = (fieldErrors?: Record<string, string[]>) => {
-    if (!fieldErrors) {
-      return;
-    }
-
-    for (const [field, messages] of Object.entries(fieldErrors)) {
-      if (messages[0]) {
-        setError(field as keyof PostFormValues, {
-          message: messages[0],
-          type: "server",
-        });
+  const applyFieldErrors = useCallback(
+    (fieldErrors?: Record<string, string[]>) => {
+      if (!fieldErrors) {
+        return;
       }
-    }
-  };
+
+      for (const [field, messages] of Object.entries(fieldErrors)) {
+        if (messages[0]) {
+          setError(field as keyof PostFormValues, {
+            message: messages[0],
+            type: "server",
+          });
+        }
+      }
+    },
+    [setError],
+  );
 
   // Advance the saved baseline without replacing edits made during the request.
   const acceptSaved = useCallback(
-    (snapshot: PostFormInput, savedStatus: "draft" | "published") => {
-      const current = structuredClone(getValues());
-      reset({ ...snapshot, status: savedStatus });
-      reset({ ...current, status: savedStatus }, { keepDefaultValues: true });
+    (
+      snapshot: PostFormInput,
+      savedStatus: "draft" | "published",
+      publishedAt: string | null,
+      automatic = false,
+    ) => {
+      const reconciled = reconcilePostSave(
+        snapshot,
+        getValues(),
+        savedStatus,
+        publishedAt,
+        automatic,
+      );
+      reset(reconciled.baseline);
+      reset(reconciled.values, { keepDefaultValues: true });
+      setSavedPublication(publishedAt);
     },
     [getValues, reset],
   );
 
+  const contentDirty = Object.keys(dirtyFields).some(
+    (field) =>
+      field !== "scheduledPublishDate" &&
+      field !== "publicationIntent" &&
+      field !== "status",
+  );
   const autosave = useCallback(() => {
     if (
       mode !== "edit" ||
       !post?.id ||
       !isDirty ||
+      !contentDirty ||
       manualSavePending.current ||
       autosaveInFlight.current
     )
@@ -296,6 +372,11 @@ export function PostEditor({ mode, post }: PostEditorProps) {
     const parsed = postFormSchema.safeParse(snapshot);
     if (!parsed.success) {
       setAutosaveStatus("failed");
+      for (const issue of parsed.error.issues)
+        setError(issue.path[0] as keyof PostFormValues, {
+          type: "validation",
+          message: issue.message,
+        });
       return;
     }
 
@@ -304,9 +385,16 @@ export function PostEditor({ mode, post }: PostEditorProps) {
       try {
         const result = await actionAutosavePost(parsed.data, post.id);
         if (result.success && result.data) {
-          acceptSaved(snapshot, result.data.status);
+          acceptSaved(
+            snapshot,
+            result.data.status,
+            result.data.publishedAt,
+            true,
+          );
+          setSavedSlug(result.data.slug);
           setAutosaveStatus("saved");
         } else {
+          if (!result.success) applyFieldErrors(result.fieldErrors);
           setAutosaveStatus("failed");
         }
       } catch {
@@ -316,7 +404,16 @@ export function PostEditor({ mode, post }: PostEditorProps) {
       }
     })();
     autosaveInFlight.current = request;
-  }, [acceptSaved, getValues, isDirty, mode, post?.id]);
+  }, [
+    acceptSaved,
+    applyFieldErrors,
+    contentDirty,
+    getValues,
+    isDirty,
+    mode,
+    post?.id,
+    setError,
+  ]);
 
   useEffect(() => {
     if (mode !== "edit") return;
@@ -341,13 +438,25 @@ export function PostEditor({ mode, post }: PostEditorProps) {
             ? await actionPublishPost(payload, post?.id)
             : await actionSavePostDraft(payload, post?.id);
         if (result.success && result.data) {
-          acceptSaved(snapshot, result.data.status);
+          acceptSaved(snapshot, result.data.status, result.data.publishedAt);
+          setSavedSlug(result.data.slug);
+          try {
+            const key = `storylio:post-schedule:${result.data.id}`;
+            if (
+              result.data.status === "draft" &&
+              snapshot.status === "draft" &&
+              snapshot.publicationIntent === "schedule" &&
+              snapshot.scheduledPublishDate
+            )
+              sessionStorage.setItem(
+                key,
+                JSON.stringify({ date: snapshot.scheduledPublishDate }),
+              );
+            else sessionStorage.removeItem(key);
+          } catch {}
           setAutosaveStatus("saved");
           toast.add({
-            title:
-              status === "published" && nextStatus === "published"
-                ? "Changes saved."
-                : (result.message ?? "Saved."),
+            title: result.message ?? "Saved.",
             type: "success",
           });
           if (mode === "create") {
@@ -385,12 +494,12 @@ export function PostEditor({ mode, post }: PostEditorProps) {
   };
 
   const handlePreview = () => {
-    if (!slug) {
-      toast.add({ title: "Add a slug before previewing.", type: "error" });
+    if (!savedSlug) {
+      toast.add({ title: "Save the draft before previewing.", type: "error" });
       return;
     }
 
-    window.open(`/preview/posts/${slug}`, "_blank", "noopener,noreferrer");
+    window.open(`/preview/posts/${savedSlug}`, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -401,7 +510,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
         void submitWithStatus(status)();
       }}
     >
-      <div className="top-14 z-20 sticky flex xl:flex-row flex-col xl:justify-between xl:items-center gap-4 bg-background py-4 border-border border-b min-w-0">
+      <div className="flex flex-col gap-4 min-w-0">
         <div className="flex flex-col gap-2 min-w-0">
           <Button
             role="link"
@@ -422,80 +531,313 @@ export function PostEditor({ mode, post }: PostEditorProps) {
             </p>
           </div>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2 min-w-0">
-          <div className="flex flex-wrap items-center gap-3 sm:mr-2 w-full sm:w-auto">
-            <PostStatusBadge status={status} />
-            <AutosaveStatusPill
-              status={isPending ? "saving" : autosaveStatus}
-              isDirty={isDirty}
-              isNew={mode === "create"}
-            />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handlePreview}
-            disabled={!slug || isPending}
-          >
-            <EyeIcon data-icon="inline-start" />
-            Preview
-          </Button>
-          {status === "draft" && (
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={isPending}
-              onClick={submitWithStatus(
-                mode === "create" ? "draft" : "published",
-              )}
-            >
-              {mode === "create" ? (
-                <FloppyDiskIcon data-icon="inline-start" />
-              ) : (
-                <PaperPlaneTiltIcon data-icon="inline-start" />
-              )}
-              {mode === "create" ? "Save draft" : "Publish"}
-            </Button>
-          )}
-          <Button
-            type="button"
-            onClick={submitWithStatus(primaryStatus)}
-            disabled={isPending}
-          >
-            {isPending ? (
-              <SpinnerIcon data-icon="inline-start" className="animate-spin" />
-            ) : (
-              <FloppyDiskIcon data-icon="inline-start" />
-            )}
-            {isPending ? "Saving…" : primaryLabel}
-          </Button>
-          {status === "published" && (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="outline"
-                    aria-label="Publishing options"
-                  />
-                }
-                disabled={isPending}
-              >
-                <CaretDownIcon />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={moveToDraft}>
-                  Move to draft…
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
       </div>
+      <div
+        className="top-14 z-20 sticky flex flex-wrap items-center gap-2 bg-background py-3 border-border border-y min-w-0"
+        aria-label="Post save actions"
+      >
+        <div className="flex flex-wrap items-center gap-3 sm:mr-2 w-full sm:w-auto">
+          <PostStatusBadge
+            status={status}
+            publishedAt={savedPublication}
+            now={now}
+          />
+          <AutosaveStatusPill
+            status={isPending ? "saving" : autosaveStatus}
+            isDirty={isDirty}
+            isNew={mode === "create"}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handlePreview}
+          disabled={!savedSlug || isPending}
+          aria-label="Preview saved version"
+        >
+          <EyeIcon data-icon="inline-start" />
+          Preview saved
+        </Button>
+        {status === "draft" && (
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={isPending}
+            onClick={submitWithStatus("published")}
+          >
+            <PaperPlaneTiltIcon data-icon="inline-start" />
+            {futureSchedule ? "Schedule" : "Publish"}
+          </Button>
+        )}
+        <Button
+          type="button"
+          onClick={submitWithStatus(primaryStatus)}
+          disabled={isPending}
+        >
+          {isPending ? (
+            <SpinnerIcon data-icon="inline-start" className="animate-spin" />
+          ) : (
+            <FloppyDiskIcon data-icon="inline-start" />
+          )}
+          {isPending ? "Saving…" : primaryLabel}
+        </Button>
+        {status === "published" && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="outline"
+                  aria-label="Publishing options"
+                />
+              }
+              disabled={isPending}
+            >
+              <CaretDownIcon />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={moveToDraft}>
+                Move to draft…
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+      <p className="text-muted-foreground text-xs" role="note">
+        {mode === "create"
+          ? "Save your first draft to enable preview."
+          : "Content changes autosave every 30 seconds."}{" "}
+        {persistedState === "published"
+          ? "Content edits update the live post."
+          : persistedState === "scheduled"
+            ? "This post is scheduled and stays private until its publication time."
+            : "Drafts stay private."}{" "}
+        Preview shows the saved version. Schedule changes require an explicit
+        Schedule or Save schedule action.
+      </p>
+      {publicationIntent !== "keep" && (
+        <p className="text-brand-soft text-sm" role="status">
+          {publicationIntent === "now"
+            ? "Pending: publish immediately. Save to confirm."
+            : schedule
+              ? `Pending schedule: ${new Intl.DateTimeFormat("en-US", { dateStyle: "full", timeStyle: "long", timeZone: zone }).format(new Date(schedule))}. This is not saved by autosave or Save draft.`
+              : "Choose a publication date."}
+        </p>
+      )}
 
-      <div className="gap-6 grid xl:grid-cols-[minmax(0,1fr)_360px] min-w-0">
-        <div className="flex flex-col gap-6 min-w-0">
+      <div className="items-start gap-6 grid xl:grid-cols-[minmax(0,1fr)_320px] min-w-0">
+        <section className="min-w-0" aria-label="Post identity">
+          <Card className="min-w-0">
+            <CardHeader>
+              <CardTitle>Details</CardTitle>
+              <CardDescription>
+                Public metadata for the blog listing and article header.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="gap-5 grid sm:grid-cols-2 min-w-0">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  aria-describedby={errors.title ? "title-help" : undefined}
+                  placeholder="Designing durable interfaces"
+                  aria-invalid={!!errors.title}
+                  disabled={isPending}
+                  {...register("title")}
+                />
+                {errors.title?.message && (
+                  <p
+                    id="title-help"
+                    role="alert"
+                    className="text-destructive text-sm"
+                  >
+                    {errors.title.message}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="slug">Slug</Label>
+                <Input
+                  id="slug"
+                  aria-describedby={errors.slug ? "slug-help" : undefined}
+                  placeholder="designing-durable-interfaces"
+                  aria-invalid={!!errors.slug}
+                  disabled={isPending}
+                  name={slugRegistration.name}
+                  onBlur={slugRegistration.onBlur}
+                  ref={slugRegistration.ref}
+                  value={slug}
+                  onChange={(event) => {
+                    setSlugEdited(true);
+                    slugRegistration.onChange(event);
+                  }}
+                />
+                {errors.slug?.message && (
+                  <p
+                    id="slug-help"
+                    role="alert"
+                    className="text-destructive text-sm"
+                  >
+                    {errors.slug.message}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="excerpt">Excerpt</Label>
+                <Textarea
+                  id="excerpt"
+                  aria-describedby="excerpt-help"
+                  placeholder="A short summary for cards and metadata."
+                  aria-invalid={!!errors.excerpt}
+                  disabled={isPending}
+                  className="min-h-24"
+                  {...register("excerpt")}
+                />
+                <p
+                  id="excerpt-help"
+                  className={cn(
+                    "text-muted-foreground text-sm",
+                    errors.excerpt && "text-destructive",
+                  )}
+                >
+                  {errors.excerpt?.message ?? "Maximum 280 characters."}
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <DashboardSelect
+                  label="Content type"
+                  value={note ? "note" : "article"}
+                  options={[
+                    { value: "article", label: "Article" },
+                    { value: "note", label: "Note" },
+                  ]}
+                  disabled={isPending}
+                  onValueChange={(kind) => {
+                    const tags = getTagArray(tagsValue).filter(
+                      (tag) => tag !== "notes",
+                    );
+                    if (kind === "note") tags.push("notes");
+                    setValue("tags", tags.join(", "), {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+                <p className="mt-2 text-muted-foreground text-xs">
+                  {note
+                    ? "Notes use the notes tag and open in a reading dialog on Home and Notes. A cover is optional."
+                    : "Articles open on their own reading page."}
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                {" "}
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="tags">Tags</Label>
+                  <Controller
+                    control={control}
+                    name="tags"
+                    render={({ field }) => (
+                      <TagsInput
+                        id="tags"
+                        value={getTagArray(field.value ?? "")}
+                        onChange={(nextTags) =>
+                          field.onChange(nextTags.join(", "))
+                        }
+                        disabled={isPending}
+                        placeholder="nextjs, ui, craft"
+                      />
+                    )}
+                  />
+                  <p className="text-muted-foreground text-sm">
+                    Type comma + space to create a tag.
+                  </p>
+                </div>
+              </div>{" "}
+            </CardContent>
+          </Card>
+        </section>
+        <aside className="min-w-0" aria-label="Publication">
+          <Card className="min-w-0">
+            <CardHeader>
+              <CardTitle>Publishing</CardTitle>
+              <CardAction>
+                <PostStatusBadge
+                  status={status}
+                  publishedAt={savedPublication}
+                  now={now}
+                  compact
+                />
+              </CardAction>
+              <CardDescription>
+                {status === "published"
+                  ? persistedState === "scheduled"
+                    ? "Scheduled posts remain private until their publication time."
+                    : "Saved edits update the live post directly."
+                  : "Drafts stay private until you publish."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5 min-w-0">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="scheduledPublishDate">
+                  Publication date and time
+                </Label>
+                <Controller
+                  control={control}
+                  name="scheduledPublishDate"
+                  render={({ field }) => (
+                    <DateTimePicker
+                      id="scheduledPublishDate"
+                      aria-describedby={
+                        errors.scheduledPublishDate
+                          ? "scheduledPublishDate-help"
+                          : undefined
+                      }
+                      value={field.value}
+                      onChange={(value) => {
+                        field.onChange(value);
+                        setValue(
+                          "publicationIntent",
+                          value ? "schedule" : "now",
+                          { shouldDirty: true },
+                        );
+                      }}
+                      disabled={isPending}
+                    />
+                  )}
+                />
+                <p className="text-muted-foreground text-xs">
+                  Saving a draft does not activate a schedule. Publish/Schedule
+                  commits it.
+                </p>
+                {errors.scheduledPublishDate?.message && (
+                  <p
+                    id="scheduledPublishDate-help"
+                    role="alert"
+                    className="text-destructive text-sm"
+                  >
+                    {errors.scheduledPublishDate.message}
+                  </p>
+                )}
+              </div>
+              {persistedState === "scheduled" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isPending}
+                  onClick={() => {
+                    setValue("scheduledPublishDate", undefined, {
+                      shouldDirty: true,
+                    });
+                    setValue("publicationIntent", "now", { shouldDirty: true });
+                  }}
+                >
+                  Use current time (publish now)
+                </Button>
+              )}{" "}
+            </CardContent>
+          </Card>
+        </aside>
+        <section className="xl:col-span-2 min-w-0" aria-label="Writing">
           <Card className="min-w-0">
             <CardHeader>
               <CardTitle>Content</CardTitle>
@@ -510,6 +852,10 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                 name="content"
                 render={({ field }) => (
                   <MdxEditor
+                    ariaLabel="Post content"
+                    placeholder={
+                      note ? "Write this note..." : "Write the article..."
+                    }
                     value={field.value ?? ""}
                     onChange={field.onChange}
                     disabled={isPending}
@@ -517,133 +863,21 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                   />
                 )}
               />
-              {errors.content?.message && (
-                <p className="mt-2 text-destructive text-sm">
-                  {errors.content.message}
-                </p>
-              )}
             </CardContent>
           </Card>
-        </div>
-
-        <div className="flex flex-col gap-6 min-w-0">
+        </section>
+        <section className="xl:col-span-2 min-w-0" aria-label="Post cover">
           <Card className="min-w-0">
             <CardHeader>
-              <CardTitle>Details</CardTitle>
+              <CardTitle>Cover image</CardTitle>
               <CardDescription>
-                Public metadata for the blog listing and article header.
+                Optional cover for the article. Notes are read in a text-focused
+                dialog.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5 min-w-0">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  placeholder="Designing durable interfaces"
-                  aria-invalid={!!errors.title}
-                  disabled={isPending}
-                  {...register("title")}
-                />
-                {errors.title?.message && (
-                  <p className="text-destructive text-sm">
-                    {errors.title.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="slug">Slug</Label>
-                <Input
-                  id="slug"
-                  placeholder="designing-durable-interfaces"
-                  aria-invalid={!!errors.slug}
-                  disabled={isPending}
-                  name={slugRegistration.name}
-                  onBlur={slugRegistration.onBlur}
-                  ref={slugRegistration.ref}
-                  value={slug}
-                  onChange={(event) => {
-                    setSlugEdited(true);
-                    slugRegistration.onChange(event);
-                  }}
-                />
-                {errors.slug?.message && (
-                  <p className="text-destructive text-sm">
-                    {errors.slug.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="excerpt">Excerpt</Label>
-                <Textarea
-                  id="excerpt"
-                  placeholder="A short summary for cards and metadata."
-                  aria-invalid={!!errors.excerpt}
-                  disabled={isPending}
-                  className="min-h-24"
-                  {...register("excerpt")}
-                />
-                <p
-                  className={cn(
-                    "text-muted-foreground text-sm",
-                    errors.excerpt && "text-destructive",
-                  )}
-                >
-                  {errors.excerpt?.message ?? "Maximum 280 characters."}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="min-w-0">
-            <CardHeader>
-              <CardTitle>Publishing</CardTitle>
-              <CardAction>
-                <PostStatusBadge status={status} compact />
-              </CardAction>
-              <CardDescription>
-                {status === "published"
-                  ? "Saved edits update the published post directly."
-                  : "Drafts stay private until you publish."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-5 min-w-0">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="scheduledPublishDate">
-                  Scheduled publish date
-                </Label>
-                <Controller
-                  control={control}
-                  name="scheduledPublishDate"
-                  render={({ field }) => (
-                    <DateTimePicker
-                      id="scheduledPublishDate"
-                      value={field.value}
-                      onChange={field.onChange}
-                      disabled={isPending}
-                    />
-                  )}
-                />
-                {errors.scheduledPublishDate?.message && (
-                  <p className="text-destructive text-sm">
-                    {errors.scheduledPublishDate.message}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="min-w-0">
-            <CardHeader>
-              <CardTitle>Cover & Tags</CardTitle>
-              <CardDescription>
-                Reuse the Cloudinary upload flow from the Media Library.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-5 min-w-0">
-              <div className="flex flex-col gap-2">
-                <Label>Cover image</Label>
+                <h3 className="font-medium text-sm">Cover image (optional)</h3>
                 <ImageUpload
                   value={coverImage}
                   disabled={isPending}
@@ -668,31 +902,9 @@ export function PostEditor({ mode, post }: PostEditorProps) {
                   </p>
                 )}
               </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="tags">Tags</Label>
-                <Controller
-                  control={control}
-                  name="tags"
-                  render={({ field }) => (
-                    <TagsInput
-                      id="tags"
-                      value={getTagArray(field.value ?? "")}
-                      onChange={(nextTags) =>
-                        field.onChange(nextTags.join(", "))
-                      }
-                      disabled={isPending}
-                      placeholder="nextjs, ui, craft"
-                    />
-                  )}
-                />
-                <p className="text-muted-foreground text-sm">
-                  Type comma + space to create a tag.
-                </p>
-              </div>
             </CardContent>
           </Card>
-        </div>
+        </section>
       </div>
     </form>
   );
