@@ -1,33 +1,30 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowSquareOutIcon,
   CalendarBlankIcon,
   CaretDownIcon,
   CaretLeftIcon,
   CaretRightIcon,
+  CheckSquareIcon,
   CopyIcon,
   DotsThreeVerticalIcon,
   EyeIcon,
   EyeSlashIcon,
   FileImageIcon,
   FolderIcon,
-  GridFourIcon,
+  FunnelSimpleIcon,
   ImageIcon,
-  ListBulletsIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   PlusIcon,
   RulerIcon,
-  SpinnerIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { ReactElement, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,21 +41,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Drawer,
   DrawerContent,
   DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
+  DrawerTrigger,
 } from "@/components/ui/drawer";
 import {
   DropdownMenu,
@@ -73,30 +62,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
 import {
-  actionCreateGalleryItem,
   actionDeleteGalleryItem,
   actionDeleteGalleryItems,
   actionHideGalleryItems,
   actionReorderGalleryItems,
   actionShowGalleryItems,
-  actionUpdateGalleryItem,
 } from "@/features/dashboard/gallery/actions";
-import {
-  type GalleryItemActionInput,
-  type GalleryItemActionValues,
-  galleryItemActionSchema,
-} from "@/features/dashboard/gallery/validations";
+import { GALLERY_BATCH_LIMIT } from "@/features/dashboard/gallery/constants";
+import toolbarStyles from "@/features/dashboard/shared/components/collection-toolbar.module.css";
 import {
   DashboardSelect,
-  DashboardStatusFilter,
   DashboardViewToggle,
 } from "@/features/dashboard/shared/components/filter-controls";
-import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import {
   DashboardSortableList,
   verticalListSortingStrategy,
@@ -105,12 +84,15 @@ import { DashboardSummary } from "@/features/dashboard/shared/components/summary
 import { useDashboardFilter } from "@/features/dashboard/shared/hooks/use-dashboard-filter";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import type { ActionResult } from "@/lib/action-result";
+import { getPageItems } from "@/lib/archive-pagination";
 import {
   getDefaultItemsPerPage,
   getItemsPerPageOptions,
   paginateItems,
 } from "@/lib/pagination";
 import { cn, formatDate } from "@/lib/utils";
+
+import { GalleryItemDialog } from "./gallery-item-dialog";
 
 export type DashboardGalleryItem = {
   id: string;
@@ -133,70 +115,31 @@ type GalleryManagerProps = {
   items: DashboardGalleryItem[];
 };
 
-type GalleryItemDialogProps = {
-  item?: DashboardGalleryItem;
-  trigger: ReactElement;
-  triggerNativeButton?: boolean;
-};
-
 type ViewMode = "grid" | "list";
 type VisibilityFilter = "all" | "visible" | "hidden";
 type SortMode = "order-asc" | "order-desc" | "created-desc" | "created-asc";
 
-const emptyDefaults: GalleryItemActionValues = {
-  imageUrl: "",
-  caption: "",
-  description: "",
-  altText: "",
-  category: "",
-  width: undefined,
-  height: undefined,
-  size: undefined,
-  aspectRatio: undefined,
-  blurDataUrl: undefined,
-  isVisible: true,
-  order: 0,
-};
-
-function getDefaults(item?: DashboardGalleryItem): GalleryItemActionValues {
-  if (!item) {
-    return emptyDefaults;
-  }
-
-  return {
-    imageUrl: item.imageUrl,
-    caption: item.caption ?? "",
-    description: item.description ?? "",
-    altText: item.altText ?? "",
-    category: item.category ?? "",
-    width: item.width ?? undefined,
-    height: item.height ?? undefined,
-    size: item.size ?? undefined,
-    aspectRatio: item.aspectRatio ?? undefined,
-    blurDataUrl: item.blurDataUrl ?? undefined,
-    isVisible: item.isVisible,
-    order: item.order,
-  };
-}
-
 function GalleryThumbnail({
   imageUrl,
   caption,
+  altText,
   className,
   imageClassName,
 }: {
   imageUrl?: string | null;
   caption?: string | null;
+  altText?: string | null;
   className?: string;
   imageClassName?: string;
 }) {
   const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [imageUrl]);
 
   if (!imageUrl || failed) {
     return (
       <div
         className={cn(
-          "flex justify-center items-center bg-muted h-full min-h-30 text-muted-foreground",
+          "flex justify-center items-center bg-muted h-full min-h-0 text-muted-foreground",
           className,
         )}
       >
@@ -208,7 +151,7 @@ function GalleryThumbnail({
   return (
     <Image
       src={imageUrl}
-      alt={caption || "Gallery image"}
+      alt={altText || caption || "Gallery image"}
       fill
       className={cn("object-cover", imageClassName)}
       sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 25vw"
@@ -275,14 +218,14 @@ function GalleryStatusBadge({
 }) {
   return (
     <Badge
-      variant={isVisible ? "default" : "secondary"}
+      variant="outline"
       className={cn(
-        isVisible
-          ? "bg-primary text-primary-foreground"
-          : "bg-muted text-muted-foreground",
+        "gap-1.5 bg-card px-2 border-border rounded-md h-6 text-xs",
+        isVisible ? "text-success" : "text-muted-foreground",
         className,
       )}
     >
+      <span aria-hidden className="bg-current rounded-full size-1.5" />
       {isVisible ? "Visible" : "Hidden"}
     </Badge>
   );
@@ -291,9 +234,13 @@ function GalleryStatusBadge({
 function GalleryItemActions({
   item,
   align = "end",
+  overlay = false,
+  disabled = false,
 }: {
   item: DashboardGalleryItem;
   align?: "start" | "end";
+  overlay?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <DropdownMenu>
@@ -302,7 +249,13 @@ function GalleryItemActions({
           <Button
             type="button"
             size="icon"
-            variant="ghost"
+            variant={overlay ? "secondary" : "ghost"}
+            disabled={disabled}
+            className={cn(
+              "size-11",
+              overlay &&
+                "bg-popover/80 border-border shadow-sm hover:bg-surface-hover/90",
+            )}
             aria-label={`Open actions for ${getItemTitle(item)}`}
           />
         }
@@ -339,276 +292,6 @@ function GalleryItemActions({
   );
 }
 
-function GalleryItemDialog({
-  item,
-  trigger,
-  triggerNativeButton = true,
-}: GalleryItemDialogProps) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-
-  const {
-    formState: { errors },
-    handleSubmit,
-    register,
-    reset,
-    setError,
-    setValue,
-    watch,
-  } = useForm<GalleryItemActionInput, unknown, GalleryItemActionValues>({
-    resolver: zodResolver(galleryItemActionSchema),
-    defaultValues: getDefaults(item),
-  });
-
-  const imageUrl = watch("imageUrl");
-  const isEdit = Boolean(item);
-
-  const applyFieldErrors = (fieldErrors?: Record<string, string[]>) => {
-    if (!fieldErrors) {
-      return;
-    }
-
-    for (const [field, messages] of Object.entries(fieldErrors)) {
-      if (messages[0]) {
-        setError(field as keyof GalleryItemActionValues, {
-          message: messages[0],
-          type: "server",
-        });
-      }
-    }
-  };
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    setOpen(nextOpen);
-    if (nextOpen) {
-      reset(getDefaults(item));
-    }
-  };
-
-  const onSubmit = handleSubmit((values) => {
-    startTransition(async () => {
-      const result =
-        isEdit && item
-          ? await actionUpdateGalleryItem(item.id, values)
-          : await actionCreateGalleryItem(values);
-
-      if (result.success) {
-        toast.add({
-          title:
-            result.message ??
-            (isEdit ? "Gallery item updated." : "Gallery item created."),
-          type: "success",
-        });
-        setOpen(false);
-        router.refresh();
-      } else {
-        applyFieldErrors(result.fieldErrors);
-        toast.add({ title: result.error, type: "error" });
-      }
-    });
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger nativeButton={triggerNativeButton} render={trigger} />
-      <DialogContent className="sm:max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-none">
-        <form className="flex flex-col gap-5" onSubmit={onSubmit}>
-          <DialogHeader>
-            <DialogTitle>
-              {isEdit ? "Edit Gallery Item" : "Add Gallery Item"}
-            </DialogTitle>
-            <DialogDescription>
-              Upload an image, set its category, and control its display order.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col gap-2">
-            <Label>Image</Label>
-            <ImageUpload
-              value={imageUrl}
-              disabled={isPending}
-              previewClassName="bg-muted/40"
-              previewImageClassName="object-contain"
-              onChange={(url, metadata) => {
-                setValue("imageUrl", url, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-                setValue("width", metadata?.width ?? undefined, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-                setValue("height", metadata?.height ?? undefined, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-                setValue("size", metadata?.size ?? undefined, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-                setValue("aspectRatio", metadata?.aspectRatio ?? undefined, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-                setValue("blurDataUrl", metadata?.blurDataUrl ?? undefined, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-              }}
-              onRemove={() =>
-                setValue("imageUrl", "", {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                })
-              }
-            />
-            {errors.imageUrl?.message && (
-              <p className="text-destructive text-sm">
-                {errors.imageUrl.message}
-              </p>
-            )}
-          </div>
-
-          <div className="gap-4 grid sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="altText">Alt text</Label>
-              <Input
-                id="altText"
-                placeholder="Interface detail with dark cards"
-                aria-invalid={!!errors.altText}
-                disabled={isPending}
-                {...register("altText")}
-              />
-              {errors.altText?.message && (
-                <p className="text-destructive text-sm">
-                  {errors.altText.message}
-                </p>
-              )}
-            </div>
-
-            <div className="flex justify-between items-center gap-4 bg-background/35 p-4 border border-border/60 rounded-2xl">
-              <div>
-                <Label htmlFor="isVisible">Visible publicly</Label>
-                <p className="mt-1 text-muted-foreground text-xs leading-5">
-                  Hidden items stay editable here but are not shown on the
-                  public Gallery.
-                </p>
-              </div>
-              <Switch
-                id="isVisible"
-                checked={watch("isVisible")}
-                disabled={isPending}
-                onCheckedChange={(checked) =>
-                  setValue("isVisible", checked, {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  })
-                }
-              />
-            </div>
-          </div>
-
-          <div className="gap-4 grid sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                placeholder="Interface"
-                aria-invalid={!!errors.category}
-                disabled={isPending}
-                {...register("category")}
-              />
-              {errors.category?.message && (
-                <p className="text-destructive text-sm">
-                  {errors.category.message}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="order">Display order</Label>
-              <Input
-                id="order"
-                type="number"
-                min={0}
-                aria-invalid={!!errors.order}
-                disabled={isPending}
-                {...register("order")}
-              />
-              {errors.order?.message && (
-                <p className="text-destructive text-sm">
-                  {errors.order.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="caption">Caption</Label>
-            <Textarea
-              id="caption"
-              placeholder="A short note about this image."
-              aria-invalid={!!errors.caption}
-              disabled={isPending}
-              wrap="soft"
-              className="max-w-full min-h-24 field-sizing-fixed scrollbar-none wrap-anywhere"
-              {...register("caption")}
-            />
-            {errors.caption?.message && (
-              <p className="text-destructive text-sm">
-                {errors.caption.message}
-              </p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Optional detail shown on public gallery overlays."
-              aria-invalid={!!errors.description}
-              disabled={isPending}
-              wrap="soft"
-              className="max-w-full min-h-24 field-sizing-fixed scrollbar-none wrap-anywhere"
-              {...register("description")}
-            />
-            {errors.description?.message && (
-              <p className="text-destructive text-sm">
-                {errors.description.message}
-              </p>
-            )}
-          </div>
-
-          <DialogFooter className="bottom-0 z-10 sticky bg-popover py-4 border-border border-t">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? (
-                <SpinnerIcon
-                  data-icon="inline-start"
-                  className="animate-spin"
-                />
-              ) : isEdit ? (
-                <PencilSimpleIcon data-icon="inline-start" />
-              ) : (
-                <PlusIcon data-icon="inline-start" />
-              )}
-              {isPending ? "Saving..." : isEdit ? "Save Changes" : "Add Item"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 function GalleryDeleteButton({
   item,
   trigger,
@@ -625,25 +308,38 @@ function GalleryDeleteButton({
 
   const handleDelete = () => {
     startTransition(async () => {
-      const result = await actionDeleteGalleryItem(item.id);
+      try {
+        const result = await actionDeleteGalleryItem(item.id);
 
-      if (result.success) {
+        if (result.success) {
+          toast.add({
+            title: result.message ?? "Gallery item deleted.",
+            type: "success",
+          });
+          setOpen(false);
+          router.refresh();
+        } else {
+          toast.add({ title: result.error, type: "error" });
+        }
+      } catch {
         toast.add({
-          title: result.message ?? "Gallery item deleted.",
-          type: "success",
+          title: "Could not delete this image. Try again.",
+          type: "error",
         });
-        setOpen(false);
-        router.refresh();
-      } else {
-        toast.add({ title: result.error, type: "error" });
       }
     });
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!isPending) setOpen(next);
+      }}
+    >
       <AlertDialogTrigger
         nativeButton={triggerNativeButton}
+        role={triggerNativeButton ? undefined : "menuitem"}
         render={
           trigger ?? (
             <Button type="button" size="sm" variant="destructive">
@@ -685,55 +381,11 @@ function FilterDropdown({
 }: {
   label: string;
   value: string;
-  displayValue: string;
   options: Array<{ value: string; label: string }>;
   onValueChange: (value: string) => void;
 }) {
-  if (label === "Visibility")
-    return (
-      <DashboardStatusFilter
-        label={label}
-        value={value}
-        options={options}
-        onValueChange={onValueChange}
-      />
-    );
   return (
     <DashboardSelect
-      label={label}
-      value={value}
-      options={options}
-      onValueChange={onValueChange}
-    />
-  );
-}
-
-function CompactFilterDropdown({
-  label,
-  value,
-  options,
-  onValueChange,
-}: {
-  label: string;
-  value: string;
-  displayValue: string;
-  options: Array<{ value: string; label: string }>;
-  onValueChange: (value: string) => void;
-}) {
-  if (label === "Visibility")
-    return (
-      <div className="col-span-2">
-        <DashboardStatusFilter
-          label={label}
-          value={value}
-          options={options}
-          onValueChange={onValueChange}
-        />
-      </div>
-    );
-  return (
-    <DashboardSelect
-      compact
       label={label}
       value={value}
       options={options}
@@ -748,12 +400,14 @@ function GalleryGrid({
   selectedIds,
   onSelectItem,
   onToggleItem,
+  selectionPending,
 }: {
   items: DashboardGalleryItem[];
   batchMode: boolean;
   selectedIds: Set<string>;
   onSelectItem: (item: DashboardGalleryItem) => void;
   onToggleItem: (id: string) => void;
+  selectionPending: boolean;
 }) {
   return (
     <div className={dashboardStyles.gridCards}>
@@ -761,31 +415,35 @@ function GalleryGrid({
         <article
           key={item.id}
           className={cn(
-            "group bg-background/45 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)] border border-border/70 hover:border-brand-soft/40 rounded-2xl min-w-0 overflow-hidden transition-[border-color,transform,box-shadow] hover:-translate-y-0.5",
-            selectedIds.has(item.id) && "border-brand-soft/60 bg-brand/5",
-            batchMode ? "cursor-pointer" : "cursor-zoom-in",
+            "group bg-card border border-border hover:border-input rounded-lg min-w-0 overflow-hidden transition-colors",
+            selectedIds.has(item.id) && "border-primary bg-primary/5",
           )}
-          onClick={batchMode ? () => onToggleItem(item.id) : undefined}
         >
           <div className="relative bg-muted/35 aspect-square overflow-hidden">
-            <GalleryThumbnail imageUrl={item.imageUrl} caption={item.caption} />
-            {!batchMode && (
-              <button
-                type="button"
-                className="absolute inset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                aria-label={`Preview ${getItemTitle(item)}`}
-                onClick={(event) => {
-                  event.currentTarget.focus();
-                  onSelectItem(item);
-                }}
-              />
-            )}
+            <GalleryThumbnail
+              imageUrl={item.imageUrl}
+              caption={item.caption}
+              altText={item.altText}
+            />
+            <button
+              type="button"
+              disabled={selectionPending}
+              className="absolute inset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset cursor-pointer"
+              aria-label={`${batchMode ? "Toggle selection for" : "Preview"} ${getItemTitle(item)}`}
+              onClick={(event) => {
+                event.currentTarget.focus();
+                if (batchMode) onToggleItem(item.id);
+                else onSelectItem(item);
+              }}
+            />
             {batchMode && (
               <div
-                className="top-3 left-3 z-10 absolute"
+                className="top-3 left-3 z-10 absolute flex justify-center items-center bg-popover border border-border rounded-md size-11"
                 onClick={(event) => event.stopPropagation()}
               >
                 <Checkbox
+                  className="after:-inset-x-3.5 after:-inset-y-3.5"
+                  disabled={selectionPending}
                   checked={selectedIds.has(item.id)}
                   onCheckedChange={() => onToggleItem(item.id)}
                   aria-label={`Select ${getItemTitle(item)}`}
@@ -796,7 +454,11 @@ function GalleryGrid({
               className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
-              <GalleryItemActions item={item} />
+              <GalleryItemActions
+                item={item}
+                overlay
+                disabled={selectionPending}
+              />
             </div>
           </div>
           <div className="relative">
@@ -816,7 +478,18 @@ function GalleryGrid({
                 className="mt-2 font-sans font-semibold text-base truncate leading-snug"
                 title={getItemTitle(item)}
               >
-                {getItemTitle(item)}
+                <button
+                  type="button"
+                  className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring max-w-full hover:text-link text-left truncate"
+                  disabled={selectionPending}
+                  onClick={(event) => {
+                    event.currentTarget.focus();
+                    if (batchMode) onToggleItem(item.id);
+                    else onSelectItem(item);
+                  }}
+                >
+                  {getItemTitle(item)}
+                </button>
               </h2>
               <p className="flex items-center gap-1.5 mt-2 text-muted-foreground text-xs">
                 <CalendarBlankIcon className="size-3.5" />
@@ -830,6 +503,42 @@ function GalleryGrid({
   );
 }
 
+function galleryListColumns(hasRail: boolean, showPosition: boolean) {
+  if (showPosition)
+    return hasRail
+      ? "grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(0,1fr)_110px_140px_64px_120px_64px]"
+      : "grid-cols-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_110px_140px_64px_120px_64px]";
+  return hasRail
+    ? "grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(0,1fr)_110px_140px_120px_64px]"
+    : "grid-cols-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_110px_140px_120px_64px]";
+}
+
+function GalleryListHeader({
+  hasRail,
+  showPosition,
+}: {
+  hasRail: boolean;
+  showPosition: boolean;
+}) {
+  return (
+    <div
+      data-gallery-list-header
+      className={cn(
+        "hidden xl:grid border-border border-b font-medium text-muted-foreground text-xs",
+        galleryListColumns(hasRail, showPosition),
+      )}
+    >
+      {hasRail && <div />}
+      <div className="py-3 pr-3 pl-34">Image</div>
+      <div className="p-3">Visibility</div>
+      <div className="p-3">Category</div>
+      {showPosition && <div className="p-3">Position</div>}
+      <div className="p-3">Added</div>
+      <div className="p-3 text-center">Actions</div>
+    </div>
+  );
+}
+
 function GalleryListRow({
   item,
   handle,
@@ -838,6 +547,9 @@ function GalleryListRow({
   selected,
   onSelectItem,
   onToggleItem,
+  selectionPending,
+  showPosition,
+  position,
 }: {
   item: DashboardGalleryItem;
   handle: ReactNode;
@@ -846,47 +558,59 @@ function GalleryListRow({
   selected: boolean;
   onSelectItem: (item: DashboardGalleryItem) => void;
   onToggleItem: (id: string) => void;
+  selectionPending: boolean;
+  showPosition: boolean;
+  position: number;
 }) {
+  const hasRail = batchMode || Boolean(handle);
   return (
     <div
       className={cn(
-        "grid grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(280px,1fr)_120px_150px_80px_130px_64px] min-w-0",
-        dashboardStyles.listRow,
+        "grid min-w-0",
+        galleryListColumns(hasRail, showPosition),
         selected && "border-brand-soft/60 bg-brand/5",
         batchMode && "cursor-pointer",
         isDragging && "relative z-10 bg-background/70 opacity-80",
       )}
-      onClick={batchMode ? () => onToggleItem(item.id) : undefined}
     >
-      <div className="row-span-2 xl:row-span-1">
-        {batchMode ? (
-          <div
-            className="flex justify-center items-center border-border/50 border-r h-full min-h-20"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <Checkbox
-              checked={selected}
-              onCheckedChange={() => onToggleItem(item.id)}
-              aria-label={`Select ${getItemTitle(item)}`}
-            />
-          </div>
-        ) : (
-          handle
-        )}
-      </div>
+      {hasRail && (
+        <div className="row-span-2 xl:row-span-1">
+          {batchMode ? (
+            <div
+              className="flex justify-center items-center border-border/50 border-r h-full min-h-20"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Checkbox
+                className="after:-inset-x-3.5 after:-inset-y-3.5"
+                disabled={selectionPending}
+                checked={selected}
+                onCheckedChange={() => onToggleItem(item.id)}
+                aria-label={`Select ${getItemTitle(item)}`}
+              />
+            </div>
+          ) : (
+            handle
+          )}
+        </div>
+      )}
       <button
         type="button"
         className="flex items-center gap-3 p-3 min-w-0 text-left disabled:cursor-pointer"
-        disabled={batchMode}
+        disabled={selectionPending}
         onClick={(event) => {
           event.currentTarget.focus();
-          onSelectItem(item);
+          if (batchMode) onToggleItem(item.id);
+          else onSelectItem(item);
         }}
       >
-        <div className="relative bg-muted/35 border border-border/50 rounded-xl w-20 h-14 overflow-hidden shrink-0">
+        <div
+          data-gallery-list-thumbnail
+          className="relative bg-muted/35 border border-border/50 rounded-xl w-28 h-16 overflow-hidden shrink-0"
+        >
           <GalleryThumbnail
             imageUrl={item.imageUrl}
             caption={item.caption}
+            altText={item.altText}
             imageClassName="object-cover"
           />
         </div>
@@ -898,7 +622,7 @@ function GalleryListRow({
             {getItemTitle(item)}
           </p>
           <p className="xl:hidden mt-1 text-muted-foreground text-xs truncate">
-            {item.category || "Uncategorized"} · order {item.order}
+            {item.category || "Uncategorized"}
           </p>
         </div>
       </button>
@@ -910,13 +634,20 @@ function GalleryListRow({
           {item.category || "Uncategorized"}
         </Badge>
       </div>
-      <div className="hidden xl:flex items-center p-3 text-muted-foreground text-sm">
-        {item.order}
-      </div>
+      {showPosition && (
+        <div className="hidden xl:flex items-center p-3 text-muted-foreground text-sm">
+          {position}
+        </div>
+      )}
       <div className="hidden xl:flex items-center p-3 text-muted-foreground text-sm">
         {formatDate(item.createdAt)}
       </div>
-      <div className="flex items-center gap-2 col-start-2 xl:p-3 px-3 pb-3 xl:pl-0 xl:col-auto">
+      <div
+        className={cn(
+          "flex items-center gap-2 xl:p-3 px-3 pb-3 xl:pl-0 xl:col-auto",
+          hasRail ? "col-start-2" : "col-start-1",
+        )}
+      >
         <div className="xl:hidden flex flex-wrap items-center gap-2">
           <GalleryStatusBadge isVisible={item.isVisible} />
           <span className="text-muted-foreground text-xs">
@@ -924,7 +655,7 @@ function GalleryListRow({
           </span>
         </div>
         <div className="ml-auto" onClick={(event) => event.stopPropagation()}>
-          <GalleryItemActions item={item} />
+          <GalleryItemActions item={item} disabled={selectionPending} />
         </div>
       </div>
     </div>
@@ -964,22 +695,30 @@ function GalleryPagination({
       >
         <CaretLeftIcon />
       </Button>
-      {Array.from({ length: pageCount }).map((_, index) => {
-        const pageNumber = index + 1;
-
-        return (
-          <Button
-            key={pageNumber}
-            type="button"
-            size="icon"
-            variant={pageNumber === page ? "default" : "outline"}
-            onClick={() => onPageChange(pageNumber)}
-            aria-current={pageNumber === page ? "page" : undefined}
-          >
-            {pageNumber}
-          </Button>
-        );
-      })}
+      <span className="md:hidden px-2 text-sm" aria-live="polite">
+        Page {page} of {pageCount}
+      </span>
+      <div className="hidden md:flex items-center gap-1">
+        {getPageItems(page, pageCount).map((value, index) =>
+          value === "ellipsis" ? (
+            <span key={`gap-${index}`} className="px-1" aria-hidden>
+              …
+            </span>
+          ) : (
+            <Button
+              key={value}
+              type="button"
+              size="icon"
+              variant={value === page ? "default" : "outline"}
+              onClick={() => onPageChange(value)}
+              aria-label={`Page ${value}`}
+              aria-current={value === page ? "page" : undefined}
+            >
+              {value}
+            </Button>
+          ),
+        )}
+      </div>
       <Button
         type="button"
         size="icon"
@@ -1042,7 +781,14 @@ function ItemsPerPageDropdown({
       )}
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={<Button type="button" variant="outline" size="sm" />}
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label="Items per page"
+            />
+          }
         >
           {value}
           <CaretDownIcon className="size-3.5" />
@@ -1075,6 +821,10 @@ function GalleryBatchActionsBar({
   onHide,
   onDelete,
   onCancel,
+  selectedItems,
+  outsideViewCount,
+  onTogglePage,
+  pageSelected,
 }: {
   selectedCount: number;
   isPending: boolean;
@@ -1082,18 +832,50 @@ function GalleryBatchActionsBar({
   onHide: () => void;
   onDelete: () => void;
   onCancel: () => void;
+  selectedItems: DashboardGalleryItem[];
+  outsideViewCount: number;
+  onTogglePage: () => void;
+  pageSelected: boolean;
 }) {
   return (
-    <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-card/55 shadow-sm mb-4 p-3 border border-border/70 rounded-2xl">
+    <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-3 bg-card p-3 border border-border rounded-lg">
       <div className="min-w-0">
         <p className="font-medium text-foreground text-sm">
           {selectedCount} {selectedCount === 1 ? "item" : "items"} selected
         </p>
         <p className="text-muted-foreground text-xs">
-          Drag ordering is paused while selecting gallery items.
+          Up to {GALLERY_BATCH_LIMIT} images per batch.{" "}
+          {outsideViewCount > 0 &&
+            `${outsideViewCount} selected outside this page.`}
         </p>
+        {selectedItems.length > 0 && (
+          <details className="mt-2 text-sm">
+            <summary className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring cursor-pointer">
+              Review selected images
+            </summary>
+            <ul
+              className="space-y-1 mt-2 max-h-40 overflow-y-auto"
+              aria-label="Selected images"
+            >
+              {selectedItems.map((item) => (
+                <li key={item.id} className="wrap-anywhere">
+                  {getItemTitle(item)}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </div>
       <div className="sm:flex sm:flex-wrap sm:justify-end gap-2 grid grid-cols-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={isPending}
+          onClick={onTogglePage}
+        >
+          {pageSelected ? "Deselect page" : "Select page"}
+        </Button>
         <Button
           type="button"
           size="sm"
@@ -1137,6 +919,16 @@ function GalleryBatchActionsBar({
                 {selectedCount === 1 ? "item" : "items"}. This action cannot be
                 undone.
               </AlertDialogDescription>
+              <ul
+                className="space-y-1 my-3 max-h-48 overflow-y-auto text-sm"
+                aria-label="Images to delete"
+              >
+                {selectedItems.map((item) => (
+                  <li key={item.id} className="wrap-anywhere">
+                    {getItemTitle(item)}
+                  </li>
+                ))}
+              </ul>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
@@ -1157,7 +949,7 @@ function GalleryBatchActionsBar({
           disabled={isPending}
           onClick={onCancel}
         >
-          Cancel
+          Clear selection
         </Button>
       </div>
     </div>
@@ -1179,9 +971,17 @@ function GalleryDetailDrawer({
 }) {
   const aspectRatio = getGalleryAspectRatio(item);
 
-  const handleCopyImageUrl = () => {
-    navigator.clipboard.writeText(item.imageUrl);
-    toast.add({ title: "Image URL copied.", type: "success" });
+  const handleCopyImageUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(item.imageUrl);
+      toast.add({ title: "Image URL copied.", type: "success" });
+    } catch {
+      toast.add({
+        title:
+          "Could not copy the URL. Use View to open the image and copy its address.",
+        type: "error",
+      });
+    }
   };
 
   const metadata = [
@@ -1224,17 +1024,18 @@ function GalleryDetailDrawer({
         <div className="flex flex-col flex-1 min-h-0">
           <div className="flex-1 px-4 pt-7 pb-4 min-h-0 overflow-y-auto scrollbar-none">
             <div
-              className="relative bg-muted/35 border border-border rounded-2xl w-full overflow-hidden"
+              className="relative bg-muted/35 border border-border rounded-xl w-full overflow-hidden"
               style={{ aspectRatio }}
             >
               <GalleryThumbnail
                 imageUrl={item.imageUrl}
                 caption={item.caption}
+                altText={item.altText}
                 imageClassName="object-contain"
               />
             </div>
             <h3
-              className="mt-4 font-semibold text-xl truncate leading-tight"
+              className="mt-4 font-semibold text-xl leading-tight wrap-anywhere"
               title={getItemTitle(item)}
             >
               {getItemTitle(item)}
@@ -1251,8 +1052,14 @@ function GalleryDetailDrawer({
                 {item.description}
               </p>
             )}
+            {item.altText && (
+              <p className="mt-3 text-sm leading-6 wrap-anywhere">
+                <span className="text-muted-foreground">Alt text: </span>
+                {item.altText}
+              </p>
+            )}
 
-            <div className="gap-3 grid grid-cols-2 bg-card/50 mt-4 p-3 border border-border/70 rounded-2xl">
+            <div className="gap-4 grid grid-cols-2 mt-4 pt-4 border-border border-t">
               {metadata.map((row) => (
                 <div key={row.label} className="flex items-start gap-2 min-w-0">
                   <span className="mt-0.5 [&_svg]:size-4 text-muted-foreground">
@@ -1301,15 +1108,9 @@ function GalleryDetailDrawer({
                 View
               </Button>
             </div>
-            <GalleryDeleteButton
-              item={item}
-              trigger={
-                <Button type="button" variant="destructive" className="w-full">
-                  <TrashIcon data-icon="inline-start" />
-                  Delete Item
-                </Button>
-              }
-            />
+            <div className="flex justify-end">
+              <GalleryItemActions item={item} />
+            </div>
           </DrawerFooter>
         </div>
       </DrawerContent>
@@ -1317,12 +1118,23 @@ function GalleryDetailDrawer({
   );
 }
 
+const visibilityOptions = [
+  { value: "all", label: "All images" },
+  { value: "visible", label: "Visible" },
+  { value: "hidden", label: "Hidden" },
+];
+const sortOptions = [
+  { value: "order-asc", label: "Display order" },
+  { value: "order-desc", label: "Reverse order" },
+  { value: "created-desc", label: "Newest first" },
+  { value: "created-asc", label: "Oldest first" },
+];
+
 export function GalleryManager({ items }: GalleryManagerProps) {
   const router = useRouter();
-  const [isReordering, startReorderTransition] = useTransition();
   const [reorderMode, setReorderMode] = useState(false);
-  const [reorderRevision, setReorderRevision] = useState(0);
-  const detailTriggerRef = useRef<HTMLElement | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
+  const reorderLock = useRef(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [query, setQuery] = useState("");
   const [visibility, setVisibility] = useDashboardFilter<VisibilityFilter>(
@@ -1339,88 +1151,76 @@ export function GalleryManager({ items }: GalleryManagerProps) {
   const [batchMode, setBatchMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBatchPending, startBatchTransition] = useTransition();
-  const [selectedItem, setSelectedItem] = useState<DashboardGalleryItem | null>(
-    null,
-  );
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [drawerDirection, setDrawerDirection] = useState<"down" | "right">(
     "down",
   );
+  const detailTriggerRef = useRef<HTMLElement | null>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
-
+  const filtersTriggerRef = useRef<HTMLButtonElement>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [draftVisibility, setDraftVisibility] =
+    useState<VisibilityFilter>("all");
+  const [draftCategory, setDraftCategory] = useState("all");
+  const [draftSort, setDraftSort] = useState<SortMode>("order-asc");
+  const [draftView, setDraftView] = useState<ViewMode>("grid");
+  const previousView = useRef<{
+    query: string;
+    visibility: VisibilityFilter;
+    category: string;
+    sortMode: SortMode;
+    viewMode: ViewMode;
+    itemsPerPage: number;
+  } | null>(null);
+  const selectedItem = items.find((item) => item.id === selectedItemId);
   const categories = useMemo(
     () =>
-      Array.from(
-        new Set(items.map((item) => item.category).filter(Boolean)),
-      ).sort((a, b) => String(a).localeCompare(String(b))),
+      [
+        ...new Set(
+          items.flatMap((item) => (item.category ? [item.category] : [])),
+        ),
+      ].sort((a, b) => a.localeCompare(b)),
     [items],
   );
-
-  const stats = useMemo(
-    () => ({
-      total: items.length,
-      visible: items.filter((item) => item.isVisible).length,
-      hidden: items.filter((item) => !item.isVisible).length,
-      categories: categories.length,
-    }),
-    [categories.length, items],
-  );
-
+  const categoryOptions = [
+    { value: "all", label: "All categories" },
+    ...categories.map((value) => ({ value, label: value })),
+  ];
+  const stats = {
+    total: items.length,
+    visible: items.filter((item) => item.isVisible).length,
+    hidden: items.filter((item) => !item.isVisible).length,
+    categories: categories.length,
+  };
   const filteredItems = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return [...items]
-      .filter((item) => {
-        if (visibility === "visible" && !item.isVisible) {
-          return false;
-        }
-
-        if (visibility === "hidden" && item.isVisible) {
-          return false;
-        }
-
-        if (category !== "all" && item.category !== category) {
-          return false;
-        }
-
-        if (!normalizedQuery) {
-          return true;
-        }
-
-        return [
-          item.caption,
-          item.description,
-          item.altText,
-          item.category,
-          getFileName(item.imageUrl),
-        ]
-          .filter(Boolean)
-          .some((value) =>
-            String(value).toLowerCase().includes(normalizedQuery),
-          );
-      })
-      .sort((a, b) => {
-        if (sortMode === "order-desc") {
-          return b.order - a.order;
-        }
-
-        if (sortMode === "created-desc") {
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        }
-
-        if (sortMode === "created-asc") {
-          return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-        }
-
-        return a.order - b.order;
-      });
-  }, [category, items, query, sortMode, visibility]);
-
+    const search = query.trim().toLowerCase();
+    return items
+      .filter(
+        (item) =>
+          (visibility === "all" ||
+            item.isVisible === (visibility === "visible")) &&
+          (category === "all" || item.category === category) &&
+          (!search ||
+            [
+              item.caption,
+              item.description,
+              item.altText,
+              item.category,
+              getFileName(item.imageUrl),
+            ].some((value) => value?.toLowerCase().includes(search))),
+      )
+      .sort((a, b) =>
+        sortMode === "order-desc"
+          ? b.order - a.order
+          : sortMode === "created-desc"
+            ? Date.parse(b.createdAt) - Date.parse(a.createdAt)
+            : sortMode === "created-asc"
+              ? Date.parse(a.createdAt) - Date.parse(b.createdAt)
+              : a.order - b.order,
+      );
+  }, [items, query, visibility, category, sortMode]);
   const {
     items: paginatedItems,
     pageCount,
@@ -1429,435 +1229,518 @@ export function GalleryManager({ items }: GalleryManagerProps) {
     lastIndex,
   } = paginateItems(filteredItems, page, itemsPerPage);
   const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
+  const pageSelected =
+    paginatedItems.length > 0 &&
+    paginatedItems.every((item) => selectedIds.has(item.id));
+  const selectedItems = items.filter((item) => selectedIds.has(item.id));
+  const outsideViewCount = selectedItems.filter(
+    (item) => !paginatedItems.some((row) => row.id === item.id),
+  ).length;
+  const activeFilterCount =
+    Number(visibility !== "all") +
+    Number(category !== "all") +
+    Number(sortMode !== "order-asc");
 
   useEffect(() => {
     setPage(1);
   }, [category, itemsPerPage, query, sortMode, visibility]);
-
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 768px)");
-
-    const syncDrawerDirection = () => {
-      setDrawerDirection(mediaQuery.matches ? "right" : "down");
-    };
-
-    syncDrawerDirection();
-    mediaQuery.addEventListener("change", syncDrawerDirection);
-
-    return () => mediaQuery.removeEventListener("change", syncDrawerDirection);
+    const ids = new Set(items.map((item) => item.id));
+    setSelectedIds((previous) => {
+      const next = new Set([...previous].filter((id) => ids.has(id)));
+      return next.size === previous.size ? previous : next;
+    });
+    if (selectedItemId && !ids.has(selectedItemId)) {
+      setDetailOpen(false);
+      setSelectedItemId(null);
+    }
+  }, [items, selectedItemId]);
+  useEffect(() => {
+    const media = matchMedia("(min-width: 768px)");
+    const sync = () => setDrawerDirection(media.matches ? "right" : "down");
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
   }, []);
-
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const key = (event: KeyboardEvent) => {
       if (
         event.key.toLowerCase() !== "k" ||
-        !(event.ctrlKey || event.metaKey)
-      ) {
+        !(event.ctrlKey || event.metaKey) ||
+        filtersOpen ||
+        detailOpen
+      )
         return;
-      }
-
       event.preventDefault();
-
-      const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
-      const input = isMobileViewport
+      const input = matchMedia("(max-width: 767px)").matches
         ? mobileSearchInputRef.current
         : desktopSearchInputRef.current;
-
       input?.focus();
       input?.select();
     };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [filtersOpen, detailOpen]);
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  const handleViewModeChange = (nextViewMode: ViewMode) => {
-    setViewMode(nextViewMode);
-    setItemsPerPage(getDefaultItemsPerPage(nextViewMode));
+  const handleViewModeChange = (value: ViewMode) => {
+    setViewMode(value);
+    if (value !== viewMode) setItemsPerPage(getDefaultItemsPerPage(value));
   };
-
-  const toggleBatchMode = () => {
-    setBatchMode((current) => {
-      if (current) {
-        setSelectedIds(new Set());
-      }
-
-      return !current;
-    });
-  };
-
   const clearSelection = () => {
     setSelectedIds(new Set());
     setBatchMode(false);
   };
-
-  const toggleItemSelection = (id: string) => {
-    setSelectedIds((currentIds) => {
-      const nextIds = new Set(currentIds);
-
-      if (nextIds.has(id)) {
-        nextIds.delete(id);
-      } else {
-        nextIds.add(id);
-      }
-
-      return nextIds;
+  const selectionLimit = () =>
+    toast.add({
+      title: `Select no more than ${GALLERY_BATCH_LIMIT} images at a time.`,
+      type: "error",
     });
-  };
-
-  const runBatchAction = (
-    action: (itemIds: string[]) => Promise<ActionResult<{ count: number }>>,
-    fallbackMessage: string,
-  ) => {
-    const itemIds = Array.from(selectedIds);
-
-    if (itemIds.length === 0) {
+  const toggleItemSelection = (id: string) => {
+    if (isBatchPending) return;
+    if (!selectedIds.has(id) && selectedIds.size >= GALLERY_BATCH_LIMIT) {
+      selectionLimit();
       return;
     }
-
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const togglePageSelection = () => {
+    if (isBatchPending) return;
+    const allSelected = pageSelected;
+    const next = new Set(selectedIds);
+    for (const item of paginatedItems) {
+      if (allSelected) next.delete(item.id);
+      else if (next.size < GALLERY_BATCH_LIMIT) next.add(item.id);
+    }
+    if (!allSelected && paginatedItems.some((item) => !next.has(item.id)))
+      selectionLimit();
+    setSelectedIds(next);
+  };
+  const runBatchAction = (
+    action: (ids: string[]) => Promise<ActionResult<{ count: number }>>,
+    message: string,
+  ) => {
+    if (isBatchPending || !selectedItems.length) return;
+    const ids = selectedItems.map((item) => item.id);
     startBatchTransition(async () => {
-      const result = await action(itemIds);
-
-      if (result.success) {
-        toast.add({
-          title: result.message ?? fallbackMessage,
-          type: "success",
-        });
+      try {
+        const result = await action(ids);
+        if (!result.success) {
+          toast.add({ title: result.error, type: "error" });
+          return;
+        }
+        toast.add({ title: result.message ?? message, type: "success" });
         clearSelection();
         router.refresh();
-        return;
+      } catch {
+        toast.add({
+          title:
+            "Could not complete this action. Your selection is retained; try again.",
+          type: "error",
+        });
       }
-
-      toast.add({ title: result.error, type: "error" });
     });
   };
-
-  const handleReorder = (nextItems: DashboardGalleryItem[]) => {
+  const handleReorder = async (next: DashboardGalleryItem[]) => {
     if (
       !reorderMode ||
-      isReordering ||
-      nextItems.length !== items.length ||
-      new Set(nextItems.map((item) => item.id)).size !== items.length
+      reorderLock.current ||
+      next.length !== items.length ||
+      new Set(next.map((item) => item.id)).size !== items.length
     )
-      return;
-    startReorderTransition(async () => {
+      return false;
+    reorderLock.current = true;
+    setIsReordering(true);
+    try {
       const result = await actionReorderGalleryItems(
-        nextItems.map((item, index) => ({
-          id: item.id,
-          order: index,
-        })),
+        next.map((item, index) => ({ id: item.id, order: index })),
       );
-
-      if (result.success) {
-        toast.add({
-          title: result.message ?? "Gallery order updated.",
-          type: "success",
-        });
-        router.refresh();
-      } else {
-        setReorderRevision((value) => value + 1);
+      if (!result.success) {
         toast.add({ title: result.error, type: "error" });
+        return false;
       }
-    });
+      toast.add({
+        title: result.message ?? "Gallery order updated.",
+        type: "success",
+      });
+      router.refresh();
+      return true;
+    } catch {
+      toast.add({
+        title:
+          "Could not save the order. The previous order has been restored.",
+        type: "error",
+      });
+      return false;
+    } finally {
+      reorderLock.current = false;
+      setIsReordering(false);
+    }
   };
-
+  const toggleReorderMode = () => {
+    if (isReordering || isBatchPending) return;
+    if (reorderMode) {
+      setReorderMode(false);
+      const previous = previousView.current;
+      if (previous) {
+        setQuery(previous.query);
+        setVisibility(previous.visibility);
+        setCategory(previous.category);
+        setSortMode(previous.sortMode);
+        setViewMode(previous.viewMode);
+        setItemsPerPage(previous.itemsPerPage);
+      }
+      setPage(1);
+      return;
+    }
+    previousView.current = {
+      query,
+      visibility,
+      category,
+      sortMode,
+      viewMode,
+      itemsPerPage,
+    };
+    setQuery("");
+    setVisibility("all");
+    setCategory("all");
+    setSortMode("order-asc");
+    setViewMode("list");
+    setPage(1);
+    clearSelection();
+    setReorderMode(true);
+  };
   const openItemDetails = (item: DashboardGalleryItem) => {
     detailTriggerRef.current =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
-    setSelectedItem(item);
+    setSelectedItemId(item.id);
     setDetailOpen(true);
   };
-
-  const toggleReorderMode = () => {
-    if (reorderMode) {
-      setReorderMode(false);
-      return;
-    }
+  const clearFilters = () => {
     setQuery("");
     setVisibility("all");
     setCategory("all");
     setSortMode("order-asc");
-    setPage(1);
-    setViewMode("list");
-    clearSelection();
-    setReorderMode(true);
   };
+  const openFilters = (open: boolean) => {
+    if (open) {
+      setDraftVisibility(visibility);
+      setDraftCategory(category);
+      setDraftSort(sortMode);
+      setDraftView(viewMode);
+    }
+    setFiltersOpen(open);
+  };
+  const resetDraft = () => {
+    setDraftVisibility("all");
+    setDraftCategory("all");
+    setDraftSort("order-asc");
+  };
+  const applyFilters = () => {
+    setVisibility(draftVisibility);
+    setCategory(draftCategory);
+    setSortMode(draftSort);
+    handleViewModeChange(draftView);
+    setFiltersOpen(false);
+  };
+  const toggleBatchMode = () => {
+    if (isBatchPending) return;
+    if (batchMode) clearSelection();
+    else setBatchMode(true);
+  };
+  const renderFilters = (mobile = false) => (
+    <>
+      <FilterDropdown
+        label="Visibility"
+        value={mobile ? draftVisibility : visibility}
+        options={visibilityOptions}
+        onValueChange={(value) =>
+          mobile
+            ? setDraftVisibility(value as VisibilityFilter)
+            : setVisibility(value as VisibilityFilter)
+        }
+      />
+      <FilterDropdown
+        label="Category"
+        value={mobile ? draftCategory : category}
+        options={categoryOptions}
+        onValueChange={mobile ? setDraftCategory : setCategory}
+      />
+      <FilterDropdown
+        label="Sort by"
+        value={mobile ? draftSort : sortMode}
+        options={sortOptions}
+        onValueChange={(value) =>
+          mobile
+            ? setDraftSort(value as SortMode)
+            : setSortMode(value as SortMode)
+        }
+      />
+    </>
+  );
 
   return (
-    <div className={dashboardStyles.page}>
-      <div className="flex justify-between items-start gap-4">
-        <div className="min-w-0">
-          <h1 className="font-heading font-bold text-3xl">Gallery</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
-            Manage gallery images, visibility, categories, and display order.
-          </p>
-        </div>
-        <GalleryItemDialog
-          trigger={
-            <Button className="md:px-4 md:w-auto shrink-0">
-              <PlusIcon data-icon="inline-start" />
-              <span>Add Gallery Item</span>
+    <Drawer
+      open={filtersOpen}
+      onOpenChange={openFilters}
+      swipeDirection="down"
+      showSwipeHandle
+    >
+      <div className={dashboardStyles.page}>
+        <div className={dashboardStyles.header}>
+          <div className="min-w-0">
+            <h1 className="font-heading font-bold text-3xl">Gallery</h1>
+            <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
+              Manage gallery images, visibility, categories, and display order.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isReordering || isBatchPending || items.length < 2}
+              aria-pressed={reorderMode}
+              onClick={toggleReorderMode}
+            >
+              {isReordering
+                ? "Saving order..."
+                : reorderMode
+                  ? "Done reordering"
+                  : "Reorder"}
             </Button>
-          }
+            <GalleryItemDialog
+              categories={categories}
+              trigger={
+                <Button
+                  className="shrink-0"
+                  disabled={reorderMode || isBatchPending}
+                >
+                  <PlusIcon data-icon="inline-start" />
+                  Add image
+                </Button>
+              }
+            />
+          </div>
+        </div>
+        <DashboardSummary
+          items={[
+            { label: "Images", value: stats.total },
+            { label: "Visible", value: stats.visible },
+            { label: "Hidden", value: stats.hidden },
+            { label: "Categories", value: stats.categories },
+          ]}
         />
-      </div>
-
-      <DashboardSummary
-        items={[
-          { label: "Images", value: stats.total },
-          { label: "Visible", value: stats.visible },
-          { label: "Hidden", value: stats.hidden },
-          { label: "Categories", value: stats.categories },
-        ]}
-      />
-
-      <div className="flex flex-wrap justify-between items-center gap-3">
-        <p className="text-muted-foreground text-sm" role="status">
-          {reorderMode
-            ? `Reordering all ${items.length} images, including hidden items. Changes save as you move items.`
-            : "Reorder clears filters and shows all images in display order."}
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={toggleReorderMode}
-          aria-pressed={reorderMode}
-          disabled={isReordering || items.length < 2}
-        >
-          {reorderMode ? "Done reordering" : "Reorder"}
-        </Button>
-      </div>
-
-      {!reorderMode && (
-        <Card className={dashboardStyles.toolbarCard}>
-          <CardContent className={dashboardStyles.toolbarContent}>
-            <div className="md:hidden gap-3 grid">
-              <div className="relative min-w-0">
-                <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
-                <Input
-                  ref={mobileSearchInputRef}
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search gallery items..."
-                  className="pr-14 pl-9"
-                  aria-label="Search gallery items"
-                />
-                <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
-                  ⌘ K
-                </Kbd>
-              </div>
-              <div className="items-end gap-3 grid grid-cols-2 min-w-0">
-                <CompactFilterDropdown
-                  label="Visibility"
-                  value={visibility}
-                  displayValue={
-                    visibility === "visible"
-                      ? "Visible"
-                      : visibility === "hidden"
-                        ? "Hidden"
-                        : ""
-                  }
-                  onValueChange={(value) =>
-                    setVisibility(value as VisibilityFilter)
-                  }
-                  options={[
-                    { value: "all", label: "All" },
-                    { value: "visible", label: "Visible" },
-                    { value: "hidden", label: "Hidden" },
-                  ]}
-                />
-                <CompactFilterDropdown
-                  label="Category"
-                  value={category}
-                  displayValue={category === "all" ? "" : category}
-                  onValueChange={setCategory}
-                  options={[
-                    { value: "all", label: "All Categories" },
-                    ...categories.map((itemCategory) => ({
-                      value: String(itemCategory),
-                      label: String(itemCategory),
-                    })),
-                  ]}
-                />
-                <DashboardViewToggle
-                  value={viewMode}
-                  onValueChange={handleViewModeChange}
-                />
-                <Button
-                  type="button"
-                  variant={batchMode ? "secondary" : "outline"}
-                  size="sm"
-                  className="shrink-0"
-                  onClick={toggleBatchMode}
-                >
-                  {batchMode ? "Cancel" : "Select"}
-                </Button>
-              </div>
-            </div>
-
-            <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_minmax(160px,220px)_160px_auto] min-w-0">
-              <div className="md:col-span-full">
-                <FilterDropdown
-                  label="Visibility"
-                  value={visibility}
-                  displayValue={
-                    visibility === "all"
-                      ? "All"
-                      : visibility === "visible"
-                        ? "Visible"
-                        : "Hidden"
-                  }
-                  onValueChange={(value) =>
-                    setVisibility(value as VisibilityFilter)
-                  }
-                  options={[
-                    { value: "all", label: "All" },
-                    { value: "visible", label: "Visible" },
-                    { value: "hidden", label: "Hidden" },
-                  ]}
-                />
-              </div>
-
-              <div className="relative md:col-span-2 xl:col-span-1 min-w-0">
-                <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
-                <Input
-                  ref={desktopSearchInputRef}
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search gallery items..."
-                  className="pr-14 pl-9"
-                  aria-label="Search gallery items"
-                />
-                <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
-                  ⌘ K
-                </Kbd>
-              </div>
-
-              <FilterDropdown
-                label="Category"
-                value={category}
-                displayValue={category === "all" ? "All Categories" : category}
-                onValueChange={setCategory}
-                options={[
-                  { value: "all", label: "All Categories" },
-                  ...categories.map((itemCategory) => ({
-                    value: String(itemCategory),
-                    label: String(itemCategory),
-                  })),
-                ]}
-              />
-              <FilterDropdown
-                label="Sort by"
-                value={sortMode}
-                displayValue={
-                  sortMode === "order-asc"
-                    ? "Order (asc)"
-                    : sortMode === "order-desc"
-                      ? "Order (desc)"
-                      : sortMode === "created-desc"
-                        ? "Newest"
-                        : "Oldest"
-                }
-                onValueChange={(value) => setSortMode(value as SortMode)}
-                options={[
-                  { value: "order-asc", label: "Order (asc)" },
-                  { value: "order-desc", label: "Order (desc)" },
-                  { value: "created-desc", label: "Newest" },
-                  { value: "created-asc", label: "Oldest" },
-                ]}
-              />
-              <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
-                <DashboardViewToggle
-                  value={viewMode}
-                  onValueChange={handleViewModeChange}
-                />
-                <Button
-                  type="button"
-                  variant={batchMode ? "secondary" : "outline"}
-                  className="shrink-0"
-                  onClick={toggleBatchMode}
-                >
-                  {batchMode ? "Cancel" : "Select"}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card className={dashboardStyles.toolbarCard}>
-        <CardContent className={dashboardStyles.toolbarContent}>
-          {batchMode && (
-            <GalleryBatchActionsBar
-              selectedCount={selectedIds.size}
-              isPending={isBatchPending}
-              onShow={() =>
-                runBatchAction(actionShowGalleryItems, "Selected items shown.")
-              }
-              onHide={() =>
-                runBatchAction(actionHideGalleryItems, "Selected items hidden.")
-              }
-              onDelete={() =>
-                runBatchAction(
-                  actionDeleteGalleryItems,
-                  "Selected items deleted.",
-                )
-              }
-              onCancel={clearSelection}
-            />
-          )}
-          {items.length === 0 ? (
-            <div className={dashboardStyles.emptyState}>
-              <ImageIcon className="size-12 text-muted-foreground/50" />
-              <div>
-                <p className="font-medium">No gallery items yet</p>
-                <p className="mt-1 text-muted-foreground text-sm">
-                  Add the first image and assign it to a category.
-                </p>
-              </div>
-              <GalleryItemDialog
-                trigger={
-                  <Button>
-                    <PlusIcon data-icon="inline-start" />
-                    Add Gallery Item
+        {!reorderMode && (
+          <Card className={dashboardStyles.toolbarCard}>
+            <CardContent
+              className={cn(
+                dashboardStyles.toolbarContent,
+                "[&_input]:min-h-11 [&_button]:min-h-11",
+              )}
+            >
+              <div className={cn("md:hidden", toolbarStyles.mobileToolbar)}>
+                <div className={toolbarStyles.mobileRow}>
+                  <div className={toolbarStyles.mobileSearch}>
+                    <MagnifyingGlassIcon
+                      aria-hidden
+                      className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none"
+                    />
+                    <Input
+                      ref={mobileSearchInputRef}
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Search..."
+                      aria-label="Search gallery items"
+                      className="pr-3 pl-9"
+                    />
+                  </div>
+                  <DrawerTrigger
+                    render={
+                      <Button
+                        ref={filtersTriggerRef}
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="relative p-0 size-11"
+                        aria-label={
+                          activeFilterCount
+                            ? `Filters (${activeFilterCount})`
+                            : "Filters"
+                        }
+                        title="Filters"
+                      />
+                    }
+                  >
+                    <FunnelSimpleIcon aria-hidden />
+                    {activeFilterCount > 0 && (
+                      <span
+                        className="-top-1 -right-1 absolute bg-primary px-1 rounded-full min-w-4 h-4 text-primary-foreground text-xs"
+                        aria-hidden
+                      >
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </DrawerTrigger>
+                  <Button
+                    type="button"
+                    variant={batchMode ? "secondary" : "outline"}
+                    size="icon"
+                    className="p-0 size-11"
+                    disabled={isBatchPending}
+                    aria-label={batchMode ? "Exit selection mode" : "Select"}
+                    aria-pressed={batchMode}
+                    onClick={toggleBatchMode}
+                  >
+                    <CheckSquareIcon aria-hidden />
                   </Button>
-                }
-              />
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className={dashboardStyles.emptyState}>
-              <MagnifyingGlassIcon className="size-11 text-muted-foreground/50" />
-              <div>
-                <p className="font-medium">No gallery items found</p>
-                <p className="mt-1 text-muted-foreground text-sm">
-                  Try adjusting the search, visibility, or category filter.
-                </p>
+                </div>
               </div>
+              <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(160px,1fr)_130px_minmax(140px,190px)_150px_auto] min-w-0">
+                <div className="flex flex-col gap-1.5 md:col-span-2 xl:col-span-1 min-w-0">
+                  <span className="text-muted-foreground text-xs">Search</span>
+                  <div className="relative">
+                    <MagnifyingGlassIcon
+                      aria-hidden
+                      className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none"
+                    />
+                    <Input
+                      ref={desktopSearchInputRef}
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Search images..."
+                      aria-label="Search gallery items"
+                      className="pr-14 pl-9"
+                    />
+                    <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
+                      ⌘ K
+                    </Kbd>
+                  </div>
+                </div>
+                {renderFilters()}
+                <div className="flex items-center gap-2">
+                  <DashboardViewToggle
+                    value={viewMode}
+                    onValueChange={handleViewModeChange}
+                  />
+                  <Button
+                    type="button"
+                    variant={batchMode ? "secondary" : "outline"}
+                    disabled={isBatchPending}
+                    onClick={toggleBatchMode}
+                  >
+                    {batchMode ? "Cancel" : "Select"}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {(reorderMode || activeFilterCount > 0 || query.trim()) && (
+          <div className="flex flex-wrap justify-between items-center gap-3">
+            <div
+              className="flex flex-wrap items-center gap-3 text-muted-foreground text-sm"
+              role="status"
+            >
+              <span>
+                {reorderMode
+                  ? `Reordering all ${items.length} images, including hidden items. Changes save as you move images.`
+                  : `${filteredItems.length} ${filteredItems.length === 1 ? "image" : "images"} found`}
+              </span>
+              {!reorderMode && (activeFilterCount > 0 || query.trim()) && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="link"
+                  className="px-0"
+                  onClick={clearFilters}
+                >
+                  Clear filters and search
+                </Button>
+              )}
             </div>
-          ) : viewMode === "grid" ? (
-            <GalleryGrid
-              items={paginatedItems}
-              batchMode={batchMode}
-              selectedIds={selectedIds}
-              onSelectItem={openItemDetails}
-              onToggleItem={toggleItemSelection}
+          </div>
+        )}
+        {batchMode && (
+          <GalleryBatchActionsBar
+            selectedCount={selectedItems.length}
+            selectedItems={selectedItems}
+            outsideViewCount={outsideViewCount}
+            onTogglePage={togglePageSelection}
+            pageSelected={pageSelected}
+            isPending={isBatchPending}
+            onShow={() =>
+              runBatchAction(actionShowGalleryItems, "Selected images shown.")
+            }
+            onHide={() =>
+              runBatchAction(actionHideGalleryItems, "Selected images hidden.")
+            }
+            onDelete={() =>
+              runBatchAction(
+                actionDeleteGalleryItems,
+                "Selected images deleted.",
+              )
+            }
+            onCancel={clearSelection}
+          />
+        )}
+        {!filteredItems.length ? (
+          <div className={dashboardStyles.emptyState}>
+            <ImageIcon
+              aria-hidden
+              className="size-12 text-muted-foreground/50"
             />
-          ) : (
+            <div>
+              <p className="font-medium">
+                {items.length
+                  ? "No images match these filters"
+                  : "No gallery images yet"}
+              </p>
+              <p className="mt-1 text-muted-foreground text-sm">
+                {items.length
+                  ? "Clear filters or try another search."
+                  : "Add your first image and choose a category."}
+              </p>
+            </div>
+            {items.length ? (
+              <Button type="button" variant="outline" onClick={clearFilters}>
+                Clear filters and search
+              </Button>
+            ) : (
+              <GalleryItemDialog
+                categories={categories}
+                trigger={<Button>Add image</Button>}
+              />
+            )}
+          </div>
+        ) : viewMode === "grid" ? (
+          <GalleryGrid
+            items={paginatedItems}
+            batchMode={batchMode}
+            selectedIds={selectedIds}
+            onSelectItem={openItemDetails}
+            onToggleItem={toggleItemSelection}
+            selectionPending={isBatchPending}
+          />
+        ) : (
+          <div className={dashboardStyles.listSurface}>
+            <GalleryListHeader
+              hasRail={reorderMode || batchMode}
+              showPosition={reorderMode}
+            />
             <DashboardSortableList
-              key={reorderRevision}
               items={reorderMode ? filteredItems : paginatedItems}
-              disabled={
-                !reorderMode ||
-                isReordering ||
-                batchMode ||
-                filteredItems.length !== items.length
-              }
-              className={dashboardStyles.sortableRows}
+              disabled={!reorderMode || isReordering || batchMode}
+              className={dashboardStyles.listRows}
               strategy={verticalListSortingStrategy}
+              getItemLabel={getItemTitle}
               onReorder={handleReorder}
-              renderItem={({ item, handle, isDragging }) => (
+              renderItem={({ item, index, handle, isDragging }) => (
                 <GalleryListRow
                   item={item}
                   handle={reorderMode ? handle : null}
@@ -1866,36 +1749,65 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   selected={selectedIds.has(item.id)}
                   onSelectItem={openItemDetails}
                   onToggleItem={toggleItemSelection}
+                  selectionPending={isBatchPending}
+                  showPosition={reorderMode}
+                  position={index + 1}
                 />
               )}
             />
-          )}
-
-          {!reorderMode && filteredItems.length > 0 && (
-            <GalleryPagination
-              firstIndex={firstIndex}
-              lastIndex={lastIndex}
-              total={filteredItems.length}
-              page={currentPage}
-              pageCount={pageCount}
-              itemsPerPage={itemsPerPage}
-              itemsPerPageOptions={itemsPerPageOptions}
-              onPageChange={setPage}
-              onItemsPerPageChange={setItemsPerPage}
+          </div>
+        )}
+        {!reorderMode && filteredItems.length > 0 && (
+          <GalleryPagination
+            firstIndex={firstIndex}
+            lastIndex={lastIndex}
+            total={filteredItems.length}
+            page={currentPage}
+            pageCount={pageCount}
+            itemsPerPage={itemsPerPage}
+            itemsPerPageOptions={itemsPerPageOptions}
+            onPageChange={setPage}
+            onItemsPerPageChange={setItemsPerPage}
+          />
+        )}
+        {selectedItem && (
+          <GalleryDetailDrawer
+            open={detailOpen}
+            item={selectedItem}
+            direction={drawerDirection}
+            onClose={() => setDetailOpen(false)}
+            returnFocus={detailTriggerRef}
+          />
+        )}
+      </div>
+      <DrawerContent finalFocus={filtersTriggerRef} className="p-0">
+        <DrawerHeader>
+          <DrawerTitle>Filters</DrawerTitle>
+          <DrawerDescription>
+            Refine images by visibility, category, and order.
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="gap-4 grid px-4 pb-2 max-h-[52dvh] overflow-y-auto">
+          {renderFilters(true)}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-muted-foreground text-xs">View</span>
+            <DashboardViewToggle
+              value={draftView}
+              onValueChange={setDraftView}
             />
-          )}
-        </CardContent>
-      </Card>
-
-      {selectedItem && (
-        <GalleryDetailDrawer
-          open={detailOpen}
-          item={selectedItem}
-          direction={drawerDirection}
-          onClose={() => setDetailOpen(false)}
-          returnFocus={detailTriggerRef}
-        />
-      )}
-    </div>
+          </div>
+        </div>
+        <DrawerFooter>
+          <div className="gap-2 grid grid-cols-2">
+            <Button type="button" variant="outline" onClick={resetDraft}>
+              Reset filters
+            </Button>
+            <Button type="button" onClick={applyFilters}>
+              Apply filters
+            </Button>
+          </div>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }

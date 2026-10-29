@@ -3,6 +3,7 @@
 import { and, desc, eq, gt, gte, inArray, lt, lte, ne, sql } from "drizzle-orm";
 import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
+import { GALLERY_BATCH_LIMIT } from "@/features/dashboard/gallery/constants";
 import {
   type GalleryItemActionInput,
   galleryItemActionSchema,
@@ -22,7 +23,10 @@ type GalleryActionData = {
   id: string;
 };
 
-const galleryItemIdsSchema = z.array(z.string().min(1)).min(1).max(100);
+const galleryItemIdsSchema = z
+  .array(z.string().min(1))
+  .min(1)
+  .max(GALLERY_BATCH_LIMIT);
 
 function parseGalleryInput(input: unknown) {
   const parsed = galleryItemActionSchema.safeParse(input);
@@ -245,10 +249,14 @@ function parseGalleryItemIds(itemIds: string[]) {
   const parsed = galleryItemIdsSchema.safeParse(itemIds);
 
   if (!parsed.success) {
-    return actionError("Select at least one gallery item.");
+    return actionError(
+      Array.isArray(itemIds) && itemIds.length > GALLERY_BATCH_LIMIT
+        ? `Select no more than ${GALLERY_BATCH_LIMIT} gallery items at a time.`
+        : "Select at least one gallery item.",
+    );
   }
 
-  return parsed.data;
+  return [...new Set(parsed.data)];
 }
 
 export async function actionShowGalleryItems(

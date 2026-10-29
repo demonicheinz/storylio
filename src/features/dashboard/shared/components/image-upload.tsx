@@ -3,9 +3,11 @@
 import { CloudArrowUpIcon, CropIcon, ImageIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import {
+  type AriaAttributes,
   type ChangeEvent,
   type DragEvent,
   useCallback,
+  useId,
   useRef,
   useState,
 } from "react";
@@ -46,6 +48,10 @@ type ImageUploadProps = {
   priority?: boolean;
   maxSizeBytes?: number;
   maxSizeLabel?: string;
+  "aria-labelledby"?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: AriaAttributes["aria-invalid"];
+  onUploadingChange?: (uploading: boolean) => void;
 };
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -123,7 +129,12 @@ export function ImageUpload({
   priority = false,
   maxSizeBytes = MAX_SIZE,
   maxSizeLabel = "10MB",
+  "aria-labelledby": labelledBy,
+  "aria-describedby": describedBy,
+  "aria-invalid": invalid,
+  onUploadingChange,
 }: ImageUploadProps) {
+  const id = useId();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const uploading = useRef(false);
@@ -162,6 +173,7 @@ export function ImageUpload({
 
       uploading.current = true;
       setIsUploading(true);
+      onUploadingChange?.(true);
       try {
         const data = await uploadImageFile(file);
         onChange(data.url, {
@@ -176,9 +188,10 @@ export function ImageUpload({
       } finally {
         uploading.current = false;
         setIsUploading(false);
+        onUploadingChange?.(false);
       }
     },
-    [onChange, disabled],
+    [onChange, disabled, onUploadingChange],
   );
 
   const prepareFile = useCallback(
@@ -293,7 +306,13 @@ export function ImageUpload({
 
   if (value) {
     return (
-      <div className={cn("relative", className)}>
+      <div
+        className={cn("relative", className)}
+        role={labelledBy ? "group" : undefined}
+        aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
+        aria-invalid={invalid}
+      >
         <div
           className={cn(
             "relative border border-border rounded-lg w-full aspect-video overflow-hidden",
@@ -313,7 +332,7 @@ export function ImageUpload({
         {onRemove && (
           <ImageRemoveButton
             label="Remove image"
-            disabled={disabled}
+            disabled={disabled || isUploading}
             onRemove={onRemove}
           />
         )}
@@ -329,6 +348,14 @@ export function ImageUpload({
     >
       <button
         type="button"
+        aria-labelledby={labelledBy}
+        aria-describedby={
+          [describedBy, error ? `${id}-error` : undefined]
+            .filter(Boolean)
+            .join(" ") || undefined
+        }
+        aria-invalid={error ? true : invalid}
+        aria-busy={isUploading}
         disabled={disabled || isUploading}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -370,6 +397,9 @@ export function ImageUpload({
 
       <input
         ref={inputRef}
+        aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
+        aria-invalid={invalid}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         className="hidden"
@@ -377,7 +407,15 @@ export function ImageUpload({
         disabled={disabled || isUploading}
       />
 
-      {error && <p className="mt-2 text-destructive text-sm">{error}</p>}
+      {error && (
+        <p
+          id={`${id}-error`}
+          role="alert"
+          className="mt-2 text-destructive text-sm"
+        >
+          {error}
+        </p>
+      )}
 
       <Dialog
         open={cropDialogOpen}
@@ -416,13 +454,13 @@ export function ImageUpload({
 
           <div className="flex flex-col gap-2">
             <label
-              htmlFor="image-crop-zoom"
+              htmlFor={`${id}-crop-zoom`}
               className="font-medium text-foreground text-sm"
             >
               Zoom
             </label>
             <input
-              id="image-crop-zoom"
+              id={`${id}-crop-zoom`}
               type="range"
               min={1}
               max={3}
