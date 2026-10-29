@@ -46,22 +46,21 @@ describe("public project cache input boundaries", () => {
     ]);
   });
 
-  it.each([
-    ["unknown"],
-    ["React", "unknown"],
-    ["Private tech"],
-  ])("keeps unknown selections empty without creating keyed query entries: %j", async (...technologies) => {
-    const result = await getPublicProjects(
-      technologies,
-      Number.MAX_SAFE_INTEGER,
-    );
-    expect(result.projects).toEqual([]);
-    expect(result.totalResults).toBe(0);
-    expect(result.totalProjects).toBe(14);
-    expect(result.pagination).toMatchObject({ page: 1, pageCount: 0 });
-    expect(cache.getProjectCount).not.toHaveBeenCalled();
-    expect(cache.getProjectRows).not.toHaveBeenCalled();
-  });
+  it.each([["unknown"], ["React", "unknown"], ["Private tech"]])(
+    "keeps unknown selections empty without creating keyed query entries: %j",
+    async (...technologies) => {
+      const result = await getPublicProjects(
+        technologies,
+        Number.MAX_SAFE_INTEGER,
+      );
+      expect(result.projects).toEqual([]);
+      expect(result.totalResults).toBe(0);
+      expect(result.totalProjects).toBe(14);
+      expect(result.pagination).toMatchObject({ page: 1, pageCount: 0 });
+      expect(cache.getProjectCount).not.toHaveBeenCalled();
+      expect(cache.getProjectRows).not.toHaveBeenCalled();
+    },
+  );
 
   it("does not fetch row entries for valid combinations with no matches", async () => {
     cache.getProjectCount.mockResolvedValue(0);
@@ -70,14 +69,11 @@ describe("public project cache input boundaries", () => {
     expect(cache.getProjectRows).not.toHaveBeenCalled();
   });
 
-  it.each([
-    NaN,
-    Infinity,
-    -1,
-    0,
-    1.5,
-  ])("normalizes malformed page %s before the row cache", async (page) => {
-    await getPublicProjects([], page);
-    expect(cache.getProjectRows).toHaveBeenCalledWith([], 1);
-  });
+  it.each([NaN, Infinity, -1, 0, 1.5])(
+    "normalizes malformed page %s before the row cache",
+    async (page) => {
+      await getPublicProjects([], page);
+      expect(cache.getProjectRows).toHaveBeenCalledWith([], 1);
+    },
+  );
 });

@@ -56,20 +56,25 @@ describe("Gallery editor shared contracts", () => {
     ["caption", 180],
     ["altText", 180],
     ["description", 500],
-  ] as const)("validates %s at the same boundary as editor feedback", (field, limit) => {
-    const item = {
-      imageUrl: "https://example.test/fixture.png",
-      category: "Interface",
-    };
-    expect(
-      galleryItemActionSchema.safeParse({ ...item, [field]: "x".repeat(limit) })
-        .success,
-    ).toBe(true);
-    expect(
-      galleryItemActionSchema.safeParse({
-        ...item,
-        [field]: "x".repeat(limit + 1),
-      }).success,
-    ).toBe(false);
-  });
+  ] as const)(
+    "validates %s at the same boundary as editor feedback",
+    (field, limit) => {
+      const item = {
+        imageUrl: "https://example.test/fixture.png",
+        category: "Interface",
+      };
+      expect(
+        galleryItemActionSchema.safeParse({
+          ...item,
+          [field]: "x".repeat(limit),
+        }).success,
+      ).toBe(true);
+      expect(
+        galleryItemActionSchema.safeParse({
+          ...item,
+          [field]: "x".repeat(limit + 1),
+        }).success,
+      ).toBe(false);
+    },
+  );
 });

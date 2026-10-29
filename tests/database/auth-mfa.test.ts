@@ -306,128 +306,130 @@ describe("optional authenticator MFA", () => {
     ).toBe(429);
     expect(await session()).toBeNull();
   });
-  it.each([
-    false,
-    true,
-  ])("allows a verified passkey only when local MFA is disabled (MFA=%s)", async (mfa) => {
-    if (mfa) await enable();
-    jar.clear();
-    await fixture.db.delete(schema.session);
-    const credentialID = "Zml4dHVyZS1jcmVkZW50aWFs";
-    const keys = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
-    const jwk = keys.publicKey.export({ format: "jwk" });
-    const cose = isoCBOR.encode(
-      new Map<number, number | Uint8Array>([
-        [1, 2],
-        [3, -7],
-        [-1, 1],
-        [-2, Buffer.from(jwk.x!, "base64url")],
-        [-3, Buffer.from(jwk.y!, "base64url")],
-      ]),
-    );
-    await fixture.db.insert(schema.passkey).values({
-      id: "fixture-passkey",
-      userId: ownerId,
-      credentialID,
-      publicKey: Buffer.from(cose).toString("base64"),
-      counter: 0,
-      deviceType: "singleDevice",
-      backedUp: false,
-    });
-    const options = applyCookies(
-      await auth.handler(
-        new Request(
-          origin + "/api/auth/passkey/generate-authenticate-options",
-          { headers: { Origin: origin } },
+  it.each([false, true])(
+    "allows a verified passkey only when local MFA is disabled (MFA=%s)",
+    async (mfa) => {
+      if (mfa) await enable();
+      jar.clear();
+      await fixture.db.delete(schema.session);
+      const credentialID = "Zml4dHVyZS1jcmVkZW50aWFs";
+      const keys = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
+      const jwk = keys.publicKey.export({ format: "jwk" });
+      const cose = isoCBOR.encode(
+        new Map<number, number | Uint8Array>([
+          [1, 2],
+          [3, -7],
+          [-1, 1],
+          [-2, Buffer.from(jwk.x!, "base64url")],
+          [-3, Buffer.from(jwk.y!, "base64url")],
+        ]),
+      );
+      await fixture.db.insert(schema.passkey).values({
+        id: "fixture-passkey",
+        userId: ownerId,
+        credentialID,
+        publicKey: Buffer.from(cose).toString("base64"),
+        counter: 0,
+        deviceType: "singleDevice",
+        backedUp: false,
+      });
+      const options = applyCookies(
+        await auth.handler(
+          new Request(
+            origin + "/api/auth/passkey/generate-authenticate-options",
+            { headers: { Origin: origin } },
+          ),
         ),
-      ),
-    );
-    expect(options.status).toBe(200);
-    const { challenge } = await options.json();
-    const clientData = Buffer.from(
-      JSON.stringify({ type: "webauthn.get", challenge, origin }),
-    );
-    const authenticatorData = Buffer.concat([
-      createHash("sha256").update(new URL(origin).hostname).digest(),
-      Buffer.from([1, 0, 0, 0, 1]),
-    ]);
-    const signature = sign(
-      "sha256",
-      Buffer.concat([
-        authenticatorData,
-        createHash("sha256").update(clientData).digest(),
-      ]),
-      keys.privateKey,
-    );
-    const response = await post("/passkey/verify-authentication", {
-      response: {
-        id: credentialID,
-        rawId: credentialID,
-        type: "public-key",
+      );
+      expect(options.status).toBe(200);
+      const { challenge } = await options.json();
+      const clientData = Buffer.from(
+        JSON.stringify({ type: "webauthn.get", challenge, origin }),
+      );
+      const authenticatorData = Buffer.concat([
+        createHash("sha256").update(new URL(origin).hostname).digest(),
+        Buffer.from([1, 0, 0, 0, 1]),
+      ]);
+      const signature = sign(
+        "sha256",
+        Buffer.concat([
+          authenticatorData,
+          createHash("sha256").update(clientData).digest(),
+        ]),
+        keys.privateKey,
+      );
+      const response = await post("/passkey/verify-authentication", {
         response: {
-          clientDataJSON: clientData.toString("base64url"),
-          authenticatorData: authenticatorData.toString("base64url"),
-          signature: signature.toString("base64url"),
+          id: credentialID,
+          rawId: credentialID,
+          type: "public-key",
+          response: {
+            clientDataJSON: clientData.toString("base64url"),
+            authenticatorData: authenticatorData.toString("base64url"),
+            signature: signature.toString("base64url"),
+          },
         },
-      },
-    });
-    expect(response.status).toBe(mfa ? 403 : 200);
-    if (mfa) expect(await session()).toBeNull();
-    else expect((await session()).user.id).toBe(ownerId);
-  });
-  it.each([
-    false,
-    true,
-  ])("allows GitHub only when local MFA is disabled (MFA=%s)", async (mfa) => {
-    if (mfa) await enable();
-    jar.clear();
-    await fixture.db.delete(schema.session);
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (input: string | URL | Request) => {
-        const url = String(input instanceof Request ? input.url : input);
-        if (url.includes("github.com/login/oauth/access_token"))
-          return Response.json({
-            access_token: "fixture-token",
-            token_type: "bearer",
-            scope: "user:email",
-          });
-        if (url.includes("api.github.com/user/emails"))
-          return Response.json([
-            { email: "owner@example.test", primary: true, verified: true },
-          ]);
-        if (url.startsWith("https://api.github.com/user"))
-          return Response.json({
-            id: 12345,
-            login: "owner",
-            name: "Owner",
-            email: "owner@example.test",
-            avatar_url: "https://example.test/avatar.png",
-          });
-        throw new Error("Unexpected OAuth fixture request");
-      }),
-    );
-    const start = await post("/sign-in/social", {
-      provider: "github",
-      callbackURL: origin + "/dashboard",
-      errorCallbackURL: origin + "/sign-in?error=oauth",
-    });
-    expect(start.status).toBe(200);
-    const state = new URL((await start.json()).url).searchParams.get("state")!;
-    const callback = applyCookies(
-      await auth.handler(
-        new Request(
-          origin +
-            "/api/auth/callback/github?" +
-            new URLSearchParams({ code: "fixture-code", state }),
-          { headers: { Cookie: cookie() } },
+      });
+      expect(response.status).toBe(mfa ? 403 : 200);
+      if (mfa) expect(await session()).toBeNull();
+      else expect((await session()).user.id).toBe(ownerId);
+    },
+  );
+  it.each([false, true])(
+    "allows GitHub only when local MFA is disabled (MFA=%s)",
+    async (mfa) => {
+      if (mfa) await enable();
+      jar.clear();
+      await fixture.db.delete(schema.session);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (input: string | URL | Request) => {
+          const url = String(input instanceof Request ? input.url : input);
+          if (url.includes("github.com/login/oauth/access_token"))
+            return Response.json({
+              access_token: "fixture-token",
+              token_type: "bearer",
+              scope: "user:email",
+            });
+          if (url.includes("api.github.com/user/emails"))
+            return Response.json([
+              { email: "owner@example.test", primary: true, verified: true },
+            ]);
+          if (url.startsWith("https://api.github.com/user"))
+            return Response.json({
+              id: 12345,
+              login: "owner",
+              name: "Owner",
+              email: "owner@example.test",
+              avatar_url: "https://example.test/avatar.png",
+            });
+          throw new Error("Unexpected OAuth fixture request");
+        }),
+      );
+      const start = await post("/sign-in/social", {
+        provider: "github",
+        callbackURL: origin + "/dashboard",
+        errorCallbackURL: origin + "/sign-in?error=oauth",
+      });
+      expect(start.status).toBe(200);
+      const state = new URL((await start.json()).url).searchParams.get(
+        "state",
+      )!;
+      const callback = applyCookies(
+        await auth.handler(
+          new Request(
+            origin +
+              "/api/auth/callback/github?" +
+              new URLSearchParams({ code: "fixture-code", state }),
+            { headers: { Cookie: cookie() } },
+          ),
         ),
-      ),
-    );
-    expect(callback.status).toBe(302);
-    if (mfa) {
-      expect(await session()).toBeNull();
-      expect(await fixture.db.query.session.findMany()).toHaveLength(0);
-    } else expect((await session()).user.id).toBe(ownerId);
-  });
+      );
+      expect(callback.status).toBe(302);
+      if (mfa) {
+        expect(await session()).toBeNull();
+        expect(await fixture.db.query.session.findMany()).toHaveLength(0);
+      } else expect((await session()).user.id).toBe(ownerId);
+    },
+  );
 });

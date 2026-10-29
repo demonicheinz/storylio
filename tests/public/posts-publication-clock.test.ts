@@ -51,44 +51,39 @@ describe("Posts manager publication clock", () => {
       views: 17,
       badge: "Published",
     },
-  ])("uses the shared clock $clock for summary, badges and views despite wall time", ({
-    clock,
-    wall,
-    published,
-    scheduled,
-    views,
-    badge,
-  }) => {
-    mocks.status = "all";
-    mocks.now.mockReturnValue(clock);
-    vi.spyOn(Date, "now").mockReturnValue(wall);
-    const html = renderToStaticMarkup(
-      createElement(PostsManager, { posts: [post] }),
-    );
-    const text = html.replace(/<[^>]+>/g, "");
-    expect(text).toContain(
-      `Published${published}Drafts0Scheduled${scheduled}Views${views}`,
-    );
-    expect(html).toContain(`${badge}</span>`);
-    expect(text).toContain(`${views} views`);
-  });
+  ])(
+    "uses the shared clock $clock for summary, badges and views despite wall time",
+    ({ clock, wall, published, scheduled, views, badge }) => {
+      mocks.status = "all";
+      mocks.now.mockReturnValue(clock);
+      vi.spyOn(Date, "now").mockReturnValue(wall);
+      const html = renderToStaticMarkup(
+        createElement(PostsManager, { posts: [post] }),
+      );
+      const text = html.replace(/<[^>]+>/g, "");
+      expect(text).toContain(
+        `Published${published}Drafts0Scheduled${scheduled}Views${views}`,
+      );
+      expect(html).toContain(`${badge}</span>`);
+      expect(text).toContain(`${views} views`);
+    },
+  );
 
   it.each([
     { clock: due - 1, wall: due + 60_000, status: "scheduled" },
     { clock: due, wall: due - 60_000, status: "published" },
-  ])("filters $status using the shared clock rather than wall time", ({
-    clock,
-    wall,
-    status,
-  }) => {
-    mocks.status = status;
-    mocks.now.mockReturnValue(clock);
-    vi.spyOn(Date, "now").mockReturnValue(wall);
-    const text = renderToStaticMarkup(
-      createElement(PostsManager, { posts: [post] }),
-    ).replace(/<[^>]+>/g, "");
-    expect(text).toContain("1 post found");
-    expect(text).toContain(post.title);
-    expect(text).not.toContain("No posts match these filters");
-  });
+  ])(
+    "filters $status using the shared clock rather than wall time",
+    ({ clock, wall, status }) => {
+      mocks.status = status;
+      mocks.now.mockReturnValue(clock);
+      vi.spyOn(Date, "now").mockReturnValue(wall);
+      const text = renderToStaticMarkup(
+        createElement(PostsManager, { posts: [post] }),
+      ).replace(/<[^>]+>/g, "");
+      expect(text).toContain("1 post found");
+      expect(text).toContain(post.title);
+      expect(text).not.toContain("No posts match these filters");
+    },
+  );
 });

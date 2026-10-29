@@ -145,26 +145,26 @@ describe("post publication intent", () => {
     expect(effects.updateTag).not.toHaveBeenCalled();
   });
 
-  it.each([
-    undefined,
-    "now",
-  ] as const)("creates a current publication date with intent %s and returns the persisted value", async (publicationIntent) => {
-    const before = Date.now();
-    const result = await actionCreatePost({
-      ...input,
-      publicationIntent,
-      scheduledPublishDate: publicationIntent === "now" ? future : undefined,
-    });
-    const after = Date.now();
-    const persisted = (await stored(data(result).id))?.publishedAt;
-    expect(persisted?.getTime()).toBeGreaterThanOrEqual(before);
-    expect(persisted?.getTime()).toBeLessThanOrEqual(after);
-    expect(result).toMatchObject({
-      success: true,
-      message: "Post published.",
-      data: { publishedAt: persisted?.toISOString() },
-    });
-  });
+  it.each([undefined, "now"] as const)(
+    "creates a current publication date with intent %s and returns the persisted value",
+    async (publicationIntent) => {
+      const before = Date.now();
+      const result = await actionCreatePost({
+        ...input,
+        publicationIntent,
+        scheduledPublishDate: publicationIntent === "now" ? future : undefined,
+      });
+      const after = Date.now();
+      const persisted = (await stored(data(result).id))?.publishedAt;
+      expect(persisted?.getTime()).toBeGreaterThanOrEqual(before);
+      expect(persisted?.getTime()).toBeLessThanOrEqual(after);
+      expect(result).toMatchObject({
+        success: true,
+        message: "Post published.",
+        data: { publishedAt: persisted?.toISOString() },
+      });
+    },
+  );
 
   it("returns the persisted ISO date and scheduled message on create and manual publish", async () => {
     const created = data(await actionCreatePost({ ...input, status: "draft" }));
@@ -220,33 +220,35 @@ describe("post publication intent", () => {
     });
   });
 
-  it.each([
-    "keep",
-    undefined,
-  ] as const)("%s keeps the existing date and supports legacy rescheduling with a supplied date", async (publicationIntent) => {
-    const created = data(
-      await actionCreatePost({ ...input, scheduledPublishDate: future }),
-    );
-    expect(
-      await actionUpdatePost(created.id, { ...input, publicationIntent }),
-    ).toMatchObject({
-      success: true,
-      message: "Post scheduled.",
-      data: { publishedAt: future },
-    });
-    expect((await stored(created.id))?.publishedAt?.toISOString()).toBe(future);
-    const nextDate = "2099-04-05T06:07:08.000Z";
-    expect(
-      await actionUpdatePost(created.id, {
-        ...input,
-        publicationIntent,
-        scheduledPublishDate: nextDate,
-      }),
-    ).toMatchObject({ success: true, data: { publishedAt: nextDate } });
-    expect((await stored(created.id))?.publishedAt?.toISOString()).toBe(
-      nextDate,
-    );
-  });
+  it.each(["keep", undefined] as const)(
+    "%s keeps the existing date and supports legacy rescheduling with a supplied date",
+    async (publicationIntent) => {
+      const created = data(
+        await actionCreatePost({ ...input, scheduledPublishDate: future }),
+      );
+      expect(
+        await actionUpdatePost(created.id, { ...input, publicationIntent }),
+      ).toMatchObject({
+        success: true,
+        message: "Post scheduled.",
+        data: { publishedAt: future },
+      });
+      expect((await stored(created.id))?.publishedAt?.toISOString()).toBe(
+        future,
+      );
+      const nextDate = "2099-04-05T06:07:08.000Z";
+      expect(
+        await actionUpdatePost(created.id, {
+          ...input,
+          publicationIntent,
+          scheduledPublishDate: nextDate,
+        }),
+      ).toMatchObject({ success: true, data: { publishedAt: nextDate } });
+      expect((await stored(created.id))?.publishedAt?.toISOString()).toBe(
+        nextDate,
+      );
+    },
+  );
 
   it("draft saves clear the persisted date regardless of schedule intent", async () => {
     const created = data(
@@ -320,16 +322,19 @@ describe("atomic batch post publication", () => {
     ["empty", "Empty post"],
     ["unsafe", "Unsafe post"],
     ["invalid", "Invalid post"],
-  ])("rejects %s with its title and leaves every selected row untouched", async (id, title) => {
-    const before = await rows();
-    expect(await actionPublishPosts(["ready", id])).toMatchObject({
-      success: false,
-      error: expect.stringContaining(`Cannot publish "${title}"`),
-    });
-    expect(await rows()).toEqual(before);
-    expect(effects.updateTag).not.toHaveBeenCalled();
-    expect(effects.revalidatePath).not.toHaveBeenCalled();
-  });
+  ])(
+    "rejects %s with its title and leaves every selected row untouched",
+    async (id, title) => {
+      const before = await rows();
+      expect(await actionPublishPosts(["ready", id])).toMatchObject({
+        success: false,
+        error: expect.stringContaining(`Cannot publish "${title}"`),
+      });
+      expect(await rows()).toEqual(before);
+      expect(effects.updateTag).not.toHaveBeenCalled();
+      expect(effects.revalidatePath).not.toHaveBeenCalled();
+    },
+  );
 
   it("rejects missing IDs atomically even when the selection includes duplicates", async () => {
     const before = await rows();

@@ -119,19 +119,17 @@ describe.each([
     });
   });
 
-  it.each([
-    { ids: [] },
-    { ids: [""] },
-  ])("keeps the selection error for empty or malformed IDs %#", async ({
-    ids,
-  }) => {
-    const before = await states();
-    expect(await action(ids)).toMatchObject({
-      success: false,
-      error: "Select at least one gallery item.",
-    });
-    expect(await states()).toEqual(before);
-  });
+  it.each([{ ids: [] }, { ids: [""] }])(
+    "keeps the selection error for empty or malformed IDs %#",
+    async ({ ids }) => {
+      const before = await states();
+      expect(await action(ids)).toMatchObject({
+        success: false,
+        error: "Select at least one gallery item.",
+      });
+      expect(await states()).toEqual(before);
+    },
+  );
 
   it.each([
     {

@@ -88,11 +88,14 @@ describe("About category-scoped skills", () => {
       { id: "a1", order: 0 },
       { id: "a2", order: 4 },
     ],
-  ])("rejects incomplete, mixed, duplicate or invalid orders %#", async (...entries) => {
-    const before = await rows();
-    expect((await actionReorderSkills(entries, "a")).success).toBe(false);
-    expect(await rows()).toEqual(before);
-  });
+  ])(
+    "rejects incomplete, mixed, duplicate or invalid orders %#",
+    async (...entries) => {
+      const before = await rows();
+      expect((await actionReorderSkills(entries, "a")).success).toBe(false);
+      expect(await rows()).toEqual(before);
+    },
+  );
   it("requires authorization for an otherwise valid reorder", async () => {
     mocks.session.mockRejectedValueOnce(new Error("Unauthorized"));
     const before = await rows();

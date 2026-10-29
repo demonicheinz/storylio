@@ -96,22 +96,23 @@ describe("Home session drafts", () => {
     { ...base, showOnHome: false },
     { ...base, order: 1 },
     { ...base, imageUrl: "https://example.com/new.png" },
-  ])("rejects and deletes a section draft when any saved base field changes: %j", (changed) => {
-    saveSectionDraft(key, base, { ...base, label: "React" });
-    expect(readSectionDraft(key, changed)).toBeUndefined();
-    expect(entries.has(key)).toBe(false);
-  });
+  ])(
+    "rejects and deletes a section draft when any saved base field changes: %j",
+    (changed) => {
+      saveSectionDraft(key, base, { ...base, label: "React" });
+      expect(readSectionDraft(key, changed)).toBeUndefined();
+      expect(entries.has(key)).toBe(false);
+    },
+  );
 
-  it.each([
-    "{",
-    "null",
-    "[]",
-    "x".repeat(16_385),
-  ])("rejects malformed or oversized stored JSON (case %#)", (raw) => {
-    entries.set(key, raw);
-    expect(readSectionDraft(key, base)).toBeUndefined();
-    expect(entries.has(key)).toBe(false);
-  });
+  it.each(["{", "null", "[]", "x".repeat(16_385)])(
+    "rejects malformed or oversized stored JSON (case %#)",
+    (raw) => {
+      entries.set(key, raw);
+      expect(readSectionDraft(key, base)).toBeUndefined();
+      expect(entries.has(key)).toBe(false);
+    },
+  );
 
   it.each([
     { version: 2 },

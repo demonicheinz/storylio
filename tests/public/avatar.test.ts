@@ -27,17 +27,17 @@ describe("avatar source", () => {
 });
 
 describe("static avatar orb", () => {
-  it.each([
-    null,
-    "/images/heinz.jpg",
-  ])("renders the shared fallback for %s", (src) => {
-    const html = renderToStaticMarkup(
-      createElement(ProfileAvatar, { src, name: "Heinz" }),
-    );
-    expect(html).toContain('aria-label="Heinz avatar"');
-    expect(html).not.toContain("<img");
-    expect(html).not.toContain("<canvas");
-  });
+  it.each([null, "/images/heinz.jpg"])(
+    "renders the shared fallback for %s",
+    (src) => {
+      const html = renderToStaticMarkup(
+        createElement(ProfileAvatar, { src, name: "Heinz" }),
+      );
+      expect(html).toContain('aria-label="Heinz avatar"');
+      expect(html).not.toContain("<img");
+      expect(html).not.toContain("<canvas");
+    },
+  );
 
   it("renders an accessible face without a WebGL canvas", () => {
     const html = renderToStaticMarkup(

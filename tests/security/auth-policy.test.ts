@@ -6,15 +6,14 @@ import {
 } from "@/lib/auth-policy";
 
 describe("auth deployment hosts", () => {
-  it.each([
-    "localhost",
-    "127.0.0.1",
-    "[::1]",
-  ])("uses HTTP for explicitly configured local %s even with next start", (host) => {
-    expect(
-      getAuthProtocol(`http://${host}:3000`, { NODE_ENV: "production" }),
-    ).toBe("http");
-  });
+  it.each(["localhost", "127.0.0.1", "[::1]"])(
+    "uses HTTP for explicitly configured local %s even with next start",
+    (host) => {
+      expect(
+        getAuthProtocol(`http://${host}:3000`, { NODE_ENV: "production" }),
+      ).toBe("http");
+    },
+  );
   it("keeps remote deployments and HTTPS localhost secure", () => {
     expect(
       getAuthProtocol("https://localhost:3000", { NODE_ENV: "production" }),

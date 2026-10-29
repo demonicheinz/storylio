@@ -68,15 +68,14 @@ const states = async () =>
     .map(({ id, status }) => ({ id, status }))
     .sort((a, b) => a.id.localeCompare(b.id));
 describe("batch project publication", () => {
-  it.each([
-    "empty",
-    "unsafe",
-    "missing",
-  ])("rejects %s atomically", async (id) => {
-    const before = await states();
-    expect((await actionPublishProjects(["ready", id])).success).toBe(false);
-    expect(await states()).toEqual(before);
-  });
+  it.each(["empty", "unsafe", "missing"])(
+    "rejects %s atomically",
+    async (id) => {
+      const before = await states();
+      expect((await actionPublishProjects(["ready", id])).success).toBe(false);
+      expect(await states()).toEqual(before);
+    },
+  );
   it("publishes valid projects", async () => {
     expect(await actionPublishProjects(["ready"])).toMatchObject({
       success: true,

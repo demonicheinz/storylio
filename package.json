@@ -110,7 +110,7 @@
     "zod": "^4.6.6"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.0",
+    "@biomejs/biome": "^2.6.4",
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@electric-sql/pglite": "0.5.11",
