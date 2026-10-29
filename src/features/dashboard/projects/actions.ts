@@ -436,32 +436,59 @@ export async function actionPublishProjects(
   }
 
   try {
-    const projects = await db.query.project.findMany({
-      where: inArray(projectTable.id, parsedIds),
-      columns: { slug: true },
+    let slugs: string[] = [];
+    const outcome = await db.transaction(async (tx) => {
+      const rows = await tx
+        .select()
+        .from(projectTable)
+        .where(inArray(projectTable.id, parsedIds))
+        .for("update");
+      if (rows.length !== new Set(parsedIds).size)
+        return actionError(
+          "The selection changed. Refresh and select the projects again. Nothing was published.",
+        );
+      for (const row of rows.filter(
+        (entry) => entry.status === ProjectStatus.DRAFT,
+      )) {
+        const input = Object.fromEntries(
+          Object.entries(row).map(([key, value]) => [
+            key,
+            value === null ? undefined : value,
+          ]),
+        );
+        const parsed = projectActionSchema.safeParse({
+          ...input,
+          status: "published",
+          techStack: row.techStack ?? [],
+        });
+        const problem = !parsed.success
+          ? parsed.error.issues[0]?.message
+          : await getMdxSafetyError(parsed.data.content);
+        if (problem)
+          return actionError(
+            `Cannot publish "${row.title}": ${problem} No projects were published.`,
+          );
+      }
+      const changed = await tx
+        .update(projectTable)
+        .set({ status: ProjectStatus.PUBLISHED, updatedAt: new Date() })
+        .where(
+          and(
+            inArray(projectTable.id, parsedIds),
+            eq(projectTable.status, ProjectStatus.DRAFT),
+          ),
+        )
+        .returning({ id: projectTable.id });
+      slugs = rows.map((entry) => entry.slug);
+      return actionSuccess(
+        { count: changed.length },
+        changed.length === 1
+          ? "Project published."
+          : `${changed.length} projects published.`,
+      );
     });
-
-    const result = await db
-      .update(projectTable)
-      .set({
-        status: ProjectStatus.PUBLISHED,
-      })
-      .where(
-        and(
-          inArray(projectTable.id, parsedIds),
-          eq(projectTable.status, ProjectStatus.DRAFT),
-        ),
-      )
-      .returning({ id: projectTable.id });
-
-    revalidateProjectSlugs(projects.map((project) => project.slug));
-
-    return actionSuccess(
-      { count: result.length },
-      result.length === 1
-        ? "Project published."
-        : `${result.length} projects published.`,
-    );
+    if (outcome.success) revalidateProjectSlugs(slugs);
+    return outcome;
   } catch (error) {
     console.error("Publish projects failed:", error);
     return actionError("Failed to publish projects.");

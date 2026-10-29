@@ -160,32 +160,20 @@ export function DashboardMdxEditor({
               <DiffSourceToggleWrapper options={["rich-text", "source"]}>
                 <UndoRedo />
                 <Separator />
-                {variant === "full" && (
-                  <>
-                    <BlockTypeSelect />
-                    <Separator />
-                  </>
-                )}
+                <BlockTypeSelect />
+                <Separator />
                 <BoldItalicUnderlineToggles options={["Bold", "Italic"]} />
-                {variant === "full" && (
-                  <>
-                    <CodeToggle />
-                    <HighlightToggle />
-                    <StrikeThroughSupSubToggles options={["Strikethrough"]} />
-                  </>
-                )}
+                <CodeToggle />
+                <HighlightToggle />
+                <StrikeThroughSupSubToggles options={["Strikethrough"]} />
                 <ListsToggle />
                 <Separator />
                 <CreateLink />
-                {variant === "full" && (
-                  <>
-                    <InsertImage />
-                    <InsertTable />
-                    <InsertThematicBreak />
-                    <InsertCodeBlock />
-                    <InsertAdmonition />
-                  </>
-                )}
+                <InsertImage />
+                <InsertTable />
+                <InsertThematicBreak />
+                <InsertCodeBlock />
+                <InsertAdmonition />
               </DiffSourceToggleWrapper>
             ),
           }),

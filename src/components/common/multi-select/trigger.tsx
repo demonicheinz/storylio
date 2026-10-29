@@ -47,7 +47,9 @@ export function MultiSelectTrigger({
           }
         }}
       >
-        <span className={styles.triggerLabel}>{fieldLabel}</span>
+        {fieldLabel && (
+          <span className={styles.triggerLabel}>{fieldLabel}</span>
+        )}
         <span className={styles.desktopSummary}>
           {count === 0 ? emptyLabel : context.values.slice(0, 2).join(" + ")}
           {count > 2 && ` +${count - 2}`}

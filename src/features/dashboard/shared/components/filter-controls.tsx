@@ -149,37 +149,44 @@ export function DashboardMultiFilter({
   options,
   onValueChange,
   emptyLabel = "All",
+  labelPlacement = "inside",
 }: {
   label: string;
   values: string[];
   options: string[];
   onValueChange: (values: string[]) => void;
   emptyLabel?: string;
+  labelPlacement?: "inside" | "above";
 }) {
   return (
-    <MultiSelect value={values} onValueChange={onValueChange}>
-      <MultiSelectTrigger
-        label={`Filter ${label.toLowerCase()}`}
-        fieldLabel={label}
-        emptyLabel={emptyLabel}
-        clearLabel={`Reset ${label.toLowerCase()}`}
-        onClear={() => onValueChange([])}
-      />
-      <MultiSelectContent>
-        <MultiSelectSearch
-          label={`Search ${label.toLowerCase()}`}
-          placeholder={`Search ${label.toLowerCase()}…`}
+    <div className="flex flex-col gap-1.5 min-w-0">
+      {labelPlacement === "above" && (
+        <span className="text-muted-foreground text-xs">{label}</span>
+      )}
+      <MultiSelect value={values} onValueChange={onValueChange}>
+        <MultiSelectTrigger
+          label={`Filter ${label.toLowerCase()}`}
+          fieldLabel={labelPlacement === "above" ? "" : label}
+          emptyLabel={emptyLabel}
+          clearLabel={`Reset ${label.toLowerCase()}`}
+          onClear={() => onValueChange([])}
         />
-        <MultiSelectSelections />
-        <MultiSelectList ariaLabel={label}>
-          {options.map((option) => (
-            <MultiSelectItem key={option} value={option}>
-              {option}
-            </MultiSelectItem>
-          ))}
-        </MultiSelectList>
-        <MultiSelectEmpty>No matching options.</MultiSelectEmpty>
-      </MultiSelectContent>
-    </MultiSelect>
+        <MultiSelectContent>
+          <MultiSelectSearch
+            label={`Search ${label.toLowerCase()}`}
+            placeholder={`Search ${label.toLowerCase()}…`}
+          />
+          <MultiSelectSelections />
+          <MultiSelectList ariaLabel={label}>
+            {options.map((option) => (
+              <MultiSelectItem key={option} value={option}>
+                {option}
+              </MultiSelectItem>
+            ))}
+          </MultiSelectList>
+          <MultiSelectEmpty>No matching options.</MultiSelectEmpty>
+        </MultiSelectContent>
+      </MultiSelect>
+    </div>
   );
 }

@@ -44,14 +44,15 @@ export function TagsInput({
         <Badge
           key={tag}
           variant="secondary"
-          className="gap-1 pr-0 rounded-md max-w-full h-auto"
+          className="gap-1 py-0 pr-0 border-0 rounded-md max-w-full h-11"
         >
           <TagIcon className="size-3 shrink-0" />
           <span className="truncate">{tag}</span>
           <Button
             type="button"
             variant="ghost"
-            size="icon-xs"
+            size="icon"
+            className="size-11 shrink-0"
             disabled={disabled}
             onClick={() => removeTag(tag)}
             aria-label={`Remove ${tag}`}

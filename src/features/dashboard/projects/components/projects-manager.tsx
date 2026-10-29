@@ -25,12 +25,10 @@ import {
   CaretLeftIcon,
   CaretRightIcon,
   CheckCircleIcon,
+  CheckSquareIcon,
   DotsSixVerticalIcon,
   DotsThreeVerticalIcon,
-  EyeIcon,
   FunnelSimpleIcon,
-  GridFourIcon,
-  ListBulletsIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   PlusIcon,
@@ -90,12 +88,13 @@ import { toast } from "@/components/ui/toast";
 import {
   DashboardMultiFilter,
   DashboardSelect,
-  DashboardStatusFilter,
+  DashboardViewToggle,
 } from "@/features/dashboard/shared/components/filter-controls";
 import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
 import { useDashboardFilter } from "@/features/dashboard/shared/hooks/use-dashboard-filter";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import type { ActionResult } from "@/lib/action-result";
+import { getPageItems } from "@/lib/archive-pagination";
 import { ProjectStatus } from "@/lib/db/enums";
 import {
   getDefaultItemsPerPage,
@@ -110,6 +109,7 @@ import {
   actionReorderProjects,
 } from "../actions";
 import { ProjectDeleteButton } from "./project-delete-button";
+import toolbarStyles from "./projects-toolbar.module.css";
 
 export type DashboardProject = {
   id: string;
@@ -134,6 +134,11 @@ type ViewMode = "list" | "grid";
 type StatusFilter = "all" | "published" | "draft";
 type FeaturedFilter = "all" | "featured" | "standard";
 type SortMode = "order" | "updated" | "created" | "title";
+
+// Header and rows share the same tracks; padding belongs to their cells.
+const PROJECT_COLUMNS = "xl:grid-cols-[minmax(0,1fr)_130px_180px_68px]";
+const PROJECT_COLUMNS_WITH_GUTTER =
+  "xl:grid-cols-[44px_minmax(0,1fr)_130px_180px_68px]";
 
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
   { value: "all", label: "All" },
@@ -181,21 +186,52 @@ function ProjectStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-xs",
-        published
-          ? "bg-emerald-500/12 text-emerald-300"
-          : "bg-muted text-muted-foreground",
-        compact && "px-2 py-0.5",
+        "inline-flex items-center gap-1.5 bg-surface px-2 border border-border rounded-md h-6 font-medium text-xs",
+        published ? "text-success" : "text-muted-foreground",
+        compact && "px-2",
       )}
     >
       <span
         className={cn(
-          "rounded-full size-1.5",
+          "rounded-full size-1.5 shrink-0",
           published ? "bg-success" : "bg-muted-foreground",
         )}
       />
       {published ? "Published" : "Draft"}
     </span>
+  );
+}
+
+function FeaturedProjectBadge() {
+  return (
+    <span className="inline-flex items-center gap-1.5 bg-surface px-2 border border-border rounded-md h-6 font-medium text-brand-soft text-xs">
+      <SparkleIcon className="size-3" aria-hidden="true" />
+      Featured
+    </span>
+  );
+}
+
+function ProjectUpdatedAt({ value }: { value: Date }) {
+  const date = new Date(value);
+  return (
+    <time
+      dateTime={date.toISOString()}
+      className="flex flex-col gap-1 whitespace-nowrap"
+    >
+      <span>
+        {new Intl.DateTimeFormat("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }).format(date)}
+      </span>
+      <span className="text-xs">
+        {new Intl.DateTimeFormat("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(date)}
+      </span>
+    </time>
   );
 }
 
@@ -214,7 +250,7 @@ function ProjectThumbnail({
   return (
     <div
       className={cn(
-        "relative bg-muted/30 border border-border/60 rounded-2xl aspect-video overflow-hidden",
+        "relative bg-muted/30 border border-border/60 rounded-xl aspect-video overflow-hidden",
         className,
       )}
     >
@@ -248,18 +284,10 @@ function FilterDropdown<T extends string>({
   options: Array<{ value: T; label: string }>;
   onValueChange: (value: T) => void;
 }) {
-  if (label === "Status")
-    return (
-      <DashboardStatusFilter
-        label={label}
-        value={value}
-        options={options}
-        onValueChange={onValueChange}
-      />
-    );
   return (
     <DashboardSelect
       label={label}
+      triggerClassName="min-h-11"
       value={value}
       options={options}
       onValueChange={onValueChange}
@@ -280,6 +308,7 @@ function TechStackDropdown({
     <div className="min-w-40">
       <DashboardMultiFilter
         label="Tech stack"
+        labelPlacement="above"
         values={selectedTechStacks}
         options={techStacks}
         onValueChange={onValueChange}
@@ -297,28 +326,7 @@ function ViewToggle({
   onViewModeChange: (mode: ViewMode) => void;
 }) {
   return (
-    <div className="justify-self-end grid grid-cols-2 bg-background/35 p-1 border border-border/60 rounded-xl w-fit shrink-0">
-      <Button
-        type="button"
-        size="icon"
-        variant={viewMode === "list" ? "default" : "ghost"}
-        onClick={() => onViewModeChange("list")}
-        aria-label="List view"
-        aria-pressed={viewMode === "list"}
-      >
-        <ListBulletsIcon />
-      </Button>
-      <Button
-        type="button"
-        size="icon"
-        variant={viewMode === "grid" ? "default" : "ghost"}
-        onClick={() => onViewModeChange("grid")}
-        aria-label="Grid view"
-        aria-pressed={viewMode === "grid"}
-      >
-        <GridFourIcon />
-      </Button>
-    </div>
+    <DashboardViewToggle value={viewMode} onValueChange={onViewModeChange} />
   );
 }
 
@@ -357,9 +365,11 @@ function TechPills({
 function ProjectActions({
   project,
   align = "end",
+  overlay = false,
 }: {
   project: DashboardProject;
   align?: "start" | "end";
+  overlay?: boolean;
 }) {
   return (
     <DropdownMenu>
@@ -368,7 +378,12 @@ function ProjectActions({
           <Button
             type="button"
             size="icon"
-            variant="ghost"
+            variant={overlay ? "secondary" : "ghost"}
+            className={cn(
+              "size-11",
+              overlay &&
+                "bg-popover/80 border-border shadow-sm hover:bg-surface-hover/90",
+            )}
             aria-label={`Open actions for ${project.title}`}
           />
         }
@@ -388,7 +403,7 @@ function ProjectActions({
               }
             >
               <ArrowSquareOutIcon data-icon="inline-start" />
-              Preview
+              View live
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
@@ -432,7 +447,7 @@ function ProjectsGrid({
         <article
           key={project.id}
           className={cn(
-            "group bg-background/45 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)] border border-border/70 hover:border-brand-soft/40 rounded-2xl min-w-0 overflow-hidden transition-[border-color,transform,box-shadow] hover:-translate-y-0.5",
+            "group flex flex-col bg-card border border-border hover:border-border-hover rounded-lg min-w-0 overflow-hidden transition-colors",
             selectedIds.has(project.id) && "border-brand-soft/60 bg-brand/5",
             batchMode && "cursor-pointer",
           )}
@@ -448,7 +463,7 @@ function ProjectsGrid({
               className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
-              <ProjectActions project={project} />
+              <ProjectActions project={project} overlay />
             </div>
             {batchMode && (
               <div
@@ -462,23 +477,23 @@ function ProjectsGrid({
                 />
               </div>
             )}
-            <div
-              className={cn(
-                "left-3 absolute flex flex-wrap gap-1.5 transition-[top]",
-                batchMode ? "top-11" : "top-3",
-              )}
-            >
-              <ProjectStatusBadge project={project} compact />
-              {project.isFeatured && (
-                <Badge variant="secondary" className="px-2 text-xs">
-                  featured
-                </Badge>
-              )}
-            </div>
           </div>
-          <div className="flex flex-col p-4 min-h-56">
-            <h2 className="mt-2 font-sans font-semibold text-base wrap-break-word line-clamp-2 leading-snug">
-              {project.title}
+          <div className="flex flex-col flex-1 p-4">
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              <ProjectStatusBadge project={project} compact />
+              {project.isFeatured && <FeaturedProjectBadge />}
+            </div>
+            <h2 className="font-sans font-semibold text-base wrap-break-word line-clamp-2 leading-snug">
+              {batchMode ? (
+                project.title
+              ) : (
+                <Link
+                  href={`/dashboard/projects/${project.id}/edit`}
+                  className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring hover:text-link"
+                >
+                  {project.title}
+                </Link>
+              )}
             </h2>
             <p className="mt-1 text-muted-foreground text-xs truncate">
               /projects/{project.slug}
@@ -516,7 +531,11 @@ function ProjectListRow({
   return (
     <div
       className={cn(
-        "xl:items-center grid grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(0,1fr)_130px_160px_56px] min-w-0 overflow-hidden",
+        "xl:items-center grid min-w-0 overflow-hidden",
+        batchMode || dragHandle
+          ? "grid-cols-[44px_minmax(0,1fr)]"
+          : "grid-cols-1",
+        batchMode || dragHandle ? PROJECT_COLUMNS_WITH_GUTTER : PROJECT_COLUMNS,
         selected && "border-brand-soft/60 bg-brand/5",
         batchMode && "cursor-pointer",
         isDragging &&
@@ -528,26 +547,28 @@ function ProjectListRow({
           : undefined
       }
     >
-      <div className="row-span-2 xl:row-span-1">
-        {batchMode ? (
-          <div
-            className="flex justify-center items-center border-border/50 border-r h-full min-h-24"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <Checkbox
-              checked={selected}
-              onCheckedChange={() => onToggleProject?.(project.id)}
-              aria-label={`Select ${project.title}`}
-            />
-          </div>
-        ) : (
-          dragHandle
-        )}
-      </div>
+      {(batchMode || dragHandle) && (
+        <div className="row-span-2 xl:row-span-1">
+          {batchMode ? (
+            <div
+              className="flex justify-center items-center border-border/50 border-r h-full min-h-24"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Checkbox
+                checked={selected}
+                onCheckedChange={() => onToggleProject?.(project.id)}
+                aria-label={`Select ${project.title}`}
+              />
+            </div>
+          ) : (
+            dragHandle
+          )}
+        </div>
+      )}
       <div className="flex items-start gap-3 p-4 xl:p-3 xl:pr-4 min-w-0">
         <ProjectThumbnail
           project={project}
-          className="hidden sm:block rounded-xl w-28 h-16 shrink-0"
+          className="hidden sm:block rounded-lg w-28 h-16 shrink-0"
           sizes="112px"
         />
         <div className="flex-1 min-w-0">
@@ -559,7 +580,16 @@ function ProjectListRow({
               )}
             />
             <h2 className="font-sans font-semibold xl:text-sm text-base wrap-break-word line-clamp-2 leading-snug">
-              {project.title}
+              {batchMode ? (
+                project.title
+              ) : (
+                <Link
+                  href={`/dashboard/projects/${project.id}/edit`}
+                  className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring hover:text-link"
+                >
+                  {project.title}
+                </Link>
+              )}
             </h2>
           </div>
           <p className="mt-1 text-muted-foreground text-xs truncate">
@@ -582,28 +612,25 @@ function ProjectListRow({
       <div className="hidden xl:flex items-center p-3">
         <div className="flex flex-wrap items-center gap-2">
           <ProjectStatusBadge project={project} compact />
-          {project.isFeatured && (
-            <Badge variant="secondary" className="px-2 text-xs">
-              featured
-            </Badge>
-          )}
+          {project.isFeatured && <FeaturedProjectBadge />}
         </div>
       </div>
       <div className="hidden xl:block p-3 text-muted-foreground text-sm">
-        {formatDateTime(project.updatedAt)}
+        <ProjectUpdatedAt value={project.updatedAt} />
       </div>
-      <div className="hidden xl:flex justify-end p-3">
+      <div className="hidden xl:flex justify-center p-3">
         <div onClick={(event) => event.stopPropagation()}>
           <ProjectActions project={project} />
         </div>
       </div>
-      <div className="xl:hidden flex flex-wrap items-center gap-2 col-start-2 px-4 pb-4">
-        <ProjectStatusBadge project={project} compact />
-        {project.isFeatured && (
-          <Badge variant="secondary" className="px-2 text-xs">
-            featured
-          </Badge>
+      <div
+        className={cn(
+          "xl:hidden flex flex-wrap items-center gap-2 px-4 pb-4",
+          (batchMode || dragHandle) && "col-start-2",
         )}
+      >
+        <ProjectStatusBadge project={project} compact />
+        {project.isFeatured && <FeaturedProjectBadge />}
         <span className="text-muted-foreground text-xs">
           Updated {formatDate(project.updatedAt)}
         </span>
@@ -670,19 +697,20 @@ function SortableProjectListRow({
   );
 }
 
-function ProjectsListHeader() {
+function ProjectsListHeader({ hasGutter = false }: { hasGutter?: boolean }) {
   return (
     <div
       className={cn(
-        "hidden xl:grid grid-cols-[44px_minmax(0,1fr)_130px_160px_56px]",
-        dashboardStyles.listHeader,
+        "hidden xl:grid border-border border-b font-medium text-muted-foreground text-xs",
+        hasGutter ? PROJECT_COLUMNS_WITH_GUTTER : PROJECT_COLUMNS,
       )}
+      data-project-list-header
     >
-      <div />
-      <div>Title</div>
-      <div>Status</div>
-      <div>Updated at</div>
-      <div className="text-right">Actions</div>
+      {hasGutter && <div />}
+      <div className="py-3 pr-3 pl-34">Title</div>
+      <div className="p-3">Status</div>
+      <div className="p-3">Updated at</div>
+      <div className="p-3 text-center">Actions</div>
     </div>
   );
 }
@@ -724,24 +752,32 @@ function ProjectsList({
 
   const persistOrder = (nextProjects: DashboardProject[]) => {
     startTransition(async () => {
-      const result = await actionReorderProjects(
-        nextProjects.map((project, index) => ({
-          id: project.id,
-          order: index,
-        })),
-      );
+      try {
+        const result = await actionReorderProjects(
+          nextProjects.map((project, index) => ({
+            id: project.id,
+            order: index,
+          })),
+        );
 
-      if (result.success) {
+        if (result.success) {
+          toast.add({
+            title: result.message ?? "Project order updated.",
+            type: "success",
+          });
+          router.refresh();
+          return;
+        }
+
+        onReorder(projects);
+        toast.add({ title: result.error, type: "error" });
+      } catch {
+        onReorder(projects);
         toast.add({
-          title: result.message ?? "Project order updated.",
-          type: "success",
+          title: "Could not save order. Previous order restored.",
+          type: "error",
         });
-        router.refresh();
-        return;
       }
-
-      onReorder(projects);
-      toast.add({ title: result.error, type: "error" });
     });
   };
 
@@ -774,7 +810,7 @@ function ProjectsList({
   if (!canReorder) {
     return (
       <div className={dashboardStyles.listSurface}>
-        <ProjectsListHeader />
+        <ProjectsListHeader hasGutter={canReorder || batchMode} />
         <div className="flex flex-col divide-y divide-border min-w-0">
           {projects.map((project) => (
             <ProjectListRow
@@ -783,11 +819,6 @@ function ProjectsList({
               batchMode={batchMode}
               selected={selectedIds.has(project.id)}
               onToggleProject={onToggleProject}
-              dragHandle={
-                <div className="flex justify-center items-center border-border/50 border-r h-full min-h-24 text-muted-foreground">
-                  <DotsSixVerticalIcon />
-                </div>
-              }
             />
           ))}
         </div>
@@ -797,7 +828,7 @@ function ProjectsList({
 
   return (
     <div className={dashboardStyles.listSurface}>
-      <ProjectsListHeader />
+      <ProjectsListHeader hasGutter={canReorder || batchMode} />
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -855,22 +886,30 @@ function ProjectsPagination({
       >
         <CaretLeftIcon />
       </Button>
-      {Array.from({ length: pageCount }).map((_, index) => {
-        const pageNumber = index + 1;
-
-        return (
-          <Button
-            key={pageNumber}
-            type="button"
-            size="icon"
-            variant={pageNumber === page ? "default" : "outline"}
-            onClick={() => onPageChange(pageNumber)}
-            aria-current={pageNumber === page ? "page" : undefined}
-          >
-            {pageNumber}
-          </Button>
-        );
-      })}
+      <span className="md:hidden px-2 text-sm" aria-live="polite">
+        Page {page} of {pageCount}
+      </span>
+      <div className="hidden md:flex items-center gap-1">
+        {getPageItems(page, pageCount).map((value, index) =>
+          value === "ellipsis" ? (
+            <span key={`gap-${index}`} className="px-1" aria-hidden>
+              …
+            </span>
+          ) : (
+            <Button
+              key={value}
+              type="button"
+              size="icon"
+              variant={value === page ? "default" : "outline"}
+              onClick={() => onPageChange(value)}
+              aria-label={`Page ${value}`}
+              aria-current={value === page ? "page" : undefined}
+            >
+              {value}
+            </Button>
+          ),
+        )}
+      </div>
       <Button
         type="button"
         size="icon"
@@ -933,7 +972,14 @@ function ItemsPerPageDropdown({
       )}
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={<Button type="button" variant="outline" size="sm" />}
+          render={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              aria-label="Items per page"
+            />
+          }
         >
           {value}
           <CaretDownIcon className="size-3.5" />
@@ -961,6 +1007,10 @@ function ItemsPerPageDropdown({
 
 function ProjectsBatchActionsBar({
   selectedCount,
+  selectedTitles,
+  outsideViewCount,
+  onSelectPage,
+  pageSelected,
   isPending,
   onPublish,
   onMoveToDraft,
@@ -968,6 +1018,10 @@ function ProjectsBatchActionsBar({
   onCancel,
 }: {
   selectedCount: number;
+  selectedTitles: string[];
+  outsideViewCount: number;
+  onSelectPage: () => void;
+  pageSelected: boolean;
   isPending: boolean;
   onPublish: () => void;
   onMoveToDraft: () => void;
@@ -982,10 +1036,22 @@ function ProjectsBatchActionsBar({
           selected
         </p>
         <p className="text-muted-foreground text-xs">
-          Drag ordering is paused while selecting projects.
+          {outsideViewCount > 0
+            ? `${outsideViewCount} selected outside this page. `
+            : ""}
+          Selection includes all chosen pages and filters.
         </p>
       </div>
       <div className="sm:flex sm:flex-wrap sm:justify-end gap-2 grid grid-cols-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={isPending}
+          onClick={onSelectPage}
+        >
+          {pageSelected ? "Deselect page" : "Select page"}
+        </Button>
         <Button
           type="button"
           size="sm"
@@ -1027,6 +1093,13 @@ function ProjectsBatchActionsBar({
                 cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <ul className="space-y-1 max-h-48 overflow-y-auto text-sm">
+              {selectedTitles.map((title, index) => (
+                <li key={`${index}-${title}`} className="wrap-anywhere">
+                  {title}
+                </li>
+              ))}
+            </ul>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
               <AlertDialogAction
@@ -1046,7 +1119,7 @@ function ProjectsBatchActionsBar({
           disabled={isPending}
           onClick={onCancel}
         >
-          Cancel
+          Cancel selection
         </Button>
       </div>
     </div>
@@ -1080,6 +1153,17 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filtersTriggerRef = useRef<HTMLButtonElement>(null);
   const [reorderMode, setReorderMode] = useState(false);
+  const previousView = useRef<{
+    query: string;
+    status: StatusFilter;
+    featured: FeaturedFilter;
+    tech: string[];
+    sort: SortMode;
+    view: ViewMode;
+    page: number;
+    size: number;
+  } | null>(null);
+  const restorePage = useRef<number | null>(null);
   const [draftStatus, setDraftStatus] = useState<StatusFilter>(status);
   const [draftFeatured, setDraftFeatured] = useState<FeaturedFilter>(featured);
   const [draftTechStacks, setDraftTechStacks] =
@@ -1090,6 +1174,11 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
 
   useEffect(() => {
     setItems(projects);
+    const available = new Set(projects.map((project) => project.id));
+    setSelectedIds((current) => {
+      const next = new Set([...current].filter((id) => available.has(id)));
+      return next.size === current.size ? current : next;
+    });
   }, [projects]);
 
   useEffect(() => {
@@ -1230,19 +1319,12 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
 
   useEffect(() => {
-    setPage(1);
+    setPage(restorePage.current ?? 1);
+    restorePage.current = null;
   }, [featured, itemsPerPage, query, selectedTechStacks, sortMode, status]);
 
   const toggleTechStack = (techStack: string) => {
     setSelectedTechStacks((currentTechStacks) =>
-      currentTechStacks.includes(techStack)
-        ? currentTechStacks.filter((item) => item !== techStack)
-        : [...currentTechStacks, techStack],
-    );
-  };
-
-  const toggleDraftTechStack = (techStack: string) => {
-    setDraftTechStacks((currentTechStacks) =>
       currentTechStacks.includes(techStack)
         ? currentTechStacks.filter((item) => item !== techStack)
         : [...currentTechStacks, techStack],
@@ -1346,6 +1428,32 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     });
   };
 
+  const activeFilterCount =
+    Number(status !== "all") +
+    Number(featured !== "all") +
+    selectedTechStacks.length +
+    Number(sortMode !== "order");
+  const hasRefinements = activeFilterCount > 0 || query.trim().length > 0;
+  const selectedProjects = items.filter((item) => selectedIds.has(item.id));
+  const outsideViewCount = selectedProjects.filter(
+    (item) => !paginatedProjects.some((visible) => visible.id === item.id),
+  ).length;
+  const pageSelected =
+    paginatedProjects.length > 0 &&
+    paginatedProjects.every((item) => selectedIds.has(item.id));
+  const selectPage = () =>
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      for (const item of paginatedProjects) {
+        if (pageSelected) next.delete(item.id);
+        else next.add(item.id);
+      }
+      return next;
+    });
+  const clearFilters = () => {
+    resetFilters();
+    setQuery("");
+  };
   const statusDisplay =
     statusOptions.find((option) => option.value === status)?.label ??
     "All Status";
@@ -1368,9 +1476,31 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
 
   const toggleReorderMode = () => {
     if (reorderMode) {
+      const previous = previousView.current;
+      if (previous) {
+        restorePage.current = previous.page;
+        setQuery(previous.query);
+        setStatus(previous.status);
+        setFeatured(previous.featured);
+        setSelectedTechStacks(previous.tech);
+        setSortMode(previous.sort);
+        setViewMode(previous.view);
+        setItemsPerPage(previous.size);
+        setPage(previous.page);
+      }
       setReorderMode(false);
       return;
     }
+    previousView.current = {
+      query,
+      status,
+      featured,
+      tech: selectedTechStacks,
+      sort: sortMode,
+      view: viewMode,
+      page: currentPage,
+      size: itemsPerPage,
+    };
     resetFilters();
     setQuery("");
     clearSelection();
@@ -1391,7 +1521,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
       showSwipeHandle
     >
       <div className={dashboardStyles.page}>
-        <div className="flex justify-between items-start gap-4">
+        <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-4">
           <div className="min-w-0">
             <h1 className="font-heading font-bold text-3xl">Projects</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
@@ -1399,15 +1529,27 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               display order.
             </p>
           </div>
-          <Button
-            role="link"
-            render={<Link href="/dashboard/projects/new" />}
-            nativeButton={false}
-            className="md:px-4 md:w-auto shrink-0"
-          >
-            <PlusIcon data-icon="inline-start" />
-            <span>New Project</span>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {" "}
+            <Button
+              role="link"
+              render={<Link href="/dashboard/projects/new" />}
+              nativeButton={false}
+              className="md:px-4 md:w-auto shrink-0"
+            >
+              <PlusIcon data-icon="inline-start" />
+              <span>New Project</span>
+            </Button>{" "}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={toggleReorderMode}
+              aria-pressed={reorderMode}
+              disabled={items.length < 2}
+            >
+              {reorderMode ? "Done reordering" : "Reorder"}
+            </Button>
+          </div>
         </div>
 
         <DashboardSummary
@@ -1423,32 +1565,92 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
           ]}
         />
 
-        <div className="flex flex-wrap justify-between items-center gap-3">
+        {reorderMode && (
           <p className="text-muted-foreground text-sm" role="status">
-            {reorderMode
-              ? `Reordering all ${items.length} projects. Changes save as you move items.`
-              : "Reorder clears filters and shows all projects in display order."}
+            Reordering all projects. Changes save after each move; Done restores
+            your previous filters and view.
           </p>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={toggleReorderMode}
-            aria-pressed={reorderMode}
-            disabled={items.length < 2}
-          >
-            {reorderMode ? "Done reordering" : "Reorder"}
-          </Button>
-        </div>
+        )}
 
         {!reorderMode && (
           <Card className={dashboardStyles.toolbarCard}>
-            <CardContent className={dashboardStyles.toolbarContent}>
-              <div className="md:hidden gap-3 grid">
-                <div className="flex flex-wrap gap-2 min-w-0">
-                  <div className="relative min-w-0 basis-full">
-                    <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
+            <CardContent
+              className={cn(
+                dashboardStyles.toolbarContent,
+                "[&_input]:min-h-11 [&_button]:min-h-11",
+              )}
+            >
+              <div className={cn("md:hidden", toolbarStyles.mobileToolbar)}>
+                <div className={toolbarStyles.mobileRow}>
+                  <div className={toolbarStyles.mobileSearch}>
+                    <MagnifyingGlassIcon
+                      className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none"
+                      aria-hidden="true"
+                    />
                     <Input
                       ref={mobileSearchInputRef}
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Search..."
+                      className="pr-3 pl-9"
+                      aria-label="Search projects"
+                    />
+                  </div>
+                  <DrawerTrigger
+                    render={
+                      <Button
+                        ref={filtersTriggerRef}
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="relative p-0 size-11"
+                        aria-label={
+                          activeFilterCount > 0
+                            ? `Filters (${activeFilterCount})`
+                            : "Filters"
+                        }
+                        title={
+                          activeFilterCount > 0
+                            ? `Filters (${activeFilterCount})`
+                            : "Filters"
+                        }
+                      />
+                    }
+                  >
+                    <FunnelSimpleIcon aria-hidden="true" />
+                    {activeFilterCount > 0 && (
+                      <span
+                        className="-top-1 -right-1 absolute flex justify-center items-center bg-primary px-1 rounded-full min-w-4 h-4 font-semibold text-[10px] text-primary-foreground pointer-events-none"
+                        aria-hidden="true"
+                      >
+                        {activeFilterCount > 99 ? "99+" : activeFilterCount}
+                      </span>
+                    )}
+                  </DrawerTrigger>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant={batchMode ? "secondary" : "outline"}
+                    className="p-0 size-11"
+                    aria-label={batchMode ? "Exit selection mode" : "Select"}
+                    title={
+                      batchMode ? "Exit selection mode" : "Select projects"
+                    }
+                    aria-pressed={batchMode}
+                    onClick={toggleBatchMode}
+                  >
+                    <CheckSquareIcon aria-hidden="true" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(140px,1fr)_minmax(90px,0.6fr)_minmax(100px,0.7fr)_minmax(150px,1fr)_minmax(125px,0.8fr)_auto] min-w-0">
+                <div className="flex flex-col gap-1.5 md:col-span-2 xl:col-span-1 min-w-0">
+                  <span className="text-muted-foreground text-xs">Search</span>
+                  <div className="relative min-w-0">
+                    <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
+                    <Input
+                      ref={desktopSearchInputRef}
                       value={query}
                       onChange={(event) => setQuery(event.target.value)}
                       placeholder="Search projects..."
@@ -1459,31 +1661,8 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
                       ⌘ K
                     </Kbd>
                   </div>
-                  <DrawerTrigger
-                    render={
-                      <Button
-                        ref={filtersTriggerRef}
-                        type="button"
-                        variant="outline"
-                      />
-                    }
-                  >
-                    <FunnelSimpleIcon data-icon="inline-start" />
-                    Filters
-                  </DrawerTrigger>
-                  <Button
-                    type="button"
-                    variant={batchMode ? "secondary" : "outline"}
-                    className="shrink-0"
-                    onClick={toggleBatchMode}
-                  >
-                    {batchMode ? "Cancel" : "Select"}
-                  </Button>
                 </div>
-              </div>
-
-              <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(180px,1fr)_140px_minmax(180px,1fr)_150px_auto] min-w-0">
-                <div className="md:col-span-full">
+                <div className="min-w-0">
                   <FilterDropdown
                     label="Status"
                     value={status}
@@ -1491,21 +1670,6 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
                     options={statusOptions}
                     onValueChange={setStatus}
                   />
-                </div>
-
-                <div className="relative md:col-span-2 xl:col-span-1 min-w-0">
-                  <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
-                  <Input
-                    ref={desktopSearchInputRef}
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search projects..."
-                    className="pr-14 pl-9"
-                    aria-label="Search projects"
-                  />
-                  <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
-                    ⌘ K
-                  </Kbd>
                 </div>
 
                 <FilterDropdown
@@ -1575,9 +1739,34 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
           </Card>
         )}
 
+        {!reorderMode && (
+          <div
+            className="flex flex-wrap items-center gap-3 text-muted-foreground text-sm"
+            role="status"
+          >
+            <span>
+              {filteredProjects.length} of {items.length} projects
+            </span>
+            {hasRefinements && (
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="px-0"
+                onClick={clearFilters}
+              >
+                Clear filters and search
+              </Button>
+            )}
+          </div>
+        )}
         {batchMode && (
           <ProjectsBatchActionsBar
             selectedCount={selectedIds.size}
+            selectedTitles={selectedProjects.map((item) => item.title)}
+            outsideViewCount={outsideViewCount}
+            onSelectPage={selectPage}
+            pageSelected={pageSelected}
             isPending={isBatchPending}
             onPublish={() =>
               runBatchAction(
@@ -1602,11 +1791,22 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
           <div className={dashboardStyles.emptyState}>
             <BriefcaseIcon className="size-12 text-muted-foreground/50" />
             <div>
-              <p className="font-medium">No projects found</p>
+              <p className="font-medium">
+                {items.length
+                  ? "No projects match these filters"
+                  : "No projects yet"}
+              </p>
               <p className="mt-1 text-muted-foreground text-sm">
-                Adjust the filters or create a new portfolio entry.
+                {items.length
+                  ? "Clear filters or try another search."
+                  : "Add your first portfolio project."}
               </p>
             </div>
+            {items.length > 0 && (
+              <Button type="button" variant="outline" onClick={clearFilters}>
+                Clear filters and search
+              </Button>
+            )}
             <Button
               role="link"
               render={<Link href="/dashboard/projects/new" />}
@@ -1697,36 +1897,11 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               options={featuredOptions}
               onValueChange={setDraftFeatured}
             />
-            <div>
-              <p className="mb-2 font-medium text-muted-foreground text-xs">
-                Tech stack
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={draftTechStacks.length === 0 ? "default" : "outline"}
-                  onClick={() => setDraftTechStacks([])}
-                >
-                  All Tech
-                </Button>
-                {techStacks.map((techStack) => (
-                  <Button
-                    key={techStack}
-                    type="button"
-                    size="sm"
-                    variant={
-                      draftTechStacks.includes(techStack)
-                        ? "default"
-                        : "outline"
-                    }
-                    onClick={() => toggleDraftTechStack(techStack)}
-                  >
-                    {techStack}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            <TechStackDropdown
+              techStacks={techStacks}
+              selectedTechStacks={draftTechStacks}
+              onValueChange={setDraftTechStacks}
+            />
             <FilterDropdown
               label="Sort by"
               value={draftSort}
@@ -1740,7 +1915,16 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
           </div>
           <DrawerFooter>
             <div className="gap-2 grid grid-cols-2">
-              <Button type="button" variant="outline" onClick={resetFilters}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setDraftStatus("all");
+                  setDraftFeatured("all");
+                  setDraftTechStacks([]);
+                  setDraftSort("order");
+                }}
+              >
                 Reset filters
               </Button>
               <Button type="button" onClick={applyFilters}>

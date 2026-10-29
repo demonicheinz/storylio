@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  CloudArrowUpIcon,
-  CropIcon,
-  ImageIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { CloudArrowUpIcon, CropIcon, ImageIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import {
   type ChangeEvent,
@@ -24,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ImageRemoveButton } from "@/features/dashboard/shared/components/image-remove-button";
 import { uploadFile as uploadImageFile } from "@/features/dashboard/shared/utils/upload";
 import { cn } from "@/lib/utils";
 
@@ -315,17 +311,11 @@ export function ImageUpload({
           />
         </div>
         {onRemove && (
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="-top-2 -right-2 absolute rounded-full size-7"
-            onClick={onRemove}
+          <ImageRemoveButton
+            label="Remove image"
             disabled={disabled}
-            aria-label="Remove image"
-          >
-            <XIcon className="size-4" />
-          </Button>
+            onRemove={onRemove}
+          />
         )}
       </div>
     );
