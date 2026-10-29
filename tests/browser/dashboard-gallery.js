@@ -60,7 +60,11 @@ async function dashboardGallery(sessionPage) {
     await fresh();
     await page.getByRole("button", { name: "Filters", exact: true }).click();
     await select("Visibility", "Hidden");
-    await select("Sort by", "Newest first");
+    await select("Sort by", "Date created");
+    await page
+      .getByRole("button", { name: "Sort descending", exact: true })
+      .filter({ visible: true })
+      .click();
     await page
       .getByRole("button", { name: "Apply filters", exact: true })
       .click();

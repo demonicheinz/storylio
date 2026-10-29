@@ -89,6 +89,7 @@ import toolbarStyles from "@/features/dashboard/shared/components/collection-too
 import {
   DashboardMultiFilter,
   DashboardSelect,
+  DashboardSort,
   DashboardViewToggle,
 } from "@/features/dashboard/shared/components/filter-controls";
 import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
@@ -134,6 +135,7 @@ type ViewMode = "list" | "grid";
 type StatusFilter = "all" | "published" | "draft";
 type FeaturedFilter = "all" | "featured" | "standard";
 type SortMode = "order" | "updated" | "created" | "title";
+type SortDirection = "asc" | "desc";
 
 // Header and rows share the same tracks; padding belongs to their cells.
 const PROJECT_COLUMNS = "xl:grid-cols-[minmax(0,1fr)_130px_180px_68px]";
@@ -153,11 +155,36 @@ const featuredOptions: Array<{ value: FeaturedFilter; label: string }> = [
 ];
 
 const sortOptions: Array<{ value: SortMode; label: string }> = [
-  { value: "order", label: "Order (asc)" },
-  { value: "updated", label: "Recently Updated" },
-  { value: "created", label: "Newest Created" },
-  { value: "title", label: "Title A-Z" },
+  { value: "order", label: "Display order" },
+  { value: "updated", label: "Last updated" },
+  { value: "created", label: "Date created" },
+  { value: "title", label: "Title" },
 ];
+
+export function compareProjects(
+  a: DashboardProject,
+  b: DashboardProject,
+  field: SortMode,
+  direction: SortDirection,
+) {
+  const multiplier = direction === "asc" ? 1 : -1;
+  if (field === "updated") {
+    return (
+      multiplier *
+      (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
+    );
+  }
+  if (field === "created") {
+    return (
+      multiplier *
+      (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    );
+  }
+  if (field === "title") {
+    return multiplier * a.title.localeCompare(b.title);
+  }
+  return multiplier * (a.order - b.order);
+}
 
 function isPublished(project: DashboardProject) {
   return project.status === ProjectStatus.PUBLISHED;
@@ -1142,6 +1169,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   );
   const [selectedTechStacks, setSelectedTechStacks] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>("order");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [itemsPerPage, setItemsPerPage] = useState<number>(
     getDefaultItemsPerPage("list"),
@@ -1159,6 +1187,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     featured: FeaturedFilter;
     tech: string[];
     sort: SortMode;
+    direction: SortDirection;
     view: ViewMode;
     page: number;
     size: number;
@@ -1169,6 +1198,8 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   const [draftTechStacks, setDraftTechStacks] =
     useState<string[]>(selectedTechStacks);
   const [draftSort, setDraftSort] = useState<SortMode>(sortMode);
+  const [draftSortDirection, setDraftSortDirection] =
+    useState<SortDirection>(sortDirection);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
 
@@ -1288,26 +1319,16 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
 
         return searchable.includes(normalizedQuery);
       })
-      .sort((a, b) => {
-        if (sortMode === "updated") {
-          return (
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-          );
-        }
-
-        if (sortMode === "created") {
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        }
-
-        if (sortMode === "title") {
-          return a.title.localeCompare(b.title);
-        }
-
-        return a.order - b.order;
-      });
-  }, [featured, items, query, selectedTechStacks, sortMode, status]);
+      .sort((a, b) => compareProjects(a, b, sortMode, sortDirection));
+  }, [
+    featured,
+    items,
+    query,
+    selectedTechStacks,
+    sortMode,
+    sortDirection,
+    status,
+  ]);
 
   const {
     items: paginatedProjects,
@@ -1321,7 +1342,15 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   useEffect(() => {
     setPage(restorePage.current ?? 1);
     restorePage.current = null;
-  }, [featured, itemsPerPage, query, selectedTechStacks, sortMode, status]);
+  }, [
+    featured,
+    itemsPerPage,
+    query,
+    selectedTechStacks,
+    sortMode,
+    sortDirection,
+    status,
+  ]);
 
   const toggleTechStack = (techStack: string) => {
     setSelectedTechStacks((currentTechStacks) =>
@@ -1336,6 +1365,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     setDraftFeatured(featured);
     setDraftTechStacks(selectedTechStacks);
     setDraftSort(sortMode);
+    setDraftSortDirection(sortDirection);
     setFiltersOpen(true);
   };
 
@@ -1353,6 +1383,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     setFeatured(draftFeatured);
     setSelectedTechStacks(draftTechStacks);
     setSortMode(draftSort);
+    setSortDirection(draftSortDirection);
     setFiltersOpen(false);
   };
 
@@ -1361,10 +1392,12 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     setDraftFeatured("all");
     setDraftTechStacks([]);
     setDraftSort("order");
+    setDraftSortDirection("asc");
     setStatus("all");
     setFeatured("all");
     setSelectedTechStacks([]);
     setSortMode("order");
+    setSortDirection("asc");
   };
 
   const handleViewModeChange = (nextViewMode: ViewMode) => {
@@ -1432,7 +1465,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     Number(status !== "all") +
     Number(featured !== "all") +
     selectedTechStacks.length +
-    Number(sortMode !== "order");
+    Number(sortMode !== "order" || sortDirection !== "asc");
   const hasRefinements = activeFilterCount > 0 || query.trim().length > 0;
   const selectedProjects = items.filter((item) => selectedIds.has(item.id));
   const outsideViewCount = selectedProjects.filter(
@@ -1460,14 +1493,12 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   const featuredDisplay =
     featuredOptions.find((option) => option.value === featured)?.label ??
     "All Projects";
-  const sortDisplay =
-    sortOptions.find((option) => option.value === sortMode)?.label ??
-    "Order asc";
   const canReorder =
     reorderMode &&
     viewMode === "list" &&
     !batchMode &&
     sortMode === "order" &&
+    sortDirection === "asc" &&
     status === "all" &&
     featured === "all" &&
     selectedTechStacks.length === 0 &&
@@ -1484,6 +1515,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
         setFeatured(previous.featured);
         setSelectedTechStacks(previous.tech);
         setSortMode(previous.sort);
+        setSortDirection(previous.direction);
         setViewMode(previous.view);
         setItemsPerPage(previous.size);
         setPage(previous.page);
@@ -1497,6 +1529,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
       featured,
       tech: selectedTechStacks,
       sort: sortMode,
+      direction: sortDirection,
       view: viewMode,
       page: currentPage,
       size: itemsPerPage,
@@ -1643,7 +1676,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
                 </div>
               </div>
 
-              <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(140px,1fr)_minmax(90px,0.6fr)_minmax(100px,0.7fr)_minmax(150px,1fr)_minmax(125px,0.8fr)_auto] min-w-0">
+              <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(140px,1fr)_minmax(90px,0.6fr)_minmax(100px,0.7fr)_minmax(150px,1fr)_minmax(220px,1fr)_auto] min-w-0">
                 <div className="flex flex-col gap-1.5 md:col-span-2 xl:col-span-1 min-w-0">
                   <span className="text-muted-foreground text-xs">Search</span>
                   <div className="relative min-w-0">
@@ -1683,12 +1716,12 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
                   selectedTechStacks={selectedTechStacks}
                   onValueChange={setSelectedTechStacks}
                 />
-                <FilterDropdown
-                  label="Sort by"
+                <DashboardSort
                   value={sortMode}
-                  displayValue={sortDisplay}
                   options={sortOptions}
                   onValueChange={setSortMode}
+                  direction={sortDirection}
+                  onDirectionChange={setSortDirection}
                 />
                 <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
                   <ViewToggle
@@ -1902,15 +1935,12 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               selectedTechStacks={draftTechStacks}
               onValueChange={setDraftTechStacks}
             />
-            <FilterDropdown
-              label="Sort by"
+            <DashboardSort
               value={draftSort}
-              displayValue={
-                sortOptions.find((option) => option.value === draftSort)
-                  ?.label ?? "Order (asc)"
-              }
               options={sortOptions}
               onValueChange={setDraftSort}
+              direction={draftSortDirection}
+              onDirectionChange={setDraftSortDirection}
             />
           </div>
           <DrawerFooter>
@@ -1923,6 +1953,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
                   setDraftFeatured("all");
                   setDraftTechStacks([]);
                   setDraftSort("order");
+                  setDraftSortDirection("asc");
                 }}
               >
                 Reset filters

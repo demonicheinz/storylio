@@ -59,14 +59,18 @@ export async function uploadToCloudinary(
 }
 
 /**
- * Delete an asset from Cloudinary by its public_id.
+ * True confirms deletion or absence of this image; other outcomes remain false
+ * or throw. A generic HTTP 404 does not establish that the asset is absent.
  */
 export async function deleteFromCloudinary(publicId: string): Promise<boolean> {
   const result = await cloudinary.uploader.destroy(publicId, {
     resource_type: "image",
   });
 
-  return result.result === "ok";
+  return (
+    !result?.error &&
+    (result?.result === "ok" || result?.result === "not found")
+  );
 }
 
 export function extractCloudinaryPublicId(url: string): string | null {

@@ -72,6 +72,7 @@ import toolbarStyles from "@/features/dashboard/shared/components/collection-too
 import {
   DashboardMultiFilter,
   DashboardSelect,
+  DashboardSort,
   DashboardViewToggle,
 } from "@/features/dashboard/shared/components/filter-controls";
 import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
@@ -107,6 +108,7 @@ type PostsManagerProps = {
 type ViewMode = "list" | "grid";
 type StatusFilter = "all" | "published" | "draft" | "scheduled";
 type SortMode = "newest" | "updated" | "views" | "title" | "published";
+type SortDirection = "asc" | "desc";
 
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
   { value: "all", label: "All" },
@@ -116,11 +118,11 @@ const statusOptions: Array<{ value: StatusFilter; label: string }> = [
 ];
 
 const sortOptions: Array<{ value: SortMode; label: string }> = [
-  { value: "newest", label: "Newest First" },
-  { value: "updated", label: "Recently Updated" },
-  { value: "views", label: "Most Viewed" },
-  { value: "title", label: "Title A-Z" },
-  { value: "published", label: "Published First" },
+  { value: "newest", label: "Date created" },
+  { value: "updated", label: "Last updated" },
+  { value: "views", label: "Views" },
+  { value: "title", label: "Title" },
+  { value: "published", label: "Publication date" },
 ];
 
 function isPublished(post: DashboardPost, now: number) {
@@ -980,6 +982,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
   );
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [itemsPerPage, setItemsPerPage] = useState<number>(
     getDefaultItemsPerPage("list"),
   );
@@ -992,6 +995,8 @@ export function PostsManager({ posts }: PostsManagerProps) {
   const [draftStatus, setDraftStatus] = useState<StatusFilter>(status);
   const [draftTags, setDraftTags] = useState<string[]>(selectedTags);
   const [draftSort, setDraftSort] = useState<SortMode>(sortMode);
+  const [draftSortDirection, setDraftSortDirection] =
+    useState<SortDirection>(sortDirection);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
 
@@ -1055,35 +1060,39 @@ export function PostsManager({ posts }: PostsManagerProps) {
         ].some((value) => value.toLowerCase().includes(normalizedQuery));
       })
       .sort((a, b) => {
+        const direction = sortDirection === "asc" ? 1 : -1;
         if (sortMode === "updated") {
           return (
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+            direction *
+            (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
           );
         }
 
         if (sortMode === "views") {
-          return getPostViews(b, now) - getPostViews(a, now);
+          return direction * (getPostViews(a, now) - getPostViews(b, now));
         }
 
         if (sortMode === "title") {
-          return a.title.localeCompare(b.title);
+          return direction * a.title.localeCompare(b.title);
         }
 
         if (sortMode === "published") {
-          const aTime = a.publishedAt
-            ? new Date(a.publishedAt).getTime()
-            : Number.NEGATIVE_INFINITY;
-          const bTime = b.publishedAt
-            ? new Date(b.publishedAt).getTime()
-            : Number.NEGATIVE_INFINITY;
-          return bTime - aTime;
+          // Undated posts stay last in either direction.
+          if (!a.publishedAt) return b.publishedAt ? 1 : 0;
+          if (!b.publishedAt) return -1;
+          return (
+            direction *
+            (new Date(a.publishedAt).getTime() -
+              new Date(b.publishedAt).getTime())
+          );
         }
 
         return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          direction *
+          (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
         );
       });
-  }, [posts, query, selectedTags, sortMode, status, now]);
+  }, [posts, query, selectedTags, sortMode, sortDirection, status, now]);
 
   const {
     items: paginatedPosts,
@@ -1096,7 +1105,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
 
   useEffect(() => {
     setPage(1);
-  }, [itemsPerPage, query, selectedTags, sortMode, status]);
+  }, [itemsPerPage, query, selectedTags, sortMode, sortDirection, status]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -1134,6 +1143,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
     setDraftStatus(status);
     setDraftTags(selectedTags);
     setDraftSort(sortMode);
+    setDraftSortDirection(sortDirection);
     setFiltersOpen(true);
   };
 
@@ -1150,6 +1160,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
     setStatus(draftStatus);
     setSelectedTags(draftTags);
     setSortMode(draftSort);
+    setSortDirection(draftSortDirection);
     setFiltersOpen(false);
   };
 
@@ -1157,9 +1168,11 @@ export function PostsManager({ posts }: PostsManagerProps) {
     setDraftStatus("all");
     setDraftTags([]);
     setDraftSort("newest");
+    setDraftSortDirection("desc");
     setStatus("all");
     setSelectedTags([]);
     setSortMode("newest");
+    setSortDirection("desc");
   };
 
   const handleViewModeChange = (nextViewMode: ViewMode) => {
@@ -1295,7 +1308,8 @@ export function PostsManager({ posts }: PostsManagerProps) {
   const activeFilterCount =
     Number(status !== "all") +
     selectedTags.length +
-    Number(sortMode !== "newest");
+    Number(sortMode !== "newest") +
+    Number(sortDirection !== "desc");
   const hasRefinements = activeFilterCount > 0 || Boolean(query.trim());
   const selectedPosts = posts.filter((post) => selectedIds.has(post.id));
   const outsideViewCount = selectedPosts.filter(
@@ -1315,9 +1329,6 @@ export function PostsManager({ posts }: PostsManagerProps) {
   const statusDisplay =
     statusOptions.find((option) => option.value === status)?.label ??
     "All Status";
-  const sortDisplay =
-    sortOptions.find((option) => option.value === sortMode)?.label ??
-    "Newest First";
 
   return (
     <Drawer
@@ -1420,7 +1431,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
               </div>
             </div>
 
-            <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(180px,1fr)_130px_minmax(150px,220px)_160px_auto] min-w-0">
+            <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(180px,1fr)_130px_minmax(150px,220px)_220px_auto] min-w-0">
               <div className="flex flex-col gap-1.5 md:col-span-2 xl:col-span-1 min-w-0">
                 <span className="text-muted-foreground text-xs">Search</span>
                 <div className="relative min-w-0">
@@ -1453,12 +1464,12 @@ export function PostsManager({ posts }: PostsManagerProps) {
                 selectedTags={selectedTags}
                 onValueChange={setSelectedTags}
               />
-              <FilterDropdown
-                label="Sort by"
+              <DashboardSort
                 value={sortMode}
-                displayValue={sortDisplay}
                 options={sortOptions}
                 onValueChange={setSortMode}
+                direction={sortDirection}
+                onDirectionChange={setSortDirection}
               />
               <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
                 <ViewToggle
@@ -1632,15 +1643,12 @@ export function PostsManager({ posts }: PostsManagerProps) {
               selectedTags={draftTags}
               onValueChange={setDraftTags}
             />
-            <FilterDropdown
-              label="Sort by"
+            <DashboardSort
               value={draftSort}
-              displayValue={
-                sortOptions.find((option) => option.value === draftSort)
-                  ?.label ?? "Newest First"
-              }
               options={sortOptions}
               onValueChange={setDraftSort}
+              direction={draftSortDirection}
+              onDirectionChange={setDraftSortDirection}
             />
           </div>
           <DrawerFooter>
@@ -1652,6 +1660,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
                   setDraftStatus("all");
                   setDraftTags([]);
                   setDraftSort("newest");
+                  setDraftSortDirection("desc");
                 }}
               >
                 Reset filters
@@ -1660,6 +1669,13 @@ export function PostsManager({ posts }: PostsManagerProps) {
                 Apply filters
               </Button>
             </div>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setFiltersOpen(false)}
+            >
+              Cancel
+            </Button>
           </DrawerFooter>
         </DrawerContent>
       </div>

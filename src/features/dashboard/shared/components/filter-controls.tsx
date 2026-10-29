@@ -1,6 +1,11 @@
 "use client";
 
-import { GridFourIcon, ListBulletsIcon } from "@phosphor-icons/react";
+import {
+  GridFourIcon,
+  ListBulletsIcon,
+  SortAscendingIcon,
+  SortDescendingIcon,
+} from "@phosphor-icons/react";
 import { useId } from "react";
 import { MultiSelectContent } from "@/components/common/multi-select/content";
 import { MultiSelect } from "@/components/common/multi-select/context";
@@ -14,6 +19,7 @@ import {
   MultiSelectSelections,
   MultiSelectTrigger,
 } from "@/components/common/multi-select/trigger";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -23,8 +29,62 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 
 type Choice<T extends string> = { value: T; label: string };
+
+export function DashboardSort<T extends string>({
+  value,
+  options,
+  onValueChange,
+  direction,
+  onDirectionChange,
+  disabled,
+  className,
+}: {
+  value: T;
+  options: readonly Choice<T>[];
+  onValueChange: (value: T) => void;
+  direction: "asc" | "desc";
+  onDirectionChange: (value: "asc" | "desc") => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex items-end gap-2 min-w-0", className)}>
+      <div className="flex-1 min-w-0">
+        <DashboardSelect
+          label="Sort by"
+          value={value}
+          options={options}
+          onValueChange={onValueChange}
+          disabled={disabled}
+          triggerClassName="min-h-11"
+        />
+      </div>
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        className="bg-surface hover:bg-surface-hover dark:bg-surface dark:hover:bg-surface-hover p-0 border-input size-11 shrink-0"
+        disabled={disabled}
+        aria-label={direction === "asc" ? "Sort descending" : "Sort ascending"}
+        title={
+          direction === "asc"
+            ? "Ascending order; switch to descending"
+            : "Descending order; switch to ascending"
+        }
+        onClick={() => onDirectionChange(direction === "asc" ? "desc" : "asc")}
+      >
+        {direction === "asc" ? (
+          <SortAscendingIcon aria-hidden />
+        ) : (
+          <SortDescendingIcon aria-hidden />
+        )}
+      </Button>
+    </div>
+  );
+}
 
 export function DashboardViewToggle({
   value,

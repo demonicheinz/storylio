@@ -74,6 +74,7 @@ import { GALLERY_BATCH_LIMIT } from "@/features/dashboard/gallery/constants";
 import toolbarStyles from "@/features/dashboard/shared/components/collection-toolbar.module.css";
 import {
   DashboardSelect,
+  DashboardSort,
   DashboardViewToggle,
 } from "@/features/dashboard/shared/components/filter-controls";
 import {
@@ -117,7 +118,7 @@ type GalleryManagerProps = {
 
 type ViewMode = "grid" | "list";
 type VisibilityFilter = "all" | "visible" | "hidden";
-type SortMode = "order-asc" | "order-desc" | "created-desc" | "created-asc";
+type SortMode = "order" | "created";
 
 function GalleryThumbnail({
   imageUrl,
@@ -1124,10 +1125,8 @@ const visibilityOptions = [
   { value: "hidden", label: "Hidden" },
 ];
 const sortOptions = [
-  { value: "order-asc", label: "Display order" },
-  { value: "order-desc", label: "Reverse order" },
-  { value: "created-desc", label: "Newest first" },
-  { value: "created-asc", label: "Oldest first" },
+  { value: "order", label: "Display order" },
+  { value: "created", label: "Date created" },
 ];
 
 export function GalleryManager({ items }: GalleryManagerProps) {
@@ -1143,7 +1142,8 @@ export function GalleryManager({ items }: GalleryManagerProps) {
     "all",
   );
   const [category, setCategory] = useState("all");
-  const [sortMode, setSortMode] = useState<SortMode>("order-asc");
+  const [sortMode, setSortMode] = useState<SortMode>("order");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [itemsPerPage, setItemsPerPage] = useState<number>(
     getDefaultItemsPerPage("grid"),
   );
@@ -1164,13 +1164,15 @@ export function GalleryManager({ items }: GalleryManagerProps) {
   const [draftVisibility, setDraftVisibility] =
     useState<VisibilityFilter>("all");
   const [draftCategory, setDraftCategory] = useState("all");
-  const [draftSort, setDraftSort] = useState<SortMode>("order-asc");
+  const [draftSort, setDraftSort] = useState<SortMode>("order");
+  const [draftDirection, setDraftDirection] = useState<"asc" | "desc">("asc");
   const [draftView, setDraftView] = useState<ViewMode>("grid");
   const previousView = useRef<{
     query: string;
     visibility: VisibilityFilter;
     category: string;
     sortMode: SortMode;
+    direction: "asc" | "desc";
     viewMode: ViewMode;
     itemsPerPage: number;
   } | null>(null);
@@ -1211,16 +1213,13 @@ export function GalleryManager({ items }: GalleryManagerProps) {
               getFileName(item.imageUrl),
             ].some((value) => value?.toLowerCase().includes(search))),
       )
-      .sort((a, b) =>
-        sortMode === "order-desc"
-          ? b.order - a.order
-          : sortMode === "created-desc"
-            ? Date.parse(b.createdAt) - Date.parse(a.createdAt)
-            : sortMode === "created-asc"
-              ? Date.parse(a.createdAt) - Date.parse(b.createdAt)
-              : a.order - b.order,
+      .sort(
+        (a, b) =>
+          (sortMode === "created"
+            ? Date.parse(a.createdAt) - Date.parse(b.createdAt)
+            : a.order - b.order) * (sortDirection === "asc" ? 1 : -1),
       );
-  }, [items, query, visibility, category, sortMode]);
+  }, [items, query, visibility, category, sortMode, sortDirection]);
   const {
     items: paginatedItems,
     pageCount,
@@ -1239,11 +1238,11 @@ export function GalleryManager({ items }: GalleryManagerProps) {
   const activeFilterCount =
     Number(visibility !== "all") +
     Number(category !== "all") +
-    Number(sortMode !== "order-asc");
+    Number(sortMode !== "order" || sortDirection !== "asc");
 
   useEffect(() => {
     setPage(1);
-  }, [category, itemsPerPage, query, sortMode, visibility]);
+  }, [category, itemsPerPage, query, sortMode, sortDirection, visibility]);
   useEffect(() => {
     const ids = new Set(items.map((item) => item.id));
     setSelectedIds((previous) => {
@@ -1391,6 +1390,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
         setVisibility(previous.visibility);
         setCategory(previous.category);
         setSortMode(previous.sortMode);
+        setSortDirection(previous.direction);
         setViewMode(previous.viewMode);
         setItemsPerPage(previous.itemsPerPage);
       }
@@ -1402,13 +1402,15 @@ export function GalleryManager({ items }: GalleryManagerProps) {
       visibility,
       category,
       sortMode,
+      direction: sortDirection,
       viewMode,
       itemsPerPage,
     };
     setQuery("");
     setVisibility("all");
     setCategory("all");
-    setSortMode("order-asc");
+    setSortMode("order");
+    setSortDirection("asc");
     setViewMode("list");
     setPage(1);
     clearSelection();
@@ -1426,13 +1428,15 @@ export function GalleryManager({ items }: GalleryManagerProps) {
     setQuery("");
     setVisibility("all");
     setCategory("all");
-    setSortMode("order-asc");
+    setSortMode("order");
+    setSortDirection("asc");
   };
   const openFilters = (open: boolean) => {
     if (open) {
       setDraftVisibility(visibility);
       setDraftCategory(category);
       setDraftSort(sortMode);
+      setDraftDirection(sortDirection);
       setDraftView(viewMode);
     }
     setFiltersOpen(open);
@@ -1440,12 +1444,14 @@ export function GalleryManager({ items }: GalleryManagerProps) {
   const resetDraft = () => {
     setDraftVisibility("all");
     setDraftCategory("all");
-    setDraftSort("order-asc");
+    setDraftSort("order");
+    setDraftDirection("asc");
   };
   const applyFilters = () => {
     setVisibility(draftVisibility);
     setCategory(draftCategory);
     setSortMode(draftSort);
+    setSortDirection(draftDirection);
     handleViewModeChange(draftView);
     setFiltersOpen(false);
   };
@@ -1472,10 +1478,11 @@ export function GalleryManager({ items }: GalleryManagerProps) {
         options={categoryOptions}
         onValueChange={mobile ? setDraftCategory : setCategory}
       />
-      <FilterDropdown
-        label="Sort by"
+      <DashboardSort
         value={mobile ? draftSort : sortMode}
         options={sortOptions}
+        direction={mobile ? draftDirection : sortDirection}
+        onDirectionChange={mobile ? setDraftDirection : setSortDirection}
         onValueChange={(value) =>
           mobile
             ? setDraftSort(value as SortMode)
@@ -1601,7 +1608,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
                   </Button>
                 </div>
               </div>
-              <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(160px,1fr)_130px_minmax(140px,190px)_150px_auto] min-w-0">
+              <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(160px,1fr)_130px_minmax(140px,190px)_220px_auto] min-w-0">
                 <div className="flex flex-col gap-1.5 md:col-span-2 xl:col-span-1 min-w-0">
                   <span className="text-muted-foreground text-xs">Search</span>
                   <div className="relative">
