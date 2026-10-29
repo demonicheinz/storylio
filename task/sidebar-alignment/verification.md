@@ -36,3 +36,15 @@ trigger has an explicit name because its visible account text is hidden.
 
 Overall: 4.2/5. A follow-up authenticated route smoke would extend confidence
 beyond isolated layout. The assessment matches the requested alignment fix.
+
+## Mobile portal regression — 29 October 2026
+
+The mobile Sheet renders outside SidebarProvider, so `--sidebar-width-icon`
+was unavailable to the grid declaration. With no fallback, the declaration was
+invalid and icons/text occupied separate rows. A 4rem fallback now keeps the
+grid valid inside the portal while preserving configured desktop values.
+
+`sidebar-mobile.js` reproduced the original failure at 767px, then passed at
+767/640/390/320px: all eleven controls have aligned icon/text centers, at least
+44px hit targets, and a panel inside the viewport. Desktop/tablet geometry and
+collapse/reduced-motion checks also passed. Screenshots: `mobile-*.png`.

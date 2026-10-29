@@ -15,6 +15,7 @@ In another terminal:
 ```powershell
 bunx --no-install playwright-cli -s=sidebar-layout open http://127.0.0.1:3195 --config=playwright-cli.config.json
 bunx --no-install playwright-cli -s=sidebar-layout run-code --filename=tests/browser/sidebar-layout.js
+bunx --no-install playwright-cli -s=sidebar-layout run-code --filename=tests/browser/sidebar-mobile.js
 bunx --no-install playwright-cli -s=sidebar-layout run-code --filename=tests/browser/sidebar-motion.js
 bunx --no-install playwright-cli -s=sidebar-layout close
 ```

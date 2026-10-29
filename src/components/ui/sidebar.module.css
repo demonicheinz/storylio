@@ -1,7 +1,8 @@
 /* Keep the icon column fixed while the rail and content area resize together. */
 .menuButton {
   display: grid;
-  grid-template-columns: calc(var(--sidebar-width-icon) - 1rem - 1px) minmax(
+  /* Mobile Sheet is portalled outside SidebarProvider's CSS-variable scope. */
+  grid-template-columns: calc(var(--sidebar-width-icon, 4rem) - 1rem - 1px) minmax(
       0,
       1fr
     ) auto;
