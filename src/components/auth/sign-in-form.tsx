@@ -15,7 +15,7 @@ import {
 } from "@simplewebauthn/browser";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Logo } from "@/components/common/logo";
@@ -45,6 +45,7 @@ export function SignInForm({
   const [showPassword, setShowPassword] = useState(false);
   const lock = useRef(false);
   const mounted = useRef(false);
+  const lifecycle = useRef(0);
   const conditional = useRef<AbortController | null>(null);
   const {
     register,
@@ -61,16 +62,24 @@ export function SignInForm({
     router.refresh();
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     mounted.current = true;
     const onPageShow = (event: PageTransitionEvent) => {
       if (!event.persisted) return;
+      lifecycle.current += 1;
       lock.current = false;
       setPending(null);
+      setError(null);
     };
     window.addEventListener("pageshow", onPageShow);
     return () => {
       mounted.current = false;
+      lifecycle.current += 1;
+      // Cache Components hides this form with Activity instead of unmounting it.
+      // Transient submission state must not survive the next visit.
+      lock.current = false;
+      setPending(null);
+      setError(null);
       window.removeEventListener("pageshow", onPageShow);
       conditional.current?.abort();
       WebAuthnAbortService.cancelCeremony();
@@ -149,24 +158,26 @@ export function SignInForm({
     setPending(method);
     return true;
   };
-  const release = (success: boolean) => {
-    if (success || !mounted.current) return;
+  const isCurrent = (attempt: number) =>
+    mounted.current && lifecycle.current === attempt;
+  const release = (success: boolean, attempt: number) => {
+    if (success || !isCurrent(attempt)) return;
     lock.current = false;
     setPending(null);
   };
   const onSubmit = async (values: SignInValues) => {
     if (!begin("password")) return;
+    const attempt = lifecycle.current;
     let success = false;
     try {
       const result = await authClient.signIn.email({
         ...values,
         callbackURL: redirectTo,
       });
-      if (!mounted.current) return;
+      if (!isCurrent(attempt)) return;
       if (result.error || !result.data)
         setError(getSignInError(result.error, "password"));
       else {
-        success = true;
         if (
           "twoFactorRedirect" in result.data &&
           result.data.twoFactorRedirect
@@ -176,15 +187,17 @@ export function SignInForm({
             "/two-factor?" + new URLSearchParams({ callbackUrl: redirectTo }),
           );
         } else navigate();
+        success = true;
       }
     } catch {
-      if (mounted.current) setError(SIGN_IN_CONNECTION_ERROR);
+      if (isCurrent(attempt)) setError(SIGN_IN_CONNECTION_ERROR);
     } finally {
-      release(success);
+      release(success, attempt);
     }
   };
   const signInWithGitHub = async () => {
     if (!begin("github")) return;
+    const attempt = lifecycle.current;
     let success = false;
     try {
       const query = new URLSearchParams({
@@ -196,18 +209,19 @@ export function SignInForm({
         callbackURL: redirectTo,
         errorCallbackURL: "/sign-in?" + query.toString(),
       });
-      if (!mounted.current) return;
+      if (!isCurrent(attempt)) return;
       if (result.error || !result.data?.url)
         setError(getSignInError(result.error, "github"));
       else success = true;
     } catch {
-      if (mounted.current) setError(SIGN_IN_CONNECTION_ERROR);
+      if (isCurrent(attempt)) setError(SIGN_IN_CONNECTION_ERROR);
     } finally {
-      release(success);
+      release(success, attempt);
     }
   };
   const signInWithPasskey = async () => {
     if (!begin("passkey")) return;
+    const attempt = lifecycle.current;
     let success = false;
     try {
       if (
@@ -220,17 +234,17 @@ export function SignInForm({
         return;
       }
       const result = await authClient.signIn.passkey();
-      if (!mounted.current) return;
+      if (!isCurrent(attempt)) return;
       if (result.error || !result.data?.session || !result.data.user)
         setError(getSignInError(result.error, "passkey"));
       else {
-        success = true;
         navigate();
+        success = true;
       }
     } catch {
-      if (mounted.current) setError(SIGN_IN_CONNECTION_ERROR);
+      if (isCurrent(attempt)) setError(SIGN_IN_CONNECTION_ERROR);
     } finally {
-      release(success);
+      release(success, attempt);
     }
   };
   const message =
