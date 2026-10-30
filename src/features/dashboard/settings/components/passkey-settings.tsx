@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { authClient } from "@/lib/auth-client";
 
 type Passkey = NonNullable<
@@ -223,9 +224,21 @@ export function PasskeySettings({
                     onClick={async () => {
                       if (mutationLock.current || pending || loading) return;
                       if (
-                        !window.confirm(
+                        !(await confirmAction(
                           `Delete passkey "${passkey.name || "Unnamed passkey"}"? You will need to register it again to use it for sign-in. Other sign-in methods will not be changed.`,
-                        )
+                          {
+                            title: "Delete passkey?",
+                            confirmLabel: "Delete passkey",
+                            cancelLabel: "Cancel",
+                          },
+                        ))
+                      )
+                        return;
+                      if (
+                        !mounted.current ||
+                        mutationLock.current ||
+                        pending ||
+                        loading
                       )
                         return;
                       const error = await mutate(

@@ -44,6 +44,7 @@ import {
 } from "@/features/dashboard/shared/components/filter-controls";
 import { DashboardPagination } from "@/features/dashboard/shared/components/pagination";
 import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
+import { registerNavigationGuard } from "@/features/dashboard/shared/navigation-guard";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import type { UploadResponse } from "@/features/dashboard/shared/utils/upload";
 import { formatBytes } from "@/lib/format-bytes";
@@ -560,53 +561,9 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
   }, []);
   useEffect(() => {
     if (!queue.busy) return;
-    const unload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    const navigate = (event: MouseEvent) => {
-      if (
-        event.defaultPrevented ||
-        event.button !== 0 ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.shiftKey ||
-        event.altKey
-      )
-        return;
-      const anchor =
-        event.target instanceof Element
-          ? event.target.closest("a[href]")
-          : null;
-      if (
-        !(anchor instanceof HTMLAnchorElement) ||
-        anchor.target === "_blank" ||
-        anchor.hasAttribute("download")
-      )
-        return;
-      const next = new URL(anchor.href, location.href);
-      if (
-        !["http:", "https:"].includes(next.protocol) ||
-        (next.origin === location.origin &&
-          next.pathname === location.pathname &&
-          next.search === location.search)
-      )
-        return;
-      if (
-        !window.confirm(
-          "Leave Media? Uploads may be interrupted. Completed images remain in the library.",
-        )
-      ) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-    window.addEventListener("beforeunload", unload);
-    document.addEventListener("click", navigate, true);
-    return () => {
-      window.removeEventListener("beforeunload", unload);
-      document.removeEventListener("click", navigate, true);
-    };
+    return registerNavigationGuard(
+      "Leave Media? Uploads may be interrupted. Completed images remain in the library.",
+    );
   }, [queue.busy]);
 
   const filteredMedia = useMemo(() => {

@@ -266,8 +266,14 @@ async function authRecoveryMfa(page) {
     await page
       .getByLabel("Confirm your password", { exact: true })
       .fill("fixture-password");
-    page.once("dialog", (dialog) => dialog.accept());
+
     await page.getByRole("button", { name: "Regenerate backup codes" }).click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await page.getByRole("list", { name: "Backup codes" }).waitFor();
     assert(
       await page
@@ -282,10 +288,16 @@ async function authRecoveryMfa(page) {
     await page
       .getByLabel("Confirm your password", { exact: true })
       .fill("fixture-password");
-    page.once("dialog", (dialog) => dialog.accept());
+
     await page
       .getByRole("button", { name: "Disable two-factor", exact: true })
       .click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await page.getByRole("button", { name: "Set up authenticator" }).waitFor();
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(origin + "/forgot-password");

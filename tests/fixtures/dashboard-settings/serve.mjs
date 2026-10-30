@@ -7,7 +7,7 @@ import postcss from "postcss";
 
 const stubs = {
   "next/navigation":
-    "export const useRouter=()=>({refresh(){},push(){},replace(){}});export const useSearchParams=()=>new URLSearchParams(location.search);",
+    "export const usePathname=()=>location.pathname;export const useRouter=()=>({refresh(){},push(){},replace(){}});export const useSearchParams=()=>new URLSearchParams(location.search);",
   "./auth-flow":
     "export function AuthFormHeading({title,description,children}){return <section style={{maxWidth:400,margin:'auto'}}><h1>{title}</h1><p>{description}</p>{children}</section>}",
   "next/image":

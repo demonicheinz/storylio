@@ -50,6 +50,7 @@ import { DateTimePicker } from "@/features/dashboard/shared/components/date-time
 import { DashboardSelect } from "@/features/dashboard/shared/components/filter-controls";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { TagsInput } from "@/features/dashboard/shared/components/tag-input";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { useUnsavedChangesGuard } from "@/features/dashboard/shared/hooks/use-unsaved-changes-guard";
 import { createSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
@@ -483,10 +484,15 @@ export function PostEditor({ mode, post }: PostEditorProps) {
     }
   };
 
-  const moveToDraft = () => {
+  const moveToDraft = async () => {
     if (
-      window.confirm(
+      await confirmAction(
         "Move this post to draft? It will no longer be public. Your current edits will be saved.",
+        {
+          title: "Move post to draft?",
+          confirmLabel: "Move to draft",
+          cancelLabel: "Cancel",
+        },
       )
     ) {
       void submitWithStatus("draft")();

@@ -76,6 +76,8 @@ import {
 } from "@/features/dashboard/home/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { DashboardSortableList } from "@/features/dashboard/shared/components/sortable-list";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
+import { registerNavigationGuard } from "@/features/dashboard/shared/navigation-guard";
 import { DEFAULT_HOME_HERO } from "@/lib/home-hero";
 import {
   getHomeLogoSettings,
@@ -242,8 +244,8 @@ function HeroHeadlineForm({
             type="button"
             variant="outline"
             disabled={pending || !dirty}
-            onClick={() => {
-              if (window.confirm("Discard the unsaved headline?")) {
+            onClick={async () => {
+              if (await confirmAction("Discard the unsaved headline?")) {
                 setValue(savedValue);
                 clearHeroDraft();
                 setError(undefined);
@@ -360,14 +362,23 @@ function HomeSectionDialog({
     return () => cancelAnimationFrame(frame);
   }, [errors, open, pending, setFocus]);
 
-  const changeOpen = (next: boolean) => {
-    if (pendingRef.current) return;
-    if (
-      !next &&
-      isDirty &&
-      !window.confirm("Discard unsaved changes to this Home section?")
-    )
+  const changeOpen = (next: boolean, details?: { cancel: () => void }) => {
+    if (pendingRef.current) {
+      details?.cancel();
       return;
+    }
+    if (!next && isDirty) {
+      details?.cancel();
+      void confirmAction("Discard unsaved changes to this Home section?").then(
+        (approved) => {
+          if (approved && !pendingRef.current) {
+            clearHomeDraft(draftKey);
+            setOpen(false);
+          }
+        },
+      );
+      return;
+    }
     if (!next) clearHomeDraft(draftKey);
     setOpen(next);
   };
@@ -1037,49 +1048,7 @@ export function HomeContentManager({
   const dirty = Object.values(drafts).some(Boolean);
   useEffect(() => {
     if (!dirty) return;
-    const beforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-    const navigate = (event: MouseEvent) => {
-      if (
-        event.defaultPrevented ||
-        event.button !== 0 ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.shiftKey ||
-        event.altKey
-      )
-        return;
-      const anchor =
-        event.target instanceof Element
-          ? event.target.closest("a[href]")
-          : null;
-      if (
-        !(anchor instanceof HTMLAnchorElement) ||
-        anchor.target === "_blank" ||
-        anchor.hasAttribute("download")
-      )
-        return;
-      const next = new URL(anchor.href, window.location.href);
-      if (
-        !["http:", "https:"].includes(next.protocol) ||
-        (next.origin === window.location.origin &&
-          next.pathname === window.location.pathname &&
-          next.search === window.location.search)
-      )
-        return;
-      if (!window.confirm("Leave Home and discard unsaved changes?")) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    };
-    window.addEventListener("beforeunload", beforeUnload);
-    document.addEventListener("click", navigate, true);
-    return () => {
-      window.removeEventListener("beforeunload", beforeUnload);
-      document.removeEventListener("click", navigate, true);
-    };
+    return registerNavigationGuard("Leave Home and discard unsaved changes?");
   }, [dirty]);
   return (
     <DraftContext.Provider value={reportDraft}>

@@ -431,8 +431,14 @@ async function dashboardSettings(sessionPage) {
     await page
       .getByRole("heading", { name: "Dashboard session", exact: true })
       .waitFor({ state: "hidden" });
-    page.once("dialog", (dialog) => dialog.dismiss());
+
     await tab("Account");
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-cancel"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(
       (await page
         .getByRole("tab", { name: "Security", exact: true })
@@ -463,10 +469,16 @@ async function dashboardSettings(sessionPage) {
           (x) => x.name === "generateBackupCodes",
         ).length,
     );
-    page.once("dialog", (dialog) => dialog.dismiss());
+
     await page
       .getByRole("button", { name: "Regenerate backup codes", exact: true })
       .click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-cancel"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(
       (await page.evaluate(
         () =>
@@ -476,15 +488,27 @@ async function dashboardSettings(sessionPage) {
       )) === before,
       "Cancelled regeneration called API",
     );
-    page.once("dialog", (dialog) => dialog.accept());
+
     await page
       .getByRole("button", { name: "Regenerate backup codes", exact: true })
       .click();
     await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
+    await page
       .getByRole("list", { name: "Backup codes", exact: true })
       .waitFor();
-    page.once("dialog", (dialog) => dialog.accept());
+
     await tab("Account");
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await tab("Security");
     assert(
       (await page
@@ -584,13 +608,18 @@ async function dashboardSettings(sessionPage) {
       (await remove.getAttribute("data-variant")) === "destructive",
       "Delete should use destructive styling",
     );
-    let prompt = "";
-    page.once("dialog", async (dialog) => {
-      prompt = dialog.message();
-      await dialog.dismiss();
-    });
     await remove.click();
-    assert(prompt.includes(keyName), "Delete confirmation should name the key");
+    const deletePrompt = page.getByRole("alertdialog", {
+      name: "Delete passkey?",
+      exact: true,
+    });
+    await deletePrompt.waitFor();
+    assert(
+      (await deletePrompt.textContent()).includes(keyName),
+      "Delete confirmation should name the key",
+    );
+    await deletePrompt.locator('[data-slot="alert-dialog-cancel"]').click();
+    await deletePrompt.waitFor({ state: "hidden" });
     assert(
       (await page.evaluate(
         () =>
@@ -600,8 +629,14 @@ async function dashboardSettings(sessionPage) {
       )) === 0,
       "Cancelled delete called auth",
     );
-    page.once("dialog", (dialog) => dialog.accept());
+
     await remove.click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await page.getByText(keyName, { exact: true }).waitFor({ state: "hidden" });
     const revokeOthers = page.getByRole("button", {
       name: "Revoke Other Sessions",

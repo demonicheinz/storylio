@@ -211,14 +211,14 @@ async function dashboardProjects(sessionPage) {
       "Preview used unsaved slug",
     );
     await preview.close();
-    await page.evaluate(() => {
-      window.confirm = () => false;
-    });
     await page.getByRole("link", { name: "Projects", exact: true }).click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-cancel"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(page.url().includes("editor=draft"), "Dirty navigation not guarded");
-    await page.evaluate(() => {
-      window.confirm = () => true;
-    });
     await page.goto(`${origin}/?upload`);
     const drop = page.getByRole("button", {
       name: "Add screenshots",

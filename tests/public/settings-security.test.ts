@@ -23,6 +23,9 @@ type HarnessState = {
   queued: (() => void)[];
 };
 
+vi.mock("@/features/dashboard/shared/confirmation", () => ({
+  confirmAction: async (message: string) => window.confirm(message),
+}));
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
     useListPasskeys: mocks.listKeys,

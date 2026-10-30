@@ -171,8 +171,14 @@ async function dashboardMedia(sessionPage) {
     await page.getByRole("menuitem", { name: "Rename", exact: true }).click();
     const input = page.getByRole("textbox", { name: "File name", exact: true });
     await input.fill("Keep this draft.webp");
-    page.once("dialog", (dialog) => dialog.dismiss());
+
     await page.keyboard.press("Escape");
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-cancel"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(
       (await input.inputValue()) === "Keep this draft.webp",
       "Rename discarded a protected draft",

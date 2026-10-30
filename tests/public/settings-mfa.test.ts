@@ -36,6 +36,9 @@ const mocks = vi.hoisted(() => ({
   changed: vi.fn(),
   confirm: vi.fn(),
 }));
+vi.mock("@/features/dashboard/shared/confirmation", () => ({
+  confirmAction: async (message: string) => window.confirm(message),
+}));
 vi.mock("@/lib/auth-client", () => ({
   authClient: { useSession: () => mocks.session, twoFactor: mocks },
 }));
@@ -464,10 +467,10 @@ describe("MFA settings", () => {
     await submit();
     fill("mfa-code", "123456");
     mocks.confirm.mockReturnValue(false);
-    button("Cancel setup").onClick?.();
+    await button("Cancel setup").onClick?.();
     expect(render().html).toContain("Scan this QR code");
     mocks.confirm.mockReturnValue(true);
-    button("Cancel setup").onClick?.();
+    await button("Cancel setup").onClick?.();
     const { html, nodes } = render();
     expect(html).not.toContain("FIXTURE");
     expect(html).not.toContain("fixture-backup");

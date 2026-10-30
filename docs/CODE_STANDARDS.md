@@ -27,6 +27,12 @@ CMS contracts, and security behavior unless the task explicitly changes them.
   while a known zero-byte file is "0 B".
 - Use existing pagination/filter/sort helpers before adding another one.
   Preserve query canonicalization and stable ordering when consolidating them.
+- Use `confirmAction` and the dashboard `DashboardConfirmationHost` for imperative
+  confirmation choices. Await the result before submitting actions; a modal close
+  handler must cancel its original event synchronously before opening confirmation.
+  Keep multi-step mutation dialogs local when they own pending/error/retry UI.
+  Native `beforeunload` protection remains for tab close/reload; in-app draft links
+  use the shared navigation guard and styled confirmation instead of window.confirm.
 - Keep record slug generation distinct from heading anchor generation. They
   serve different contracts; similar code alone is not proof they are interchangeable.
 - Follow [IMAGE_DELIVERY.md](IMAGE_DELIVERY.md) for responsive image sizes and

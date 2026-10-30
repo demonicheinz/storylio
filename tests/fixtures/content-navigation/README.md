@@ -21,6 +21,11 @@ Run these files with `run-code --filename=...`:
   `/?kind=covers`. Valid images are inline SVG fixtures, and broken input is
   deliberate. The Next Image component is stubbed; optimizer URLs are tested
   separately by `tests/public/image-delivery.test.ts`.
+- `tests/browser/dashboard-confirmations.js`: uses the Media fixture on port 3201
+  and this fixture on 3205. Verifies nested discard, Cancel/Escape/focus, no native
+  confirms, one approved link replay, coalesced dirty guards, and native unload
+  protection. Inspect `/?kind=confirmation`; screenshots go to
+  `task/code-standardization/`.
 
 The fixture renders the actual New route components, editors, skeletons,
 Blog card, shared controls, and project CSS/fonts. React StrictMode and Activity

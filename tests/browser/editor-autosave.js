@@ -196,16 +196,28 @@ async function editorAutosave(sessionPage) {
         `${kind}: no editable status dropdown`,
       );
       await page.getByRole("button", { name: "Publishing options" }).click();
-      page.once("dialog", (dialog) => dialog.dismiss());
+
       await page.getByRole("menuitem", { name: "Move to draft…" }).click();
+      await page
+        .getByRole("alertdialog")
+        .last()
+        .locator('[data-slot="alert-dialog-cancel"]')
+        .click();
+      await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
       assert(
         (await state()).calls.length === 7,
         `${kind}: cancelling move to draft does not save`,
       );
       await page.getByLabel("Content", { exact: true }).fill("");
       await page.getByRole("button", { name: "Publishing options" }).click();
-      page.once("dialog", (dialog) => dialog.accept());
+
       await page.getByRole("menuitem", { name: "Move to draft…" }).click();
+      await page
+        .getByRole("alertdialog")
+        .last()
+        .locator('[data-slot="alert-dialog-action"]')
+        .click();
+      await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
       await waitCalls(8);
       await settle();
       await page

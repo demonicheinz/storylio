@@ -72,6 +72,7 @@ import {
 } from "@/features/dashboard/shared/components/filter-controls";
 import { DashboardPagination } from "@/features/dashboard/shared/components/pagination";
 import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { useDashboardFilter } from "@/features/dashboard/shared/hooks/use-dashboard-filter";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import type { ActionResult } from "@/lib/action-result";
@@ -1134,11 +1135,16 @@ export function PostsManager({ posts }: PostsManagerProps) {
     runBatchAction(actionPublishPosts, "Selected posts published.");
   };
 
-  const moveSelectedPostsToDraft = () => {
+  const moveSelectedPostsToDraft = async () => {
     if (
-      !window.confirm(
+      !(await confirmAction(
         "Move selected posts to draft? Public posts will be hidden and schedules cancelled.",
-      )
+        {
+          title: "Move selected posts to draft?",
+          confirmLabel: "Move to draft",
+          cancelLabel: "Cancel",
+        },
+      ))
     )
       return;
     runBatchAction(actionMovePostsToDraft, "Selected posts moved to draft.");

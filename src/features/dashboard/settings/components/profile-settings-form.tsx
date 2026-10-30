@@ -66,6 +66,7 @@ import {
 } from "@/features/dashboard/settings/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { useUnsavedChangesGuard } from "@/features/dashboard/shared/hooks/use-unsaved-changes-guard";
 import type { ActionResult } from "@/lib/action-result";
 import { authClient } from "@/lib/auth-client";
@@ -1235,7 +1236,7 @@ export function SettingsManager({
     setMfaOverride(enabled);
     setSecurityVersion((value) => value + 1);
   }, []);
-  const changeTab = (next: unknown) => {
+  const changeTab = async (next: unknown) => {
     if (typeof next !== "string" || next === tab) return;
     if (tab === "security" && securityFlow.current.pending) {
       toast.add({
@@ -1247,11 +1248,17 @@ export function SettingsManager({
     if (
       tab === "security" &&
       securityFlow.current.dirty &&
-      !window.confirm(
+      !(await confirmAction(
         "Leave Security? Incomplete setup or unsaved backup codes will be cleared from this view. This does not undo changes already made to your account.",
-      )
+        {
+          title: "Leave Security?",
+          confirmLabel: "Leave Security",
+          cancelLabel: "Cancel",
+        },
+      ))
     )
       return;
+    if (securityFlow.current.pending) return;
     securityFlow.current = { dirty: false, pending: false };
     setTab(next);
   };

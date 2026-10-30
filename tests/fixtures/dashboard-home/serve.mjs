@@ -7,7 +7,7 @@ import { build } from "esbuild";
 import postcss from "postcss";
 
 const replacements = {
-  "next/navigation": `export const useRouter=()=>({refresh(){window.homeFixture.refreshes++;window.dispatchEvent(new Event("fixture-refresh"));},push(href){location.href=href;}});`,
+  "next/navigation": `import {useSyncExternalStore} from 'react';const subscribe=(callback)=>{window.addEventListener('popstate',callback);return ()=>window.removeEventListener('popstate',callback)};export const usePathname=()=>useSyncExternalStore(subscribe,()=>location.pathname,()=>'/');export const useRouter=()=>({refresh(){window.homeFixture.refreshes++;window.dispatchEvent(new Event("fixture-refresh"));},push(href){location.href=href;}});`,
   "next/link": `export default function Link({children,...props}){return <a {...props}>{children}</a>;}`,
   "next/image": `export default function Image({src,unoptimized,fill,priority,loading,...props}){return <img src={typeof src==='string'?src:src.src} {...props}/>;}`,
   "@/components/ui/toast": `export const toast={add(){}};`,

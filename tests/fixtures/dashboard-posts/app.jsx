@@ -4,6 +4,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import { NotePreview } from "@/features/dashboard/posts/components/note-preview";
 import { PostEditor } from "@/features/dashboard/posts/components/post-editor";
 import { PostsManager } from "@/features/dashboard/posts/components/posts-manager";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
 import { DateTimePicker } from "@/features/dashboard/shared/components/date-time-picker";
 import shell from "@/features/dashboard/shell/dashboard-shell.module.css";
 
@@ -81,35 +82,40 @@ function Picker() {
   );
 }
 createRoot(document.getElementById("root")).render(
-  <ToastProvider>
-    <main
-      className={shell.shell}
-      style={{ maxWidth: 1280, margin: "auto", padding: 16 }}
-    >
-      {params.has("picker") ? (
-        <Picker />
-      ) : params.has("preview-note") ? (
-        <NotePreview
-          id="saved"
-          title="Private draft note"
-          state="Draft"
-          dateISO={future}
-          dateLabel="Preview date"
-          body={
-            <>
-              <h2 id="details">Shared note reading body</h2>
-              <p>Private note content.</p>
-            </>
-          }
-        />
-      ) : params.has("editor") ? (
-        <PostEditor
-          mode={params.get("editor") === "create" ? "create" : "edit"}
-          {...(params.get("editor") === "create" ? {} : { post })}
-        />
-      ) : (
-        <PostsManager posts={posts} />
-      )}
-    </main>
-  </ToastProvider>,
+  <>
+    <DashboardConfirmationHost />
+    {
+      <ToastProvider>
+        <main
+          className={shell.shell}
+          style={{ maxWidth: 1280, margin: "auto", padding: 16 }}
+        >
+          {params.has("picker") ? (
+            <Picker />
+          ) : params.has("preview-note") ? (
+            <NotePreview
+              id="saved"
+              title="Private draft note"
+              state="Draft"
+              dateISO={future}
+              dateLabel="Preview date"
+              body={
+                <>
+                  <h2 id="details">Shared note reading body</h2>
+                  <p>Private note content.</p>
+                </>
+              }
+            />
+          ) : params.has("editor") ? (
+            <PostEditor
+              mode={params.get("editor") === "create" ? "create" : "edit"}
+              {...(params.get("editor") === "create" ? {} : { post })}
+            />
+          ) : (
+            <PostsManager posts={posts} />
+          )}
+        </main>
+      </ToastProvider>
+    }
+  </>,
 );

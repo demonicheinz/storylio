@@ -71,6 +71,7 @@ import {
 } from "@/features/dashboard/about/validations";
 import { DashboardSelect } from "@/features/dashboard/shared/components/filter-controls";
 import { DashboardSortableList } from "@/features/dashboard/shared/components/sortable-list";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { cn } from "@/lib/utils";
 import { useAboutDraftGuard } from "./use-about-draft-guard";
@@ -219,14 +220,20 @@ function EditDialog({
   const [dirty, setDirty] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(categoryId ?? "");
   useAboutDraftGuard(open && dirty);
-  const close = (next: boolean) => {
-    if (pending) return;
-    if (
-      !next &&
-      dirty &&
-      !window.confirm("Discard unsaved changes to this item?")
-    )
+  const close = (next: boolean, details?: { cancel: () => void }) => {
+    if (pending) {
+      details?.cancel();
       return;
+    }
+    if (!next && dirty) {
+      details?.cancel();
+      void confirmAction("Discard unsaved changes to this item?").then(
+        (approved) => {
+          if (approved) setOpen(false);
+        },
+      );
+      return;
+    }
     setOpen(next);
   };
   const config = configs[kind];

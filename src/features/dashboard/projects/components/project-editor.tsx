@@ -48,6 +48,7 @@ import {
 } from "@/features/dashboard/projects/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { TagsInput } from "@/features/dashboard/shared/components/tag-input";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { useUnsavedChangesGuard } from "@/features/dashboard/shared/hooks/use-unsaved-changes-guard";
 import { createSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
@@ -429,10 +430,15 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
     }
   };
 
-  const moveToDraft = () => {
+  const moveToDraft = async () => {
     if (
-      window.confirm(
+      await confirmAction(
         "Move this project to draft? It will no longer be public. Your current edits will be saved.",
+        {
+          title: "Move project to draft?",
+          confirmLabel: "Move to draft",
+          cancelLabel: "Cancel",
+        },
       )
     ) {
       void submitWithStatus("draft")();

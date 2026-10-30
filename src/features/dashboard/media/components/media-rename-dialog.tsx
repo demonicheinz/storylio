@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { actionRenameMedia } from "../actions";
 import type { MediaItem } from "../types";
 
@@ -39,12 +40,13 @@ export function MediaRenameDialog({
       details?.cancel();
       return;
     }
-    if (
-      item &&
-      value !== item.filename &&
-      !window.confirm("Discard unsaved changes to this file name?")
-    ) {
+    if (item && value !== item.filename) {
       details?.cancel();
+      void confirmAction("Discard unsaved changes to this file name?").then(
+        (approved) => {
+          if (approved && !locked.current) onClose();
+        },
+      );
       return;
     }
     onClose();

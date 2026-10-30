@@ -5,16 +5,11 @@ async function galleryEditor(sessionPage) {
   const errors = [];
   const external = [];
   const prompts = [];
-  let discard = false;
   const assert = (ok, message) => {
     if (!ok) throw new Error(message);
   };
   page.on("pageerror", (error) => errors.push(error.message));
-  page.on("dialog", async (dialog) => {
-    prompts.push(dialog.message());
-    if (discard) await dialog.accept();
-    else await dialog.dismiss();
-  });
+
   await context.route("**/*", (route) => {
     if (new URL(route.request().url()).origin !== origin) {
       external.push(route.request().url());
@@ -67,6 +62,14 @@ async function galleryEditor(sessionPage) {
     for (const dismiss of dismissals) {
       const before = prompts.length;
       await dismiss();
+      const confirmation = page.getByRole("alertdialog", {
+        name: "Discard unsaved changes?",
+        exact: true,
+      });
+      await confirmation.waitFor();
+      prompts.push(await confirmation.textContent());
+      await confirmation.locator('[data-slot="alert-dialog-cancel"]').click();
+      await confirmation.waitFor({ state: "hidden" });
       await page.waitForFunction(
         () =>
           document.querySelector('[role="dialog"] textarea')?.value ===
@@ -90,8 +93,14 @@ async function galleryEditor(sessionPage) {
       (await caption().inputValue()) === "Draft to keep",
       "Prop refresh overwrote dirty draft",
     );
-    discard = true;
+
     await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await dialog.waitFor({ state: "hidden" });
     await open();
     assert(
@@ -161,6 +170,7 @@ async function galleryEditor(sessionPage) {
     const pendingPrompts = prompts.length;
     for (const dismiss of [dismissals[1], dismissals[2], dismissals[3]])
       await dismiss();
+
     assert(await dialog.isVisible(), "Saving dialog dismissed");
     assert(
       prompts.length === pendingPrompts,
@@ -243,6 +253,7 @@ async function galleryEditor(sessionPage) {
     const beforeUpload = prompts.length;
     for (const dismiss of [dismissals[1], dismissals[2], dismissals[3]])
       await dismiss();
+
     assert(await dialog.isVisible(), "Uploading dialog dismissed");
     assert(prompts.length === beforeUpload, "Uploading should block discard");
     assert(

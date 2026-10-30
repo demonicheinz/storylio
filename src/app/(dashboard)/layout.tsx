@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
 import { DashboardBreadcrumb } from "@/features/dashboard/shell/components/dashboard-breadcrumb";
 import { DashboardSidebarProvider } from "@/features/dashboard/shell/components/dashboard-sidebar-provider";
 import { AppSidebar } from "@/features/dashboard/shell/components/sidebar/app-sidebar";
@@ -16,6 +17,7 @@ export default function DashboardLayout({
 }) {
   return (
     <Providers>
+      <DashboardConfirmationHost />
       <DashboardSidebarProvider>
         <Suspense fallback={null}>
           <AppSidebar />

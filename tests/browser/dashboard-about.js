@@ -43,12 +43,15 @@ async function dashboardAbout(page) {
   await page
     .getByRole("textbox", { name: "How I Work (English)", exact: true })
     .fill("Discard this rich-text edit");
-  await page.evaluate(() => {
-    window.confirm = () => true;
-  });
   await page
     .getByRole("button", { name: "Discard changes", exact: true })
     .click();
+  await page
+    .getByRole("alertdialog")
+    .last()
+    .locator('[data-slot="alert-dialog-action"]')
+    .click();
+  await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
   assert(
     (await intro().inputValue()) === "An unsaved English introduction",
     "Discard did not restore saved content",
@@ -72,10 +75,13 @@ async function dashboardAbout(page) {
     .fill("New skill");
   await dialog.getByRole("combobox", { name: "Category", exact: true }).click();
   await page.getByRole("option", { name: "Backend", exact: true }).click();
-  await page.evaluate(() => {
-    window.confirm = () => false;
-  });
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await page
+    .getByRole("alertdialog")
+    .last()
+    .locator('[data-slot="alert-dialog-cancel"]')
+    .click();
+  await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
   assert(
     await dialog.isVisible(),
     "Dirty dialog closed without retaining cancelled discard",

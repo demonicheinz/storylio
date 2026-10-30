@@ -78,10 +78,16 @@ async function mediaUploadQueue(sessionPage) {
       .waitFor();
     await page.waitForFunction(() => window.mediaUploadRequests === 2);
     assert(jobs.length === 2, "Queue started more or fewer than two uploads");
-    page.once("dialog", (dialog) => dialog.dismiss());
+
     await page
       .getByRole("link", { name: "Leave library fixture", exact: true })
       .click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-cancel"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(
       new URL(page.url()).pathname === "/",
       "Upload navigation guard lost pending files",
