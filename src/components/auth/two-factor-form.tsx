@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { OtpInput } from "@/components/common/otp-input";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { SIGN_IN_CONNECTION_ERROR } from "@/lib/auth-errors";
@@ -13,6 +14,7 @@ export function TwoFactorForm() {
   const router = useRouter();
   const search = useSearchParams();
   const [backup, setBackup] = useState(false);
+  const [codeValue, setCodeValue] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lock = useRef(false);
@@ -77,27 +79,50 @@ export function TwoFactorForm() {
       }
     >
       <form key={String(backup)} onSubmit={submit} className={styles.form}>
-        <div className={styles.field}>
+        <div className={backup ? styles.field : styles.codeField}>
           <input
+            hidden={!backup}
             id="verification-code"
-            name="code"
+            name={backup ? "code" : undefined}
             autoComplete="one-time-code"
             autoCapitalize="none"
             spellCheck={false}
             inputMode={backup ? "text" : "numeric"}
             pattern={backup ? undefined : "[0-9]{6}"}
             maxLength={backup ? 64 : 6}
-            required
+            required={backup}
             placeholder=" "
             className={styles.input}
-            disabled={pending}
+            disabled={pending || !backup}
+            aria-invalid={backup && !!error}
+            aria-describedby={
+              backup ? (error ? "verification-error" : undefined) : undefined
+            }
           />
-          <label htmlFor="verification-code" className={styles.label}>
+          <label
+            htmlFor={backup ? "verification-code" : "authenticator-code"}
+            className={backup ? styles.label : "sr-only"}
+          >
             {backup ? "Backup code" : "Authenticator code"}
           </label>
+          {!backup && (
+            <OtpInput
+              id="authenticator-code"
+              name="code"
+              value={codeValue}
+              onValueChange={(value) => {
+                setCodeValue(value);
+                setError(null);
+              }}
+              required
+              disabled={pending}
+              aria-invalid={!!error}
+              aria-describedby={error ? "verification-error" : undefined}
+            />
+          )}
         </div>
         {error && (
-          <p role="alert" className={styles.error}>
+          <p id="verification-error" role="alert" className={styles.error}>
             {error}
           </p>
         )}
@@ -111,6 +136,7 @@ export function TwoFactorForm() {
           disabled={pending}
           onClick={() => {
             setBackup(!backup);
+            setCodeValue("");
             setError(null);
           }}
         >

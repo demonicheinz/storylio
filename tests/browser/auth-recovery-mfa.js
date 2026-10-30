@@ -1,4 +1,22 @@
 async function authRecoveryMfa(page) {
+  async function openMfaConfirmation() {
+    if (
+      await page
+        .getByLabel("Confirm your password", { exact: true })
+        .isVisible()
+    )
+      return;
+    const manage = page.getByRole("button", {
+      name: "Manage two-factor",
+      exact: true,
+    });
+    if (await manage.count()) await manage.click();
+    else
+      await page
+        .getByRole("button", { name: "Set up authenticator", exact: true })
+        .click();
+  }
+
   const origin = new URL(page.url()).origin;
   const assert = (value, message) => {
     if (!value) throw new Error(message);
@@ -221,6 +239,7 @@ async function authRecoveryMfa(page) {
       path: "task/auth-recovery-mfa/two-factor-390.png",
     });
     await page.goto(origin + "/auth-security-fixture-check");
+    await openMfaConfirmation();
     await page
       .getByLabel("Confirm your password", { exact: true })
       .fill("fixture-password");
@@ -243,9 +262,11 @@ async function authRecoveryMfa(page) {
     );
     await page.getByLabel("I saved my backup codes.").check();
     await page.getByRole("button", { name: "Done", exact: true }).click();
+    await openMfaConfirmation();
     await page
       .getByLabel("Confirm your password", { exact: true })
       .fill("fixture-password");
+    page.once("dialog", (dialog) => dialog.accept());
     await page.getByRole("button", { name: "Regenerate backup codes" }).click();
     await page.getByRole("list", { name: "Backup codes" }).waitFor();
     assert(
@@ -257,9 +278,11 @@ async function authRecoveryMfa(page) {
     );
     await page.getByLabel("I saved my backup codes.").check();
     await page.getByRole("button", { name: "Done", exact: true }).click();
+    await openMfaConfirmation();
     await page
       .getByLabel("Confirm your password", { exact: true })
       .fill("fixture-password");
+    page.once("dialog", (dialog) => dialog.accept());
     await page
       .getByRole("button", { name: "Disable two-factor", exact: true })
       .click();

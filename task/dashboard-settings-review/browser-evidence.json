@@ -1,0 +1,206 @@
+{
+  "scope": "Current production SettingsManager in synthetic fixture; no real auth/DB/actions, no credentials entered",
+  "result": [
+    {
+      "width": 1440,
+      "tab": "Profile",
+      "scrollWidth": 1440,
+      "height": 905,
+      "orientation": "vertical",
+      "tabHeight": 34,
+      "headings": ["Settings"],
+      "unassociatedLabels": [],
+      "errors": []
+    },
+    {
+      "width": 1440,
+      "tab": "Account",
+      "scrollWidth": 1440,
+      "height": 900,
+      "orientation": "vertical",
+      "tabHeight": 34,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Current login email", "Connected providers"],
+      "errors": []
+    },
+    {
+      "width": 1440,
+      "tab": "Security",
+      "scrollWidth": 1440,
+      "height": 1323,
+      "orientation": "vertical",
+      "tabHeight": 34,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Active sessions"],
+      "errors": []
+    },
+    {
+      "width": 1024,
+      "tab": "Profile",
+      "scrollWidth": 1024,
+      "height": 905,
+      "orientation": "vertical",
+      "tabHeight": 34,
+      "headings": ["Settings"],
+      "unassociatedLabels": [],
+      "errors": []
+    },
+    {
+      "width": 1024,
+      "tab": "Account",
+      "scrollWidth": 1024,
+      "height": 1192,
+      "orientation": "vertical",
+      "tabHeight": 34,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Current login email", "Connected providers"],
+      "errors": []
+    },
+    {
+      "width": 1024,
+      "tab": "Security",
+      "scrollWidth": 1024,
+      "height": 1343,
+      "orientation": "vertical",
+      "tabHeight": 34,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Active sessions"],
+      "errors": []
+    },
+    {
+      "width": 768,
+      "tab": "Profile",
+      "scrollWidth": 768,
+      "height": 1393,
+      "orientation": "vertical",
+      "tabHeight": 34,
+      "headings": ["Settings"],
+      "unassociatedLabels": [],
+      "errors": []
+    },
+    {
+      "width": 768,
+      "tab": "Account",
+      "scrollWidth": 768,
+      "height": 1254,
+      "orientation": "vertical",
+      "tabHeight": 34,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Current login email", "Connected providers"],
+      "errors": []
+    },
+    {
+      "width": 768,
+      "tab": "Security",
+      "scrollWidth": 768,
+      "height": 1405,
+      "orientation": "vertical",
+      "tabHeight": 34,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Active sessions"],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "tab": "Profile",
+      "scrollWidth": 390,
+      "height": 1641,
+      "orientation": "vertical",
+      "tabHeight": 44,
+      "headings": ["Settings"],
+      "unassociatedLabels": [],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "tab": "Account",
+      "scrollWidth": 390,
+      "height": 1420,
+      "orientation": "vertical",
+      "tabHeight": 44,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Current login email", "Connected providers"],
+      "errors": []
+    },
+    {
+      "width": 390,
+      "tab": "Security",
+      "scrollWidth": 390,
+      "height": 1879,
+      "orientation": "vertical",
+      "tabHeight": 44,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Active sessions"],
+      "errors": []
+    },
+    {
+      "width": 360,
+      "tab": "Profile",
+      "scrollWidth": 360,
+      "height": 1641,
+      "orientation": "vertical",
+      "tabHeight": 44,
+      "headings": ["Settings"],
+      "unassociatedLabels": [],
+      "errors": []
+    },
+    {
+      "width": 360,
+      "tab": "Account",
+      "scrollWidth": 360,
+      "height": 1440,
+      "orientation": "vertical",
+      "tabHeight": 44,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Current login email", "Connected providers"],
+      "errors": []
+    },
+    {
+      "width": 360,
+      "tab": "Security",
+      "scrollWidth": 360,
+      "height": 1899,
+      "orientation": "vertical",
+      "tabHeight": 44,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Active sessions"],
+      "errors": []
+    },
+    {
+      "width": 320,
+      "tab": "Profile",
+      "scrollWidth": 320,
+      "height": 1673,
+      "orientation": "vertical",
+      "tabHeight": 44,
+      "headings": ["Settings"],
+      "unassociatedLabels": [],
+      "errors": []
+    },
+    {
+      "width": 320,
+      "tab": "Account",
+      "scrollWidth": 320,
+      "height": 1464,
+      "orientation": "vertical",
+      "tabHeight": 44,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Current login email", "Connected providers"],
+      "errors": []
+    },
+    {
+      "width": 320,
+      "tab": "Security",
+      "scrollWidth": 320,
+      "height": 1915,
+      "orientation": "vertical",
+      "tabHeight": 44,
+      "headings": ["Settings"],
+      "unassociatedLabels": ["Active sessions"],
+      "errors": []
+    }
+  ],
+  "draftPreserved": true,
+  "resolvedPasskeyErrorShowsSuccess": true,
+  "errors": []
+}

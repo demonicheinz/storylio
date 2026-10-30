@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "widths": [1440, 1024, 768, 390, 360, 320],
+  "checks": [
+    "desktop rail and compact horizontal tabs",
+    "task-specific desktop layouts and sensitive-form disclosures",
+    "responsive fields and headings",
+    "profile transport recovery",
+    "unlinked providers stay removed across tab remounts",
+    "avatar upload/save coordination",
+    "passkey resolved errors",
+    "session retry",
+    "MFA pending and unsaved-code departure",
+    "post-MFA sessions refresh",
+    "regeneration confirmation",
+    "unknown auth state",
+    "shared login TOTP paste, autofill and error feedback",
+    "destructive actions with named/count confirmations and cancellation"
+  ],
+  "errors": []
+}

@@ -51,11 +51,11 @@ async function SettingsContent() {
   ]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 min-w-0">
       <div>
         <h1 className="font-heading font-bold text-3xl">Settings</h1>
-        <p className="mt-2 text-muted-foreground">
-          Manage your profile, account, and security preferences.
+        <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
+          Manage your public profile, sign-in methods, and account security.
         </p>
       </div>
 
