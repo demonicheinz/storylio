@@ -32,7 +32,7 @@
       "empty_catches": 0,
       "any_casts": 0,
       "ts_ignore": 0,
-      "current_lines": 1633
+      "current_lines": 1383
     },
     {
       "file": "src/features/dashboard/posts/components/posts-manager.tsx",

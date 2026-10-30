@@ -41,7 +41,7 @@ authentication, database schema, upload transport, or public layout was redesign
 | Batch | Area | Concrete work and verification |
 | --- | --- | --- |
 | 2 | Public image components | Implemented shared ContentCover lifecycle and bounded fallback. Source-replacement recovery reproduced before the fix and verified afterward. See [batch-two.md](batch-two.md). |
-| 3 | Dashboard collection managers | Separate table/grid renderers, batch actions, filters and detail panels by ownership, one feature at a time. Four managers remain large after removing pagination; use existing browser fixtures for sorting, selection, reorder rollback and mobile geometry. |
+| 3 | Dashboard collection managers | Media detail panel, thumbnail, metadata helpers and item type extracted; parent still owns collection state and mutations. See [batch-three.md](batch-three.md). Table/grid renderers, batch actions and other managers remain queued. |
 | 4 | Editors and About/Home forms | Audit autosave/manual-save races, draft guards, field schemas and rich editor integration. Do not merge draft/publication validation or heading/record slug helpers simply because they look similar. |
 | 5 | Settings/auth and data actions | Review lock lifecycle, provider refresh, error diagnostics, revalidation-after-commit and authorization with security/PGlite fixtures. No line-by-line security verdict is claimed yet. |
 | 6 | UI lint and tooling | Review the blanket src/components/ui lint exclusion; enable rules incrementally with specific justified exceptions. Inspect generated fixtures and graph freshness independently of application code. |

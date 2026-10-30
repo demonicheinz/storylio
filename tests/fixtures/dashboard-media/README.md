@@ -17,6 +17,7 @@ In another terminal:
 bunx --no-install playwright-cli -s=media-polish open http://127.0.0.1:3201 --config=playwright-cli.config.json
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/dashboard-media.js
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-upload-queue.js
+bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-detail-panel.js
 bunx --no-install playwright-cli -s=media-polish close
 ```
 
@@ -40,3 +41,8 @@ contracts are separately covered by PGlite/mocked tests in
 `tests/database/security/media-safety.test.ts`, `upload-safety.test.ts`, and
 `tests/security/media-download.test.ts`. These fixtures do not verify real
 provider responses or the full Next router/history lifecycle.
+
+`media-detail-panel.js` checks the extracted detail panel at 320/768/1440px:
+keyboard opening, metadata, URL selection and copy, View target, nested rename
+refresh, and restoring focus to the preview after Escape. Its screenshots go to
+`task/code-standardization/` (create that directory before running).

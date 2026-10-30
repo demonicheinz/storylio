@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { actionRenameMedia } from "../actions";
-import type { MediaItem } from "./media-client";
+import type { MediaItem } from "../types";
 
 export function MediaRenameDialog({
   item,

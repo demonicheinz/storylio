@@ -13,9 +13,7 @@ import {
   PencilSimpleIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
-import Image from "next/image";
 import {
-  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -80,29 +78,19 @@ import {
 } from "../actions";
 import { MEDIA_BATCH_LIMIT } from "../constants";
 import { getMediaDisplayFilename } from "../filename";
+import { getDimensions } from "../presentation";
 import {
   type MediaSortDirection,
   type MediaSortField,
   sortMediaItems,
 } from "../sorting";
+import type { MediaItem } from "../types";
 import { useMediaUploadQueue } from "../use-media-upload-queue";
+import { MediaDetailDrawer } from "./media-detail-drawer";
 import { MediaFilename } from "./media-filename";
 import { MediaRenameDialog } from "./media-rename-dialog";
+import { MediaThumbnail } from "./media-thumbnail";
 import { MediaUploadPanel } from "./media-upload-queue";
-
-export type MediaItem = {
-  id: string;
-  url: string;
-  publicId: string;
-  filename: string;
-  size: number;
-  format: string;
-  width: number | null;
-  height: number | null;
-  aspectRatio: number | null;
-  blurDataUrl: string | null;
-  createdAt: Date | string;
-};
 
 type MediaLibraryClientProps = {
   initialMedia: MediaItem[];
@@ -115,37 +103,6 @@ const sortOptions: Array<{ value: MediaSortField; label: string }> = [
   { value: "name", label: "File name" },
   { value: "format", label: "Format" },
 ];
-
-function formatUploadedDate(value: Date | string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
-function getDimensions(item: MediaItem): string {
-  if (!item.width || !item.height) {
-    return "Unknown";
-  }
-
-  return `${item.width} × ${item.height}`;
-}
-
-function getMediaAspectRatio(item: MediaItem): number {
-  if (item.aspectRatio && item.aspectRatio > 0) {
-    return item.aspectRatio;
-  }
-
-  if (item.width && item.height && item.height > 0) {
-    return item.width / item.height;
-  }
-
-  return 1;
-}
-
-function getFormatLabel(format: string): string {
-  return format.toUpperCase();
-}
 
 function formatReferenceSummary(
   references: Array<{ label: string; count: number }>,
@@ -272,214 +229,6 @@ function MediaActionsMenu({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-function MediaDetailDrawer({
-  children,
-  item,
-  direction,
-  isPending,
-  onClose,
-  onRename,
-  onCopy,
-  onDelete,
-  returnFocus,
-}: {
-  children?: ReactNode;
-  item: MediaItem | null;
-  direction: "down" | "right";
-  isPending: boolean;
-  onClose: () => void;
-  onRename: (item: MediaItem) => void;
-  onCopy: (url: string) => void;
-  onDelete: (item: MediaItem) => void;
-  returnFocus: React.RefObject<HTMLElement | null>;
-}) {
-  const aspectRatio = item ? getMediaAspectRatio(item) : 1;
-  const metadata = item
-    ? [
-        { label: "Uploaded", value: formatUploadedDate(item.createdAt) },
-        { label: "Size", value: formatBytes(item.size) },
-        { label: "Dimensions", value: getDimensions(item) },
-        { label: "Type", value: getFormatLabel(item.format) },
-      ]
-    : [];
-
-  return (
-    <Drawer
-      open={!!item}
-      swipeDirection={direction}
-      showSwipeHandle
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose();
-        }
-      }}
-    >
-      <DrawerContent
-        finalFocus={returnFocus}
-        className={cn(
-          "p-0 overflow-hidden",
-          direction === "right"
-            ? "h-dvh before:inset-y-0! before:right-0! before:left-0!"
-            : "max-h-[86vh] before:inset-x-0! before:top-2! before:bottom-0!",
-        )}
-      >
-        <DrawerHeader className="sr-only p-0">
-          <DrawerTitle>Media details</DrawerTitle>
-          <DrawerDescription>
-            Preview metadata and actions for{" "}
-            {item?.filename ?? "selected media"}.
-          </DrawerDescription>
-        </DrawerHeader>
-
-        {item && (
-          <div className="flex flex-col flex-1 min-h-0">
-            <div className="flex-1 px-4 pt-7 pb-4 min-h-0 overflow-y-auto scrollbar-none">
-              <div
-                className="relative bg-muted/35 border border-border rounded-xl w-full overflow-hidden"
-                style={{ aspectRatio }}
-              >
-                <MediaThumbnail
-                  item={item}
-                  contain
-                  sizes="(max-width: 768px) 100vw, 384px"
-                />
-              </div>
-
-              <h2
-                className="mt-4 font-semibold text-xl leading-tight wrap-anywhere"
-                title={item.filename}
-              >
-                {item.filename}
-              </h2>
-              <div className="gap-3 grid mt-4 pt-4 border-border border-t">
-                {metadata.map((row) => (
-                  <div
-                    key={row.label}
-                    className="gap-3 grid grid-cols-[96px_minmax(0,1fr)] text-sm"
-                  >
-                    <span className="text-muted-foreground">{row.label}</span>
-                    <span className="font-medium wrap-anywhere">
-                      {row.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor={`media-url-${item.id}`}>Image URL</Label>
-                <Input
-                  id={`media-url-${item.id}`}
-                  readOnly
-                  value={item.url}
-                  onFocus={(event) => event.currentTarget.select()}
-                />
-              </div>
-              <details className="mt-4 text-sm">
-                <summary className="text-muted-foreground cursor-pointer">
-                  Technical details
-                </summary>
-                <p className="mt-2 text-xs wrap-anywhere">
-                  Asset ID: {item.publicId}
-                </p>
-                <p className="mt-1 text-muted-foreground text-xs">
-                  {item.blurDataUrl
-                    ? "Low-resolution loading placeholder available."
-                    : "No loading placeholder stored."}
-                </p>
-              </details>
-            </div>
-
-            <DrawerFooter className="gap-2 px-4 pb-4">
-              <div className="gap-2 grid grid-cols-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onRename(item)}
-                >
-                  <PencilSimpleIcon data-icon="inline-start" />
-                  Rename
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void downloadMedia(item)}
-                >
-                  <DownloadSimpleIcon data-icon="inline-start" />
-                  Download
-                </Button>
-              </div>
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full"
-                onClick={() => onCopy(item.url)}
-              >
-                <CopyIcon data-icon="inline-start" />
-                Copy URL
-              </Button>
-              <Button
-                role="link"
-                type="button"
-                variant="outline"
-                className="w-full"
-                render={<a href={item.url} target="_blank" rel="noreferrer" />}
-                nativeButton={false}
-              >
-                <ArrowSquareOutIcon data-icon="inline-start" />
-                View
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full text-destructive"
-                disabled={isPending}
-                onClick={() => onDelete(item)}
-              >
-                <TrashIcon data-icon="inline-start" />
-                Delete
-              </Button>
-            </DrawerFooter>
-          </div>
-        )}
-      </DrawerContent>
-      {children}
-    </Drawer>
-  );
-}
-
-function MediaThumbnail({
-  item,
-  contain = false,
-  sizes = "(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw",
-}: {
-  item: MediaItem;
-  contain?: boolean;
-  sizes?: string;
-}) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [item.url]);
-  if (failed)
-    return (
-      <div
-        className="flex justify-center items-center gap-2 h-full text-muted-foreground text-xs"
-        role="img"
-        aria-label={`Preview unavailable for ${item.filename}`}
-      >
-        <ImageIcon className="size-6" aria-hidden />
-        <span>Preview unavailable</span>
-      </div>
-    );
-  return (
-    <Image
-      src={item.url}
-      alt={item.filename}
-      fill
-      className={contain ? "object-contain" : "object-cover"}
-      sizes={sizes}
-      onError={() => setFailed(true)}
-    />
   );
 }
 
@@ -1441,6 +1190,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
           />
         )}
         <MediaDetailDrawer
+          onDownload={downloadMedia}
           item={selectedMedia}
           returnFocus={detailTriggerRef}
           direction={drawerDirection}
