@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { useId } from "react";
 import { Button } from "@/components/ui/button";
+import { formatBytes } from "@/lib/format-bytes";
 import { cn } from "@/lib/utils";
 import {
   canRetryMediaUpload,
@@ -19,12 +20,6 @@ import {
   type useMediaUploadQueue,
 } from "../use-media-upload-queue";
 import { MediaFilename } from "./media-filename";
-
-function formatFileSize(size: number) {
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 export type MediaUploadPanelProps = {
   queue: ReturnType<typeof useMediaUploadQueue>;
@@ -181,7 +176,7 @@ export function MediaUploadPanel({
                     {item.status === "error" && (
                       <WarningCircleIcon size={16} aria-hidden="true" />
                     )}
-                    {formatFileSize(item.file.size)} · {statusLabel(item)}
+                    {formatBytes(item.file.size)} · {statusLabel(item)}
                   </p>
                   {item.status === "uploading" &&
                     item.progress !== undefined && (

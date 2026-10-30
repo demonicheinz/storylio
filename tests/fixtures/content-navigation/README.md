@@ -12,6 +12,10 @@ Run these files with `run-code --filename=...`:
 - `tests/browser/control-cursors.js`: computed cursor checks for shared controls,
   disabled states, Select options, and dropdown submenu triggers. Open
   `/?kind=controls` for manual inspection.
+- `tests/browser/dashboard-pagination.js`: shared pagination range, boundaries,
+  page-size choices and keyboard behavior at 320/390/768/1440px. Create
+  `task/code-standardization/` before running screenshots; manually inspect
+  `/?kind=pagination`.
 
 The fixture renders the actual New route components, editors, skeletons,
 Blog card, shared controls, and project CSS/fonts. React StrictMode and Activity

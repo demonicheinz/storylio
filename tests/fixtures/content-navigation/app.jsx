@@ -5,6 +5,7 @@ import NewProjectPage from "@/app/(dashboard)/dashboard/projects/new/page";
 import { PublicPageSkeleton } from "@/components/common/public-page-skeleton";
 import { PostCard } from "@/components/public/sections/blog/post-card";
 import { Controls } from "./controls";
+import { PaginationFixture } from "./pagination";
 
 window.fixture = { id: "first", fail: false, calls: [] };
 window.confirm = () => true;
@@ -26,6 +27,7 @@ function App() {
   };
   const variant = new URLSearchParams(location.search).get("variant");
   if (kind === "controls") return <Controls />;
+  if (kind === "pagination") return <PaginationFixture />;
   if (variant) return <PublicPageSkeleton variant={variant} />;
   if (kind === "cover")
     return (
