@@ -2,8 +2,14 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Heading, type HeadingProps } from "@/components/common/heading";
+import { htmlText } from "../helpers/html-text";
 
 const cases = [
+  {
+    name: "escaped HTML-like text and entities",
+    props: { title: "<script>", children: "A & B > C" },
+    text: "<script> A & B > C",
+  },
   {
     name: "title and text children",
     props: { title: "Build", children: "together" },
@@ -37,6 +43,6 @@ describe("section heading text", () => {
     const html = renderToStaticMarkup(
       createElement(Heading, { variant: "section", ...props }),
     );
-    expect(html.replace(/<[^>]*>/g, "")).toBe(text);
+    expect(htmlText(html)).toBe(text);
   });
 });

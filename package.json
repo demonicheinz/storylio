@@ -123,6 +123,8 @@
     "@types/three": "^0.184.1",
     "@types/ws": "^8.18.1",
     "drizzle-kit": "0.31.11",
+    "hast-util-from-html": "^2.0.3",
+    "hast-util-to-string": "^3.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.5",
     "tailwindcss": "^4.3.3",

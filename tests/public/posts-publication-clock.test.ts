@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PostsManager } from "@/features/dashboard/posts/components/posts-manager";
+import { htmlText } from "../helpers/html-text";
 
 const mocks = vi.hoisted(() => ({ now: vi.fn(), status: "all" }));
 vi.mock("@/features/dashboard/posts/components/use-publication-clock", () => ({
@@ -60,7 +61,7 @@ describe("Posts manager publication clock", () => {
       const html = renderToStaticMarkup(
         createElement(PostsManager, { posts: [post] }),
       );
-      const text = html.replace(/<[^>]+>/g, "");
+      const text = htmlText(html);
       expect(text).toContain(
         `Published${published}Drafts0Scheduled${scheduled}Views${views}`,
       );
@@ -78,9 +79,9 @@ describe("Posts manager publication clock", () => {
       mocks.status = status;
       mocks.now.mockReturnValue(clock);
       vi.spyOn(Date, "now").mockReturnValue(wall);
-      const text = renderToStaticMarkup(
-        createElement(PostsManager, { posts: [post] }),
-      ).replace(/<[^>]+>/g, "");
+      const text = htmlText(
+        renderToStaticMarkup(createElement(PostsManager, { posts: [post] })),
+      );
       expect(text).toContain("1 post found");
       expect(text).toContain(post.title);
       expect(text).not.toContain("No posts match these filters");
