@@ -15,7 +15,11 @@ function RouteSkeleton() {
           ? "project-detail"
           : pathname.startsWith("/blog/")
             ? "post-detail"
-            : "collection";
+            : pathname === "/projects"
+              ? "projects"
+              : pathname === "/blog"
+                ? "blog"
+                : "collection";
 
   return <PublicPageSkeleton variant={variant} />;
 }

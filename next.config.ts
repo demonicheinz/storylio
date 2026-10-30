@@ -1,5 +1,6 @@
 import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
+import { IMAGE_QUALITY } from "./src/lib/image-policy";
 import { getSentryIngestOrigin } from "./src/lib/monitoring";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -79,6 +80,8 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    formats: ["image/webp"],
+    qualities: [IMAGE_QUALITY.thumbnail, IMAGE_QUALITY.detail],
     remotePatterns: [
       {
         protocol: "https",

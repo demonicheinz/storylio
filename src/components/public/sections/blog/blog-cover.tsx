@@ -3,6 +3,7 @@
 import { ImageIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useState } from "react";
+import { IMAGE_QUALITY } from "@/lib/image-policy";
 import { cn } from "@/lib/utils";
 
 type BlogCoverProps = {
@@ -12,6 +13,7 @@ type BlogCoverProps = {
   fetchPriority?: "auto" | "high" | "low";
   loading?: "eager" | "lazy";
   sizes?: string;
+  quality?: number;
   appearance?: "default" | "home";
 };
 
@@ -23,6 +25,7 @@ export function BlogCover({
   loading = "lazy",
   sizes = "(min-width: 1024px) 50vw, 100vw",
   appearance = "default",
+  quality = IMAGE_QUALITY.thumbnail,
 }: BlogCoverProps) {
   const [hasImageError, setHasImageError] = useState(false);
   const shouldShowImage = Boolean(src) && !hasImageError;
@@ -41,6 +44,7 @@ export function BlogCover({
           alt={alt}
           fill
           sizes={sizes}
+          quality={quality}
           fetchPriority={fetchPriority}
           loading={loading}
           className={cn(
@@ -51,7 +55,7 @@ export function BlogCover({
           onError={() => setHasImageError(true)}
         />
       ) : (
-        <div className="flex items-center justify-center gap-2 p-6 min-h-40 h-full text-muted-foreground text-sm">
+        <div className="absolute inset-0 flex justify-center items-center gap-2 p-6 text-muted-foreground text-sm">
           <ImageIcon size={20} aria-hidden="true" />
           <span>Article cover unavailable</span>
         </div>

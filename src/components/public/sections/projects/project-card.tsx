@@ -5,6 +5,7 @@ import {
 import { FlowButton } from "@/components/common/flow-button";
 import { TiltedCard } from "@/components/common/tilted-card";
 import styles from "@/components/public/public-page.module.css";
+import { PUBLIC_CARD_IMAGE_SIZES } from "@/lib/image-policy";
 import { ProjectCover } from "./project-cover";
 import projectStyles from "./projects.module.css";
 import type { ProjectListItem } from "./types";
@@ -32,7 +33,7 @@ export function ProjectCard({
             appearance="home"
             className="aspect-video"
             loading={featured ? "eager" : "lazy"}
-            sizes="(min-width:1328px) 400px, (min-width:1200px) 31vw, (min-width:768px) 46vw, 94vw"
+            sizes={PUBLIC_CARD_IMAGE_SIZES}
           />
         </TiltedCard>
         {featured && (

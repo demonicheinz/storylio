@@ -245,8 +245,9 @@ html.lenis {
     background: var(--primary);
     color: var(--primary-foreground);
   }
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
+  button:not(:disabled, [aria-disabled="true"], [data-disabled]),
+  [role="button"]:not(:disabled, [aria-disabled="true"], [data-disabled]),
+  select:not(:disabled, [aria-disabled="true"], [data-disabled]) {
     cursor: pointer;
   }
   html {

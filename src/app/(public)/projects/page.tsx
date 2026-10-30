@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 
 export default function ProjectsPage(props: ProjectsPageProps) {
   return (
-    <PublicRouteBoundary>
+    <PublicRouteBoundary variant="projects">
       <ProjectsContent {...props} />
     </PublicRouteBoundary>
   );

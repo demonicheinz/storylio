@@ -1,6 +1,7 @@
 import { FlowButton } from "@/components/common/flow-button";
 import { TiltedCard } from "@/components/common/tilted-card";
 import page from "@/components/public/public-page.module.css";
+import { PUBLIC_CARD_IMAGE_SIZES } from "@/lib/image-policy";
 import { calculateReadingTime, formatDate } from "@/lib/utils";
 import styles from "./blog.module.css";
 import { BlogCover } from "./blog-cover";
@@ -15,20 +16,18 @@ export function PostCard({
   const href = `/blog/${post.slug}`;
   return (
     <article className={page.card} data-post-card data-tilt-target>
-      {post.coverImage && (
-        <div className={page.cardMedia}>
-          <TiltedCard amplitude={2.5} scale={1.01}>
-            <BlogCover
-              src={post.coverImage}
-              alt={post.title}
-              appearance="home"
-              className="aspect-video"
-              loading={featured ? "eager" : "lazy"}
-              sizes="(min-width:1328px) 400px, (min-width:1200px) 31vw, (min-width:768px) 46vw, 94vw"
-            />
-          </TiltedCard>
-        </div>
-      )}
+      <div className={page.cardMedia}>
+        <TiltedCard amplitude={2.5} scale={1.01}>
+          <BlogCover
+            src={post.coverImage}
+            alt={post.title}
+            appearance="home"
+            className="aspect-video"
+            loading={featured ? "eager" : "lazy"}
+            sizes={PUBLIC_CARD_IMAGE_SIZES}
+          />
+        </TiltedCard>
+      </div>
       <div className={page.cardBody}>
         <div className={page.meta}>
           <time dateTime={(post.publishedAt ?? post.createdAt).toISOString()}>
