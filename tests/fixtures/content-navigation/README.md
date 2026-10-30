@@ -9,7 +9,9 @@ Run these files with `run-code --filename=...`:
 - `tests/browser/content-loading.js`: five public skeleton layouts at
   320/390/768/1440px and the missing-cover aspect ratio. Screenshots go into
   `task/content-navigation-and-loading/` (create that directory before running).
-
+- `tests/browser/control-cursors.js`: computed cursor checks for shared controls,
+  disabled states, Select options, and dropdown submenu triggers. Open
+  `/?kind=controls` for manual inspection.
 
 The fixture renders the actual New route components, editors, skeletons,
 Blog card, shared controls, and project CSS/fonts. React StrictMode and Activity
