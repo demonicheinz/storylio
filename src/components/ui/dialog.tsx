@@ -1,46 +1,40 @@
 "use client";
 
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { XIcon } from "@phosphor-icons/react";
-import { Dialog as DialogPrimitive } from "radix-ui";
 import type * as React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-function Dialog({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 }
 
-function DialogTrigger({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
+function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
-function DialogPortal({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
 
-function DialogClose({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
+function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 }
 
 function DialogOverlay({
   className,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+}: DialogPrimitive.Backdrop.Props) {
   return (
-    <DialogPrimitive.Overlay
+    <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
-      className={cn(
-        "z-50 isolate fixed inset-0 bg-black/30 supports-backdrop-filter:backdrop-blur-sm data-closed:animate-out data-open:animate-in duration-100 data-open:fade-in-0 data-closed:fade-out-0",
-        className,
-      )}
+      className={(state) =>
+        cn(
+          "z-50 isolate fixed inset-0 bg-black/30 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-sm transition-opacity duration-100",
+          typeof className === "function" ? className(state) : className,
+        )
+      }
       {...props}
     />
   );
@@ -50,35 +44,47 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onKeyDown,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+}: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
 }) {
   return (
     <DialogPortal>
       <DialogOverlay />
-      <DialogPrimitive.Content
+      <DialogPrimitive.Popup
         data-slot="dialog-content"
-        className={cn(
-          "top-1/2 left-1/2 z-50 fixed gap-6 grid bg-popover shadow-xl p-6 rounded-4xl outline-none ring-1 ring-foreground/5 dark:ring-foreground/10 w-full max-w-[calc(100%-2rem)] sm:max-w-md text-popover-foreground text-sm -translate-x-1/2 -translate-y-1/2 data-closed:animate-out data-open:animate-in duration-100 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95",
-          className,
-        )}
+        onKeyDown={(event) => {
+          onKeyDown?.(event);
+          // Portals retain React ancestry. Keep form input keys away from an
+          // ancestor menu's list navigation and typeahead handlers.
+          event.stopPropagation();
+        }}
+        className={(state) =>
+          cn(
+            "top-1/2 left-1/2 z-50 fixed gap-6 grid bg-popover data-ending-style:opacity-0 data-starting-style:opacity-0 p-6 border border-border rounded-lg outline-none w-full max-w-[calc(100%-2rem)] sm:max-w-md text-popover-foreground text-sm data-ending-style:scale-95 data-starting-style:scale-95 transition-[opacity,scale] -translate-x-1/2 -translate-y-1/2 duration-100",
+            typeof className === "function" ? className(state) : className,
+          )
+        }
         {...props}
       >
         {children}
         {showCloseButton && (
-          <DialogPrimitive.Close data-slot="dialog-close" asChild>
-            <Button
-              variant="ghost"
-              className="top-4 right-4 absolute bg-secondary"
-              size="icon-sm"
-            >
-              <XIcon />
-              <span className="sr-only">Close</span>
-            </Button>
+          <DialogPrimitive.Close
+            data-slot="dialog-close"
+            render={
+              <Button
+                variant="ghost"
+                className="top-4 right-4 absolute bg-secondary"
+                size="icon-sm"
+              />
+            }
+          >
+            <XIcon />
+            <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
-      </DialogPrimitive.Content>
+      </DialogPrimitive.Popup>
     </DialogPortal>
   );
 }
@@ -112,25 +118,24 @@ function DialogFooter({
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close asChild>
-          <Button variant="outline">Close</Button>
+        <DialogPrimitive.Close render={<Button variant="outline" />}>
+          Close
         </DialogPrimitive.Close>
       )}
     </div>
   );
 }
 
-function DialogTitle({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Title>) {
+function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn(
-        "font-heading font-medium text-base leading-none",
-        className,
-      )}
+      className={(state) =>
+        cn(
+          "font-sans font-semibold text-base leading-none",
+          typeof className === "function" ? className(state) : className,
+        )
+      }
       {...props}
     />
   );
@@ -139,14 +144,16 @@ function DialogTitle({
 function DialogDescription({
   className,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+}: DialogPrimitive.Description.Props) {
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn(
-        "text-muted-foreground *:[a]:hover:text-foreground text-sm *:[a]:underline *:[a]:underline-offset-3",
-        className,
-      )}
+      className={(state) =>
+        cn(
+          "text-muted-foreground *:[a]:hover:text-foreground text-sm *:[a]:underline *:[a]:underline-offset-3",
+          typeof className === "function" ? className(state) : className,
+        )
+      }
       {...props}
     />
   );

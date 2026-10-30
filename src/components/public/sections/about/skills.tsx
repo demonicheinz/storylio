@@ -1,7 +1,6 @@
-import { Heading } from "@/components/common";
+import { Heading } from "@/components/common/heading";
 import { skillGroups } from "@/components/public/sections/about/data";
-import { aboutInteractiveGlowCardClassName } from "@/components/public/sections/about/styles";
-import { cn } from "@/lib/utils";
+import styles from "./about.module.css";
 
 type PublicSkillCategory = {
   id: string;
@@ -33,15 +32,10 @@ export function SkillsSection({
         title={language === "id" ? "Keahlian" : "Technical"}
         highlight={language === "id" ? "Teknis" : "Skills"}
       />
-      <div className="gap-4 grid sm:grid-cols-2">
+      <div className="grid">
         {items.map((skill) => (
-          <article
-            key={skill.id}
-            className={cn(aboutInteractiveGlowCardClassName, "rounded-3xl p-5")}
-          >
-            <h3 className="font-heading font-semibold text-foreground text-xl">
-              {skill.name}
-            </h3>
+          <article key={skill.id} className={styles.skillGroup}>
+            <h3>{skill.name}</h3>
             <p className="mt-3 text-muted-foreground text-sm leading-7">
               {skill.description}
             </p>
@@ -50,7 +44,7 @@ export function SkillsSection({
                 {skill.skills.map((item) => (
                   <span
                     key={item.id}
-                    className="bg-background/30 px-3 py-1 border border-border/50 rounded-full text-muted-foreground text-xs"
+                    className="bg-surface px-3 py-1 border border-border rounded-md text-muted-foreground text-sm"
                   >
                     {item.name}
                     {item.level ? ` · ${item.level}` : ""}

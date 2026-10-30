@@ -1,33 +1,25 @@
-import { and, desc, eq, inArray, isNull, lte, or } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
-import Link from "next/link";
 import { Suspense } from "react";
-import { PublicBackground } from "@/components/common";
-import {
-  BlogFilters,
-  BlogHero,
-  BlogReveal,
-  EmptyPosts,
-  FeaturedPost,
-  PostList,
-} from "@/components/public/sections/blog";
-import { db } from "@/lib/db";
-import { PostStatus } from "@/lib/db/enums";
-import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
-import { post, postToTag, tag } from "@/lib/db/schema";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
+import { NotesCollection } from "@/components/public/notes/notes-collection";
+import page from "@/components/public/public-page.module.css";
+import styles from "@/components/public/sections/blog/blog.module.css";
+import { BlogFilters } from "@/components/public/sections/blog/blog-filters";
+import { BlogHero } from "@/components/public/sections/blog/blog-hero";
+import { BlogPagination } from "@/components/public/sections/blog/blog-pagination";
+import { EmptyPosts } from "@/components/public/sections/blog/empty-posts";
+import { PostList } from "@/components/public/sections/blog/post-list";
+import { getPage } from "@/lib/archive-pagination";
+import { getPublicWriting } from "@/lib/public-writing";
+import { getWritingTag } from "@/lib/writing-filters";
 
 type BlogPageProps = {
   searchParams: Promise<{
-    tag?: string | string[] | undefined;
+    tag?: string | string[];
+    page?: string | string[];
+    note?: string | string[];
   }>;
 };
-
-export const unstable_instant = {
-  prefetch: "runtime",
-  samples: [{ searchParams: { tag: null } }],
-};
-
 export const metadata: Metadata = {
   title: "Writing — Storylio",
   description:
@@ -47,164 +39,62 @@ export const metadata: Metadata = {
     images: ["/og?title=Writing&type=page"],
   },
 };
-
-function getSelectedTag(value: string | string[] | undefined) {
-  const tag = Array.isArray(value) ? value[0] : value;
-
-  return tag?.trim() || undefined;
-}
-
-function formatBlogSummary(postsCount: number, selectedTag?: string) {
-  const noun = postsCount === 1 ? "article" : "articles";
-
-  if (selectedTag) {
-    return `Showing ${postsCount} ${noun} tagged ${selectedTag}`;
-  }
-
-  return `Showing ${postsCount} ${noun} across all topics`;
-}
-
-async function getBlogData(selectedTag?: string) {
-  "use cache";
-  cacheLife("minutes");
-
-  const now = new Date();
-  const publishedWhere = and(
-    eq(post.status, PostStatus.PUBLISHED),
-    or(isNull(post.publishedAt), lte(post.publishedAt, now)),
-  );
-
-  const [posts, allPublishedPosts] = await Promise.all([
-    db.query.post
-      .findMany({
-        where: (table) =>
-          and(
-            publishedWhere,
-            selectedTag
-              ? inArray(
-                  table.id,
-                  db
-                    .select({ postId: postToTag.postId })
-                    .from(postToTag)
-                    .innerJoin(tag, eq(postToTag.tagId, tag.id))
-                    .where(eq(tag.name, selectedTag)),
-                )
-              : undefined,
-          ),
-        columns: {
-          id: true,
-          title: true,
-          slug: true,
-          excerpt: true,
-          content: true,
-          coverImage: true,
-          publishedAt: true,
-          createdAt: true,
-          viewCount: true,
-        },
-        orderBy: (table) => [desc(table.publishedAt), desc(table.createdAt)],
-        with: {
-          tags: {
-            columns: {},
-            with: {
-              tag: {
-                columns: {
-                  id: true,
-                  name: true,
-                },
-              },
-            },
-            orderBy: orderPostTagsByName,
-          },
-        },
-      })
-      .then((rows) => rows.map((row) => flattenPostTags(row))),
-    db.query.post
-      .findMany({
-        where: (table) => publishedWhere,
-        columns: { id: true },
-        with: {
-          tags: {
-            columns: {},
-            with: {
-              tag: {
-                columns: {
-                  name: true,
-                },
-              },
-            },
-          },
-        },
-      })
-      .then((rows) => rows.map((row) => flattenPostTags(row))),
-  ]);
-
-  const tags = Array.from(
-    new Set(
-      allPublishedPosts.flatMap((post) => post.tags.map((tag) => tag.name)),
-    ),
-  ).sort((a, b) => a.localeCompare(b));
-
-  return {
-    posts,
-    tags,
-    totalPosts: allPublishedPosts.length,
-  };
-}
-
-export default async function BlogPage({ searchParams }: BlogPageProps) {
-  const selectedTag = getSelectedTag((await searchParams).tag);
-  const { posts, tags, totalPosts } = await getBlogData(selectedTag);
-  const [featuredPost, ...remainingPosts] = posts;
-
+export default function BlogPage(props: BlogPageProps) {
   return (
-    <main className="min-h-screen overflow-x-clip">
-      <PublicBackground variant="blog" />
-
-      <div className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-295">
+    <PublicRouteBoundary>
+      <BlogContent {...props} />
+    </PublicRouteBoundary>
+  );
+}
+async function BlogContent({ searchParams }: BlogPageProps) {
+  const query = await searchParams;
+  const data = await getPublicWriting(
+    getWritingTag(query.tag),
+    getPage(query.page),
+  );
+  return (
+    <main className={page.page} data-public-page="blog">
+      <div className={page.container}>
         <BlogHero
-          totalPosts={totalPosts}
-          totalTags={tags.length}
-          selectedTag={selectedTag}
+          totalPosts={data.totalPosts}
+          totalTags={data.tags.length}
+          selectedTag={data.selectedTag}
         />
-
-        <Suspense
-          fallback={
-            <div className="bg-surface/55 backdrop-blur-xl border border-border/40 rounded-3xl h-24" />
-          }
-        >
-          <BlogFilters tags={tags} selectedTag={selectedTag} />
+        <Suspense fallback={<div className="h-20 border-y border-border" />}>
+          <BlogFilters
+            tags={data.tags}
+            selectedTag={data.selectedTag}
+            resultCount={data.totalResults}
+            totalPosts={data.totalPosts}
+          />
         </Suspense>
-
-        <div className="flex flex-wrap justify-between items-center gap-3 mt-4 px-1 text-muted-foreground text-sm">
-          <p>{formatBlogSummary(posts.length, selectedTag)}</p>
-          {selectedTag && (
-            <Link
-              href="/blog"
-              scroll={false}
-              className="text-brand-soft hover:text-foreground hover:underline underline-offset-4 transition-colors"
-            >
-              Reset topic
-            </Link>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-7 md:gap-8 pt-8 md:pt-10 pb-12 md:pb-14">
-          {featuredPost ? (
+        <section
+          id="writing-list"
+          tabIndex={-1}
+          aria-label={data.kind === "notes" ? "Notes" : "Articles"}
+          className={styles.collection}
+        >
+          {data.kind === "notes" ? (
             <>
-              <BlogReveal>
-                <FeaturedPost post={featuredPost} />
-              </BlogReveal>
-
-              {remainingPosts.length > 0 && <PostList posts={remainingPosts} />}
+              {!data.posts.length && <EmptyPosts selectedTag="notes" />}
+              <NotesCollection
+                posts={data.posts}
+                selectedSlug={getWritingTag(query.note)}
+              />
             </>
+          ) : data.posts.length ? (
+            <PostList posts={data.posts} />
           ) : (
-            <EmptyPosts selectedTag={selectedTag} />
+            <EmptyPosts selectedTag={data.selectedTag} />
           )}
-        </div>
+          <Suspense>
+            <BlogPagination
+              pagination={data.pagination}
+              notes={data.kind === "notes"}
+            />
+          </Suspense>
+        </section>
       </div>
-
-      <div className="h-24" />
     </main>
   );
 }

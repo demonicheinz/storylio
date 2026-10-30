@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import type { CSSProperties } from "react";
+import GooeyNav from "@/components/common/gooey-nav";
 import { introCopy } from "@/components/public/sections/about/data";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import styles from "./about.module.css";
 
 export type AboutLanguage = keyof typeof introCopy;
 
@@ -23,35 +23,41 @@ export function LanguageIntro({
   language: AboutLanguage;
 }) {
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex bg-surface/70 backdrop-blur p-1 border border-border/50 rounded-full w-fit">
-        {languages.map((item) => {
-          const isActive = language === item.value;
-
-          return (
-            <Button
-              key={item.value}
-              variant={isActive ? "default" : "ghost"}
-              size="sm"
-              className={cn(
-                "px-4 rounded-full h-8",
-                !isActive && "text-muted-foreground hover:text-foreground",
-              )}
-              asChild
-            >
-              <Link
-                href={`/about?lang=${item.value}`}
-                prefetch={true}
-                scroll={false}
-                aria-current={isActive ? "page" : undefined}
-              >
-                {item.label}
-              </Link>
-            </Button>
-          );
-        })}
-      </div>
-      <p className="text-muted-foreground text-lg leading-8">{intro}</p>
+    <div className={styles.language}>
+      <GooeyNav
+        ariaLabel="Language"
+        className={styles.languageNav}
+        items={languages.map((item) => ({
+          label: item.label,
+          href: `/about?lang=${item.value}`,
+        }))}
+        activeIndex={languages.findIndex((item) => item.value === language)}
+        scroll={false}
+        color="#f2fbfe"
+        activeTextColor="#000b27"
+        size="sm"
+        animationTime={400}
+        particleCount={5}
+        spread={16}
+        timeVariance={100}
+        gooeyness={0.3}
+        wobble={0.2}
+        hoverEffect={false}
+        style={
+          {
+            "--gn-pad": "4px",
+            "--gn-gap": "4px",
+            "--gn-x": "16px",
+            "--gn-frame": "var(--surface)",
+            "--gn-frame-edge": "var(--border)",
+            "--gn-frame-highlight": "transparent",
+            "--gn-frame-shadow": "none",
+            "--gn-ink": "var(--foreground)",
+            "--gn-muted": "var(--muted-foreground)",
+          } as CSSProperties
+        }
+      />
+      <p>{intro}</p>
     </div>
   );
 }

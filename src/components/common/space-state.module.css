@@ -1,0 +1,210 @@
+.page {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: 104px 24px 72px;
+  background: var(--background);
+  color: var(--foreground);
+}
+.logo {
+  position: absolute;
+  inset: 24px auto auto 24px;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+}
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.2;
+}
+:global(.dark) .backdrop {
+  opacity: 1;
+}
+.earth {
+  position: absolute;
+  top: 94%;
+  left: 50%;
+  width: max(100%, 1280px);
+  aspect-ratio: 2728 / 1536;
+  transform: translate(-50%, -46%);
+  mask-image: linear-gradient(transparent, #000 38% 78%, transparent);
+}
+.earthImage {
+  object-fit: cover;
+}
+.veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    var(--background),
+    color-mix(in oklch, var(--background) 60%, transparent) 65%,
+    color-mix(in oklch, var(--background) 25%, transparent)
+  );
+}
+.stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  mask-image: linear-gradient(#000 0% 60%, transparent);
+}
+.content {
+  width: 100%;
+  max-width: 960px;
+  text-align: center;
+}
+.art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: clamp(250px, 40vw, 420px);
+  margin-bottom: 24px;
+}
+.code {
+  position: absolute;
+  top: -0.1em;
+  left: 0;
+  right: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(144px, 29vw, 360px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  color: transparent;
+  -webkit-text-stroke: 1px
+    color-mix(in oklch, var(--brand-soft) 70%, transparent);
+  text-shadow: 0 0 24px color-mix(in oklch, var(--brand) 15%, transparent);
+}
+.astronaut {
+  position: relative;
+  width: min(64vw, 440px);
+  margin-top: 48px;
+}
+.crop {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1153 / 859;
+  overflow: hidden;
+}
+/* The supplied AVIF includes a transparent canvas. Crop that canvas in CSS,
+   preserving the original asset and its alpha channel (bounds from Sharp). */
+.astronautImage {
+  position: absolute;
+  left: -61.84%;
+  top: -48.43%;
+  width: 236.6%;
+  max-width: none;
+  height: auto;
+}
+.message h1 {
+  font-family: var(--font-heading);
+  font-size: clamp(36px, 5vw, 48px);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+.message p {
+  max-width: 52ch;
+  margin: 16px auto 0;
+  color: var(--muted-foreground);
+  font-size: 18px;
+  line-height: 1.75;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px 24px;
+  margin-top: 28px;
+}
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.primary:hover {
+  background: var(--primary-hover);
+}
+.secondary {
+  color: var(--foreground);
+}
+.secondary:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.page a:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+@keyframes astronaut-drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .astronaut {
+    animation: astronaut-drift 9s ease-in-out infinite;
+  }
+}
+@media (max-width: 767px) {
+  .page {
+    padding: 112px 24px 64px;
+  }
+  .art {
+    height: 260px;
+    margin-bottom: 24px;
+  }
+  .astronaut {
+    width: min(90%, 340px);
+    margin-top: 24px;
+  }
+  .code {
+    font-size: clamp(120px, 40vw, 240px);
+    top: 0;
+  }
+  .message p {
+    font-size: 16px;
+  }
+  .earth {
+    top: 96%;
+  }
+}
+@media (max-height: 600px) and (min-width: 768px) {
+  .page {
+    padding-top: 96px;
+  }
+  .art {
+    height: 260px;
+  }
+  .code {
+    font-size: 240px;
+  }
+  .astronaut {
+    width: 300px;
+  }
+}

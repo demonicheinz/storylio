@@ -27,6 +27,20 @@
   color: var(--foreground) !important;
 }
 
+.storylio-mdx-editor .cm-sourceView .cm-editor {
+  min-height: 240px;
+  max-height: 560px;
+}
+
+.storylio-mdx-editor .cm-sourceView .cm-scroller {
+  overflow: auto;
+}
+
+/* Render one accessible error below the shared editor instead of the library banner. */
+.storylio-mdx-editor [class*="_markdownParseError_"] {
+  display: none;
+}
+
 .storylio-mdx-editor.dark-theme [class*="_toolbarRoot_"] {
   display: flex !important;
   flex-wrap: wrap !important;

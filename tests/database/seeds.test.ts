@@ -6,7 +6,6 @@ import { seedHomeSections } from "../../scripts/seeds/home-sections";
 import { seedOwner } from "../../scripts/seeds/owner";
 import { seedPosts } from "../../scripts/seeds/posts";
 import { seedProjects } from "../../scripts/seeds/projects";
-import { seedTestimonials } from "../../scripts/seeds/testimonials";
 import type { Database } from "../../src/lib/db";
 import * as schema from "../../src/lib/db/schema";
 import { createTestDatabase } from "../helpers/database";
@@ -35,11 +34,17 @@ afterEach(async () => {
 
 describe("PostgreSQL seed integration", () => {
   it("creates one owner and keeps the original ID and credential on repeated seeds", async () => {
-    const first = await seedOwner(seedDb);
+    const first = await seedOwner(seedDb, {
+      profile: {
+        name: "Fixture Owner",
+        tagline: "Web developer",
+        subheadline: "An owner-supplied introduction.",
+      },
+    });
     const [credential] = await db.query.account.findMany();
     expect(credential).toMatchObject({
       userId: first.id,
-      accountId: "",
+      accountId: first.id,
       providerId: "credential",
     });
     expect(credential.password).toBeTruthy();
@@ -56,9 +61,10 @@ describe("PostgreSQL seed integration", () => {
       expect.objectContaining({
         id: first.id,
         email: "seed.owner@example.test",
-        name: "Ahmad Haizul Amany",
+        name: "Fixture Owner",
         emailVerified: true,
-        tagline: "Full Stack Developer",
+        tagline: "Web developer",
+        bio: "An owner-supplied introduction.",
       }),
     ]);
   });
@@ -108,8 +114,8 @@ describe("PostgreSQL seed integration", () => {
         id: owner.id,
         createdAt: owner.createdAt,
         image: owner.image,
-        emailVerified: true,
-        name: "Ahmad Haizul Amany",
+        emailVerified: false,
+        name: "Existing owner",
       }),
     ]);
     expect(await db.query.account.findMany()).toEqual([credential]);
@@ -279,12 +285,11 @@ describe("PostgreSQL seed integration", () => {
     ]);
   });
 
-  it("does not duplicate initial About, gallery, home sections or testimonials", async () => {
+  it("does not duplicate initial About, gallery, home sections", async () => {
     async function seedInitialContent() {
       await seedAboutContent(seedDb);
       await seedGallery({ db: seedDb });
       await seedHomeSections(seedDb);
-      await seedTestimonials(seedDb);
     }
     async function readInitialContent() {
       return {
@@ -298,9 +303,6 @@ describe("PostgreSQL seed integration", () => {
             asc(schema.homeSection.order),
           ],
         }),
-        testimonials: await db.query.testimonial.findMany({
-          orderBy: [asc(schema.testimonial.order)],
-        }),
       };
     }
     await seedInitialContent();
@@ -308,7 +310,6 @@ describe("PostgreSQL seed integration", () => {
     expect(original.about).toHaveLength(1);
     expect(original.gallery).toHaveLength(8);
     expect(original.sections).toHaveLength(8);
-    expect(original.testimonials).toHaveLength(3);
 
     await seedInitialContent();
     expect(await readInitialContent()).toEqual(original);

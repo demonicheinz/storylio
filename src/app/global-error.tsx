@@ -1,61 +1,71 @@
 "use client";
 
-import { useEffect } from "react";
+import { useReportError } from "@/hooks/use-report-error";
 
 export default function GlobalError({
   error,
-  unstable_retry,
+  retry,
 }: {
-  error: Error & { digest?: string };
-  unstable_retry: () => void;
+  error: unknown;
+  retry: () => void;
 }) {
-  useEffect(() => {
-    console.error("Global application error:", error);
-  }, [error]);
+  useReportError(error, "global");
 
   return (
     <html lang="en" className="dark">
       <body
         style={{
           alignItems: "center",
-          background: "#090615",
-          color: "#f8f7ff",
+          background: "#05070c",
+          color: "#f2fbfe",
           display: "flex",
           fontFamily: "system-ui, sans-serif",
           justifyContent: "center",
           margin: 0,
-          minHeight: "100vh",
+          minHeight: "100svh",
           padding: "24px",
           textAlign: "center",
         }}
       >
         <main style={{ maxWidth: "560px" }}>
-          <p style={{ color: "#c4b5fd", fontSize: "12px", fontWeight: 700 }}>
-            STORYLIO
-          </p>
           <h1 style={{ fontSize: "36px", lineHeight: 1.15, margin: "16px 0" }}>
             Something went wrong at the application level.
           </h1>
-          <p style={{ color: "#b8b4c7", lineHeight: 1.7 }}>
+          <p style={{ color: "#a7b8c6", lineHeight: 1.7 }}>
             Try loading Storylio again. No sensitive error details are shown
             here.
           </p>
           <button
             type="button"
-            onClick={() => unstable_retry()}
+            onClick={() => retry()}
             style={{
-              background: "#7c3aed",
+              background: "#068ce6",
               border: 0,
-              borderRadius: "999px",
-              color: "#fff",
+              borderRadius: "8px",
+              color: "#000b27",
               cursor: "pointer",
               fontWeight: 700,
               marginTop: "24px",
               padding: "12px 20px",
+              minHeight: "48px",
             }}
           >
             Try again
           </button>
+          <p>
+            <a
+              href="/"
+              style={{
+                color: "#78c6f5",
+                display: "inline-flex",
+                alignItems: "center",
+                minHeight: "44px",
+                marginTop: "12px",
+              }}
+            >
+              Back to home
+            </a>
+          </p>
         </main>
       </body>
     </html>

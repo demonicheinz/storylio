@@ -2,43 +2,35 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ChatCircleTextIcon,
   DotsThreeVerticalIcon,
-  EyeIcon,
-  ImageIcon,
   PencilSimpleIcon,
   PlusIcon,
-  SpinnerIcon,
-  StackIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
-import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
-import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import {
+  createContext,
+  type ReactElement,
+  type RefObject,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
+import { Controller, useForm } from "react-hook-form";
+import { TechnologyLogo } from "@/components/common/technology-logo";
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -51,42 +43,55 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import {
   actionCreateHomeSection,
-  actionCreateTestimonial,
   actionDeleteHomeSection,
-  actionDeleteTestimonial,
   actionReorderHomeSections,
-  actionReorderTestimonials,
+  actionSetHeroHeadline,
   actionUpdateHomeSection,
-  actionUpdateTestimonial,
 } from "@/features/dashboard/home/actions";
 import {
   type HomeSectionActionInput,
   type HomeSectionActionValues,
   type HomeSectionTypeValue,
   homeSectionActionSchema,
-  type TestimonialActionInput,
-  type TestimonialActionValues,
-  testimonialActionSchema,
 } from "@/features/dashboard/home/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
+import { DashboardSortableList } from "@/features/dashboard/shared/components/sortable-list";
+import { DEFAULT_HOME_HERO } from "@/lib/home-hero";
 import {
-  DashboardSortableList,
-  verticalListSortingStrategy,
-} from "@/features/dashboard/shared/components/sortable-list";
-import { dashboardStyles } from "@/features/dashboard/shared/styles";
+  getHomeLogoSettings,
+  hasLocalTechnologyLogo,
+} from "@/lib/home-technologies";
 import { cn, formatDate } from "@/lib/utils";
+import styles from "./home.module.css";
+import {
+  clearHeroDraft,
+  clearHomeDraft,
+  homeSectionDraftKey,
+  readHeroDraft,
+  readSectionDraft,
+  saveHeroDraft,
+  saveSectionDraft,
+} from "./home-drafts";
 
 export type DashboardHomeSection = {
   id: string;
@@ -98,90 +103,177 @@ export type DashboardHomeSection = {
   createdAt: string;
 };
 
-export type DashboardTestimonial = {
-  id: string;
-  name: string;
-  role: string | null;
-  company: string | null;
-  avatar: string | null;
-  content: string;
-  isVisible: boolean;
-  order: number;
-  createdAt: string;
-};
-
 type HomeContentManagerProps = {
+  headline: string;
+  subheadline?: string;
   phases: DashboardHomeSection[];
-  testimonials: DashboardTestimonial[];
   logos: DashboardHomeSection[];
 };
 
-function HomeStatCard({
-  icon: Icon,
-  iconClassName,
-  label,
-  value,
-  description,
-  className,
+const DraftContext = createContext<(id: string, dirty: boolean) => void>(
+  () => {},
+);
+
+function useHomeDraft(dirty: boolean) {
+  const id = useId();
+  const report = useContext(DraftContext);
+  useEffect(() => {
+    report(id, dirty);
+    return () => report(id, false);
+  }, [dirty, id, report]);
+}
+
+function HeroHeadlineForm({
+  headline,
+  subheadline,
 }: {
-  icon: typeof StackIcon;
-  iconClassName: string;
-  label: string;
-  value: number;
-  description: string;
-  className?: string;
+  headline: string;
+  subheadline: string;
 }) {
+  const router = useRouter();
+  const [value, setValue] = useState(headline);
+  const [savedValue, setSavedValue] = useState(headline);
+  const [error, setError] = useState<string>();
+  const [pending, setPending] = useState(false);
+  const textarea = useRef<HTMLTextAreaElement>(null);
+  const dirty = value !== savedValue;
+  useHomeDraft(dirty);
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current) return;
+    restored.current = true;
+    const draft = readHeroDraft(headline);
+    if (draft !== undefined) setValue(draft);
+  }, [headline]);
+  useEffect(() => {
+    if (error && !pending) textarea.current?.focus();
+  }, [error, pending]);
+  useEffect(() => {
+    if (!textarea.current) return;
+    textarea.current.style.height = "auto";
+    textarea.current.style.height = `${textarea.current.scrollHeight}px`;
+  }, [value]);
+
   return (
-    <Card className={dashboardStyles.statCard}>
-      <CardContent className={dashboardStyles.statContent}>
-        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
-          <Icon className="size-5" />
+    <section className={styles.panel} aria-labelledby="home-hero-title">
+      <header className={styles.sectionHeader}>
+        <div>
+          <h2 id="home-hero-title">Hero</h2>
+          <p>The headline opens the public Home page.</p>
         </div>
-        <div className="min-w-0">
-          <p className={cn("font-heading font-bold text-xl", className)}>
-            {value}
+      </header>
+      <form
+        className={styles.formBody}
+        onSubmit={async (event) => {
+          event.preventDefault();
+          if (pending) return;
+          setPending(true);
+          setError(undefined);
+          try {
+            const result = await actionSetHeroHeadline({ headline: value });
+            if (!result.success) {
+              setError(result.fieldErrors?.headline?.[0] ?? result.error);
+              textarea.current?.focus();
+              return;
+            }
+            setValue(value.trim());
+            setSavedValue(value.trim());
+            clearHeroDraft();
+            toast.add({
+              title: result.message ?? "Headline saved.",
+              type: "success",
+            });
+            router.refresh();
+          } catch {
+            setError(
+              "Could not save the headline. Your draft is kept. Try again.",
+            );
+            textarea.current?.focus();
+          } finally {
+            setPending(false);
+          }
+        }}
+      >
+        <div className={styles.field}>
+          <Label htmlFor="hero-headline">Headline</Label>
+          <Textarea
+            ref={textarea}
+            id="hero-headline"
+            rows={2}
+            className={styles.headline}
+            value={value}
+            maxLength={160}
+            disabled={pending}
+            aria-invalid={!!error}
+            aria-describedby="hero-headline-help hero-headline-count hero-headline-error"
+            placeholder={DEFAULT_HOME_HERO.headline}
+            onChange={(event) => {
+              setValue(event.target.value);
+              saveHeroDraft(savedValue, event.target.value);
+              setError(undefined);
+            }}
+          />
+          <p id="hero-headline-count" className={styles.caption}>
+            {value.length}/160 characters
           </p>
-          <p className="text-[11px] text-muted-foreground">{label}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground/80">
-            {description}
+          <p id="hero-headline-help" className={styles.help}>
+            Leave empty to use the default: {DEFAULT_HOME_HERO.headline}
+          </p>
+          <p id="hero-headline-error" role="alert" className={styles.error}>
+            {error}
           </p>
         </div>
-      </CardContent>
-    </Card>
+        <div className={styles.field}>
+          <p className="font-medium">Subheadline</p>
+          <p>{subheadline.trim() || DEFAULT_HOME_HERO.subheadline}</p>
+          <p className={styles.help}>
+            Uses your profile bio.{" "}
+            <Link href="/dashboard/settings" className={styles.link}>
+              Edit bio in Settings
+            </Link>
+            .
+          </p>
+        </div>
+        <div className={styles.formActions}>
+          <Button type="submit" disabled={pending || !dirty}>
+            {pending ? "Saving…" : "Save headline"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={pending || !dirty}
+            onClick={() => {
+              if (window.confirm("Discard the unsaved headline?")) {
+                setValue(savedValue);
+                clearHeroDraft();
+                setError(undefined);
+              }
+            }}
+          >
+            Discard changes
+          </Button>
+        </div>
+      </form>
+    </section>
   );
 }
-
-function applyFieldErrors<T extends Record<string, unknown>>(
-  fieldErrors: Record<string, string[]> | undefined,
-  setError: (field: keyof T, error: { message: string; type: string }) => void,
-) {
-  if (!fieldErrors) return;
-  for (const [field, messages] of Object.entries(fieldErrors)) {
-    if (messages[0]) {
-      setError(field as keyof T, { message: messages[0], type: "server" });
-    }
-  }
-}
-
-const homeSectionEmptyDefaults: HomeSectionActionValues = {
-  type: "PHASE",
-  label: "",
-  content: "",
-  imageUrl: undefined,
-  order: 0,
-};
 
 function getHomeSectionDefaults(
   type: HomeSectionTypeValue,
   section?: DashboardHomeSection,
 ): HomeSectionActionValues {
-  if (!section) return { ...homeSectionEmptyDefaults, type };
+  const settings = section ? getHomeLogoSettings(section) : undefined;
   return {
-    type: section.type,
-    label: section.label,
-    content: section.content ?? "",
-    imageUrl: section.imageUrl ?? undefined,
-    order: section.order,
+    type,
+    label: section?.label ?? "",
+    content:
+      type === "LOGO"
+        ? (settings?.description ?? "")
+        : (section?.content ?? ""),
+    category: settings?.category ?? "TECHNOLOGY",
+    showOnHome: settings?.showOnHome ?? true,
+    imageUrl: section?.imageUrl ?? undefined,
+    order: section?.order ?? 0,
   };
 }
 
@@ -193,192 +285,372 @@ function HomeSectionDialog({
   section,
   type,
   trigger,
+  triggerNativeButton = true,
+  open: controlledOpen,
+  onOpenChange,
+  returnFocus,
 }: {
   section?: DashboardHomeSection;
   type: HomeSectionTypeValue;
-  trigger: ReactNode;
+  trigger?: ReactElement;
+  triggerNativeButton?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  returnFocus?: RefObject<HTMLElement | null>;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-
+  const id = useId();
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = onOpenChange ?? setLocalOpen;
+  const [pending, setPending] = useState(false);
+  const pendingRef = useRef(false);
+  const [imageMethod, setImageMethod] = useState("upload");
+  const [failure, setFailure] = useState<string>();
   const {
-    formState: { errors },
+    control,
+    formState: { errors, isDirty },
     handleSubmit,
     register,
     reset,
     setError,
+    setFocus,
     setValue,
     watch,
   } = useForm<HomeSectionActionInput, unknown, HomeSectionActionValues>({
     resolver: zodResolver(homeSectionActionSchema),
     defaultValues: getHomeSectionDefaults(type, section),
   });
-
   const imageUrl = watch("imageUrl");
-  const isEdit = Boolean(section);
-  const typeLabel = getTypeLabel(type);
+  const label = watch("label");
+  const category = watch("category");
+  const showOnHome = watch("showOnHome");
+  const builtin = hasLocalTechnologyLogo(label);
+  const draftKey = homeSectionDraftKey(type, section?.id);
+  const draftBase = useRef(getHomeSectionDefaults(type, section));
+  useHomeDraft(open && isDirty);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      const defaults = getHomeSectionDefaults(type, section);
+      draftBase.current = defaults;
+      const draft = readSectionDraft(draftKey, defaults);
+      reset(defaults);
+      if (draft) reset(draft, { keepDefaultValues: true });
+      setFailure(undefined);
+      setImageMethod("upload");
+    }
+    wasOpen.current = open;
+  }, [draftKey, open, reset, section, type]);
+  useEffect(() => {
+    if (!open) return;
+    const subscription = watch((values) =>
+      saveSectionDraft(draftKey, draftBase.current, values),
+    );
+    return () => subscription.unsubscribe();
+  }, [draftKey, open, watch]);
+  useEffect(() => {
+    if (!open || pending) return;
+    const first = Object.keys(errors)[0] as
+      | keyof HomeSectionActionInput
+      | undefined;
+    if (!first) return;
+    // Error details must be expanded and disabled fields re-enabled before focus.
+    const frame = requestAnimationFrame(() => setFocus(first));
+    return () => cancelAnimationFrame(frame);
+  }, [errors, open, pending, setFocus]);
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    setOpen(nextOpen);
-    if (nextOpen) reset(getHomeSectionDefaults(type, section));
+  const changeOpen = (next: boolean) => {
+    if (pendingRef.current) return;
+    if (
+      !next &&
+      isDirty &&
+      !window.confirm("Discard unsaved changes to this Home section?")
+    )
+      return;
+    if (!next) clearHomeDraft(draftKey);
+    setOpen(next);
   };
-
-  const onSubmit = handleSubmit((values) => {
-    startTransition(async () => {
+  const save = handleSubmit(async (values) => {
+    if (pendingRef.current) return;
+    pendingRef.current = true;
+    setPending(true);
+    setFailure(undefined);
+    try {
       const payload = { ...values, type };
-      const result =
-        isEdit && section
-          ? await actionUpdateHomeSection(section.id, payload)
-          : await actionCreateHomeSection(payload);
-
-      if (result.success) {
-        toast.success(
-          result.message ??
-            (isEdit ? "Home section updated." : "Home section created."),
-        );
-        setOpen(false);
-        router.refresh();
-      } else {
-        applyFieldErrors<HomeSectionActionValues>(result.fieldErrors, setError);
-        toast.error(result.error);
+      const result = section
+        ? await actionUpdateHomeSection(section.id, payload)
+        : await actionCreateHomeSection(payload);
+      if (!result.success) {
+        const fields = Object.entries(result.fieldErrors ?? {});
+        for (const [field, messages] of fields)
+          if (messages[0])
+            setError(field as keyof HomeSectionActionInput, {
+              type: "server",
+              message: messages[0],
+            });
+        if (fields[0]) setFocus(fields[0][0] as keyof HomeSectionActionInput);
+        setFailure(result.error);
+        return;
       }
-    });
+      reset(values);
+      clearHomeDraft(draftKey);
+      setOpen(false);
+      toast.add({
+        title: result.message ?? "Home section saved.",
+        type: "success",
+      });
+      router.refresh();
+    } catch {
+      setFailure("Could not save this section. Your input is kept. Try again.");
+    } finally {
+      pendingRef.current = false;
+      setPending(false);
+    }
   });
+  const fieldError = (field: keyof HomeSectionActionInput) => (
+    <p id={`${id}-${field}-error`} role="alert" className={styles.error}>
+      {errors[field]?.message}
+    </p>
+  );
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto">
-        <form className="flex flex-col gap-5" onSubmit={onSubmit}>
-          <DialogHeader>
+    <Dialog open={open} onOpenChange={changeOpen}>
+      {trigger && (
+        <DialogTrigger nativeButton={triggerNativeButton} render={trigger} />
+      )}
+      <DialogContent
+        className={styles.dialog}
+        showCloseButton={!pending}
+        finalFocus={returnFocus}
+      >
+        <form onSubmit={save} noValidate className={styles.dialogForm}>
+          <DialogHeader className={styles.dialogHeader}>
             <DialogTitle>
-              {isEdit ? `Edit ${typeLabel}` : `Add ${typeLabel}`}
+              {section ? "Edit" : "Add"} {getTypeLabel(type)}
             </DialogTitle>
             <DialogDescription>
               {type === "LOGO"
-                ? "Manage logo name, image, and display order."
-                : "Manage phase title, description, and display order."}
+                ? "Choose a logo and where it appears."
+                : "Describe a phase of your approach."}
             </DialogDescription>
           </DialogHeader>
-
-          <input type="hidden" value={type} {...register("type")} />
-
-          <div className="gap-4 grid sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor={`${type}-label`}>
+          <div className={styles.dialogBody}>
+            <input type="hidden" {...register("type")} />
+            <div className={styles.field}>
+              <Label htmlFor={`${id}-label`}>
                 {type === "LOGO" ? "Logo name" : "Phase title"}
               </Label>
               <Input
-                id={`${type}-label`}
-                placeholder={type === "LOGO" ? "Vercel" : "Phase 1"}
+                id={`${id}-label`}
+                autoComplete="off"
+                disabled={pending}
                 aria-invalid={!!errors.label}
-                disabled={isPending}
+                aria-describedby={`${id}-label-error`}
                 {...register("label")}
               />
-              {errors.label?.message && (
-                <p className="text-destructive text-sm">
-                  {errors.label.message}
-                </p>
-              )}
+              {fieldError("label")}
             </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor={`${type}-order`}>Display order</Label>
-              <Input
-                id={`${type}-order`}
-                type="number"
-                min={0}
-                aria-invalid={!!errors.order}
-                disabled={isPending}
-                {...register("order")}
-              />
-              {errors.order?.message && (
-                <p className="text-destructive text-sm">
-                  {errors.order.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {type === "PHASE" ? (
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="content">Description</Label>
-              <Textarea
-                id="content"
-                placeholder="Describe this phase."
-                aria-invalid={!!errors.content}
-                disabled={isPending}
-                className="min-h-28"
-                {...register("content")}
-              />
-              {errors.content?.message && (
-                <p className="text-destructive text-sm">
-                  {errors.content.message}
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label>Logo image</Label>
-                <ImageUpload
-                  value={imageUrl}
-                  disabled={isPending}
-                  onChange={(url) =>
-                    setValue("imageUrl", url, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
-                  onRemove={() =>
-                    setValue("imageUrl", undefined, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
+            {type === "PHASE" ? (
+              <div className={styles.field}>
+                <Label htmlFor={`${id}-content`}>Description</Label>
+                <Textarea
+                  id={`${id}-content`}
+                  className="min-h-28"
+                  disabled={pending}
+                  aria-invalid={!!errors.content}
+                  aria-describedby={`${id}-content-error`}
+                  {...register("content")}
                 />
-                {errors.imageUrl?.message && (
-                  <p className="text-destructive text-sm">
-                    {errors.imageUrl.message}
+                {fieldError("content")}
+              </div>
+            ) : (
+              <>
+                <div className={styles.field}>
+                  <Label htmlFor={`${id}-category`}>Logo category</Label>
+                  <Controller
+                    control={control}
+                    name="category"
+                    render={({ field }) => (
+                      <Select
+                        items={[
+                          { value: "TECHNOLOGY", label: "Technology" },
+                          { value: "CLIENT", label: "Client" },
+                        ]}
+                        value={field.value ?? "TECHNOLOGY"}
+                        disabled={pending}
+                        onValueChange={(next) => {
+                          if (next === null) return;
+                          field.onChange(next);
+                          if (next === "CLIENT")
+                            setValue("showOnHome", false, {
+                              shouldDirty: true,
+                            });
+                        }}
+                      >
+                        <SelectTrigger
+                          id={`${id}-category`}
+                          ref={field.ref}
+                          onBlur={field.onBlur}
+                          className="w-full"
+                          aria-invalid={!!errors.category}
+                          aria-describedby={`${id}-category-error`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent
+                          alignItemWithTrigger={false}
+                          align="start"
+                        >
+                          <SelectGroup>
+                            <SelectItem value="TECHNOLOGY">
+                              Technology
+                            </SelectItem>
+                            <SelectItem value="CLIENT">Client</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {fieldError("category")}
+                </div>
+                <div className={styles.visibility}>
+                  <Label htmlFor={`${id}-show-home`}>
+                    Show in Home tech stack
+                  </Label>
+                  <Switch
+                    id={`${id}-show-home`}
+                    checked={Boolean(showOnHome)}
+                    disabled={pending || category === "CLIENT"}
+                    aria-describedby={`${id}-showOnHome-error`}
+                    onCheckedChange={(checked) =>
+                      setValue("showOnHome", checked, { shouldDirty: true })
+                    }
+                  />
+                </div>
+                {fieldError("showOnHome")}
+                <div className={styles.logoSource}>
+                  <span className={styles.logoPreview} data-home-logo-preview>
+                    <TechnologyLogo
+                      label={label}
+                      imageUrl={imageUrl}
+                      size={40}
+                    />
+                  </span>
+                  <p className={styles.help}>
+                    {imageUrl
+                      ? "Custom image selected. A failed image falls back to a built-in logo when available."
+                      : builtin
+                        ? "Using the built-in logo."
+                        : "Choose an image below."}
+                  </p>
+                </div>
+                <details
+                  open={!builtin || !!errors.imageUrl}
+                  className={styles.replacement}
+                >
+                  <summary>Choose or replace image</summary>
+                  <fieldset disabled={pending} className={styles.field}>
+                    <legend className="sr-only">Choose one logo image</legend>
+                    <div className={styles.imageMethods}>
+                      <label>
+                        <input
+                          type="radio"
+                          name={`${id}-image-method`}
+                          value="upload"
+                          checked={imageMethod === "upload"}
+                          onChange={() => setImageMethod("upload")}
+                        />{" "}
+                        Upload
+                      </label>
+                      <label>
+                        <input
+                          type="radio"
+                          name={`${id}-image-method`}
+                          value="url"
+                          checked={imageMethod === "url"}
+                          onChange={() => setImageMethod("url")}
+                        />{" "}
+                        Paste URL
+                      </label>
+                    </div>
+                    {imageMethod === "upload" && (
+                      <ImageUpload
+                        value={imageUrl || undefined}
+                        disabled={pending}
+                        previewClassName="aspect-auto h-24"
+                        previewImageClassName="object-contain"
+                        onChange={(url) =>
+                          setValue("imageUrl", url, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          })
+                        }
+                        onRemove={() =>
+                          setValue("imageUrl", "", {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          })
+                        }
+                      />
+                    )}
+                    <div className={styles.field}>
+                      <Label htmlFor={`${id}-imageUrl`}>
+                        {imageMethod === "url"
+                          ? "Logo image URL"
+                          : "Selected image URL"}
+                      </Label>
+                      <Input
+                        id={`${id}-imageUrl`}
+                        type="url"
+                        disabled={pending}
+                        readOnly={imageMethod !== "url"}
+                        aria-invalid={!!errors.imageUrl}
+                        aria-describedby={`${id}-imageUrl-error`}
+                        {...register("imageUrl")}
+                      />
+                      {fieldError("imageUrl")}
+                    </div>
+                  </fieldset>
+                </details>
+              </>
+            )}
+            <details open={!!errors.order} className={styles.replacement}>
+              <summary>Display order and details</summary>
+              <div className={styles.field}>
+                <Label htmlFor={`${id}-order`}>Display order</Label>
+                <Input
+                  id={`${id}-order`}
+                  type="number"
+                  min={0}
+                  disabled={pending}
+                  aria-invalid={!!errors.order}
+                  aria-describedby={`${id}-order-error`}
+                  {...register("order")}
+                />
+                {fieldError("order")}
+                {section && (
+                  <p className={styles.caption}>
+                    Created {formatDate(section.createdAt)}
                   </p>
                 )}
               </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor={`${type}-image-url`}>Logo image URL</Label>
-                <Input
-                  id={`${type}-image-url`}
-                  type="url"
-                  placeholder="https://res.cloudinary.com/..."
-                  aria-invalid={!!errors.imageUrl}
-                  disabled={isPending}
-                  {...register("imageUrl")}
-                />
-                <p className="text-muted-foreground text-xs">
-                  Upload a logo or paste an existing image URL.
-                </p>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? (
-                <SpinnerIcon
-                  data-icon="inline-start"
-                  className="animate-spin"
-                />
-              ) : isEdit ? (
-                <PencilSimpleIcon data-icon="inline-start" />
-              ) : (
-                <PlusIcon data-icon="inline-start" />
-              )}
-              {isPending
-                ? "Saving..."
-                : isEdit
-                  ? "Save Changes"
-                  : `Add ${typeLabel}`}
+            </details>
+            <p role="alert" className={styles.error}>
+              {failure}
+            </p>
+          </div>
+          <DialogFooter className={styles.dialogFooter}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending}
+              onClick={() => changeOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={pending}>
+              {pending ? "Saving…" : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>
@@ -389,56 +661,82 @@ function HomeSectionDialog({
 
 function HomeSectionDeleteButton({
   section,
-  trigger,
+  open,
+  onOpenChange,
+  returnFocus,
 }: {
   section: DashboardHomeSection;
-  trigger?: ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  returnFocus: RefObject<HTMLElement | null>;
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-
-  const handleDelete = () => {
-    startTransition(async () => {
-      const result = await actionDeleteHomeSection(section.id);
-      if (result.success) {
-        toast.success(result.message ?? "Home section deleted.");
-        setOpen(false);
-        router.refresh();
-      } else {
-        toast.error(result.error);
-      }
-    });
-  };
-
+  const [pending, setPending] = useState(false);
+  const pendingRef = useRef(false);
+  const [error, setError] = useState<string>();
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        {trigger ?? (
-          <Button type="button" size="sm" variant="destructive">
-            <TrashIcon data-icon="inline-start" />
-            Delete
-          </Button>
-        )}
-      </AlertDialogTrigger>
-      <AlertDialogContent>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!pendingRef.current) {
+          onOpenChange(next);
+          setError(undefined);
+        }
+      }}
+    >
+      <AlertDialogContent finalFocus={returnFocus}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete home content?</AlertDialogTitle>
+          <AlertDialogTitle>Delete {section.label}?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete{" "}
-            <span className="font-medium text-foreground">{section.label}</span>
-            . This action cannot be undone.
+            This permanently removes the section from Home. This cannot be
+            undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <p role="alert" className={styles.error}>
+          {error}
+        </p>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            disabled={isPending}
-            onClick={handleDelete}
+          <Button
+            type="button"
+            variant="outline"
+            disabled={pending}
+            onClick={() => {
+              if (!pendingRef.current) onOpenChange(false);
+            }}
           >
-            {isPending ? "Deleting..." : "Delete"}
-          </AlertDialogAction>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={pending}
+            onClick={async () => {
+              if (pendingRef.current) return;
+              pendingRef.current = true;
+              setPending(true);
+              setError(undefined);
+              try {
+                const result = await actionDeleteHomeSection(section.id);
+                if (!result.success) {
+                  setError(result.error);
+                  return;
+                }
+                onOpenChange(false);
+                toast.add({
+                  title: result.message ?? "Home section deleted.",
+                  type: "success",
+                });
+                router.refresh();
+              } catch {
+                setError("Could not delete this section. Try again.");
+              } finally {
+                pendingRef.current = false;
+                setPending(false);
+              }
+            }}
+          >
+            {pending ? "Deleting…" : "Delete"}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -452,852 +750,382 @@ function HomeSectionActions({
   section: DashboardHomeSection;
   type: HomeSectionTypeValue;
 }) {
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const actionButton = useRef<HTMLButtonElement>(null);
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
-          aria-label={`Open actions for ${section.label}`}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              ref={actionButton}
+              type="button"
+              variant="ghost"
+              size="icon"
+              className={styles.actionButton}
+              aria-label={`Open actions for ${section.label}`}
+            />
+          }
         >
           <DotsThreeVerticalIcon />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuLabel>{getTypeLabel(type)}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <HomeSectionDialog
-          section={section}
-          type={type}
-          trigger={
-            <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
               <PencilSimpleIcon data-icon="inline-start" />
               Edit
             </DropdownMenuItem>
-          }
-        />
-        <HomeSectionDeleteButton
-          section={section}
-          trigger={
             <DropdownMenuItem
               variant="destructive"
-              onSelect={(event) => event.preventDefault()}
+              onClick={() => setDeleteOpen(true)}
             >
               <TrashIcon data-icon="inline-start" />
               Delete
             </DropdownMenuItem>
-          }
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <HomeSectionDialog
+        section={section}
+        type={type}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        returnFocus={actionButton}
+      />
+      <HomeSectionDeleteButton
+        section={section}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        returnFocus={actionButton}
+      />
+    </>
+  );
+}
+
+function HomeLogoStatus({ logo }: { logo: DashboardHomeSection }) {
+  const { category, showOnHome } = getHomeLogoSettings(logo);
+  return (
+    <p className={styles.caption}>
+      {category === "TECHNOLOGY"
+        ? `Technology · ${showOnHome ? "Shown on Home" : "Hidden from Home"}`
+        : "Client · Saved in dashboard"}
+    </p>
   );
 }
 
 function HomeContentList({
-  emptyLabel,
-  emptyDescription,
   items,
   type,
 }: {
-  emptyLabel: string;
-  emptyDescription: string;
   items: DashboardHomeSection[];
   type: HomeSectionTypeValue;
 }) {
   const router = useRouter();
-  const [isReordering, startReorderTransition] = useTransition();
+  const [ordered, setOrdered] = useState(items);
+  const [reorder, setReorder] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
+    "idle",
+  );
+  const [failure, setFailure] = useState<string>();
+  const [retryItems, setRetryItems] = useState<DashboardHomeSection[]>();
+  const saving = useRef(false);
+  useEffect(() => {
+    setOrdered(items);
+  }, [items]);
 
-  const handleReorder = (nextItems: DashboardHomeSection[]) => {
-    startReorderTransition(async () => {
+  const saveOrder = async (
+    nextItems: DashboardHomeSection[],
+  ): Promise<boolean> => {
+    if (saving.current) return false;
+    saving.current = true;
+    setStatus("saving");
+    setFailure(undefined);
+    setRetryItems(nextItems);
+    try {
       const result = await actionReorderHomeSections(
-        nextItems.map((item, index) => ({ id: item.id, order: index })),
+        nextItems.map((item, order) => ({ id: item.id, order })),
       );
-      if (result.success) {
-        toast.success(result.message ?? "Home content order updated.");
-        router.refresh();
-      } else {
-        toast.error(result.error);
+      if (!result.success) {
+        setFailure(result.error);
+        setStatus("error");
+        return false;
       }
-    });
+      setOrdered(nextItems);
+      setStatus("saved");
+      setRetryItems(undefined);
+      router.refresh();
+      return true;
+    } catch {
+      setFailure("Could not save the order. The previous order is restored.");
+      setStatus("error");
+      return false;
+    } finally {
+      saving.current = false;
+    }
   };
-
-  if (items.length === 0) {
-    return (
-      <div className="flex flex-col justify-center items-center gap-4 bg-background/30 p-6 border border-border/70 border-dashed rounded-2xl min-h-72 text-center">
-        {type === "LOGO" ? (
-          <ImageIcon className="size-12 text-muted-foreground/50" />
-        ) : (
-          <StackIcon className="size-12 text-muted-foreground/50" />
-        )}
-        <div>
-          <p className="font-medium">{emptyLabel}</p>
-          <p className="mt-1 text-muted-foreground text-sm">
-            {emptyDescription}
-          </p>
-        </div>
-        <HomeSectionDialog
-          type={type}
-          trigger={
-            <Button>
-              <PlusIcon data-icon="inline-start" />
-              Add {getTypeLabel(type)}
-            </Button>
-          }
-        />
-      </div>
-    );
-  }
-
+  const move = (index: number, offset: number) => {
+    const next = [...ordered];
+    [next[index], next[index + offset]] = [next[index + offset], next[index]];
+    void saveOrder(next);
+  };
   return (
-    <DashboardSortableList
-      items={items}
-      disabled={isReordering}
-      className={dashboardStyles.sortableRows}
-      strategy={verticalListSortingStrategy}
-      onReorder={handleReorder}
-      renderItem={({ item, handle, isDragging }) => (
-        <div
-          className={cn(
-            "xl:items-center grid grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(320px,1fr)_180px_56px] min-w-0",
-            dashboardStyles.listRow,
-            isDragging
-              ? "relative z-10 border-brand-soft/60 bg-background/70 opacity-80 shadow-[0_0_52px_rgba(139,92,246,0.18)]"
-              : "hover:border-brand-soft/35",
+    <>
+      <div className={styles.listToolbar}>
+        <p className={styles.help}>
+          {items.length}{" "}
+          {type === "LOGO"
+            ? items.length === 1
+              ? "logo"
+              : "logos"
+            : items.length === 1
+              ? "phase"
+              : "phases"}
+        </p>
+        <div className={styles.toolbarActions}>
+          {items.length > 1 && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={status === "saving"}
+              aria-pressed={reorder}
+              onClick={() => setReorder(!reorder)}
+            >
+              {reorder ? "Done reordering" : "Reorder"}
+            </Button>
           )}
-        >
-          <div className="flex self-stretch row-span-2 xl:row-span-1">
-            {handle}
-          </div>
-          <div
-            className={cn(
-              "flex gap-3 p-4 xl:p-3 xl:pr-4 min-w-0",
-              type === "LOGO" ? "items-center" : "items-start",
-            )}
+          <HomeSectionDialog
+            type={type}
+            trigger={
+              <Button type="button">
+                <PlusIcon data-icon="inline-start" />
+                Add {getTypeLabel(type)}
+              </Button>
+            }
+          />
+        </div>
+      </div>
+      {reorder && (
+        <p className={styles.help}>
+          Drag a named handle, use Space then arrow keys, or choose Move
+          up/down. Each move saves automatically.
+        </p>
+      )}
+      <div role="status" aria-live="polite" className={styles.saveStatus}>
+        {status === "saving"
+          ? "Saving order…"
+          : status === "saved"
+            ? "Order saved."
+            : ""}
+      </div>
+      {status === "error" && (
+        <div className={styles.retry}>
+          <p role="alert" className={styles.error}>
+            {failure}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              if (retryItems) void saveOrder(retryItems);
+            }}
           >
-            {type === "LOGO" && (
-              <div className="flex justify-center items-center bg-muted/30 p-2 border border-border/50 rounded-xl w-20 h-14 overflow-hidden shrink-0">
-                {item.imageUrl ? (
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.label}
-                    width={96}
-                    height={40}
-                    className="w-auto max-h-10 object-contain"
-                  />
-                ) : (
-                  <ImageIcon className="size-7 text-muted-foreground" />
-                )}
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <h2 className="font-heading font-semibold text-lg truncate">
-                  {item.label}
-                </h2>
-              </div>
-              {type !== "LOGO" && (
-                <p className="mt-1 text-muted-foreground text-sm line-clamp-2">
-                  {item.content || "No description yet."}
-                </p>
-              )}
-              <div className="xl:hidden flex flex-wrap items-center gap-2 mt-3">
-                <span className="text-muted-foreground text-xs">
-                  Created {formatDate(item.createdAt)}
-                </span>
-              </div>
-            </div>
-            <div className="xl:hidden shrink-0">
-              <HomeSectionActions section={item} type={type} />
-            </div>
-          </div>
-          <div className="hidden xl:flex items-center p-3 text-muted-foreground text-sm whitespace-nowrap">
-            Created {formatDate(item.createdAt)}
-          </div>
-          <div className="hidden xl:flex justify-end p-3">
-            <HomeSectionActions section={item} type={type} />
-          </div>
+            Retry order save
+          </Button>
         </div>
       )}
-    />
-  );
-}
-
-const testimonialEmptyDefaults: TestimonialActionValues = {
-  name: "",
-  role: "",
-  company: "",
-  avatar: undefined,
-  content: "",
-  isVisible: true,
-  order: 0,
-};
-
-function getTestimonialDefaults(
-  testimonial?: DashboardTestimonial,
-): TestimonialActionValues {
-  if (!testimonial) return testimonialEmptyDefaults;
-  return {
-    name: testimonial.name,
-    role: testimonial.role ?? "",
-    company: testimonial.company ?? "",
-    avatar: testimonial.avatar ?? undefined,
-    content: testimonial.content,
-    isVisible: testimonial.isVisible,
-    order: testimonial.order,
-  };
-}
-
-function getInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
-function getTestimonialTitle(testimonial: DashboardTestimonial) {
-  return [testimonial.role, testimonial.company].filter(Boolean).join(" at ");
-}
-
-function TestimonialDialog({
-  testimonial,
-  trigger,
-}: {
-  testimonial?: DashboardTestimonial;
-  trigger: ReactNode;
-}) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-
-  const {
-    formState: { errors },
-    handleSubmit,
-    register,
-    reset,
-    setError,
-    setValue,
-    watch,
-  } = useForm<TestimonialActionInput, unknown, TestimonialActionValues>({
-    resolver: zodResolver(testimonialActionSchema),
-    defaultValues: getTestimonialDefaults(testimonial),
-  });
-
-  const avatar = watch("avatar");
-  const isEdit = Boolean(testimonial);
-
-  const handleOpenChange = (nextOpen: boolean) => {
-    setOpen(nextOpen);
-    if (nextOpen) reset(getTestimonialDefaults(testimonial));
-  };
-
-  const onSubmit = handleSubmit((values) => {
-    startTransition(async () => {
-      const result =
-        isEdit && testimonial
-          ? await actionUpdateTestimonial(testimonial.id, values)
-          : await actionCreateTestimonial(values);
-
-      if (result.success) {
-        toast.success(
-          result.message ??
-            (isEdit ? "Testimonial updated." : "Testimonial created."),
-        );
-        setOpen(false);
-        router.refresh();
-      } else {
-        applyFieldErrors<TestimonialActionValues>(result.fieldErrors, setError);
-        toast.error(result.error);
-      }
-    });
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-xl max-h-[calc(100vh-2rem)] overflow-y-auto">
-        <form className="flex flex-col gap-5" onSubmit={onSubmit}>
-          <DialogHeader>
-            <DialogTitle>
-              {isEdit ? "Edit Testimonial" : "Add Testimonial"}
-            </DialogTitle>
-            <DialogDescription>
-              Manage the quote, author details, public visibility, avatar, and
-              display order.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="gap-4 grid sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                placeholder="Jane Cooper"
-                aria-invalid={!!errors.name}
-                disabled={isPending}
-                {...register("name")}
-              />
-              {errors.name?.message && (
-                <p className="text-destructive text-sm">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="order">Display order</Label>
-              <Input
-                id="order"
-                type="number"
-                min={0}
-                aria-invalid={!!errors.order}
-                disabled={isPending}
-                {...register("order")}
-              />
-              {errors.order?.message && (
-                <p className="text-destructive text-sm">
-                  {errors.order.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="gap-4 grid sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="role">Role</Label>
-              <Input
-                id="role"
-                placeholder="Founder"
-                aria-invalid={!!errors.role}
-                disabled={isPending}
-                {...register("role")}
-              />
-              {errors.role?.message && (
-                <p className="text-destructive text-sm">
-                  {errors.role.message}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="company">Company</Label>
-              <Input
-                id="company"
-                placeholder="Acme Studio"
-                aria-invalid={!!errors.company}
-                disabled={isPending}
-                {...register("company")}
-              />
-              {errors.company?.message && (
-                <p className="text-destructive text-sm">
-                  {errors.company.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="content">Quote</Label>
-            <Textarea
-              id="content"
-              placeholder="Share the testimonial quote."
-              aria-invalid={!!errors.content}
-              disabled={isPending}
-              className="min-h-32"
-              {...register("content")}
-            />
-            {errors.content?.message && (
-              <p className="text-destructive text-sm">
-                {errors.content.message}
-              </p>
-            )}
-          </div>
-
-          <div className="flex justify-between items-center gap-4 bg-background/35 p-4 border border-border/60 rounded-2xl">
-            <div>
-              <Label htmlFor="isVisible">Visible publicly</Label>
-              <p className="mt-1 text-muted-foreground text-xs leading-5">
-                Hidden testimonials stay editable here but are not shown on the
-                Home page.
-              </p>
-            </div>
-            <Switch
-              id="isVisible"
-              checked={watch("isVisible")}
-              disabled={isPending}
-              onCheckedChange={(checked) =>
-                setValue("isVisible", checked, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                })
-              }
-            />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label>Avatar upload</Label>
-            <ImageUpload
-              value={avatar}
-              disabled={isPending}
-              cropAspect={1}
-              cropShape="round"
-              cropLabel="Crop testimonial avatar"
-              previewClassName="mx-auto max-w-44 rounded-full"
-              onChange={(url) =>
-                setValue("avatar", url, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                })
-              }
-              onRemove={() =>
-                setValue("avatar", undefined, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                })
-              }
-            />
-            {errors.avatar?.message && (
-              <p className="text-destructive text-sm">
-                {errors.avatar.message}
-              </p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="avatar">Avatar URL</Label>
-            <Input
-              id="avatar"
-              type="url"
-              placeholder="https://res.cloudinary.com/..."
-              aria-invalid={!!errors.avatar}
-              disabled={isPending}
-              {...register("avatar")}
-            />
-            <p className="text-muted-foreground text-xs">
-              You can upload an avatar or paste an existing image URL.
-            </p>
-          </div>
-
-          <DialogFooter>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? (
-                <SpinnerIcon
-                  data-icon="inline-start"
-                  className="animate-spin"
-                />
-              ) : isEdit ? (
-                <PencilSimpleIcon data-icon="inline-start" />
-              ) : (
-                <PlusIcon data-icon="inline-start" />
-              )}
-              {isPending
-                ? "Saving..."
-                : isEdit
-                  ? "Save Changes"
-                  : "Add Testimonial"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function TestimonialDeleteButton({
-  testimonial,
-  trigger,
-}: {
-  testimonial: DashboardTestimonial;
-  trigger?: ReactNode;
-}) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-
-  const handleDelete = () => {
-    startTransition(async () => {
-      const result = await actionDeleteTestimonial(testimonial.id);
-      if (result.success) {
-        toast.success(result.message ?? "Testimonial deleted.");
-        setOpen(false);
-        router.refresh();
-      } else {
-        toast.error(result.error);
-      }
-    });
-  };
-
-  return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        {trigger ?? (
-          <Button type="button" size="sm" variant="destructive">
-            <TrashIcon data-icon="inline-start" />
-            Delete
-          </Button>
-        )}
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete testimonial?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This will permanently delete the quote from{" "}
-            <span className="font-medium text-foreground">
-              {testimonial.name}
-            </span>
-            . This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            disabled={isPending}
-            onClick={handleDelete}
-          >
-            {isPending ? "Deleting..." : "Delete"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
-function TestimonialActions({
-  testimonial,
-  align = "end",
-}: {
-  testimonial: DashboardTestimonial;
-  align?: "start" | "end";
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          size="icon"
-          variant="ghost"
-          className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
-          aria-label={`Open actions for ${testimonial.name}`}
-        >
-          <DotsThreeVerticalIcon />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align={align} className="w-44">
-        <DropdownMenuLabel>Testimonial</DropdownMenuLabel>
-        <TestimonialDialog
-          testimonial={testimonial}
-          trigger={
-            <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
-              <PencilSimpleIcon data-icon="inline-start" />
-              Edit
-            </DropdownMenuItem>
-          }
-        />
-        <DropdownMenuSeparator />
-        <TestimonialDeleteButton
-          testimonial={testimonial}
-          trigger={
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={(event) => event.preventDefault()}
-            >
-              <TrashIcon data-icon="inline-start" />
-              Delete
-            </DropdownMenuItem>
-          }
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function TestimonialList({
-  testimonials,
-}: {
-  testimonials: DashboardTestimonial[];
-}) {
-  const router = useRouter();
-  const [isReordering, startReorderTransition] = useTransition();
-
-  const handleReorder = (nextTestimonials: DashboardTestimonial[]) => {
-    startReorderTransition(async () => {
-      const result = await actionReorderTestimonials(
-        nextTestimonials.map((t, index) => ({ id: t.id, order: index })),
-      );
-      if (result.success) {
-        toast.success(result.message ?? "Testimonial order updated.");
-        router.refresh();
-      } else {
-        toast.error(result.error);
-      }
-    });
-  };
-
-  if (testimonials.length === 0) {
-    return (
-      <div className="flex flex-col justify-center items-center gap-4 bg-background/25 border border-border/70 border-dashed rounded-2xl min-h-72 text-center">
-        <ChatCircleTextIcon className="size-12 text-muted-foreground/50" />
-        <div>
-          <p className="font-medium">No testimonials yet</p>
-          <p className="mt-1 text-muted-foreground text-sm">
-            Add client quotes to power the Home page social proof.
+      {!items.length ? (
+        <div className={styles.empty}>
+          <p className="font-medium">
+            {type === "LOGO" ? "No logos yet" : "No phases yet"}
+          </p>
+          <p className={styles.help}>
+            {type === "LOGO"
+              ? "Add technologies for the public stack. Client logos are stored separately."
+              : "Add phases to explain how your work flows."}
           </p>
         </div>
-        <TestimonialDialog
-          trigger={
-            <Button>
-              <PlusIcon data-icon="inline-start" />
-              Add Testimonial
-            </Button>
-          }
-        />
-      </div>
-    );
-  }
-
-  return (
-    <DashboardSortableList
-      items={testimonials}
-      disabled={isReordering}
-      className={dashboardStyles.sortableRows}
-      onReorder={handleReorder}
-      renderItem={({ item: testimonial, handle, isDragging }) => {
-        const title = getTestimonialTitle(testimonial);
-        return (
-          <div
-            className={[
-              [
-                "grid min-w-0 grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(320px,1fr)_120px_180px_56px] xl:items-center",
-                dashboardStyles.listRow,
-              ].join(" "),
-              isDragging
-                ? "relative z-10 border-brand-soft/60 bg-background/70 opacity-80"
-                : testimonial.isVisible
-                  ? "hover:border-brand-soft/35"
-                  : "border-dashed opacity-65 hover:border-brand-soft/35 hover:opacity-100",
-            ].join(" ")}
-          >
-            <div className="flex self-stretch row-span-2 xl:row-span-1">
-              {handle}
-            </div>
-            <div className="flex items-start gap-3 p-4 xl:p-3 xl:pr-4 min-w-0">
-              <Avatar className="size-12 shrink-0">
-                {testimonial.avatar && (
-                  <AvatarImage
-                    src={testimonial.avatar}
-                    alt={testimonial.name}
+      ) : (
+        <DashboardSortableList
+          items={ordered}
+          disabled={!reorder || status === "saving"}
+          getItemLabel={(item) => item.label}
+          handleVariant="button"
+          className={styles.rows}
+          onReorder={saveOrder}
+          renderItem={({ item, index, handle, isDragging }) => (
+            <div
+              className={cn(styles.row, isDragging && styles.dragging)}
+              data-kind={type}
+              data-reorder={reorder}
+            >
+              {reorder && <div className={styles.handle}>{handle}</div>}
+              {type === "LOGO" && (
+                <span className={styles.logoPreview} data-home-logo-preview>
+                  <TechnologyLogo
+                    label={item.label}
+                    imageUrl={item.imageUrl}
+                    size={40}
                   />
-                )}
-                <AvatarFallback>
-                  {getInitials(testimonial.name) || "T"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  <h2 className="font-heading font-semibold xl:text-sm text-base wrap-break-words line-clamp-2 leading-snug">
-                    {testimonial.name}
-                  </h2>
-                </div>
-                {title && (
-                  <p className="mt-1 text-muted-foreground text-sm truncate">
-                    {title}
+                </span>
+              )}
+              <div className={styles.rowText}>
+                <h3>{item.label}</h3>
+                {type === "LOGO" ? (
+                  <HomeLogoStatus logo={item} />
+                ) : (
+                  <p className={styles.description}>
+                    {item.content || "No description yet."}
                   </p>
                 )}
-                <p className="mt-2 text-muted-foreground text-sm wrap-break-word line-clamp-2 leading-6">
-                  {testimonial.content}
-                </p>
               </div>
-              <div className="xl:hidden shrink-0">
-                <TestimonialActions testimonial={testimonial} />
-              </div>
+              {!reorder && (
+                <div className={styles.rowMenu}>
+                  <HomeSectionActions section={item} type={type} />
+                </div>
+              )}
+              {reorder && (
+                <div className={styles.moveControls}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={index === 0 || status === "saving"}
+                    aria-label={`Move ${item.label} up`}
+                    onClick={() => move(index, -1)}
+                  >
+                    Move up
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={
+                      index === ordered.length - 1 || status === "saving"
+                    }
+                    aria-label={`Move ${item.label} down`}
+                    onClick={() => move(index, 1)}
+                  >
+                    Move down
+                  </Button>
+                </div>
+              )}
             </div>
-            <div className="hidden xl:flex items-center p-3">
-              <Badge variant={testimonial.isVisible ? "default" : "outline"}>
-                {testimonial.isVisible ? "Visible" : "Hidden"}
-              </Badge>
-            </div>
-            <div className="hidden xl:flex items-center p-3 text-muted-foreground text-sm whitespace-nowrap">
-              Created {formatDate(testimonial.createdAt)}
-            </div>
-            <div className="hidden xl:flex justify-end p-3">
-              <TestimonialActions testimonial={testimonial} />
-            </div>
-            <div className="xl:hidden flex flex-wrap items-center gap-2 col-start-2 px-4 pb-4">
-              <Badge variant={testimonial.isVisible ? "default" : "outline"}>
-                {testimonial.isVisible ? "Visible" : "Hidden"}
-              </Badge>
-              <span className="text-muted-foreground text-xs">
-                Created {formatDate(testimonial.createdAt)}
-              </span>
-            </div>
-          </div>
-        );
-      }}
-    />
+          )}
+        />
+      )}
+    </>
   );
 }
 
 export function HomeContentManager({
-  logos,
+  headline,
+  subheadline = "",
   phases,
-  testimonials,
+  logos,
 }: HomeContentManagerProps) {
-  const visibleTestimonials = testimonials.filter(
-    (testimonial) => testimonial.isVisible,
-  ).length;
-
+  const [drafts, setDrafts] = useState<Record<string, boolean>>({});
+  const reportDraft = useCallback(
+    (id: string, dirty: boolean) =>
+      setDrafts((current) => {
+        if (Boolean(current[id]) === dirty) return current;
+        const next = { ...current };
+        if (dirty) next[id] = true;
+        else delete next[id];
+        return next;
+      }),
+    [],
+  );
+  const dirty = Object.values(drafts).some(Boolean);
+  useEffect(() => {
+    if (!dirty) return;
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const navigate = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return;
+      const anchor =
+        event.target instanceof Element
+          ? event.target.closest("a[href]")
+          : null;
+      if (
+        !(anchor instanceof HTMLAnchorElement) ||
+        anchor.target === "_blank" ||
+        anchor.hasAttribute("download")
+      )
+        return;
+      const next = new URL(anchor.href, window.location.href);
+      if (
+        !["http:", "https:"].includes(next.protocol) ||
+        (next.origin === window.location.origin &&
+          next.pathname === window.location.pathname &&
+          next.search === window.location.search)
+      )
+        return;
+      if (!window.confirm("Leave Home and discard unsaved changes?")) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    window.addEventListener("beforeunload", beforeUnload);
+    document.addEventListener("click", navigate, true);
+    return () => {
+      window.removeEventListener("beforeunload", beforeUnload);
+      document.removeEventListener("click", navigate, true);
+    };
+  }, [dirty]);
   return (
-    <Tabs defaultValue="approach" className="flex flex-col gap-5 min-w-0">
-      <div className={dashboardStyles.statGrid}>
-        <HomeStatCard
-          icon={StackIcon}
-          label="Approach"
-          value={phases.length}
-          description="Process phases"
-          iconClassName="bg-sky-500/12 text-sky-300"
-        />
-        <HomeStatCard
-          icon={ChatCircleTextIcon}
-          label="Testimonials"
-          value={testimonials.length}
-          description="Client quotes"
-          iconClassName="bg-emerald-500/12 text-emerald-300"
-        />
-        <HomeStatCard
-          icon={EyeIcon}
-          label="Visible"
-          value={visibleTestimonials}
-          description="Shown publicly"
-          iconClassName="bg-violet-500/12 text-violet-300"
-        />
-        <HomeStatCard
-          icon={ImageIcon}
-          label="Tech / Client"
-          value={logos.length}
-          description="Logo items"
-          iconClassName="bg-amber-500/12 text-amber-300"
-        />
-      </div>
-
-      <TabsList className="content-center grid grid-cols-3 bg-card/55 p-1.5 border border-border/60 rounded-2xl w-full md:w-fit min-w-0 md:min-w-96 h-auto min-h-12">
-        <TabsTrigger
-          value="approach"
-          className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
-        >
-          Approach
-        </TabsTrigger>
-        <TabsTrigger
-          value="testimonials"
-          className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
-        >
-          Testimonials
-        </TabsTrigger>
-        <TabsTrigger
-          value="logos"
-          className="px-2 sm:px-3 py-2.5 rounded-xl min-w-0 min-h-9 text-xs sm:text-sm leading-none"
-        >
-          Tech / Client
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="approach">
-        <Card>
-          <CardHeader>
-            <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
+    <DraftContext.Provider value={reportDraft}>
+      <Tabs defaultValue="hero" className={styles.home}>
+        <TabsList className={styles.tabs}>
+          <TabsTrigger value="hero">Hero</TabsTrigger>
+          <TabsTrigger value="approach">Approach</TabsTrigger>
+          <TabsTrigger value="logos">Tech stack</TabsTrigger>
+        </TabsList>
+        <nav aria-label="Other Home content" className={styles.related}>
+          <span>Also on Home:</span>
+          <Link href="/dashboard/projects">Projects</Link>
+          <Link href="/dashboard/posts">Writing and Notes</Link>
+        </nav>
+        <TabsContent value="hero" keepMounted className={styles.tabPanel}>
+          <HeroHeadlineForm headline={headline} subheadline={subheadline} />
+        </TabsContent>
+        <TabsContent value="approach" keepMounted className={styles.tabPanel}>
+          <section
+            className={styles.panel}
+            aria-labelledby="home-approach-title"
+          >
+            <header className={styles.sectionHeader}>
               <div>
-                <CardTitle className="font-semibold">My Approach</CardTitle>
-                <CardDescription>
-                  Manage the phase cards shown on the Home page.
-                </CardDescription>
+                <h2 id="home-approach-title">Approach</h2>
+                <p>Manage the phases shown on Home, in reading order.</p>
               </div>
-              <HomeSectionDialog
-                type="PHASE"
-                trigger={
-                  <Button>
-                    <PlusIcon data-icon="inline-start" />
-                    Add Phase
-                  </Button>
-                }
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <HomeContentList
-              type="PHASE"
-              items={phases}
-              emptyLabel="No phases yet"
-              emptyDescription="Add process phases to explain how the work flows."
-            />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="testimonials">
-        <Card>
-          <CardHeader>
-            <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
+            </header>
+            <HomeContentList type="PHASE" items={phases} />
+          </section>
+        </TabsContent>
+        <TabsContent value="logos" keepMounted className={styles.tabPanel}>
+          <section className={styles.panel} aria-labelledby="home-stack-title">
+            <header className={styles.sectionHeader}>
               <div>
-                <CardTitle className="font-semibold">Testimonials</CardTitle>
-                <CardDescription>
-                  {testimonials.length}{" "}
-                  {testimonials.length === 1 ? "testimonial" : "testimonials"}{" "}
-                  in the CMS. Hidden testimonials are not shown on the Home
-                  page.
-                </CardDescription>
+                <h2 id="home-stack-title">Tech stack</h2>
+                <p>
+                  Choose technologies for Home. Client logos remain
+                  dashboard-only.
+                </p>
               </div>
-              <TestimonialDialog
-                trigger={
-                  <Button>
-                    <PlusIcon data-icon="inline-start" />
-                    Add Testimonial
-                  </Button>
-                }
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <TestimonialList testimonials={testimonials} />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="logos">
-        <Card>
-          <CardHeader>
-            <div className="flex md:flex-row flex-col md:justify-between md:items-start gap-4">
-              <div>
-                <CardTitle className="font-semibold">
-                  Tech / Client Logos
-                </CardTitle>
-                <CardDescription>
-                  Manage logos shown near testimonials on the Home page.
-                </CardDescription>
-              </div>
-              <HomeSectionDialog
-                type="LOGO"
-                trigger={
-                  <Button>
-                    <PlusIcon data-icon="inline-start" />
-                    Add Logo
-                  </Button>
-                }
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <HomeContentList
-              type="LOGO"
-              items={logos}
-              emptyLabel="No logos yet"
-              emptyDescription="Add client or technology logos for the Home page."
-            />
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
+            </header>
+            <HomeContentList type="LOGO" items={logos} />
+          </section>
+        </TabsContent>
+      </Tabs>
+    </DraftContext.Provider>
   );
 }

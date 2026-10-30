@@ -23,6 +23,7 @@ Bug fixes, documentation improvements, and security disclosures are always welco
 ### Prerequisites
 
 - [Bun](https://bun.sh)
+- [Infisical CLI](https://infisical.com/docs/cli/overview) and access to the project's development environment
 - PostgreSQL database or [Neon](https://neon.tech) account
 - [Cloudinary](https://cloudinary.com) account
 - [Resend](https://resend.com) account
@@ -37,18 +38,25 @@ cd storylio
 # Install dependencies
 bun install
 
-# Configure environment
-cp .env.example .env.local
-# Fill in all required variables
+# Authenticate with Infisical (see docs/INFISICAL_SETUP.md)
+infisical login
+# Secrets are injected by the application scripts; do not create .env.local.
 
 # Set up the database
-bun db:generate
+# Fresh databases only. Existing databases need a reviewed baseline first.
 bun run db:migrate
 bun run db:seed
 
 # Start development
-bun dev
+bun run dev
 ```
+
+Read [`docs/INFISICAL_SETUP.md`](docs/INFISICAL_SETUP.md) for environment access
+and [`docs/DRIZZLE_MIGRATION.md`](docs/DRIZZLE_MIGRATION.md) before database
+administration. `db:generate` creates local SQL when the schema changes; it is
+not an initial setup requirement. `db:seed` is interactive: review the selected
+dataset and target environment before writing data. Keep real credentials out
+of test fixtures; database integration tests use PGlite.
 
 ## Branch Convention
 
@@ -80,11 +88,17 @@ Commits are enforced through Commitlint. Your commits must follow this format or
 
 ## Pull Request Process
 
-1. Ensure `bun run typecheck`, `bun run lint`, and `bun run build` all pass locally.
-2. Fill in the [pull request template](PULL_REQUEST_TEMPLATE.md) completely — do not delete sections.
+1. Run `bun run typecheck`, `bun run lint`, `bun run test`, and `bun run build`; use the security suite when relevant and explain any environment blockers.
+2. Fill in the [pull request template](.github/PULL_REQUEST_TEMPLATE.md) completely — do not delete sections.
 3. Attach screenshots or recordings for any UI changes.
 4. Keep pull requests focused on a single objective. Split unrelated changes into separate PRs.
 5. Reference the relevant issue number in the PR description if one exists.
+
+Use the repository's Playwright CLI for browser checks as described in
+[`README.md`](README.md). Report whether actions and data were mocked, include
+responsive viewport sizes, and keep non-secret review evidence in `task/`.
+Temporary diagnostics stay in `.tmp/`; generated Impeccable snapshots stay local
+in `.impeccable/`. These local directories are ignored by Git.
 
 Pull requests that skip the template, bundle unrelated changes, or fail CI checks will be closed without review.
 
@@ -94,7 +108,7 @@ Pull requests that skip the template, bundle unrelated changes, or fail CI check
 |------|---------|
 | TypeScript (strict) | All code must be type-safe; avoid `any` |
 | Biome | Linting and formatting — run `bun lint` before pushing |
-| Prisma | All database changes require a migration file |
+| Drizzle | Use the native schema and queries; schema changes require reviewed migrations |
 | Server Components | Default to RSC; use `'use client'` only when necessary |
 | Server Actions | All CMS mutations must validate the current session |
 

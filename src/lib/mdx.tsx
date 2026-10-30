@@ -5,6 +5,9 @@ import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
 import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
+import { CodeBlock } from "@/components/common/code-block";
+import { InPageLink } from "@/components/common/in-page-link";
+import detail from "@/components/public/public-detail.module.css";
 import { BlogHeadingLink } from "@/components/public/sections/blog/heading-link";
 import {
   normalizeHeadingDepths,
@@ -51,10 +54,7 @@ const components: MDXComponents = {
     <BlogHeadingLink
       as="h2"
       id={typeof id === "string" ? id : undefined}
-      className={cn(
-        "mt-12 first:mt-0 font-heading font-semibold text-foreground text-3xl scroll-mt-28",
-        className,
-      )}
+      className={cn("mt-12 first:mt-0 scroll-mt-28", className)}
     >
       {children}
     </BlogHeadingLink>
@@ -63,10 +63,7 @@ const components: MDXComponents = {
     <BlogHeadingLink
       as="h2"
       id={typeof id === "string" ? id : undefined}
-      className={cn(
-        "mt-12 first:mt-0 font-heading font-semibold text-foreground text-3xl scroll-mt-28",
-        className,
-      )}
+      className={cn("mt-12 first:mt-0 scroll-mt-28", className)}
     >
       {children}
     </BlogHeadingLink>
@@ -75,10 +72,7 @@ const components: MDXComponents = {
     <BlogHeadingLink
       as="h3"
       id={typeof id === "string" ? id : undefined}
-      className={cn(
-        "mt-8 font-heading font-semibold text-foreground text-2xl scroll-mt-28",
-        className,
-      )}
+      className={cn(detail.subheading, "mt-8 scroll-mt-28", className)}
     >
       {children}
     </BlogHeadingLink>
@@ -91,6 +85,16 @@ const components: MDXComponents = {
   a: ({ children, href }) => {
     const safeHref = getSafeHref(href);
     const isExternal = safeHref?.startsWith("http");
+    if (safeHref?.startsWith("#")) {
+      return (
+        <InPageLink
+          href={safeHref as `#${string}`}
+          className="font-medium text-brand-soft hover:underline underline-offset-4 wrap-anywhere"
+        >
+          {children}
+        </InPageLink>
+      );
+    }
 
     return (
       <a
@@ -153,13 +157,7 @@ const components: MDXComponents = {
       </span>
     );
   },
-  pre: ({ children }) => (
-    <div className="bg-background/80 border border-border/40 rounded-2xl max-w-full overflow-hidden">
-      <pre className="[&_code]:bg-transparent [&_mark]:bg-transparent **:data-highlighted-chars:bg-transparent **:data-highlighted-line:bg-transparent p-4 [&_code]:p-0 max-w-full overflow-x-auto [&_code]:text-inherit text-sm leading-7 whitespace-pre scrollbar-thin">
-        {children}
-      </pre>
-    </div>
-  ),
+  pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
   code: ({ children }) => (
     <code className="bg-brand-soft/10 px-1.5 py-0.5 rounded-md font-mono text-brand-soft text-sm wrap-anywhere">
       {children}

@@ -1,0 +1,42 @@
+.stage {
+  position: relative;
+  perspective: 800px;
+  aspect-ratio: 16 / 9;
+  min-width: 0;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+}
+.body {
+  position: relative;
+  height: 100%;
+  border-radius: inherit;
+  transform-style: preserve-3d;
+}
+.body > :first-child {
+  height: 100%;
+}
+.stage[data-tilt-active] .body {
+  will-change: transform;
+}
+.glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: var(--tilt-glare, 0);
+  background: radial-gradient(
+    farthest-corner circle at var(--tilt-gx, 50%) var(--tilt-gy, 50%),
+    var(--ring),
+    transparent 60%
+  );
+  box-shadow: inset 0 1px 0
+    color-mix(in oklch, var(--foreground) 20%, transparent);
+}
+@media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
+  .body {
+    transform: none !important;
+  }
+  .glare {
+    display: none;
+  }
+}

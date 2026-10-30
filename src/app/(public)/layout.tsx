@@ -2,6 +2,7 @@ import Script from "next/script";
 import { Suspense } from "react";
 import { Footer } from "@/components/common/footer";
 import { PublicChrome } from "@/components/common/public-chrome";
+import { PublicSmoothScroll } from "@/components/common/public-smooth-scroll";
 import { Providers } from "@/providers";
 
 function UmamiTrackingScript() {
@@ -39,6 +40,9 @@ export default function PublicLayout({
       <UmamiTrackingScript />
       <Suspense fallback={null}>
         <Providers>
+          <Suspense fallback={null}>
+            <PublicSmoothScroll />
+          </Suspense>
           <PublicChrome>
             {children}
             <Footer />

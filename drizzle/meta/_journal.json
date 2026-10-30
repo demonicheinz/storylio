@@ -8,6 +8,34 @@
       "when": 1792593701880,
       "tag": "0000_existing_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792948031234,
+      "tag": "0001_home_hero",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793091840144,
+      "tag": "0002_auth_rate_limits",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793153685299,
+      "tag": "0003_auth_two_factor",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793181020908,
+      "tag": "0004_retire_testimonials",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,15 @@
+{
+  "originalStash": "6b1feaff0870fb34cccf5f2e84d5c1119e2cdc0c",
+  "resolvedStash": "04d3b4dce724f5152666480ba417d61aeed0beb0",
+  "sources": {
+    "original-DESIGN.md": "DESIGN.md",
+    "home-plan.md": "task/home-polish-plan-2026-10-24/plan.md",
+    "home-implementation.md": "task/home-polish-plan-2026-10-24/IMPLEMENTATION.md",
+    "concepts.md": "task/landing-lab-2026-10-24/README.md",
+    "blueprint.md": "task/landing-lab-2026-10-24/BLUEPRINT.md",
+    "home-hero-1440.png": "task/home-polish-plan-2026-10-24/evidence/hero-1440.png",
+    "home-hero-390.png": "task/home-polish-plan-2026-10-24/evidence/hero-390.png",
+    "blueprint-1440.png": "task/landing-lab-2026-10-24/evidence/blueprint-1440.png",
+    "blueprint-390.png": "task/landing-lab-2026-10-24/evidence/blueprint-390.png"
+  }
+}

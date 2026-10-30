@@ -1,0 +1,139 @@
+.carousel {
+  width: min(100%, 1040px);
+  margin-inline: auto;
+}
+.stage {
+  position: relative;
+  isolation: isolate;
+  aspect-ratio: 16 / 9;
+  max-height: 560px;
+  perspective: 1400px;
+  touch-action: pan-y;
+  user-select: none;
+}
+.card,
+.open {
+  position: absolute;
+  inset: 32px 72px 8px 0;
+  border-radius: 8px;
+}
+.card {
+  display: grid;
+  place-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+  transform: translateX(calc(var(--depth) * 28px + var(--drag-x, 0px)))
+    translateY(calc(var(--depth) * -10px))
+    translateZ(calc(var(--depth) * -36px)) rotateY(calc(var(--depth) * -3deg));
+  transform-origin: center;
+  opacity: var(--layer-opacity);
+  filter: brightness(var(--layer-brightness));
+  transition:
+    transform 450ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 250ms ease-out,
+    filter 350ms ease-out;
+  pointer-events: none;
+}
+.card img {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  clip-path: inset(
+    var(--image-inset-y, 0px) var(--image-inset-x, 0px) round 8px
+  );
+}
+.open {
+  z-index: 4;
+  cursor: zoom-in;
+  background: transparent;
+  transform: translateX(var(--drag-x, 0px));
+}
+.stage[data-dragging] .card {
+  transition: none;
+}
+.stage[data-dragging] .open {
+  cursor: grabbing;
+}
+.stage[data-single] .card,
+.stage[data-single] .open {
+  inset: 0;
+}
+.fallback {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  height: 100%;
+  gap: 8px;
+  padding: 24px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  text-align: center;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 16px;
+}
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.navigation button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.navigation button:hover {
+  background: var(--surface);
+  border-color: var(--border-hover);
+}
+.counter {
+  min-width: 48px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 767px) {
+  .stage {
+    aspect-ratio: 4 / 3;
+  }
+  .card,
+  .open {
+    inset: 24px 28px 4px 0;
+  }
+  .card {
+    transform: translateX(calc(var(--depth) * 12px + var(--drag-x, 0px)))
+      translateY(calc(var(--depth) * -8px))
+      translateZ(calc(var(--depth) * -20px));
+  }
+  .controls {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .open {
+    transform: none;
+    transition: none;
+  }
+  .card:not([data-depth="0"]) {
+    visibility: hidden;
+  }
+}

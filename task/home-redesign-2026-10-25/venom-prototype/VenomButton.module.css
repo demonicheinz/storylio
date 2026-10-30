@@ -1,0 +1,191 @@
+.btn {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--venom-padding, 1.1rem 2.6rem);
+  border: 1px solid #08090c;
+  border-radius: var(--venom-radius, 999px);
+  cursor: pointer;
+  color: #f5f5f6;
+  font: 700 1.25rem / 1 var(--font-sans, system-ui, sans-serif);
+  letter-spacing: -0.04em;
+  background:
+    radial-gradient(
+      ellipse 6% 48% at 5% 45%,
+      #b9c1cb 0%,
+      #697583 25%,
+      #303844 47%,
+      #0d1118 76%,
+      transparent
+    ),
+    radial-gradient(
+      ellipse 16% 100% at 7% 55%,
+      #3a4553 0%,
+      #121820 40%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 42% 58% at 50% -22%,
+      #bdc4ce85,
+      #39414d4d 55%,
+      transparent 80%
+    ),
+    radial-gradient(ellipse 12% 33% at 95% 68%, #515c6966, transparent 80%),
+    linear-gradient(
+      175deg,
+      #252b34 0%,
+      #0b0d12 25%,
+      #080a0e 55%,
+      #010203 80%,
+      #1a2029 100%
+    );
+  box-shadow:
+    inset 0 1px 2px #9cabb955,
+    inset 1px 0 2px #a1afbd45,
+    inset -2px -4px 4px #000,
+    inset 0 -5px 6px #3e4a582b,
+    0 2px 2px #000b,
+    0 9px 12px -5px #0008,
+    0 18px 24px -12px #10131c70;
+  transition: box-shadow 180ms ease;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The convex face occludes parts of the shoulder reflection. */
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 5px 10px 7px 13px;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      ellipse 13% 55% at 1% 65%,
+      #040609 0%,
+      #06080bb3 70%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 31% 64% at var(--venom-light-x, 38%) -9%,
+      #8794a25c,
+      #3644531f 58%,
+      transparent 80%
+    ),
+    radial-gradient(ellipse 70% 70% at 57% 90%, #000000a6, transparent),
+    linear-gradient(177deg, #0c0e138c, #030406bb 60%, #080b1070);
+  box-shadow: 0 1px 2px #6475891c;
+  pointer-events: none;
+}
+
+/* Small hard reflections sit inside broad, soft reflections like black lacquer. */
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: 1px 3px 3px;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      ellipse 2% 19% at 4% 37%,
+      #dce6f5b3 0%,
+      #c6d3e14d 45%,
+      transparent 85%
+    ),
+    radial-gradient(
+      ellipse 13% 6% at 30% 5%,
+      #e1e8f280 0%,
+      #8d9caf38 45%,
+      transparent 80%
+    ),
+    radial-gradient(ellipse 9% 6% at 78% 14%, #c9d5e747, transparent),
+    radial-gradient(ellipse 14% 7% at 83% 92%, #aebfd53b, transparent);
+  pointer-events: none;
+}
+.reflection {
+  position: absolute;
+  pointer-events: none;
+  top: 3%;
+  left: 21%;
+  width: 65%;
+  height: 39%;
+  border-radius: 43% 60% 48% 55%;
+  background:
+    radial-gradient(
+      ellipse 17% 80% at 17% 5%,
+      #cbd5e18f,
+      #8090a23b 45%,
+      transparent 75%
+    ),
+    radial-gradient(ellipse 27% 60% at 50% 5%, #becad855, transparent 75%),
+    radial-gradient(ellipse 17% 48% at 83% 39%, #a5b4c247, transparent 80%);
+  filter: blur(1.1px);
+  opacity: 0.8;
+}
+.btn[data-pulling] .reflection {
+  animation: reflection-drift 4.3s ease-in-out infinite alternate;
+}
+@keyframes reflection-drift {
+  from {
+    opacity: 0.65;
+    background-position: -4px 0;
+  }
+  to {
+    opacity: 0.95;
+    background-position: 5px 1px;
+  }
+}
+.label {
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 1px 2px #000;
+}
+.btn:active {
+  box-shadow:
+    inset 0 1px 5px #000,
+    inset 0 -1px 1px #77818c55,
+    0 3px 7px #0006;
+}
+.btn:focus-visible {
+  outline: 2px solid #78b9ff;
+  outline-offset: 5px;
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  overflow: visible;
+}
+.strand {
+  fill: #080a0e;
+  stroke: #8294ab50;
+  stroke-width: 0.45;
+  stroke-linejoin: round;
+}
+.web {
+  fill: none;
+  stroke: #171c25;
+  stroke-width: 0.65;
+  stroke-linecap: round;
+}
+.glint {
+  fill: none;
+  stroke: #a6b9d775;
+  stroke-width: 0.55;
+  stroke-linecap: round;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
+  .btn[data-pulling] .reflection {
+    animation: none;
+  }
+  .overlay {
+    display: none;
+  }
+}

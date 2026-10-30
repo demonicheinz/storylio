@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { connection } from "next/server";
 import { SettingsManager } from "@/features/dashboard/settings/components/profile-settings-form";
+import { DashboardRouteBoundary } from "@/features/dashboard/shared/components/route-boundary";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 
@@ -28,11 +29,19 @@ async function getProfile(userId: string) {
 async function getLinkedAccounts(userId: string) {
   return db.query.account.findMany({
     where: (table) => eq(table.userId, userId),
-    columns: { providerId: true, accountId: true, createdAt: true },
+    columns: { id: true, providerId: true, accountId: true, createdAt: true },
   });
 }
 
-export default async function SettingsPage() {
+export default function SettingsPage() {
+  return (
+    <DashboardRouteBoundary title="Settings">
+      <SettingsContent />
+    </DashboardRouteBoundary>
+  );
+}
+
+async function SettingsContent() {
   await connection();
 
   const session = await getActionSession();
@@ -42,11 +51,11 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 min-w-0">
       <div>
         <h1 className="font-heading font-bold text-3xl">Settings</h1>
-        <p className="mt-2 text-muted-foreground">
-          Manage your profile, account, and security preferences.
+        <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
+          Manage your public profile, sign-in methods, and account security.
         </p>
       </div>
 

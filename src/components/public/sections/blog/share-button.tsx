@@ -30,7 +30,7 @@ export function ShareButton({ title }: ShareButtonProps) {
         type="button"
         variant="outline"
         size="sm"
-        className="bg-surface/70 border-border/60 rounded-full"
+        className="bg-surface border-border rounded-md min-h-11"
         onClick={copyLink}
       >
         {copied ? (
@@ -44,7 +44,7 @@ export function ShareButton({ title }: ShareButtonProps) {
         type="button"
         variant="outline"
         size="sm"
-        className="bg-surface/70 border-border/60 rounded-full"
+        className="bg-surface border-border rounded-md min-h-11"
         onClick={shareToX}
       >
         <XLogoIcon data-icon="inline-start" />

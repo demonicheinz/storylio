@@ -4,13 +4,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PublicBackground } from "@/components/common";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
 import { ArticleProgress, ArticleToc } from "@/components/public/sections/blog";
 import { BlogCover } from "@/components/public/sections/blog/blog-cover";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { NotePreview } from "@/features/dashboard/posts/components/note-preview";
+import { getPostPublicationState } from "@/features/dashboard/posts/publication-state";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
-import { PostStatus } from "@/lib/db/enums";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
 import { renderMDX } from "@/lib/mdx";
 import { calculateReadingTime, formatDate, slugify } from "@/lib/utils";
@@ -91,9 +93,15 @@ function getTocItems(content: string) {
   });
 }
 
-export default async function PreviewPostPage({
-  params,
-}: PreviewPostPageProps) {
+export default function PreviewPostPage(props: PreviewPostPageProps) {
+  return (
+    <PublicRouteBoundary variant="post-detail">
+      <PreviewPostContent {...props} />
+    </PublicRouteBoundary>
+  );
+}
+
+async function PreviewPostContent({ params }: PreviewPostPageProps) {
   await requirePreviewSession();
 
   const { slug } = await params;
@@ -109,7 +117,29 @@ export default async function PreviewPostPage({
     Promise.resolve(getTocItems(content)),
   ]);
   const publishedAt = post.publishedAt ?? post.createdAt;
-  const isPublished = post.status === PostStatus.PUBLISHED;
+  const state = getPostPublicationState(
+    post.status,
+    post.publishedAt?.toISOString(),
+    Date.now(),
+  );
+  const stateLabel =
+    state === "scheduled"
+      ? "Scheduled"
+      : state === "published"
+        ? "Published"
+        : "Draft";
+  if (post.tags.some((tag) => tag.name === "notes")) {
+    return (
+      <NotePreview
+        id={post.id}
+        title={post.title}
+        dateISO={publishedAt.toISOString()}
+        dateLabel={formatDate(publishedAt)}
+        state={stateLabel}
+        body={mdxContent}
+      />
+    );
+  }
 
   return (
     <main className="min-h-screen overflow-x-clip">
@@ -119,14 +149,14 @@ export default async function PreviewPostPage({
       <article className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 pt-32 lg:pt-40 pb-24 w-full max-w-7xl">
         <div className="flex flex-wrap justify-between items-center gap-3 mb-8">
           <Button
-            asChild
+            role="link"
+            render={<Link href={`/dashboard/posts/${post.id}/edit`} />}
+            nativeButton={false}
             variant="outline"
             className="bg-surface/70 backdrop-blur border-border/60 rounded-full"
           >
-            <Link href={`/dashboard/posts/${post.id}/edit`}>
-              <ArrowLeftIcon data-icon="inline-start" />
-              Back to editor
-            </Link>
+            <ArrowLeftIcon data-icon="inline-start" />
+            Back to editor
           </Button>
 
           <div className="inline-flex items-center gap-2 bg-brand-soft/10 px-3 py-1.5 border border-brand-soft/30 rounded-full font-medium text-brand-soft text-xs">
@@ -135,7 +165,7 @@ export default async function PreviewPostPage({
             <span className="text-border" aria-hidden="true">
               /
             </span>
-            {isPublished ? "Published" : "Draft"}
+            {stateLabel}
           </div>
         </div>
 

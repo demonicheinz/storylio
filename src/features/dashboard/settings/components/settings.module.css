@@ -1,0 +1,241 @@
+.saveBar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  padding-block: 16px;
+  background: var(--background);
+}
+.saveActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.saveActions button {
+  min-height: 44px;
+  white-space: normal;
+}
+@media (min-width: 640px) {
+  .saveBar {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    flex-direction: row;
+    align-items: center;
+  }
+  .saveActions {
+    display: flex;
+  }
+}
+.settings [data-slot="card-header"],
+.settings [data-slot="card-content"] {
+  padding-inline: 16px;
+}
+.settings h2 {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.settings input,
+.settings textarea {
+  scroll-margin-bottom: 96px;
+}
+@media (min-width: 640px) {
+  .settings [data-slot="card-header"],
+  .settings [data-slot="card-content"] {
+    padding-inline: 24px;
+  }
+}
+.settingsFrame {
+  min-width: 0;
+  width: 100%;
+  container-type: inline-size;
+  container-name: settings-frame;
+}
+.settingsNav {
+  width: 100%;
+  max-width: 420px;
+}
+.settingsNav button {
+  justify-content: center;
+}
+.panel {
+  min-width: 0;
+  width: 100%;
+  max-width: 880px;
+  margin-top: 0;
+  container-type: inline-size;
+  container-name: settings-panel;
+}
+
+.profileForm {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.groupRow {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+  padding-block: 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.groupRow:first-child {
+  padding-top: 0;
+}
+.groupRow:last-of-type {
+  border-bottom: 0;
+}
+.groupIntro {
+  min-width: 0;
+}
+.groupIntro p {
+  max-width: 65ch;
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+.groupFields {
+  width: 100%;
+  max-width: 640px;
+  min-width: 0;
+}
+.identityFields {
+  display: grid;
+  gap: 16px;
+}
+
+.avatarEditor {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-areas: "avatar actions" "avatar help";
+  align-items: center;
+  column-gap: 20px;
+  row-gap: 8px;
+}
+.avatarEditor > :first-child {
+  grid-area: avatar;
+  align-self: start;
+}
+.avatarActions {
+  grid-area: actions;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.avatarHelp {
+  grid-area: help;
+  max-width: 44ch;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.settings .accountRow {
+  display: grid;
+  gap: 20px;
+  padding-block: 28px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+.settings .accountRow:first-child {
+  padding-top: 0;
+}
+.settings .accountRow [data-slot="card-header"],
+.settings .accountRow [data-slot="card-content"] {
+  min-width: 0;
+  padding: 0;
+}
+.settings .accountRow [data-slot="card-description"] {
+  max-width: 65ch;
+  line-height: 1.6;
+}
+.settings .accountRow [data-slot="card-content"] {
+  width: 100%;
+  max-width: 640px;
+}
+
+.accountDisclosure > summary {
+  width: fit-content;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-weight: 500;
+  cursor: pointer;
+}
+.accountDisclosure > summary:hover {
+  background: var(--muted);
+}
+.accountDisclosure > summary:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+.accountDisclosure > div {
+  max-width: 560px;
+}
+
+.securityGrid {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+  align-items: start;
+}
+.sessionsPanel {
+  min-width: 0;
+}
+.mfaPanel,
+.passkeyPanel {
+  min-width: 0;
+}
+
+@container settings-frame (min-width: 880px) {
+  .settings {
+    display: grid;
+    grid-template-columns: 176px minmax(0, 1fr);
+    align-items: start;
+    gap: 32px;
+  }
+  .settingsNav {
+    position: sticky;
+    top: 80px;
+    display: flex;
+    flex-direction: column;
+    align-self: start;
+    max-width: none;
+    max-height: calc(100dvh - 112px);
+    overflow-y: auto;
+  }
+  .settingsNav button {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+@container settings-frame (min-width: 1120px) {
+  .settings {
+    grid-template-columns: 192px minmax(0, 1fr);
+  }
+}
+@container settings-panel (min-width: 560px) {
+  .identityFields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.activeEmail {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}

@@ -1,0 +1,220 @@
+.photo {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--surface);
+  text-align: left;
+}
+.photo:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+.image {
+  object-fit: cover;
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.caption {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 40px 20px 20px;
+  background: linear-gradient(
+    transparent,
+    color-mix(in oklch, var(--planet-night) 90%, transparent)
+  );
+  color: var(--planet-glow);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.category {
+  font-size: 12px;
+}
+.caption > span:first-child {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.lightbox {
+  background: var(--background);
+  color: var(--foreground);
+  --yarl__color_button: var(--foreground);
+  --yarl__color_button_active: var(--link);
+  --yarl__button_filter: none;
+}
+.lightbox :global(.yarl__container) {
+  top: calc(64px + env(safe-area-inset-top));
+  background: var(--background);
+  overflow: visible;
+}
+.lightbox :global(.yarl__toolbar) {
+  position: fixed;
+  top: env(safe-area-inset-top);
+  padding: 8px 16px;
+  gap: 4px;
+}
+.lightbox :global(.yarl__button) {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 8px;
+  padding: 10px;
+}
+.lightbox :global(.yarl__button):focus-visible,
+.details:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+.lightbox :global(.yarl__button):hover {
+  background: var(--surface);
+}
+.lightbox :global(.yarl__slide_image) {
+  border-radius: 8px;
+}
+.counter {
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top));
+  left: max(24px, env(safe-area-inset-left));
+  color: var(--muted-foreground);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.counter span {
+  margin-inline: 6px;
+}
+.details {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 1;
+  max-height: 30dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 16px 24px max(24px, env(safe-area-inset-bottom));
+  background: var(--background);
+  touch-action: pan-y;
+  user-select: text;
+  scrollbar-color: var(--border-hover) var(--background);
+  scrollbar-width: thin;
+}
+.detailsInner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 65ch;
+  margin-inline: auto;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.detailsCategory {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.details h2 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.4;
+}
+.description {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+@media (max-width: 767px) {
+  .hero {
+    padding-block: 112px 28px;
+    gap: 12px;
+  }
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-block: 12px;
+  }
+  .filter {
+    flex: 1 1 100%;
+  }
+  .collection {
+    padding-top: 20px;
+  }
+  .caption {
+    padding: 32px 16px 16px;
+  }
+  .details {
+    padding-inline: 16px;
+  }
+  .lightbox :global(.yarl__toolbar) {
+    padding-inline: 8px;
+  }
+  .counter {
+    left: max(16px, env(safe-area-inset-left));
+  }
+}
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  text-align: center;
+}
+@media (hover: hover) and (pointer: fine) {
+  .caption {
+    opacity: 0;
+    transition: opacity 180ms;
+  }
+  .photo:is(:hover, :focus-visible) .caption {
+    opacity: 1;
+  }
+}
+@media (hover: hover) and (pointer: fine) and (
+    prefers-reduced-motion: no-preference
+  ) {
+  .photo:hover .image {
+    transform: scale(1.025);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .image,
+  .caption {
+    transition: none;
+  }
+}
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding-block: 128px 40px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding-block: 16px;
+  border-block: 1px solid var(--border);
+}
+.result {
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+.filter {
+  width: 340px;
+  max-width: 100%;
+  min-width: 0;
+}
+.collection {
+  padding-top: 24px;
+}

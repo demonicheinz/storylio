@@ -1,11 +1,17 @@
 import { z } from "zod";
+import { hasLocalTechnologyLogo } from "@/lib/home-technologies";
 
-const optionalUrlSchema = z
-  .string()
-  .trim()
-  .optional()
-  .transform((value) => value || undefined)
-  .pipe(z.string().url("Use a valid URL").optional());
+export const homeHeroActionSchema = z.object({
+  headline: z
+    .string()
+    .trim()
+    .max(160, "Headline must be 160 characters or fewer"),
+  subheadline: z
+    .string()
+    .trim()
+    .max(500, "Subheadline must be 500 characters or fewer"),
+});
+export type HomeHeroActionInput = z.input<typeof homeHeroActionSchema>;
 
 const reorderItemSchema = z.object({
   id: z.string().min(1),
@@ -16,47 +22,13 @@ export const reorderSchema = z.array(reorderItemSchema);
 
 export type ReorderInput = z.input<typeof reorderSchema>;
 
-export const testimonialActionSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "Name is required")
-    .max(120, "Name must be 120 characters or fewer"),
-  role: z
-    .string()
-    .trim()
-    .max(120, "Role must be 120 characters or fewer")
-    .optional()
-    .transform((value) => value || ""),
-  company: z
-    .string()
-    .trim()
-    .max(120, "Company must be 120 characters or fewer")
-    .optional()
-    .transform((value) => value || ""),
-  avatar: optionalUrlSchema,
-  content: z
-    .string()
-    .trim()
-    .min(1, "Quote is required")
-    .max(800, "Quote must be 800 characters or fewer"),
-  isVisible: z.boolean().optional().default(true),
-  order: z.coerce
-    .number()
-    .int("Display order must be a whole number")
-    .min(0, "Display order cannot be negative")
-    .optional()
-    .transform((value) => value ?? 0),
-});
-
-export type TestimonialActionInput = z.input<typeof testimonialActionSchema>;
-export type TestimonialActionValues = z.output<typeof testimonialActionSchema>;
-
 export const homeSectionTypeSchema = z.enum(["PHASE", "LOGO"]);
 
 export const homeSectionActionSchema = z
   .object({
     type: homeSectionTypeSchema,
+    category: z.enum(["TECHNOLOGY", "CLIENT"]).optional(),
+    showOnHome: z.boolean().optional(),
     label: z
       .string()
       .trim()
@@ -82,7 +54,11 @@ export const homeSectionActionSchema = z
       .transform((value) => value ?? 0),
   })
   .superRefine((value, ctx) => {
-    if (value.type === "LOGO" && !value.imageUrl) {
+    if (
+      value.type === "LOGO" &&
+      !value.imageUrl &&
+      !hasLocalTechnologyLogo(value.label)
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["imageUrl"],

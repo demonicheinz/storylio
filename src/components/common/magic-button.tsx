@@ -10,6 +10,7 @@ type MagicButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children?: ReactNode;
   iconName?: "arrowUpRight";
   imageSrc?: string;
+  imageSlot?: ReactNode;
   imageAlt?: string;
   imagePosition?: "left" | "right";
   iconPosition?: "left" | "right";
@@ -39,6 +40,7 @@ export function MagicButton({
   className,
   iconName,
   imageSrc,
+  imageSlot,
   imageAlt = "",
   imagePosition = "left",
   iconPosition = "right",
@@ -72,7 +74,8 @@ export function MagicButton({
           variantClasses[variant],
         )}
       >
-        {showImage && imagePosition === "left" && imageSrc ? (
+        {imageSlot && imagePosition === "left" ? imageSlot : null}
+        {!imageSlot && showImage && imagePosition === "left" && imageSrc ? (
           <Image
             src={imageSrc}
             alt={imageAlt}
@@ -93,7 +96,8 @@ export function MagicButton({
             className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
           />
         ) : null}
-        {showImage && imagePosition === "right" && imageSrc ? (
+        {imageSlot && imagePosition === "right" ? imageSlot : null}
+        {!imageSlot && showImage && imagePosition === "right" && imageSrc ? (
           <Image
             src={imageSrc}
             alt={imageAlt}

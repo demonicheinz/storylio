@@ -2,6 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { ProjectEditor } from "@/features/dashboard/projects/components/project-editor";
+import { DashboardRouteBoundary } from "@/features/dashboard/shared/components/route-boundary";
 import { db } from "@/lib/db";
 import { ProjectStatus } from "@/lib/db/enums";
 
@@ -53,9 +54,15 @@ async function getProject(id: string) {
     .then((row) => (row ? { ...row, techStack: row.techStack ?? [] } : null));
 }
 
-export default async function EditProjectPage({
-  params,
-}: EditProjectPageProps) {
+export default function EditProjectPage(props: EditProjectPageProps) {
+  return (
+    <DashboardRouteBoundary title="Edit project">
+      <EditProjectContent {...props} />
+    </DashboardRouteBoundary>
+  );
+}
+
+async function EditProjectContent({ params }: EditProjectPageProps) {
   await connection();
 
   const { id } = await params;

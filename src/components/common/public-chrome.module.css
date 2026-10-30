@@ -1,0 +1,30 @@
+/* Approved Home palette shared by every public route. */ .chrome {
+  position: relative;
+  isolation: isolate;
+  background: var(--background);
+}
+.chrome:has([data-public-starfield]) {
+  --public-page-background: transparent;
+}
+.starfield {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.stars {
+  width: 100%;
+  height: 100%;
+  opacity: 0.55;
+}
+/* Recovery UI must stay readable in SSR, even if route-animation JS fails. */
+.chrome :global([data-route-motion]):has(:global([data-space-state])),
+.chrome :global([data-route-motion]):has(:global([data-error-boundary])) {
+  opacity: 1 !important;
+  transform: none !important;
+}
+/* History restoration must measure the final layout, not entrance translations. */
+:global(html[data-public-history]) .chrome :global([data-route-motion]),
+:global(html[data-public-history]) .chrome :global([data-motion-reveal]) {
+  transform: none !important;
+}

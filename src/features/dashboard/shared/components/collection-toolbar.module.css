@@ -1,0 +1,28 @@
+.mobileToolbar {
+  container-name: collection-toolbar;
+  container-type: inline-size;
+}
+
+.mobileRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px 44px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mobileSearch {
+  position: relative;
+  min-width: 0;
+}
+
+/* Equivalent to roughly 275–280px viewport with the normal dashboard padding. */
+@container collection-toolbar (max-width: 220px) {
+  .mobileRow {
+    grid-template-columns: 44px 44px minmax(0, 1fr);
+  }
+
+  .mobileSearch {
+    grid-column: 1 / -1;
+  }
+}

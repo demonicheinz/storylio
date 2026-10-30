@@ -1,8 +1,9 @@
 "use server";
 
 import { and, desc, eq, gt, gte, inArray, lt, lte, ne, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
+import { GALLERY_BATCH_LIMIT } from "@/features/dashboard/gallery/constants";
 import {
   type GalleryItemActionInput,
   galleryItemActionSchema,
@@ -14,6 +15,7 @@ import { actionError, actionSuccess } from "@/lib/action-result";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { galleryItem as galleryItemTable } from "@/lib/db/schema";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -21,7 +23,10 @@ type GalleryActionData = {
   id: string;
 };
 
-const galleryItemIdsSchema = z.array(z.string().min(1)).min(1).max(100);
+const galleryItemIdsSchema = z
+  .array(z.string().min(1))
+  .min(1)
+  .max(GALLERY_BATCH_LIMIT);
 
 function parseGalleryInput(input: unknown) {
   const parsed = galleryItemActionSchema.safeParse(input);
@@ -43,6 +48,7 @@ function parseGalleryInput(input: unknown) {
 }
 
 function revalidateGalleryPaths() {
+  updateTag(PUBLIC_CACHE_TAGS.gallery);
   revalidatePath("/dashboard/gallery");
   revalidatePath("/dashboard");
   revalidatePath("/gallery");
@@ -243,10 +249,14 @@ function parseGalleryItemIds(itemIds: string[]) {
   const parsed = galleryItemIdsSchema.safeParse(itemIds);
 
   if (!parsed.success) {
-    return actionError("Select at least one gallery item.");
+    return actionError(
+      Array.isArray(itemIds) && itemIds.length > GALLERY_BATCH_LIMIT
+        ? `Select no more than ${GALLERY_BATCH_LIMIT} gallery items at a time.`
+        : "Select at least one gallery item.",
+    );
   }
 
-  return parsed.data;
+  return [...new Set(parsed.data)];
 }
 
 export async function actionShowGalleryItems(
@@ -381,8 +391,32 @@ export async function actionReorderGalleryItems(
     return actionError("Invalid gallery order.");
   }
 
+  const ids = new Set(parsed.data.map((item) => item.id));
+  if (
+    parsed.data.length === 0 ||
+    ids.size !== parsed.data.length ||
+    new Set(parsed.data.map((item) => item.order)).size !==
+      parsed.data.length ||
+    parsed.data.some((item) => item.order >= parsed.data.length)
+  ) {
+    return actionError("Submit every gallery item once in display order.");
+  }
+
   try {
-    await db.transaction(async (tx) => {
+    const reordered = await db.transaction(async (tx) => {
+      // Keep collection membership stable until the complete order is saved.
+      await tx.execute(
+        sql`LOCK TABLE ${galleryItemTable} IN SHARE ROW EXCLUSIVE MODE`,
+      );
+      const collection = await tx.query.galleryItem.findMany({
+        columns: { id: true },
+      });
+      if (
+        collection.length !== ids.size ||
+        collection.some((item) => !ids.has(item.id))
+      ) {
+        return false;
+      }
       for (const item of parsed.data) {
         const [updatedItem] = await tx
           .update(galleryItemTable)
@@ -391,7 +425,14 @@ export async function actionReorderGalleryItems(
           .returning({ id: galleryItemTable.id });
         if (!updatedItem) throw new Error("Gallery item not found.");
       }
+      return true;
     });
+
+    if (!reordered) {
+      return actionError(
+        "Gallery changed. Refresh and reorder the full collection.",
+      );
+    }
 
     revalidateGalleryPaths();
 

@@ -44,7 +44,7 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
       {groups.map((group) => (
         <SidebarGroup
           key={group.label}
-          className="py-1.5 group-data-[collapsible=icon]:py-0.5 transition-[padding] duration-200 ease-linear"
+          className="py-1.5 group-data-[collapsible=icon]:py-0.5 transition-[padding] duration-240 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
         >
           <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -58,21 +58,22 @@ export function NavMain({ groups }: { groups: NavGroup[] }) {
                 return (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton
-                      asChild
+                      render={
+                        <Link
+                          href={item.url}
+                          aria-current={isActive ? "page" : undefined}
+                          onClick={() => {
+                            if (isMobile) {
+                              setOpenMobile(false);
+                            }
+                          }}
+                        />
+                      }
                       isActive={isActive}
                       tooltip={item.title}
                     >
-                      <Link
-                        href={item.url}
-                        onClick={() => {
-                          if (isMobile) {
-                            setOpenMobile(false);
-                          }
-                        }}
-                      >
-                        <item.icon />
-                        <span>{item.title}</span>
-                      </Link>
+                      <item.icon />
+                      <span>{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

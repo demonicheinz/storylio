@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { relations } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   doublePrecision,
   foreignKey,
@@ -25,7 +26,11 @@ const updatedAt = () =>
 
 export const postStatus = pgEnum("PostStatus", ["DRAFT", "PUBLISHED"]);
 export const projectStatus = pgEnum("ProjectStatus", ["DRAFT", "PUBLISHED"]);
-export const homeSectionType = pgEnum("HomeSectionType", ["PHASE", "LOGO"]);
+export const homeSectionType = pgEnum("HomeSectionType", [
+  "PHASE",
+  "LOGO",
+  "HERO",
+]);
 
 export const user = pgTable(
   "User",
@@ -34,6 +39,7 @@ export const user = pgTable(
     name: text("name"),
     email: text("email").notNull(),
     emailVerified: boolean("emailVerified").default(false).notNull(),
+    twoFactorEnabled: boolean("twoFactorEnabled").default(false).notNull(),
     image: text("image"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -46,6 +52,27 @@ export const user = pgTable(
     publicEmail: text("publicEmail"),
   },
   (table) => [uniqueIndex("User_email_key").on(table.email)],
+);
+
+export const twoFactor = pgTable(
+  "TwoFactor",
+  {
+    id: id(),
+    secret: text("secret").notNull(),
+    backupCodes: text("backupCodes").notNull(),
+    userId: text("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    verified: boolean("verified").default(true).notNull(),
+    failedVerificationCount: integer("failedVerificationCount")
+      .default(0)
+      .notNull(),
+    lockedUntil: timestamp("lockedUntil", { precision: 3, mode: "date" }),
+  },
+  (table) => [
+    uniqueIndex("TwoFactor_userId_key").on(table.userId),
+    index("TwoFactor_secret_idx").on(table.secret),
+  ],
 );
 
 export const session = pgTable(
@@ -119,6 +146,20 @@ export const verification = pgTable("Verification", {
     .$defaultFn(() => new Date())
     .$onUpdate(() => new Date()),
 });
+
+export const rateLimit = pgTable(
+  "RateLimit",
+  {
+    id: id(),
+    key: text("key").notNull(),
+    count: integer("count").notNull(),
+    lastRequest: bigint("lastRequest", { mode: "number" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("RateLimit_key_key").on(table.key),
+    index("RateLimit_lastRequest_idx").on(table.lastRequest),
+  ],
+);
 
 export const post = pgTable(
   "Post",
@@ -299,18 +340,6 @@ export const media = pgTable("Media", {
   height: integer("height"),
   aspectRatio: doublePrecision("aspectRatio"),
   blurDataUrl: text("blurDataUrl"),
-  createdAt: createdAt(),
-});
-
-export const testimonial = pgTable("Testimonial", {
-  id: id(),
-  name: text("name").notNull(),
-  role: text("role"),
-  company: text("company"),
-  avatar: text("avatar"),
-  content: text("content").notNull(),
-  isVisible: boolean("isVisible").default(true).notNull(),
-  order: integer("order").default(0).notNull(),
   createdAt: createdAt(),
 });
 

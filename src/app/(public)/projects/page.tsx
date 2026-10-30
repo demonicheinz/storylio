@@ -1,29 +1,22 @@
-import { and, arrayContains, asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
-import { cacheLife } from "next/cache";
-import Link from "next/link";
 import { Suspense } from "react";
-import { PublicBackground } from "@/components/common";
-import {
-  EmptyProjects,
-  FeaturedProject,
-  ProjectFilters,
-  ProjectReveal,
-  ProjectsGrid,
-  ProjectsHero,
-} from "@/components/public/sections/projects";
-import { db } from "@/lib/db";
-import { ProjectStatus } from "@/lib/db/enums";
+import { PublicRouteBoundary } from "@/components/common/public-route-boundary";
+import styles from "@/components/public/public-page.module.css";
+import { EmptyProjects } from "@/components/public/sections/projects/empty-projects";
+import { ProjectFilters } from "@/components/public/sections/projects/project-filters";
+import projectStyles from "@/components/public/sections/projects/projects.module.css";
+import { ProjectsGrid } from "@/components/public/sections/projects/projects-grid";
+import { ProjectsHero } from "@/components/public/sections/projects/projects-hero";
+import { ProjectsPagination } from "@/components/public/sections/projects/projects-pagination";
+import { normalizeProjectTechnologies } from "@/lib/project-filters";
+import { getProjectPage } from "@/lib/project-pagination";
+import { getPublicProjects } from "@/lib/public-projects";
 
 type ProjectsPageProps = {
   searchParams: Promise<{
     tech?: string | string[] | undefined;
+    page?: string | string[] | undefined;
   }>;
-};
-
-export const unstable_instant = {
-  prefetch: "runtime",
-  samples: [{ searchParams: { tech: null } }],
 };
 
 export const metadata: Metadata = {
@@ -46,144 +39,50 @@ export const metadata: Metadata = {
   },
 };
 
-function getSelectedTech(value: string | string[] | undefined) {
-  const tech = Array.isArray(value) ? value[0] : value;
-
-  return tech?.trim() || undefined;
+export default function ProjectsPage(props: ProjectsPageProps) {
+  return (
+    <PublicRouteBoundary>
+      <ProjectsContent {...props} />
+    </PublicRouteBoundary>
+  );
 }
 
-function formatProjectsSummary(projectsCount: number, selectedTech?: string) {
-  const noun = projectsCount === 1 ? "project" : "projects";
-
-  if (selectedTech) {
-    return `Showing ${projectsCount} ${noun} using ${selectedTech}`;
-  }
-
-  return `Showing ${projectsCount} ${noun} across all stacks`;
-}
-
-async function getProjectsData(selectedTech?: string) {
-  "use cache";
-  cacheLife("minutes");
-
-  const [projects, allPublishedProjects] = await Promise.all([
-    db.query.project
-      .findMany({
-        where: (table) =>
-          and(
-            eq(table.status, ProjectStatus.PUBLISHED),
-            selectedTech
-              ? arrayContains(table.techStack, [selectedTech])
-              : undefined,
-          ),
-        columns: {
-          id: true,
-          title: true,
-          slug: true,
-          description: true,
-          contribution: true,
-          coverImage: true,
-          thumbnailImageUrl: true,
-          isFeatured: true,
-          isClosedSource: true,
-          techStack: true,
-          liveUrl: true,
-          githubUrl: true,
-          order: true,
-        },
-        orderBy: (table) => [asc(table.order), desc(table.createdAt)],
-      })
-      .then((rows) =>
-        rows.map((row) => ({ ...row, techStack: row.techStack ?? [] })),
-      ),
-    db.query.project
-      .findMany({
-        where: (table) => eq(table.status, ProjectStatus.PUBLISHED),
-        columns: { id: true, techStack: true },
-        orderBy: (table) => [asc(table.order), desc(table.createdAt)],
-      })
-      .then((rows) =>
-        rows.map((row) => ({ ...row, techStack: row.techStack ?? [] })),
-      ),
-  ]);
-
-  const technologies = Array.from(
-    new Set(allPublishedProjects.flatMap((project) => project.techStack)),
-  ).sort((a, b) => a.localeCompare(b));
-
-  return {
-    projects,
-    technologies,
-    totalProjects: allPublishedProjects.length,
-  };
-}
-
-export default async function ProjectsPage({
-  searchParams,
-}: ProjectsPageProps) {
-  const selectedTech = getSelectedTech((await searchParams).tech);
-  const { projects, technologies, totalProjects } =
-    await getProjectsData(selectedTech);
-  const featuredProject = projects.find((project) => project.isFeatured);
-  const remainingProjects = featuredProject
-    ? projects.filter((project) => project.id !== featuredProject.id)
-    : projects;
+async function ProjectsContent({ searchParams }: ProjectsPageProps) {
+  const query = await searchParams;
+  const selectedTechnologies = normalizeProjectTechnologies(query.tech);
+  const { projects, technologies, totalProjects, totalResults, pagination } =
+    await getPublicProjects(selectedTechnologies, getProjectPage(query.page));
 
   return (
-    <main className="min-h-screen overflow-x-hidden">
-      <PublicBackground variant="projects" />
+    <main className={styles.page} data-public-page="projects">
+      <div className={styles.container}>
+        <ProjectsHero />
 
-      <div className="relative flex flex-col mx-auto px-4 sm:px-6 lg:px-8 w-full max-w-295">
-        <ProjectsHero
-          totalProjects={totalProjects}
-          totalTech={technologies.length}
-          selectedTech={selectedTech}
-        />
-
-        <Suspense
-          fallback={
-            <div className="bg-surface/55 backdrop-blur-xl border border-border/40 rounded-3xl h-24" />
-          }
-        >
+        <Suspense fallback={<div className="border-border border-y h-20" />}>
           <ProjectFilters
             technologies={technologies}
-            selectedTech={selectedTech}
+            selectedTechnologies={selectedTechnologies}
+            resultCount={totalResults}
+            totalProjects={totalProjects}
           />
         </Suspense>
 
-        <div className="flex flex-wrap justify-between items-center gap-3 mt-4 px-1 text-muted-foreground text-sm">
-          <p>{formatProjectsSummary(projects.length, selectedTech)}</p>
-          {selectedTech && (
-            <Link
-              href="/projects"
-              scroll={false}
-              className="text-brand-soft hover:text-foreground hover:underline underline-offset-4 transition-colors"
-            >
-              Reset stack
-            </Link>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-7 md:gap-8 pt-8 md:pt-10 pb-12 md:pb-14">
+        <section
+          id="projects-list"
+          className={projectStyles.collection}
+          aria-label="Project results"
+          tabIndex={-1}
+        >
           {projects.length > 0 ? (
-            <>
-              {featuredProject && (
-                <ProjectReveal>
-                  <FeaturedProject project={featuredProject} />
-                </ProjectReveal>
-              )}
-
-              {remainingProjects.length > 0 && (
-                <ProjectsGrid projects={remainingProjects} />
-              )}
-            </>
+            <ProjectsGrid projects={projects} />
           ) : (
-            <EmptyProjects selectedTech={selectedTech} />
+            <EmptyProjects selectedTechnologies={selectedTechnologies} />
           )}
-        </div>
+          <Suspense fallback={null}>
+            <ProjectsPagination pagination={pagination} />
+          </Suspense>
+        </section>
       </div>
-
-      <div className="h-24" />
     </main>
   );
 }

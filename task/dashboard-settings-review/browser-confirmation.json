@@ -1,0 +1,37 @@
+{
+  "keyboard": {
+    "afterRight": "Profile",
+    "afterDown": "Profile"
+  },
+  "clips": [
+    {
+      "tag": "DIV",
+      "text": "SessionReview the active dashboard session for this browser.",
+      "width": 286,
+      "scrollWidth": 338,
+      "overflow": "hidden"
+    },
+    {
+      "tag": "DIV",
+      "text": "Active sessionsReview every active dashboard session tied to",
+      "width": 286,
+      "scrollWidth": 338,
+      "overflow": "visible"
+    },
+    {
+      "tag": "DIV",
+      "text": "Active sessionsReview every active dashboard session tied to",
+      "width": 238,
+      "scrollWidth": 314,
+      "overflow": "visible"
+    },
+    {
+      "tag": "DIV",
+      "text": "Current sessionCurrentExample desktop browserLast activeOct ",
+      "width": 238,
+      "scrollWidth": 314,
+      "overflow": "visible"
+    }
+  ],
+  "securityContainsMfaRestrictionBeforeSetup": false
+}

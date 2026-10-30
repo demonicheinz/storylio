@@ -1,0 +1,71 @@
+.overview {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+  grid-template-areas: "intro facts" "stack actions" "cover cover";
+  align-items: start;
+  gap: 24px 64px;
+  padding-top: 40px;
+}
+.intro {
+  grid-area: intro;
+  min-width: 0;
+}
+.facts {
+  grid-area: facts;
+  display: grid;
+  gap: 16px;
+}
+.facts > div {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.facts dt {
+  color: var(--muted-foreground);
+}
+.stack {
+  grid-area: stack;
+  min-width: 0;
+}
+.actions {
+  grid-area: actions;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+}
+.cover {
+  grid-area: cover;
+  margin-top: 8px;
+  min-width: 0;
+}
+.navigation:has(> a:only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (max-width: 1023px) {
+  .overview {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+    padding-top: 24px;
+  }
+  .cover {
+    margin-top: 0;
+  }
+  .facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+  .facts > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .facts > div:first-child {
+    grid-column: 1 / -1;
+  }
+}

@@ -1,12 +1,13 @@
 # Drizzle migration and database administration
 
 Storylio uses Drizzle ORM 0.45.4, Drizzle Kit 0.31.11, and the existing Neon
-WebSocket driver. Better Auth remains on the 1.6 maintenance line with its
+WebSocket driver. Better Auth uses the 1.7 maintenance line with its
 Drizzle adapter. The application does not generate an ORM client on install.
 
 ## What stays compatible
 
-- Physical PostgreSQL table/column names, enums, timestamps, nullability,
+- Except for the separately reviewed Testimonial retirement below, physical
+  PostgreSQL table/column names, enums, timestamps, nullability,
   unique indexes, foreign keys and cascades remain unchanged.
 - The implicit Prisma Post/Tag table is mapped explicitly as `_PostToTag`,
   with `A` for Post and `B` for Tag.
@@ -21,7 +22,89 @@ Drizzle adapter. The application does not generate an ORM client on install.
 Schema and relation definitions live in `src/lib/db/schema.ts`. Client-safe
 enum constants live in `src/lib/db/enums.ts`. There is no Prisma query adapter.
 
+## Pending authentication rate-limit table
+
+`0002_auth_rate_limits.sql` adds the `RateLimit` table with a unique key and a
+timestamp index. Production Better Auth requests use this shared storage, so
+apply the reviewed migration before deploying the corresponding auth changes,
+following the shared-journal rollout below when later migrations are pending.
+It preserves every existing user, password hash, session and passkey. Local auth
+tests apply it only to PGlite fixtures; implementation work has not applied it to
+dev, staging or prod. Use `db:status` and the matching environment's `db:migrate`
+script when rollout is authorized. Do not run the baseline migration again.
+
+## Testimonial retirement
+
+`0004_retire_testimonials.sql` is a separate destructive migration that drops only
+`Testimonial` without CASCADE; unknown dependencies make it fail rather than
+being removed. Testimonials are removed from the application schema, dashboard
+Home, analytics, seed menu and media reference checks. All uploaded `Media` rows
+and Cloudinary assets remain; a former avatar is not deleted automatically.
+Home retains the HERO singleton, ordered PHASE and LOGO collections, and profile
+bio subheadline. Reorders require the complete collection of exactly one editable
+type, exclude HERO, and commit contiguous zero-based positions atomically.
+
+This patch generates SQL/snapshot/journal metadata locally and tests it in PGlite;
+it does not apply migrations to dev, staging or production.
+
+### Shared-journal rollout
+
+`db:migrate` has **no target/stop option**. `scripts/database.ts` invokes Drizzle
+with the entire `drizzle` folder; every pending entry in `_journal.json` is applied
+in order. Therefore, this checkout applies both `0003` and `0004` when both are
+pending. Do not run it expecting only the additive MFA migration. Authorization
+for `0003` alone does not authorize a run that also drops Testimonial.
+
+Before the first authorized migration run, inspect the matching environment's
+`db:status` output and journal, back up Testimonial's definition and rows (or take
+a restorable database backup), verify restoration, and inventory every old app,
+worker and external consumer. The drop must be approved explicitly. Keep the
+reviewed journal intact; do not manually delete entries or edit the migration
+ledger to skip the drop.
+
+- **If `0003` is already applied:** deploy the retirement code first, confirm no
+  running consumer still queries Testimonial, then authorize/apply all remaining
+  pending migrations (including `0004`) with the verified backup available.
+- **If `0003` is still pending:** ship this change as a coordinated maintenance
+  release. First prepare the release and verified backup; then pause traffic,
+  background workers and old consumers. Run the matching environment's migration
+  command for **all pending entries**, deploy the new MFA-aware/no-Testimonial
+  application, verify auth/Home/analytics/media health, and only then resume
+  traffic and workers. The old application must not keep serving queries while
+  the drop runs, and the new application must not serve before its MFA columns
+  exist. If a maintenance window is unacceptable, prepare a separate tolerant
+  intermediate release; this checkout does not implement that alternative.
+  A database-dependent build must use a schema-compatible staging database or
+  run after migration while maintenance remains active; do not build against
+  missing MFA columns and assume the artifact is ready.
+
+Commands select an environment, not a migration target. Re-run status afterward
+and check the applied journal against the exact release. A failed migration or
+health check keeps traffic paused until a compatible app/schema or the verified
+restore is available. Never resume the legacy app after a successful drop without
+restoring its required table and rows.
+
+Dropping the table permanently removes its rows. A code revert cannot restore
+them: rollback requires recreating its legacy definition and restoring the backup
+before redeploying a version that queries it. PGlite tests verify the old table can
+be recreated from the immutable baseline SQL and a retained row restored.
+The initial SQL, previous snapshots/journal entries, baseline fingerprint, archived
+Prisma SQL and historical ledgers remain unchanged. Existing databases still
+baseline against the original 20-table shape, not the retired current schema.
+Application fixtures retire Testimonials by default; historical baseline fixtures
+explicitly opt out with `currentSchema: false`.
+
 ## Existing databases: inspect, then adopt
+
+Before deploying optional MFA, apply the reviewed additive migration
+`0003_auth_two_factor.sql`. Follow the shared-journal rollout above: this checkout's
+`db:migrate` also applies pending `0004`; it cannot stop after `0003`.
+The additive MFA migration adds `User.twoFactorEnabled` (default false) and
+`TwoFactor` with encrypted secrets/backup codes and verification-lockout fields.
+Existing passwords and passkeys are unchanged. The new user column is queried by
+the auth adapter, so deploying code before applying the migration can break login.
+This implementation generated and tested the migration locally only; it has not
+applied it to dev, staging, or prod. See `AUTH_RECOVERY.md` for the feature policy.
 
 The first Drizzle SQL migration describes the complete existing schema. Its
 CREATE TABLE statements are for empty databases. Existing databases adopt that
@@ -89,9 +172,39 @@ bun run db:seed
 ```
 
 The native Drizzle migrator creates the schema and records the initial
-migration. Seed functions are in `scripts/seeds/`. They retain their previous
-content and idempotent behavior, including preservation of existing owner
-credentials and passkeys.
+migration. `db:seed` now opens a terminal menu rather than running all seed
+functions automatically. Choose one or more numbered groups, or `all`. Enter
+profile name, role, headline/subheadline and public links when selecting owner.
+Review the environment, profile changes and content groups before confirming.
+No database connection is opened for cancel or `--dry-run`.
+
+Menu option 7 adds three Storylio work notes with the exact `notes` tag. It
+creates missing posts only and preserves all existing content, draft status,
+tags and view counts. This is separate from option 5, which restores demo posts.
+CLI writes do not invalidate a running Next.js cache. Hard-refresh the local dev
+page after a seed; revalidate or rebuild a deployed app through its usual workflow.
+
+Owner email/password still come from the matching Infisical environment.
+Creating an owner no longer hardcodes a name, bio or social links. An omitted
+name defaults to the first login email's local part. Existing profiles are
+preserved unless you explicitly opt into applying the entered fields. Only
+those fields change; credentials, verification status, sessions and passkeys
+remain intact. The Home subheadline reuses the existing bio column. Demo content
+is separately selectable and keeps its established idempotent seed behavior.
+
+```powershell
+bun run db:seed -- --dry-run
+bun run db:seed:preview
+bun run db:seed:production
+```
+
+The new `0001_home_hero.sql` migration adds `HERO` to HomeSectionType. It stores
+the editable headline in a singleton HomeSection; it changes no existing rows,
+profile columns or credentials. Apply it with the environment's normal
+`db:migrate` script before saving a custom headline through the seeder or the
+forthcoming dashboard editor. It was tested in isolated PGlite databases; this
+task does not apply it to dev, staging or prod. Existing Home reads continue
+working before the migration with the default headline and current profile bio.
 
 Do not run the seed as part of adopting an existing database. Existing content
 does not need to be recreated for the ORM change.

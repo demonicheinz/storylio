@@ -2,7 +2,6 @@ export const person = {
   name: "Ahmad Haizul Amany",
   role: "Full Stack Developer",
   location: "Central Java, Indonesia",
-  avatar: "/images/heinz.jpg",
   languages: ["Indonesian", "English"],
 };
 

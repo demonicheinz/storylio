@@ -12,9 +12,9 @@ import {
 import { actionUpdateAboutContent } from "../../src/features/dashboard/about/actions";
 import { actionReorderSkills } from "../../src/features/dashboard/about/structured-actions";
 import {
-  actionCreateTestimonial,
+  actionCreateHomeSection,
+  actionReorderHomeSections,
   actionUpdateHomeSection,
-  actionUpdateTestimonial,
 } from "../../src/features/dashboard/home/actions";
 import {
   actionCheckMediaUsage,
@@ -22,6 +22,10 @@ import {
   actionDeleteMediaBatch,
 } from "../../src/features/dashboard/media/actions";
 import * as schema from "../../src/lib/db/schema";
+import {
+  getHomeLogoSettings,
+  selectHomeTechnologies,
+} from "../../src/lib/home-technologies";
 import { createTestDatabase } from "../helpers/database";
 
 type TestDatabase = Awaited<ReturnType<typeof createTestDatabase>>;
@@ -30,6 +34,7 @@ const effects = vi.hoisted(() => ({
   db: undefined as TestDatabase["db"] | undefined,
   getActionSession: vi.fn(),
   revalidatePath: vi.fn(),
+  updateTag: vi.fn(),
   deleteFromCloudinary: vi.fn(),
 }));
 
@@ -45,7 +50,9 @@ vi.mock("@/lib/auth-session", () => ({
 }));
 vi.mock("next/cache", () => ({
   revalidatePath: effects.revalidatePath,
+  updateTag: effects.updateTag,
   cacheLife: vi.fn(),
+  cacheTag: vi.fn(),
 }));
 vi.mock("@/lib/cloudinary", () => ({
   deleteFromCloudinary: effects.deleteFromCloudinary,
@@ -56,11 +63,14 @@ let fixture: TestDatabase;
 beforeAll(async () => {
   fixture = await createTestDatabase();
   effects.db = fixture.db;
+  await fixture.client.exec(
+    `ALTER TYPE "HomeSectionType" ADD VALUE IF NOT EXISTS 'HERO'`,
+  );
 }, 30_000);
 
 beforeEach(async () => {
   await fixture.client.exec(`TRUNCATE TABLE
-    "AboutContent", "SkillCategory", "HomeSection", "Testimonial", "Media", "User"
+    "AboutContent", "SkillCategory", "HomeSection", "Media", "User"
     CASCADE`);
   vi.clearAllMocks();
   effects.getActionSession.mockResolvedValue({
@@ -78,6 +88,65 @@ afterAll(async () => {
 });
 
 describe("management actions against PostgreSQL", () => {
+  it("persists custom technology visibility while preserving phase content and cache invalidation", async () => {
+    const created = await actionCreateHomeSection({
+      type: "LOGO",
+      label: "Astro",
+      category: "TECHNOLOGY",
+      showOnHome: true,
+      content: "Original note",
+      imageUrl: "https://example.test/astro.svg",
+    });
+    if (!created.success || !created.data)
+      throw new Error("Expected a created technology");
+    const id = created.data.id;
+    const read = () =>
+      fixture.db.query.homeSection.findFirst({
+        where: eq(schema.homeSection.id, id),
+      });
+    const visible = await read();
+    expect(getHomeLogoSettings(visible!)).toEqual({
+      category: "TECHNOLOGY",
+      showOnHome: true,
+      description: "Original note",
+    });
+    expect(selectHomeTechnologies([visible!])).toHaveLength(1);
+    expect(
+      await actionUpdateHomeSection(id, {
+        type: "LOGO",
+        label: "Astro",
+        category: "TECHNOLOGY",
+        showOnHome: false,
+        content: "Original note",
+        imageUrl: "https://example.test/astro.svg",
+      }),
+    ).toMatchObject({ success: true });
+    expect(selectHomeTechnologies([(await read())!])).toHaveLength(0);
+    expect(
+      await actionUpdateHomeSection(id, {
+        type: "PHASE",
+        label: "Build",
+        content: "Actual process description",
+      }),
+    ).toMatchObject({ success: true });
+    expect(await read()).toMatchObject({
+      type: "PHASE",
+      content: "Actual process description",
+      imageUrl: null,
+    });
+    expect(effects.updateTag).toHaveBeenCalledWith("public-home");
+  });
+
+  it("lets built-in technology logos be configured without an uploaded image", async () => {
+    const created = await actionCreateHomeSection({
+      type: "LOGO",
+      label: "Next.js",
+      category: "TECHNOLOGY",
+      showOnHome: true,
+    });
+    expect(created.success).toBe(true);
+  });
+
   it("updates the newest About row, breaks ties by ID, and removes duplicates", async () => {
     const createdAt = new Date("2020-01-01T00:00:00Z");
     const newest = new Date("2021-01-01T00:00:00Z");
@@ -135,10 +204,13 @@ describe("management actions against PostgreSQL", () => {
     ]);
 
     expect(
-      await actionReorderSkills([
-        { id: "first", order: 1 },
-        { id: "second", order: 0 },
-      ]),
+      await actionReorderSkills(
+        [
+          { id: "second", order: 0 },
+          { id: "first", order: 1 },
+        ],
+        "category",
+      ),
     ).toMatchObject({ success: true });
     const committed = await fixture.db.query.skill.findMany({
       orderBy: asc(schema.skill.id),
@@ -155,17 +227,25 @@ describe("management actions against PostgreSQL", () => {
     expect(effects.revalidatePath).toHaveBeenCalledWith("/about");
 
     effects.revalidatePath.mockClear();
+    effects.updateTag.mockClear();
     vi.spyOn(console, "error").mockImplementation(() => {});
     expect(
-      await actionReorderSkills([
-        { id: "first", order: 9 },
-        { id: "missing", order: 0 },
-      ]),
-    ).toMatchObject({ success: false, error: "Failed to update order." });
+      await actionReorderSkills(
+        [
+          { id: "missing", order: 0 },
+          { id: "first", order: 1 },
+        ],
+        "category",
+      ),
+    ).toMatchObject({
+      success: false,
+      error: "The skill list changed. Refresh and try again.",
+    });
     expect(
       await fixture.db.query.skill.findMany({ orderBy: asc(schema.skill.id) }),
     ).toEqual(committed);
     expect(effects.revalidatePath).not.toHaveBeenCalled();
+    expect(effects.updateTag).not.toHaveBeenCalled();
   });
 
   it("blocks single and batch media deletion for literal content references", async () => {
@@ -225,52 +305,131 @@ describe("management actions against PostgreSQL", () => {
     expect(await fixture.db.$count(schema.media)).toBe(2);
     expect(effects.deleteFromCloudinary).not.toHaveBeenCalled();
     expect(effects.revalidatePath).not.toHaveBeenCalled();
+    expect(effects.updateTag).not.toHaveBeenCalled();
   });
 
-  it("inserts, appends, and moves testimonials without gaps in their order", async () => {
-    await fixture.db.insert(schema.testimonial).values([
-      { id: "first", name: "First", content: "Quote", order: 0 },
-      { id: "second", name: "Second", content: "Quote", order: 1 },
-      { id: "third", name: "Third", content: "Quote", order: 2 },
+  async function seedReorderSections() {
+    await fixture.db.insert(schema.homeSection).values([
+      { id: "phase-a", type: "PHASE", label: "A", order: 8 },
+      { id: "phase-b", type: "PHASE", label: "B", order: 20 },
+      { id: "logo-a", type: "LOGO", label: "Logo", order: 5 },
+      { id: "home-hero", type: "HERO", label: "Hero", order: 99 },
     ]);
-    expect(
-      await actionCreateTestimonial({
-        name: "Inserted",
-        content: "Quote",
-        order: 1,
-      }),
-    ).toMatchObject({ success: true });
-    const appended = await actionCreateTestimonial({
-      name: "Appended",
-      content: "Quote",
-      order: 0,
-    });
-    expect(appended.success).toBe(true);
-    if (!appended.success || !appended.data)
-      throw new Error("Expected a created testimonial");
-    expect(
-      await fixture.db.query.testimonial.findFirst({
-        where: eq(schema.testimonial.id, appended.data.id),
-      }),
-    ).toMatchObject({ order: 4 });
+  }
 
+  it("normalizes a complete group and leaves other types and HERO intact", async () => {
+    await seedReorderSections();
     expect(
-      await actionUpdateTestimonial(appended.data.id, {
-        name: "Appended",
-        content: "Updated quote",
-        order: 0,
+      await actionReorderHomeSections([
+        { id: "phase-a", order: 50 },
+        { id: "phase-b", order: 4 },
+      ]),
+    ).toMatchObject({ success: true });
+    expect(
+      await fixture.db.query.homeSection.findMany({
+        columns: { id: true, order: true },
+        orderBy: asc(schema.homeSection.id),
       }),
-    ).toMatchObject({ success: true, data: { id: appended.data.id } });
-    const rows = await fixture.db.query.testimonial.findMany({
-      orderBy: asc(schema.testimonial.order),
-    });
-    expect(rows.map(({ name, order }) => ({ name, order }))).toEqual([
-      { name: "Appended", order: 0 },
-      { name: "First", order: 1 },
-      { name: "Inserted", order: 2 },
-      { name: "Second", order: 3 },
-      { name: "Third", order: 4 },
+    ).toEqual([
+      { id: "home-hero", order: 99 },
+      { id: "logo-a", order: 5 },
+      { id: "phase-a", order: 1 },
+      { id: "phase-b", order: 0 },
     ]);
+    expect(
+      await actionReorderHomeSections([{ id: "logo-a", order: 12 }]),
+    ).toMatchObject({ success: true });
+    expect(
+      await fixture.db.query.homeSection.findFirst({
+        where: eq(schema.homeSection.id, "logo-a"),
+      }),
+    ).toMatchObject({ order: 0 });
+    expect(effects.updateTag).toHaveBeenCalledWith("public-home");
+  });
+
+  it.each(
+    [
+      [],
+      [{ id: "phase-a", order: 0 }],
+      [
+        { id: "phase-a", order: 0 },
+        { id: "missing", order: 1 },
+      ],
+      [
+        { id: "phase-a", order: 0 },
+        { id: "phase-a", order: 1 },
+      ],
+      [
+        { id: "phase-a", order: 0 },
+        { id: "phase-b", order: 0 },
+      ],
+      [
+        { id: "phase-a", order: 0 },
+        { id: "logo-a", order: 1 },
+      ],
+      [{ id: "home-hero", order: 0 }],
+      [
+        { id: "phase-a", order: -1 },
+        { id: "phase-b", order: 1 },
+      ],
+    ].map((input) => ({ input })),
+  )("rejects invalid reorder $input without writes", async ({ input }) => {
+    await seedReorderSections();
+    const before = await fixture.db.query.homeSection.findMany({
+      orderBy: asc(schema.homeSection.id),
+    });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(await actionReorderHomeSections(input)).toMatchObject({
+      success: false,
+    });
+    expect(
+      await fixture.db.query.homeSection.findMany({
+        orderBy: asc(schema.homeSection.id),
+      }),
+    ).toEqual(before);
+    expect(effects.updateTag).not.toHaveBeenCalled();
+    expect(effects.revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("rejects unauthorized reorder before opening a transaction", async () => {
+    await seedReorderSections();
+    effects.getActionSession.mockRejectedValue(new Error("Unauthorized"));
+    const transaction = vi.spyOn(fixture.db, "transaction");
+    expect(
+      await actionReorderHomeSections([{ id: "logo-a", order: 0 }]),
+    ).toMatchObject({ success: false, error: "Unauthorized" });
+    expect(transaction).not.toHaveBeenCalled();
+    expect(effects.updateTag).not.toHaveBeenCalled();
+  });
+
+  it("rolls back an earlier reorder update if a later SQL write fails", async () => {
+    await seedReorderSections();
+    const before = await fixture.db.query.homeSection.findMany({
+      orderBy: asc(schema.homeSection.id),
+    });
+    await fixture.client.exec(
+      `ALTER TABLE "HomeSection" ADD CONSTRAINT reject_reorder CHECK ("id" <> 'phase-b' OR "order" <> 1)`,
+    );
+    try {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      expect(
+        await actionReorderHomeSections([
+          { id: "phase-a", order: 0 },
+          { id: "phase-b", order: 1 },
+        ]),
+      ).toMatchObject({ success: false });
+      expect(
+        await fixture.db.query.homeSection.findMany({
+          orderBy: asc(schema.homeSection.id),
+        }),
+      ).toEqual(before);
+      expect(effects.updateTag).not.toHaveBeenCalled();
+      expect(effects.revalidatePath).not.toHaveBeenCalled();
+    } finally {
+      await fixture.client.exec(
+        'ALTER TABLE "HomeSection" DROP CONSTRAINT reject_reorder',
+      );
+    }
   });
 
   it("shifts only the relevant Home groups when a section changes type", async () => {
@@ -360,6 +519,7 @@ describe("management actions against PostgreSQL", () => {
         }),
       ).toEqual(before);
       expect(effects.revalidatePath).not.toHaveBeenCalled();
+      expect(effects.updateTag).not.toHaveBeenCalled();
     } finally {
       await fixture.client.exec(
         'ALTER TABLE "HomeSection" DROP CONSTRAINT management_test_label',

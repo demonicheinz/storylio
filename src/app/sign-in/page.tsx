@@ -1,30 +1,53 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { AuthBackground } from "@/components/auth/auth-background";
+import { AuthEntrance } from "@/components/auth/auth-entrance";
+import styles from "@/components/auth/sign-in.module.css";
 import { SignInForm } from "@/components/auth/sign-in-form";
 import { auth } from "@/lib/auth";
+import { getAuthRedirect } from "@/lib/auth-redirect";
 import { isGitHubEnabled } from "@/lib/github-config";
+import { isOwnerEmail } from "@/lib/owner-guard";
 
-export default function SignInPage() {
+export const metadata: Metadata = {
+  title: "Sign in — Storylio",
+  robots: { index: false, follow: false },
+};
+type SignInPageProps = {
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
+};
+
+export default function SignInPage(props: SignInPageProps) {
   return (
-    <Suspense fallback={null}>
-      <SignInContent />
-    </Suspense>
+    <AuthEntrance className={styles.page}>
+      <AuthBackground />
+      <Suspense
+        fallback={
+          <p className={styles.content} role="status">
+            Loading sign-in…
+          </p>
+        }
+      >
+        <SignInContent {...props} />
+      </Suspense>
+    </AuthEntrance>
   );
 }
 
-async function SignInContent() {
+async function SignInContent({ searchParams }: SignInPageProps) {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
   if (session) {
-    redirect("/dashboard");
+    redirect(
+      isOwnerEmail(session.user.email)
+        ? getAuthRedirect((await searchParams).callbackUrl)
+        : "/unauthorized",
+    );
   }
 
-  return (
-    <div className="flex justify-center items-center bg-background px-4 min-h-screen">
-      <SignInForm githubEnabled={isGitHubEnabled} />
-    </div>
-  );
+  return <SignInForm githubEnabled={isGitHubEnabled} />;
 }

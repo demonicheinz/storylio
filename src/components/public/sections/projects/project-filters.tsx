@@ -1,56 +1,124 @@
 "use client";
 
-import { FunnelSimpleIcon } from "@phosphor-icons/react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { FilterLink } from "@/components/public/filter-link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useOptimistic, useTransition } from "react";
+import { MultiSelectContent } from "@/components/common/multi-select/content";
+import {
+  MultiSelect,
+  useMultiSelectContext,
+} from "@/components/common/multi-select/context";
+import {
+  MultiSelectEmpty,
+  MultiSelectItem,
+  MultiSelectList,
+} from "@/components/common/multi-select/list";
+import {
+  MultiSelectSearch,
+  MultiSelectSelections,
+  MultiSelectTrigger,
+} from "@/components/common/multi-select/trigger";
+import {
+  buildProjectFilterHref,
+  normalizeProjectTechnologies,
+} from "@/lib/project-filters";
+import styles from "./projects.module.css";
 
 type ProjectFiltersProps = {
   technologies: string[];
-  selectedTech?: string;
+  selectedTechnologies: string[];
+  resultCount: number;
+  totalProjects: number;
 };
 
 export function ProjectFilters({
   technologies,
-  selectedTech,
+  selectedTechnologies,
+  resultCount,
+  totalProjects,
 }: ProjectFiltersProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [selected, setSelected] = useOptimistic(selectedTechnologies);
+  const search = searchParams.toString();
 
-  const getFilterHref = (tech?: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (tech) {
-      params.set("tech", tech);
-    } else {
-      params.delete("tech");
-    }
-
-    const query = params.toString();
-
-    return query ? `${pathname}?${query}` : pathname;
+  const update = (next: string[]) => {
+    const normalized = normalizeProjectTechnologies(next);
+    startTransition(() => {
+      setSelected(normalized);
+      router.push(buildProjectFilterHref(pathname, search, normalized), {
+        scroll: false,
+      });
+    });
   };
 
   return (
-    <div className="bg-background/65 sm:bg-surface/55 backdrop-blur-xl -mx-4 sm:mx-0 px-4 sm:px-5 py-3.5 sm:border border-border/30 border-y sm:rounded-3xl">
-      <div className="flex items-center gap-2 mb-2.5 font-semibold text-muted-foreground text-xs uppercase tracking-[0.24em]">
-        <FunnelSimpleIcon className="text-brand-soft" size={16} />
-        Filter by stack
-      </div>
-
-      <div className="[&::-webkit-scrollbar]:hidden flex gap-2 pb-1 overflow-x-auto scrollbar-none">
-        <FilterLink href={getFilterHref()} active={!selectedTech}>
-          All
-        </FilterLink>
-        {technologies.map((tech) => {
-          const isActive = selectedTech === tech;
-
-          return (
-            <FilterLink key={tech} href={getFilterHref(tech)} active={isActive}>
-              {tech}
-            </FilterLink>
-          );
-        })}
+    <div
+      className={styles.filterBar}
+      role="group"
+      aria-label="Filter projects by stack"
+    >
+      <p
+        className={styles.result}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        aria-busy={pending}
+      >
+        {pending
+          ? "Updating…"
+          : selected.length
+            ? `${resultCount} of ${totalProjects} projects`
+            : `${resultCount} ${resultCount === 1 ? "project" : "projects"}`}
+      </p>
+      <div className={styles.filterControl}>
+        <MultiSelect value={selected} onValueChange={update}>
+          <MultiSelectTrigger label="Filter stack" onClear={() => update([])} />
+          <MultiSelectContent>
+            <MultiSelectSearch />
+            <MultiSelectSelections />
+            <p className={styles.filterHelp}>
+              Projects must use every selected technology.
+            </p>
+            <MultiSelectList ariaLabel="Technologies">
+              {Array.from(new Set([...technologies, ...selected]))
+                .sort((a, b) => a.localeCompare(b))
+                .map((tech) => (
+                  <StackOption
+                    key={tech}
+                    technology={tech}
+                    pathname={pathname}
+                    search={search}
+                  />
+                ))}
+            </MultiSelectList>
+            <MultiSelectEmpty>No technologies found.</MultiSelectEmpty>
+          </MultiSelectContent>
+        </MultiSelect>
       </div>
     </div>
   );
+}
+
+function StackOption({
+  technology,
+  pathname,
+  search,
+}: {
+  technology: string;
+  pathname: string;
+  search: string;
+}) {
+  const router = useRouter();
+  const context = useMultiSelectContext("StackOption");
+  const next = context.values.includes(technology)
+    ? context.values.filter((value) => value !== technology)
+    : [...context.values, technology];
+  const href = buildProjectFilterHref(pathname, search, next);
+  const intended = context.open && context.activeValue === technology;
+  useEffect(() => {
+    if (intended) router.prefetch(href);
+  }, [href, intended, router]);
+  return <MultiSelectItem value={technology}>{technology}</MultiSelectItem>;
 }

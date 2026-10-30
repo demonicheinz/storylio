@@ -2,7 +2,7 @@
 
 import Link, { useLinkStatus } from "next/link";
 import { type ReactNode, useState } from "react";
-import { Button } from "@/components/ui/button";
+import styles from "@/components/public/public-page.module.css";
 import { cn } from "@/lib/utils";
 
 function FilterLabel({ children }: { children: ReactNode }) {
@@ -27,25 +27,19 @@ export function FilterLink({
   const [intent, setIntent] = useState(false);
 
   return (
-    <Button
-      asChild
-      size="sm"
-      variant={active ? "default" : "outline"}
-      className="rounded-full shrink-0"
+    <Link
+      href={href}
+      prefetch={!active && intent}
+      scroll={false}
+      aria-current={active ? "page" : undefined}
+      onMouseEnter={() => setIntent(true)}
+      onFocus={() => setIntent(true)}
+      onNavigate={(event) => {
+        if (active) event.preventDefault();
+      }}
+      className={styles.filter}
     >
-      <Link
-        href={href}
-        prefetch={!active && intent}
-        scroll={false}
-        aria-current={active ? "page" : undefined}
-        onMouseEnter={() => setIntent(true)}
-        onFocus={() => setIntent(true)}
-        onNavigate={(event) => {
-          if (active) event.preventDefault();
-        }}
-      >
-        <FilterLabel>{children}</FilterLabel>
-      </Link>
-    </Button>
+      <FilterLabel>{children}</FilterLabel>
+    </Link>
   );
 }

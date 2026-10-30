@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import { afterAll, beforeAll, describe, it, vi } from "vitest";
 import { isOwnerEmail } from "../../src/lib/owner-guard";
+import { createTestDatabase } from "../helpers/database";
 
 const origin = "https://storylio.test";
 let auth: typeof import("../../src/lib/auth").auth;
+let fixture: Awaited<ReturnType<typeof createTestDatabase>>;
 
 beforeAll(async () => {
+  fixture = await createTestDatabase({ authRateLimits: true });
+  vi.doMock("../../src/lib/db", () => ({ db: fixture.db }));
   // These checks must never use developer credentials or a real database.
   for (const [name, value] of Object.entries({
     // Better Auth skips origin checks in test mode; exercise production guards.
@@ -24,7 +28,11 @@ beforeAll(async () => {
   ({ auth } = await import("../../src/lib/auth"));
 });
 
-afterAll(() => vi.unstubAllEnvs());
+afterAll(async () => {
+  vi.doUnmock("../../src/lib/db");
+  vi.unstubAllEnvs();
+  await fixture.client.close();
+});
 
 describe("auth security boundaries", () => {
   it("returns no session when a request has no session cookie", async () => {

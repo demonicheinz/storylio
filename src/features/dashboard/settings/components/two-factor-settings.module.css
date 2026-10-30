@@ -1,0 +1,26 @@
+.settings {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings form {
+  max-width: 520px;
+  min-width: 0;
+}
+
+.settings button {
+  max-width: 100%;
+  height: auto;
+  min-height: 44px;
+  padding-block: 10px;
+  white-space: normal;
+  text-align: center;
+}
+
+.status {
+  display: grid;
+  gap: 6px;
+  max-width: 65ch;
+}

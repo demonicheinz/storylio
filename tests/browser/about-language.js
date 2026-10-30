@@ -13,7 +13,7 @@ async (page) => {
     const url = new URL(request.url());
     if (url.origin === origin && url.pathname === "/about" &&
         request.headers().rsc === "1" &&
-        request.headers()["next-router-prefetch"] !== "1") {
+        request.headers()["next-router-prefetch"] === undefined) {
       navigationRequests.push(url.searchParams.get("lang"));
     }
   };
@@ -32,6 +32,9 @@ async (page) => {
     await page.getByRole("link", { name: "Indonesian", exact: true }).scrollIntoViewIfNeeded();
     const response = await indonesian;
     if (!response.ok()) throw new Error("Indonesian prefetch failed");
+    // The response event only confirms headers. Allow the delayed prefetch
+    // payload to reach the router cache before timing an interaction.
+    await page.waitForTimeout(1000);
 
     page.on("request", recordNavigation);
     const results = [];
@@ -53,13 +56,14 @@ async (page) => {
       }
       const scrollAfter = await page.evaluate(() => scrollY);
       const requests = navigationRequests.length - before;
-      results.push({ language, elapsedMs: Date.now() - started, navigationRequests: requests });
-      if (requests !== 0) throw new Error("Language switch waited on the server: " + JSON.stringify(results));
+      const elapsedMs = Date.now() - started;
+      results.push({ language, elapsedMs, navigationRequests: requests });
+      if (requests !== 0 || elapsedMs >= 800) throw new Error("Language switch waited on the server: " + JSON.stringify(results));
       if (Math.abs(scrollAfter - scrollBefore) > 2) throw new Error("Language switch changed scroll position");
     }
     return { injectedRscDelayMs: 800, results };
   } finally {
     page.off("request", recordNavigation);
-    await page.unroute("**/*", delayRsc);
+    await page.unrouteAll({ behavior: "wait" });
   }
 }

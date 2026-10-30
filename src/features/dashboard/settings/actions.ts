@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, ne } from "drizzle-orm";
+import { and, desc, eq, gt, ne } from "drizzle-orm";
 import { revalidatePath, updateTag } from "next/cache";
 import { headers } from "next/headers";
 import {
@@ -19,6 +19,7 @@ import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { session as sessionTable, user as userTable } from "@/lib/db/schema";
 import { isOwnerEmail } from "@/lib/owner-guard";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 
 type ProfileSettingsActionData = {
   id: string;
@@ -38,7 +39,7 @@ export type DashboardSessionItem = {
 };
 
 function revalidateSettingsPaths() {
-  updateTag("public-profile");
+  updateTag(PUBLIC_CACHE_TAGS.profile);
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
   revalidatePath("/");
@@ -58,7 +59,10 @@ export async function actionListDashboardSessions(): Promise<
 
   try {
     const sessions = await db.query.session.findMany({
-      where: eq(sessionTable.userId, session.user.id),
+      where: and(
+        eq(sessionTable.userId, session.user.id),
+        gt(sessionTable.expiresAt, new Date()),
+      ),
       orderBy: desc(sessionTable.updatedAt),
       columns: {
         id: true,
@@ -85,6 +89,39 @@ export async function actionListDashboardSessions(): Promise<
   } catch (error) {
     console.error("List dashboard sessions failed:", error);
     return actionError("Failed to load sessions.");
+  }
+}
+
+export async function actionRevokeDashboardSession(
+  id: string,
+): Promise<ActionResult> {
+  let session: Awaited<ReturnType<typeof getActionSession>>;
+  try {
+    session = await getActionSession();
+  } catch {
+    return actionError("Unauthorized");
+  }
+  if (typeof id !== "string" || !id || id.length > 128)
+    return actionError("Invalid session.");
+  try {
+    const removed = await db
+      .delete(sessionTable)
+      .where(
+        and(
+          eq(sessionTable.id, id),
+          eq(sessionTable.userId, session.user.id),
+          ne(sessionTable.token, session.session.token),
+        ),
+      )
+      .returning({ id: sessionTable.id });
+    if (!removed.length)
+      return actionError(
+        "Session unavailable. You cannot revoke the current session here.",
+      );
+    revalidatePath("/dashboard/settings");
+    return actionSuccess(undefined, "Session revoked.");
+  } catch {
+    return actionError("Failed to revoke session. Try again.");
   }
 }
 
@@ -251,7 +288,7 @@ export async function actionChangeEmail(
 
     return actionSuccess(
       undefined,
-      "A confirmation email has been sent to your new email address. Click the link to confirm the change.",
+      "Check your current email to approve the change, then verify the new address.",
     );
   } catch (error) {
     const message =
