@@ -18,6 +18,7 @@ bunx --no-install playwright-cli -s=media-polish open http://127.0.0.1:3201 --co
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/dashboard-media.js
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-upload-queue.js
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-detail-panel.js
+bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-deletion.js
 bunx --no-install playwright-cli -s=media-polish close
 ```
 
@@ -46,3 +47,10 @@ provider responses or the full Next router/history lifecycle.
 keyboard opening, metadata, URL selection and copy, View target, nested rename
 refresh, and restoring focus to the preview after Escape. Its screenshots go to
 `task/code-standardization/` (create that directory before running).
+
+`media-deletion.js` checks the deletion controller through the real library:
+usage-review failures, held requests, duplicate-call counts, returned/thrown batch
+errors, protected-selection retention, single-delete retry, and preventing Escape
+from closing a confirmation while a request is in flight. It uses only synthetic
+rows and mocked actions. Controller tests separately exercise same-tick locking
+and partial deletion reconciliation in `tests/public/media-deletion.test.ts`.

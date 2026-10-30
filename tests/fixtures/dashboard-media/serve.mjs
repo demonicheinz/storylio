@@ -23,11 +23,16 @@ const bundle = await build({
     {
       name: "review-fixture",
       setup(b) {
-        b.onResolve({ filter: /.*/ }, (a) =>
-          replacements[a.path]
-            ? { path: a.path, namespace: "fixture" }
-            : undefined,
-        );
+        b.onResolve({ filter: /.*/ }, (a) => {
+          const path =
+            a.path === "./actions" &&
+            a.importer.endsWith("use-media-deletion.ts")
+              ? "../actions"
+              : a.path;
+          return replacements[path]
+            ? { path, namespace: "fixture" }
+            : undefined;
+        });
         b.onLoad({ filter: /.*/, namespace: "fixture" }, (a) => ({
           contents: replacements[a.path],
           loader: "jsx",

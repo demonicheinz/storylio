@@ -13,24 +13,7 @@ import {
   PencilSimpleIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -70,12 +53,6 @@ import {
   paginateItems,
 } from "@/lib/pagination";
 import { cn } from "@/lib/utils";
-import {
-  actionCheckMediaUsage,
-  actionDeleteMedia,
-  actionDeleteMediaBatch,
-  type MediaUsagePreview,
-} from "../actions";
 import { MEDIA_BATCH_LIMIT } from "../constants";
 import { getMediaDisplayFilename } from "../filename";
 import { getDimensions } from "../presentation";
@@ -85,7 +62,9 @@ import {
   sortMediaItems,
 } from "../sorting";
 import type { MediaItem } from "../types";
+import { useMediaDeletion } from "../use-media-deletion";
 import { useMediaUploadQueue } from "../use-media-upload-queue";
+import { MediaDeleteDialogs } from "./media-delete-dialogs";
 import { MediaDetailDrawer } from "./media-detail-drawer";
 import { MediaFilename } from "./media-filename";
 import { MediaRenameDialog } from "./media-rename-dialog";
@@ -103,14 +82,6 @@ const sortOptions: Array<{ value: MediaSortField; label: string }> = [
   { value: "name", label: "File name" },
   { value: "format", label: "Format" },
 ];
-
-function formatReferenceSummary(
-  references: Array<{ label: string; count: number }>,
-): string {
-  return references
-    .map(({ label, count }) => `${count} ${label}${count === 1 ? "" : "s"}`)
-    .join(", ");
-}
 
 function getMediaDownloadUrl(item: MediaItem): string {
   return `/api/media/${item.id}/download`;
@@ -455,17 +426,8 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
     media.find((item) => item.id === selectedMediaId) ?? null;
   const [renameId, setRenameId] = useState<string | null>(null);
   const renameTarget = media.find((item) => item.id === renameId) ?? null;
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const deleteTarget = media.find((item) => item.id === deleteId) ?? null;
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [batchPreview, setBatchPreview] = useState<MediaUsagePreview | null>(
-    null,
-  );
-  const [batchOpen, setBatchOpen] = useState(false);
-  const [actionError, setActionError] = useState<string>();
-  const [isPending, startTransition] = useTransition();
-  const actionLock = useRef(false);
   const detailTriggerRef = useRef<HTMLElement | null>(null);
   const [drawerDirection, setDrawerDirection] = useState<"down" | "right">(
     "down",
@@ -496,6 +458,25 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
   const queueSize = useRef(queue.items.length);
   queueSize.current = queue.items.length;
   const selectedItems = media.filter((item) => selectedIds.has(item.id));
+  const removeRows = (ids: string[]) => {
+    const removed = new Set(ids);
+    setMedia((previous) => previous.filter((item) => !removed.has(item.id)));
+    setSelectedIds(
+      (previous) => new Set([...previous].filter((id) => !removed.has(id))),
+    );
+    if (selectedMediaId && removed.has(selectedMediaId))
+      setSelectedMediaId(null);
+  };
+  const deletion = useMediaDeletion({
+    media,
+    selectedItems,
+    onDeleted: removeRows,
+    onBatchComplete: (deleted) =>
+      setIsSelectionMode(
+        selectedItems.some((item) => !deleted.includes(item.id)),
+      ),
+  });
+  const { deleteId, batchOpen, isPending, checkUsage } = deletion;
 
   useEffect(() => {
     const ids = new Set(media.map((item) => item.id));
@@ -683,11 +664,9 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
     setFiltersOpen(false);
   };
   const clearSelection = () => {
-    if (actionLock.current) return;
+    if (!deletion.closeBatch()) return;
     setSelectedIds(new Set());
     setIsSelectionMode(false);
-    setBatchPreview(null);
-    setBatchOpen(false);
   };
   const selectionLimit = () =>
     toast.add({
@@ -695,7 +674,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
       type: "error",
     });
   const toggleSelection = (item: MediaItem) => {
-    if (actionLock.current) return;
+    if (deletion.isLocked()) return;
     if (!selectedIds.has(item.id) && selectedIds.size >= MEDIA_BATCH_LIMIT) {
       selectionLimit();
       return;
@@ -708,7 +687,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
     });
   };
   const togglePage = () => {
-    if (actionLock.current) return;
+    if (deletion.isLocked()) return;
     const next = new Set(selectedIds);
     for (const item of paginatedMedia) {
       if (pageSelected) next.delete(item.id);
@@ -727,10 +706,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
   };
   const onRename = (item: MediaItem) =>
     requestAnimationFrame(() => setRenameId(item.id));
-  const onDelete = (item: MediaItem) => {
-    setActionError(undefined);
-    requestAnimationFrame(() => setDeleteId(item.id));
-  };
+  const onDelete = deletion.requestDelete;
   const copy = async (url: string) => {
     try {
       await navigator.clipboard.writeText(url);
@@ -743,112 +719,6 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
         type: "error",
       });
     }
-  };
-  const checkUsage = () => {
-    if (actionLock.current || !selectedItems.length) return;
-    const ids = selectedItems.map((item) => item.id);
-    actionLock.current = true;
-    setActionError(undefined);
-    startTransition(async () => {
-      try {
-        const result = await actionCheckMediaUsage(ids);
-        if (!result.success) {
-          toast.add({ title: result.error, type: "error" });
-          return;
-        }
-        setBatchPreview(result.data ?? { canDelete: [], blocked: [] });
-        setBatchOpen(true);
-      } catch {
-        toast.add({
-          title:
-            "Could not check image usage. Your selection is kept; try again.",
-          type: "error",
-        });
-      } finally {
-        actionLock.current = false;
-      }
-    });
-  };
-  const removeRows = (ids: string[]) => {
-    const removed = new Set(ids);
-    setMedia((previous) => previous.filter((item) => !removed.has(item.id)));
-    setSelectedIds(
-      (previous) => new Set([...previous].filter((id) => !removed.has(id))),
-    );
-    if (selectedMediaId && removed.has(selectedMediaId))
-      setSelectedMediaId(null);
-  };
-  const confirmBatch = () => {
-    const ids = batchPreview?.canDelete.map((item) => item.id) ?? [];
-    if (actionLock.current || !ids.length) return;
-    actionLock.current = true;
-    setActionError(undefined);
-    startTransition(async () => {
-      try {
-        const result = await actionDeleteMediaBatch(ids);
-        if (!result.success) {
-          setActionError(result.error);
-          return;
-        }
-        const deleted = result.data?.deletedIds ?? [];
-        removeRows(deleted);
-        const failed = result.data?.failedItems ?? [];
-        if (failed.length) {
-          setActionError(
-            `${deleted.length} ${deleted.length === 1 ? "image" : "images"} deleted. Could not delete ${failed.map((item) => `${item.filename}: ${item.error}`).join("; ")}. Retry the remaining images.`,
-          );
-          const failedIds = new Set(failed.map((item) => item.id));
-          setBatchPreview((previous) =>
-            previous
-              ? {
-                  ...previous,
-                  canDelete: previous.canDelete.filter((item) =>
-                    failedIds.has(item.id),
-                  ),
-                }
-              : null,
-          );
-        } else {
-          setBatchOpen(false);
-          setBatchPreview(null);
-          setIsSelectionMode(
-            selectedItems.some((item) => !deleted.includes(item.id)),
-          );
-          toast.add({
-            title: `${deleted.length} ${deleted.length === 1 ? "image" : "images"} deleted.`,
-            type: "success",
-          });
-        }
-      } catch {
-        setActionError(
-          "Could not delete these images. Your selection is kept; try again.",
-        );
-      } finally {
-        actionLock.current = false;
-      }
-    });
-  };
-  const confirmSingle = () => {
-    if (!deleteTarget || actionLock.current) return;
-    const id = deleteTarget.id;
-    actionLock.current = true;
-    setActionError(undefined);
-    startTransition(async () => {
-      try {
-        const result = await actionDeleteMedia(id);
-        if (!result.success) {
-          setActionError(result.error);
-          return;
-        }
-        removeRows([id]);
-        setDeleteId(null);
-        toast.add({ title: "Image deleted.", type: "success" });
-      } catch {
-        setActionError("Could not delete this image. Try again.");
-      } finally {
-        actionLock.current = false;
-      }
-    });
   };
   const browse = () => {
     uploadManual.current = true;
@@ -1215,132 +1085,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
               toast.add({ title: "Image renamed.", type: "success" });
             }}
           />
-          <AlertDialog
-            open={!!deleteTarget}
-            onOpenChange={(open, details) => {
-              if (!open) {
-                if (actionLock.current) {
-                  details.cancel();
-                  return;
-                }
-                setDeleteId(null);
-              }
-            }}
-          >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete media?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Permanently delete {deleteTarget?.filename}? Images still used
-                  by content are protected. This cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              {actionError && (
-                <p
-                  role="alert"
-                  className="text-destructive text-sm wrap-anywhere"
-                >
-                  {actionError}
-                </p>
-              )}
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isPending}>
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  variant="destructive"
-                  disabled={isPending}
-                  onClick={confirmSingle}
-                >
-                  {isPending ? "Deleting..." : "Delete image"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          <AlertDialog
-            open={batchOpen}
-            onOpenChange={(open, details) => {
-              if (!open) {
-                if (actionLock.current) {
-                  details.cancel();
-                  return;
-                }
-                setBatchOpen(false);
-                setBatchPreview(null);
-              }
-            }}
-          >
-            <AlertDialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete selected media?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Review the images below. Images still in use are protected;
-                  references are checked again before deletion.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              {batchPreview && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold text-sm">
-                      Can delete ({batchPreview.canDelete.length})
-                    </h3>
-                    <ul
-                      aria-label="Images to delete"
-                      className="space-y-1 mt-2 max-h-40 overflow-y-auto text-sm"
-                    >
-                      {batchPreview.canDelete.map((item) => (
-                        <li key={item.id} className="wrap-anywhere">
-                          {item.filename}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  {batchPreview.blocked.length > 0 && (
-                    <div>
-                      <h3 className="font-semibold text-sm">
-                        Still in use ({batchPreview.blocked.length})
-                      </h3>
-                      <ul
-                        aria-label="Protected images"
-                        className="space-y-2 mt-2 max-h-40 overflow-y-auto text-sm"
-                      >
-                        {batchPreview.blocked.map((item) => (
-                          <li key={item.id} className="wrap-anywhere">
-                            {item.filename}
-                            <p className="text-muted-foreground text-xs">
-                              Used by {formatReferenceSummary(item.references)}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-              {actionError && (
-                <p
-                  role="alert"
-                  className="text-destructive text-sm wrap-anywhere"
-                >
-                  {actionError}
-                </p>
-              )}
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isPending}>
-                  Close
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  variant="destructive"
-                  disabled={isPending || !batchPreview?.canDelete.length}
-                  onClick={confirmBatch}
-                >
-                  {isPending
-                    ? "Deleting..."
-                    : `Delete ${batchPreview?.canDelete.length ?? 0} ${batchPreview?.canDelete.length === 1 ? "image" : "images"}`}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <MediaDeleteDialogs deletion={deletion} />
         </MediaDetailDrawer>
       </div>
       <DrawerContent finalFocus={filtersTriggerRef} className="p-0">
