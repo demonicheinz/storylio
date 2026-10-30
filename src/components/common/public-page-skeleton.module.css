@@ -1,0 +1,25 @@
+.masonryContainer {
+  container-type: inline-size;
+}
+.masonry {
+  columns: 1;
+  column-gap: 16px;
+}
+.photo {
+  break-inside: avoid;
+  margin-bottom: 16px;
+}
+@container (min-width: 640px) {
+  .masonry {
+    columns: 2;
+    column-gap: 24px;
+  }
+  .photo {
+    margin-bottom: 24px;
+  }
+}
+@container (min-width: 960px) {
+  .masonry {
+    columns: 3;
+  }
+}

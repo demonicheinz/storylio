@@ -51,7 +51,7 @@ export function BlogCover({
           onError={() => setHasImageError(true)}
         />
       ) : (
-        <div className="flex items-center justify-center gap-2 p-6 min-h-40 h-full text-muted-foreground text-sm">
+        <div className="absolute inset-0 flex justify-center items-center gap-2 p-6 text-muted-foreground text-sm">
           <ImageIcon size={20} aria-hidden="true" />
           <span>Article cover unavailable</span>
         </div>

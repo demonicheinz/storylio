@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 };
 export default function BlogPage(props: BlogPageProps) {
   return (
-    <PublicRouteBoundary>
+    <PublicRouteBoundary variant="blog">
       <BlogContent {...props} />
     </PublicRouteBoundary>
   );
@@ -60,7 +60,7 @@ async function BlogContent({ searchParams }: BlogPageProps) {
           totalTags={data.tags.length}
           selectedTag={data.selectedTag}
         />
-        <Suspense fallback={<div className="h-20 border-y border-border" />}>
+        <Suspense fallback={<div className="border-border border-y h-20" />}>
           <BlogFilters
             tags={data.tags}
             selectedTag={data.selectedTag}
