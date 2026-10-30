@@ -66,35 +66,34 @@ describe("Home logo configuration", () => {
     });
     expect(selectHomeTechnologies([client])).toEqual([]);
   });
-  it.each([
-    "{broken",
-    "null",
-    "[]",
-    '{"category":"TECHNOLOGY"}',
-  ])("handles unconfigured content safely: %s", (content) => {
-    expect(getHomeLogoSettings({ label: "Acme", content }).category).toBe(
-      "CLIENT",
-    );
-  });
+  it.each(["{broken", "null", "[]", '{"category":"TECHNOLOGY"}'])(
+    "handles unconfigured content safely: %s",
+    (content) => {
+      expect(getHomeLogoSettings({ label: "Acme", content }).category).toBe(
+        "CLIENT",
+      );
+    },
+  );
 });
 
 describe("Technology groups", () => {
-  it.each([
-    3, 4, 6,
-  ])("covers every item in filled groups with capacity %i", (capacity) => {
-    for (const count of [1, 5, 7, 13, 29]) {
-      const items = Array.from({ length: count }, (_, id) => ({ id }));
-      const { pages } = getTechnologyPage(items, capacity, 0);
-      const groups = Array.from(
-        { length: pages },
-        (_, page) => getTechnologyPage(items, capacity, page).items,
-      );
-      expect([...new Set(groups.flat())]).toEqual(items);
-      expect(
-        groups.every((group) => group.length === Math.min(count, capacity)),
-      ).toBe(true);
-    }
-  });
+  it.each([3, 4, 6])(
+    "covers every item in filled groups with capacity %i",
+    (capacity) => {
+      for (const count of [1, 5, 7, 13, 29]) {
+        const items = Array.from({ length: count }, (_, id) => ({ id }));
+        const { pages } = getTechnologyPage(items, capacity, 0);
+        const groups = Array.from(
+          { length: pages },
+          (_, page) => getTechnologyPage(items, capacity, page).items,
+        );
+        expect([...new Set(groups.flat())]).toEqual(items);
+        expect(
+          groups.every((group) => group.length === Math.min(count, capacity)),
+        ).toBe(true);
+      }
+    },
+  );
   it("handles empty data, previous navigation and a smaller page count after resize", () => {
     expect(getTechnologyPage([], 6, 8)).toEqual({
       items: [],

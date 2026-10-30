@@ -481,7 +481,9 @@ managed separately in `src/app/` and `public/metadata/`.
 Home now uses the supplied planet hero, the approved Venom CTA, three selected
 projects, a readable ordered approach, technology logos, latest writing, and
 personal notes. Notes come from published posts with the exact tag `notes` and
-are hidden when empty; testimonials are no longer queried on Home.
+are hidden when empty. Testimonials are retired from Home, the dashboard, analytics,
+and seed groups. Home management covers the Hero, Approach, and Tech stack; the
+Hero subheadline reuses the owner profile bio.
 
 `public-chrome.module.css` shares the approved Home dark palette across all public
 navigation, content, and footers: near-black canvas (`oklch(0.11 0.018 259.15)`), quiet

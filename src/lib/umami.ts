@@ -9,9 +9,27 @@ type UmamiStat = {
   change?: number;
 };
 
+type UmamiRange = { startAt: number; endAt: number };
+
+export type UmamiDetailResult = {
+  status: "available" | "empty" | "error";
+  fetchedAt?: string;
+  range?: UmamiRange;
+  stale?: boolean;
+};
+
 export type UmamiAnalytics = {
   status: "available" | "not-configured" | "error";
   error?: string;
+  fetchedAt?: string;
+  range?: UmamiRange;
+  comparisonStatus?: "available" | "error";
+  details?: Partial<
+    Record<
+      "topPages" | "referrers" | "browsers" | "locations",
+      UmamiDetailResult
+    >
+  >;
   pageviews: UmamiStat;
   visitors: UmamiStat;
   visits: UmamiStat;
@@ -67,7 +85,7 @@ function calculateChange(value?: number, previous?: number) {
     return value > 0 ? 100 : 0;
   }
 
-  return ((value - previous) / previous) * 100;
+  return readNumber(((value - previous) / previous) * 100);
 }
 
 function withCalculatedChange(stat: UmamiStat): UmamiStat {
@@ -104,11 +122,11 @@ function getComparableStatsRecord(
 function calculateRatioStat(numerator: UmamiStat, denominator: UmamiStat) {
   const value =
     numerator.value !== undefined && denominator.value
-      ? (numerator.value / denominator.value) * 100
+      ? readNumber((numerator.value / denominator.value) * 100)
       : undefined;
   const previous =
     numerator.previous !== undefined && denominator.previous
-      ? (numerator.previous / denominator.previous) * 100
+      ? readNumber((numerator.previous / denominator.previous) * 100)
       : undefined;
 
   return withCalculatedChange({ previous, value });
@@ -117,11 +135,11 @@ function calculateRatioStat(numerator: UmamiStat, denominator: UmamiStat) {
 function calculateAverageStat(total: UmamiStat, count: UmamiStat) {
   const value =
     total.value !== undefined && count.value
-      ? total.value / count.value
+      ? readNumber(total.value / count.value)
       : undefined;
   const previous =
     total.previous !== undefined && count.previous
-      ? total.previous / count.previous
+      ? readNumber(total.previous / count.previous)
       : undefined;
 
   return withCalculatedChange({ previous, value });
@@ -238,29 +256,66 @@ async function requestUmami(
     throw new Error(`Umami API returned HTTP ${response.status}`);
   }
 
-  return response.json() as Promise<unknown>;
+  const data: unknown = await response.json();
+  return { data, fetchedAt: new Date().toISOString() };
+}
+
+function readDetailResult(
+  result: PromiseSettledResult<Awaited<ReturnType<typeof requestUmami>>>,
+  range: UmamiRange,
+  normalize = normalizeMetrics,
+): { items: UmamiMetric[]; metadata: UmamiDetailResult } {
+  if (result.status === "rejected" || !Array.isArray(result.value.data)) {
+    return { items: [], metadata: { status: "error" } };
+  }
+
+  const items = normalize(result.value.data);
+  return {
+    items,
+    metadata: {
+      status: items.length ? "available" : "empty",
+      fetchedAt: result.value.fetchedAt,
+      range,
+    },
+  };
+}
+
+function readStatsPayload(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Invalid Umami statistics response.");
+  }
+  return value as Record<string, unknown>;
+}
+
+function emptyAnalytics(
+  status: "not-configured" | "error",
+  error?: string,
+): UmamiAnalytics {
+  return {
+    status,
+    ...(error ? { error } : {}),
+    bounceRate: {},
+    browsers: [],
+    locations: [],
+    pageviews: {},
+    referrers: [],
+    topPages: [],
+    visitDuration: {},
+    visitors: {},
+    visits: {},
+  };
 }
 
 export async function getUmamiAnalytics(): Promise<UmamiAnalytics> {
   const config = getUmamiConfig();
   if (!config) {
-    return {
-      status: "not-configured",
-      bounceRate: {},
-      browsers: [],
-      locations: [],
-      pageviews: {},
-      referrers: [],
-      topPages: [],
-      visitDuration: {},
-      visitors: {},
-      visits: {},
-    };
+    return emptyAnalytics("not-configured");
   }
 
   const endAt = Date.now();
   const rangeDuration = 30 * 24 * 60 * 60 * 1000;
   const startAt = endAt - rangeDuration;
+  const range = { startAt, endAt };
   const previousEndAt = startAt;
   const previousStartAt = previousEndAt - rangeDuration;
   const query = new URLSearchParams({
@@ -315,34 +370,20 @@ export async function getUmamiAnalytics(): Promise<UmamiAnalytics> {
     ]);
 
     if (statsResult.status === "rejected") {
-      return {
-        status: "error",
-        error:
-          statsResult.reason instanceof Error
-            ? statsResult.reason.message
-            : "Unable to load Umami statistics.",
-        bounceRate: {},
-        browsers: [],
-        locations: [],
-        pageviews: {},
-        topPages: [],
-        referrers: [],
-        visitDuration: {},
-        visitors: {},
-        visits: {},
-      };
+      return emptyAnalytics("error", "Unable to load Umami statistics.");
     }
 
-    const stats =
-      statsResult.value && typeof statsResult.value === "object"
-        ? (statsResult.value as Record<string, unknown>)
-        : {};
-    const previousStats =
-      previousStatsResult.status === "fulfilled" &&
-      previousStatsResult.value &&
-      typeof previousStatsResult.value === "object"
-        ? (previousStatsResult.value as Record<string, unknown>)
-        : {};
+    const stats = readStatsPayload(statsResult.value.data);
+    let previousStats: Record<string, unknown> = {};
+    let comparisonStatus: "available" | "error" = "error";
+    if (previousStatsResult.status === "fulfilled") {
+      try {
+        previousStats = readStatsPayload(previousStatsResult.value.data);
+        comparisonStatus = "available";
+      } catch {
+        // Current-period statistics remain useful without a comparison.
+      }
+    }
     const pageviews = getComparableStatsRecord(stats, previousStats, [
       "pageviews",
       "views",
@@ -377,43 +418,37 @@ export async function getUmamiAnalytics(): Promise<UmamiAnalytics> {
         ? explicitVisitDuration
         : calculateAverageStat(totalTime, visits);
 
+    const pages = readDetailResult(pagesResult, range);
+    const referrers = readDetailResult(referrersResult, range);
+    const browsers = readDetailResult(browsersResult, range);
+    const locations = readDetailResult(
+      locationsResult,
+      range,
+      normalizeCountryMetrics,
+    );
+
     return {
       status: "available",
+      fetchedAt: statsResult.value.fetchedAt,
+      range,
+      comparisonStatus,
+      details: {
+        topPages: pages.metadata,
+        referrers: referrers.metadata,
+        browsers: browsers.metadata,
+        locations: locations.metadata,
+      },
       pageviews,
       visitors,
       visits,
       bounceRate,
       visitDuration,
-      topPages:
-        pagesResult.status === "fulfilled"
-          ? normalizeMetrics(pagesResult.value)
-          : [],
-      referrers:
-        referrersResult.status === "fulfilled"
-          ? normalizeMetrics(referrersResult.value)
-          : [],
-      browsers:
-        browsersResult.status === "fulfilled"
-          ? normalizeMetrics(browsersResult.value)
-          : [],
-      locations:
-        locationsResult.status === "fulfilled"
-          ? normalizeCountryMetrics(locationsResult.value)
-          : [],
+      topPages: pages.items,
+      referrers: referrers.items,
+      browsers: browsers.items,
+      locations: locations.items,
     };
-  } catch (error) {
-    return {
-      status: "error",
-      error: error instanceof Error ? error.message : "Unable to load Umami.",
-      bounceRate: {},
-      browsers: [],
-      locations: [],
-      pageviews: {},
-      topPages: [],
-      referrers: [],
-      visitDuration: {},
-      visitors: {},
-      visits: {},
-    };
+  } catch {
+    return emptyAnalytics("error", "Unable to load Umami statistics.");
   }
 }

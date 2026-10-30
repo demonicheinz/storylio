@@ -62,7 +62,7 @@ function DialogContent({
         }}
         className={(state) =>
           cn(
-            "top-1/2 left-1/2 z-50 fixed gap-6 grid bg-popover data-ending-style:opacity-0 data-starting-style:opacity-0 shadow-xl p-6 rounded-4xl outline-none ring-1 ring-foreground/5 dark:ring-foreground/10 w-full max-w-[calc(100%-2rem)] sm:max-w-md text-popover-foreground text-sm data-ending-style:scale-95 data-starting-style:scale-95 transition-[opacity,scale] -translate-x-1/2 -translate-y-1/2 duration-100",
+            "top-1/2 left-1/2 z-50 fixed gap-6 grid bg-popover data-ending-style:opacity-0 data-starting-style:opacity-0 p-6 border border-border rounded-lg outline-none w-full max-w-[calc(100%-2rem)] sm:max-w-md text-popover-foreground text-sm data-ending-style:scale-95 data-starting-style:scale-95 transition-[opacity,scale] -translate-x-1/2 -translate-y-1/2 duration-100",
             typeof className === "function" ? className(state) : className,
           )
         }
@@ -132,7 +132,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
       data-slot="dialog-title"
       className={(state) =>
         cn(
-          "font-heading font-medium text-base leading-none",
+          "font-sans font-semibold text-base leading-none",
           typeof className === "function" ? className(state) : className,
         )
       }

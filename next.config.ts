@@ -69,6 +69,13 @@ const nextConfig: NextConfig = {
         source: "/preview/:path*",
         headers: previewHeaders,
       },
+      {
+        source: "/:path(forgot-password|reset-password|two-factor)",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+        ],
+      },
     ];
   },
   images: {

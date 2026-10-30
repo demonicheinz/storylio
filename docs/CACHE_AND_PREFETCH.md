@@ -59,7 +59,7 @@ The tag names are defined in `src/lib/public-cache-tags.ts`.
 
 | Tag | Cached content | Invalidated after successful CMS writes |
 | --- | --- | --- |
-| public-home | Home sections and testimonials | Home actions |
+| public-home | Home headline, approach phases and technology logos | Home actions |
 | public-projects | Project lists, detail, neighbors, public project MDX | Project actions |
 | public-posts | Blog lists, articles, companions, public article MDX | Post actions |
 | public-gallery | Visible gallery images and categories | Gallery actions |
@@ -141,3 +141,8 @@ Consult the installed Next.js docs for `adopting-partial-prefetching`,
 this policy. Database index decisions are separate; see
 `docs/DRIZZLE_MIGRATION.md` and the source-based review in
 `task/global-prefetch/index-review.md`.
+
+Testimonials are retired and have no cache or invalidation contract. Home group
+reorders invalidate `public-home` only after the full PHASE or LOGO collection
+commits. HERO is excluded; positions are normalized to contiguous zero-based
+values. The Hero subheadline comes from the profile bio (`public-profile`).

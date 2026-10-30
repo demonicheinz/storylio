@@ -28,7 +28,7 @@ const projects = [
       "## What Was Built",
       "- Public pages for Home, About, Projects, Blog, and Gallery",
       "- Server-first data fetching with Prisma",
-      "- CMS-ready models for projects, posts, testimonials, gallery, and home sections",
+      "- CMS-ready models for projects, posts, gallery, and home sections",
       "- Dark space visual system with subtle motion and glow states",
       "## Implementation Detail",
       "A small cached query keeps the public project archive responsive while still allowing content to refresh after CMS updates.",

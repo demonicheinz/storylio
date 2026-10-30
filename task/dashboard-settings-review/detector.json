@@ -1,0 +1,17 @@
+{
+  "artifactType": "detector-attempt-record",
+  "status": "unavailable",
+  "command": "<home>/.agents/skills/impeccable/scripts/impeccable.cmd detect --json src/features/dashboard/settings/components 'src/app/(dashboard)/dashboard/settings/page.tsx'",
+  "cwd": ".",
+  "exitCode": 127,
+  "engineVersionRequested": "0.1.18",
+  "reason": "Engine is not installed; launcher cannot create <home>\\.impeccable\\bin\\0.1.18. Setup requires network access and cache write permission.",
+  "attempts": 1,
+  "rawOutputFile": "detector.txt",
+  "scannerJsonProduced": false,
+  "findings": null,
+  "contextRerun": false,
+  "retryOrInstallOrDownloadOrEscalationPerformed": false,
+  "browserUsed": false,
+  "note": "This is an assessment-authored availability record, not detector output or a clean scan. Workstation paths are redacted as <home> and <repo>. See detector.txt for sanitized launcher output."
+}

@@ -79,9 +79,9 @@ export function ExperienceSection({
 
             {experience.highlights.length > 0 && (
               <ul className="flex flex-col gap-3 ml-5 marker:text-brand-soft list-disc">
-                {experience.highlights.map((achievement) => (
+                {experience.highlights.map((achievement, index) => (
                   <li
-                    key={achievement}
+                    key={`${index}:${achievement}`}
                     className="text-muted-foreground text-base"
                   >
                     {achievement}

@@ -5,22 +5,19 @@ import {
   CaretDownIcon,
   CaretLeftIcon,
   CaretRightIcon,
+  CheckSquareIcon,
   CloudArrowUpIcon,
   CopyIcon,
   DotsThreeVerticalIcon,
   DownloadSimpleIcon,
-  GridFourIcon,
+  FunnelSimpleIcon,
   ImageIcon,
-  ListBulletsIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import {
-  type ChangeEvent,
-  type DragEvent,
-  type FormEvent,
   type ReactNode,
   useCallback,
   useEffect,
@@ -39,18 +36,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Drawer,
   DrawerContent,
@@ -58,6 +46,7 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
+  DrawerTrigger,
 } from "@/components/ui/drawer";
 import {
   DropdownMenu,
@@ -72,8 +61,15 @@ import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
+import toolbarStyles from "@/features/dashboard/shared/components/collection-toolbar.module.css";
+import {
+  DashboardSort,
+  DashboardViewToggle,
+} from "@/features/dashboard/shared/components/filter-controls";
+import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
-import { uploadFile as uploadImageFile } from "@/features/dashboard/shared/utils/upload";
+import type { UploadResponse } from "@/features/dashboard/shared/utils/upload";
+import { getPageItems } from "@/lib/archive-pagination";
 import {
   getDefaultItemsPerPage,
   getItemsPerPageOptions,
@@ -84,11 +80,21 @@ import {
   actionCheckMediaUsage,
   actionDeleteMedia,
   actionDeleteMediaBatch,
-  actionRenameMedia,
   type MediaUsagePreview,
 } from "../actions";
+import { MEDIA_BATCH_LIMIT } from "../constants";
+import { getMediaDisplayFilename } from "../filename";
+import {
+  type MediaSortDirection,
+  type MediaSortField,
+  sortMediaItems,
+} from "../sorting";
+import { useMediaUploadQueue } from "../use-media-upload-queue";
+import { MediaFilename } from "./media-filename";
+import { MediaRenameDialog } from "./media-rename-dialog";
+import { MediaUploadPanel } from "./media-upload-queue";
 
-type MediaItem = {
+export type MediaItem = {
   id: string;
   url: string;
   publicId: string;
@@ -99,7 +105,7 @@ type MediaItem = {
   height: number | null;
   aspectRatio: number | null;
   blurDataUrl: string | null;
-  createdAt: Date;
+  createdAt: Date | string;
 };
 
 type MediaLibraryClientProps = {
@@ -107,16 +113,11 @@ type MediaLibraryClientProps = {
 };
 
 type ViewMode = "grid" | "list";
-type SortMode = "newest" | "oldest" | "largest" | "smallest" | "name";
-
-const MAX_SIZE = 10 * 1024 * 1024;
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-const sortOptions: Array<{ value: SortMode; label: string }> = [
-  { value: "newest", label: "Newest" },
-  { value: "oldest", label: "Oldest" },
-  { value: "largest", label: "Largest" },
-  { value: "smallest", label: "Smallest" },
-  { value: "name", label: "Name A-Z" },
+const sortOptions: Array<{ value: MediaSortField; label: string }> = [
+  { value: "date", label: "Upload date" },
+  { value: "size", label: "File size" },
+  { value: "name", label: "File name" },
+  { value: "format", label: "Format" },
 ];
 
 function formatBytes(bytes: number): string {
@@ -168,28 +169,39 @@ function getMediaDownloadUrl(item: MediaItem): string {
   return `/api/media/${item.id}/download`;
 }
 
-function FormatBadge({ format }: { format: string }) {
-  const normalizedFormat = format.toLowerCase();
-
-  return (
-    <Badge
-      variant="secondary"
-      className={cn(
-        "text-[10px]",
-        normalizedFormat === "jpg" || normalizedFormat === "jpeg"
-          ? "bg-sky-500/12 text-sky-300"
-          : normalizedFormat === "png"
-            ? "bg-emerald-500/12 text-emerald-300"
-            : normalizedFormat === "webp"
-              ? "bg-fuchsia-500/12 text-fuchsia-300"
-              : normalizedFormat === "gif"
-                ? "bg-amber-500/12 text-amber-300"
-                : "bg-muted text-muted-foreground",
-      )}
-    >
-      {getFormatLabel(format)}
-    </Badge>
-  );
+async function downloadMedia(item: MediaItem) {
+  let objectUrl: string | undefined;
+  try {
+    const response = await fetch(getMediaDownloadUrl(item));
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      throw Error(data?.error ?? "Download failed. Try again.");
+    }
+    const url = URL.createObjectURL(await response.blob());
+    objectUrl = url;
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    const encoded = response.headers
+      .get("content-disposition")
+      ?.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+    anchor.download = encoded ? decodeURIComponent(encoded) : item.filename;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+  } catch (error) {
+    toast.add({
+      title:
+        error instanceof Error
+          ? error.message
+          : "Could not download this image. Try again.",
+      type: "error",
+    });
+  } finally {
+    if (objectUrl) {
+      const url = objectUrl;
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  }
 }
 
 function MediaActionsMenu({
@@ -199,6 +211,7 @@ function MediaActionsMenu({
   onRename,
   onCopy,
   onDelete,
+  overlay = false,
 }: {
   item: MediaItem;
   isPending: boolean;
@@ -206,16 +219,24 @@ function MediaActionsMenu({
   onRename: (item: MediaItem) => void;
   onCopy: (url: string) => void;
   onDelete: (item: MediaItem) => void;
+  overlay?: boolean;
 }) {
+  const triggerRef = useRef<HTMLButtonElement>(null);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
           <Button
+            ref={triggerRef}
             type="button"
             size="icon"
-            variant="ghost"
-            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
+            variant={overlay ? "secondary" : "ghost"}
+            className={cn(
+              "size-11",
+              overlay &&
+                "bg-popover/80 border-border shadow-sm hover:bg-surface-hover/90",
+            )}
+            disabled={isPending}
             aria-label={`Open actions for ${item.filename}`}
           />
         }
@@ -223,7 +244,12 @@ function MediaActionsMenu({
         <DotsThreeVerticalIcon />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuItem onClick={() => onSelect(item)}>
+        <DropdownMenuItem
+          onClick={() => {
+            triggerRef.current?.focus();
+            onSelect(item);
+          }}
+        >
           <ImageIcon data-icon="inline-start" />
           Details
         </DropdownMenuItem>
@@ -241,7 +267,7 @@ function MediaActionsMenu({
           <ArrowSquareOutIcon data-icon="inline-start" />
           View
         </DropdownMenuItem>
-        <DropdownMenuItem render={<a href={getMediaDownloadUrl(item)} />}>
+        <DropdownMenuItem onClick={() => void downloadMedia(item)}>
           <DownloadSimpleIcon data-icon="inline-start" />
           Download
         </DropdownMenuItem>
@@ -259,122 +285,6 @@ function MediaActionsMenu({
   );
 }
 
-function MediaStatCard({
-  label,
-  value,
-  description,
-  icon,
-  iconClassName,
-}: {
-  label: string;
-  value: string | number;
-  description: string;
-  icon: ReactNode;
-  iconClassName: string;
-}) {
-  return (
-    <Card className={dashboardStyles.statCard}>
-      <CardContent className={dashboardStyles.statContent}>
-        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <p className="font-heading font-bold text-xl">{value}</p>
-          <p className="text-[11px] text-muted-foreground">{label}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground/80">
-            {description}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function FilterDropdown<T extends string>({
-  label,
-  value,
-  displayValue,
-  options,
-  onValueChange,
-}: {
-  label: string;
-  value: T;
-  displayValue: string;
-  options: Array<{ value: T; label: string }>;
-  onValueChange: (value: T) => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            className="justify-between bg-input/35 px-3 rounded-2xl w-full min-w-0 h-11"
-          />
-        }
-      >
-        <span className="min-w-0 text-left">
-          <span className="block text-[10px] text-muted-foreground leading-none">
-            {label}
-          </span>
-          <span className="block mt-1 font-medium text-xs truncate">
-            {displayValue}
-          </span>
-        </span>
-        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuRadioGroup
-          value={value}
-          onValueChange={(nextValue) => onValueChange(nextValue as T)}
-        >
-          {options.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
-              {option.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function ViewToggle({
-  viewMode,
-  onViewModeChange,
-}: {
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
-}) {
-  return (
-    <div className="justify-self-end grid grid-cols-2 bg-background/35 p-1 border border-border/60 rounded-xl w-fit shrink-0">
-      <Button
-        type="button"
-        size="icon"
-        variant={viewMode === "grid" ? "default" : "ghost"}
-        className="rounded-lg size-8"
-        onClick={() => onViewModeChange("grid")}
-        aria-label="Grid view"
-        aria-pressed={viewMode === "grid"}
-      >
-        <GridFourIcon />
-      </Button>
-      <Button
-        type="button"
-        size="icon"
-        variant={viewMode === "list" ? "default" : "ghost"}
-        className="rounded-lg size-8"
-        onClick={() => onViewModeChange("list")}
-        aria-label="List view"
-        aria-pressed={viewMode === "list"}
-      >
-        <ListBulletsIcon />
-      </Button>
-    </div>
-  );
-}
-
 function MediaDetailDrawer({
   children,
   item,
@@ -384,6 +294,7 @@ function MediaDetailDrawer({
   onRename,
   onCopy,
   onDelete,
+  returnFocus,
 }: {
   children?: ReactNode;
   item: MediaItem | null;
@@ -393,6 +304,7 @@ function MediaDetailDrawer({
   onRename: (item: MediaItem) => void;
   onCopy: (url: string) => void;
   onDelete: (item: MediaItem) => void;
+  returnFocus: React.RefObject<HTMLElement | null>;
 }) {
   const aspectRatio = item ? getMediaAspectRatio(item) : 1;
   const metadata = item
@@ -416,11 +328,12 @@ function MediaDetailDrawer({
       }}
     >
       <DrawerContent
+        finalFocus={returnFocus}
         className={cn(
           "p-0 overflow-hidden",
           direction === "right"
-            ? "h-dvh before:inset-y-0! before:right-0! before:left-0! before:rounded-l-4xl! before:rounded-r-none!"
-            : "max-h-[86vh] before:inset-x-0! before:top-2! before:bottom-0! before:rounded-b-none!",
+            ? "h-dvh before:inset-y-0! before:right-0! before:left-0!"
+            : "max-h-[86vh] before:inset-x-0! before:top-2! before:bottom-0!",
         )}
       >
         <DrawerHeader className="sr-only p-0">
@@ -435,33 +348,23 @@ function MediaDetailDrawer({
           <div className="flex flex-col flex-1 min-h-0">
             <div className="flex-1 px-4 pt-7 pb-4 min-h-0 overflow-y-auto scrollbar-none">
               <div
-                className="relative bg-muted/35 border border-border rounded-2xl w-full overflow-hidden"
+                className="relative bg-muted/35 border border-border rounded-xl w-full overflow-hidden"
                 style={{ aspectRatio }}
               >
-                <Image
-                  src={item.url}
-                  alt={item.filename}
-                  fill
-                  className="object-contain"
-                  sizes={
-                    direction === "right"
-                      ? "384px"
-                      : "(max-width: 768px) 100vw, 384px"
-                  }
+                <MediaThumbnail
+                  item={item}
+                  contain
+                  sizes="(max-width: 768px) 100vw, 384px"
                 />
               </div>
 
               <h2
-                className="mt-4 font-heading font-semibold text-xl truncate leading-tight"
+                className="mt-4 font-semibold text-xl leading-tight wrap-anywhere"
                 title={item.filename}
               >
                 {item.filename}
               </h2>
-              <p className="mt-1 text-muted-foreground text-sm truncate">
-                {item.publicId}
-              </p>
-
-              <div className="gap-3 grid bg-card/50 mt-4 p-3 border border-border/70 rounded-2xl">
+              <div className="gap-3 grid mt-4 pt-4 border-border border-t">
                 {metadata.map((row) => (
                   <div
                     key={row.label}
@@ -474,6 +377,28 @@ function MediaDetailDrawer({
                   </div>
                 ))}
               </div>
+              <div className="space-y-2 mt-4">
+                <Label htmlFor={`media-url-${item.id}`}>Image URL</Label>
+                <Input
+                  id={`media-url-${item.id}`}
+                  readOnly
+                  value={item.url}
+                  onFocus={(event) => event.currentTarget.select()}
+                />
+              </div>
+              <details className="mt-4 text-sm">
+                <summary className="text-muted-foreground cursor-pointer">
+                  Technical details
+                </summary>
+                <p className="mt-2 text-xs wrap-anywhere">
+                  Asset ID: {item.publicId}
+                </p>
+                <p className="mt-1 text-muted-foreground text-xs">
+                  {item.blurDataUrl
+                    ? "Low-resolution loading placeholder available."
+                    : "No loading placeholder stored."}
+                </p>
+              </details>
             </div>
 
             <DrawerFooter className="gap-2 px-4 pb-4">
@@ -487,11 +412,9 @@ function MediaDetailDrawer({
                   Rename
                 </Button>
                 <Button
-                  role="link"
                   type="button"
                   variant="outline"
-                  render={<a href={getMediaDownloadUrl(item)} />}
-                  nativeButton={false}
+                  onClick={() => void downloadMedia(item)}
                 >
                   <DownloadSimpleIcon data-icon="inline-start" />
                   Download
@@ -519,8 +442,8 @@ function MediaDetailDrawer({
               </Button>
               <Button
                 type="button"
-                variant="destructive"
-                className="w-full"
+                variant="ghost"
+                className="w-full text-destructive"
                 disabled={isPending}
                 onClick={() => onDelete(item)}
               >
@@ -536,6 +459,52 @@ function MediaDetailDrawer({
   );
 }
 
+function MediaThumbnail({
+  item,
+  contain = false,
+  sizes = "(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw",
+}: {
+  item: MediaItem;
+  contain?: boolean;
+  sizes?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [item.url]);
+  if (failed)
+    return (
+      <div
+        className="flex justify-center items-center gap-2 h-full text-muted-foreground text-xs"
+        role="img"
+        aria-label={`Preview unavailable for ${item.filename}`}
+      >
+        <ImageIcon className="size-6" aria-hidden />
+        <span>Preview unavailable</span>
+      </div>
+    );
+  return (
+    <Image
+      src={item.url}
+      alt={item.filename}
+      fill
+      className={contain ? "object-contain" : "object-cover"}
+      sizes={sizes}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+type MediaRowProps = {
+  item: MediaItem;
+  isSelected: boolean;
+  isSelectionMode: boolean;
+  isPending: boolean;
+  onSelect: (item: MediaItem) => void;
+  onRename: (item: MediaItem) => void;
+  onToggleSelection: (item: MediaItem) => void;
+  onCopy: (url: string) => void;
+  onDelete: (item: MediaItem) => void;
+};
+
 function MediaCard({
   item,
   isSelected,
@@ -546,78 +515,45 @@ function MediaCard({
   onToggleSelection,
   onCopy,
   onDelete,
-}: {
-  item: MediaItem;
-  isSelected: boolean;
-  isSelectionMode: boolean;
-  isPending: boolean;
-  onSelect: (item: MediaItem) => void;
-  onRename: (item: MediaItem) => void;
-  onToggleSelection: (item: MediaItem) => void;
-  onCopy: (url: string) => void;
-  onDelete: (item: MediaItem) => void;
-}) {
+}: MediaRowProps) {
+  const activate = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.currentTarget.focus();
+    if (isSelectionMode) onToggleSelection(item);
+    else onSelect(item);
+  };
   return (
-    <div
+    <article
       className={cn(
-        "group relative bg-background/45 border hover:border-brand-soft/40 focus-visible:border-ring rounded-2xl focus-visible:ring-3 focus-visible:ring-ring/30 overflow-hidden transition-colors",
-        isSelectionMode ? "cursor-pointer" : "cursor-zoom-in",
-        isSelected ? "border-primary/70" : "border-border/70",
+        "group relative bg-card border hover:border-input rounded-lg min-w-0 overflow-hidden transition-colors",
+        isSelected ? "border-primary" : "border-border",
       )}
-      role="button"
-      tabIndex={0}
-      aria-pressed={isSelected}
-      onClick={() => {
-        if (isSelectionMode) {
-          onToggleSelection(item);
-          return;
-        }
-
-        onSelect(item);
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          if (isSelectionMode) {
-            onToggleSelection(item);
-            return;
-          }
-
-          onSelect(item);
-        }
-      }}
     >
       <div className="relative bg-muted/35 aspect-square overflow-hidden">
-        <Image
-          src={item.url}
-          alt={item.filename}
-          fill
-          className="object-cover"
-          sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
+        <MediaThumbnail item={item} />
+        <button
+          type="button"
+          disabled={isPending}
+          className="absolute inset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset cursor-pointer"
+          aria-label={`${isSelectionMode ? "Select" : "Preview"} ${item.filename}`}
+          aria-pressed={isSelectionMode ? isSelected : undefined}
+          onClick={activate}
         />
-        <div
-          className={cn(
-            "top-3 left-3 absolute transition-opacity",
-            isSelectionMode || isSelected
-              ? "opacity-100"
-              : "opacity-0 group-hover:opacity-100",
-          )}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={() => onToggleSelection(item)}
-            aria-label={`Select ${item.filename}`}
-            className="bg-background/80 backdrop-blur border-border/70"
-          />
-        </div>
-        <div
-          className="top-3 right-3 absolute opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity"
-          onClick={(event) => event.stopPropagation()}
-        >
+        {isSelectionMode && (
+          <div className="top-3 left-3 absolute flex justify-center items-center bg-popover border border-border rounded-md size-11">
+            <Checkbox
+              disabled={isPending}
+              className="after:-inset-x-3.5 after:-inset-y-3.5"
+              checked={isSelected}
+              onCheckedChange={() => onToggleSelection(item)}
+              aria-label={`Select ${item.filename}`}
+            />
+          </div>
+        )}
+        <div className="top-3 right-3 absolute">
           <MediaActionsMenu
             item={item}
             isPending={isPending}
+            overlay
             onSelect={onSelect}
             onRename={onRename}
             onCopy={onCopy}
@@ -625,26 +561,48 @@ function MediaCard({
           />
         </div>
       </div>
-
-      <div className="space-y-1 p-3">
-        <p className="font-medium text-xs truncate" title={item.filename}>
-          {item.filename}
-        </p>
-        <div className="flex items-center gap-1.5 min-w-0 text-[10px] text-muted-foreground">
-          <FormatBadge format={item.format} />
-          <span className="shrink-0">{formatBytes(item.size)}</span>
-          <span aria-hidden="true">·</span>
-          <span className="min-w-0 truncate">{getDimensions(item)}</span>
-          <span aria-hidden="true">·</span>
-          <span className="shrink-0">
-            {item.blurDataUrl ? "Blur ready" : "No blur"}
-          </span>
+      <div className="space-y-2 p-3">
+        <h2 className="font-sans font-semibold text-sm truncate leading-snug">
+          <button
+            type="button"
+            disabled={isPending}
+            className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring w-full min-w-0 hover:text-link text-left"
+            aria-label={getMediaDisplayFilename(item.filename, item.format)}
+            onClick={activate}
+          >
+            <MediaFilename filename={item.filename} format={item.format} />
+          </button>
+        </h2>
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0 text-muted-foreground text-xs">
+          <span>{formatBytes(item.size)}</span>
+          <span aria-hidden>·</span>
+          <span>{getDimensions(item)}</span>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
+const MEDIA_COLUMNS = "xl:grid-cols-[minmax(0,1fr)_110px_140px_68px]";
+const MEDIA_COLUMNS_SELECTED =
+  "xl:grid-cols-[44px_minmax(0,1fr)_110px_140px_68px]";
+function MediaListHeader({ selecting }: { selecting: boolean }) {
+  return (
+    <div
+      data-media-list-header
+      className={cn(
+        "hidden xl:grid border-border border-b font-medium text-muted-foreground text-xs",
+        selecting ? MEDIA_COLUMNS_SELECTED : MEDIA_COLUMNS,
+      )}
+    >
+      {selecting && <div />}
+      <div className="py-3 pr-3 pl-34">Name</div>
+      <div className="p-3">Size</div>
+      <div className="p-3">Dimensions</div>
+      <div className="p-3 text-center">Actions</div>
+    </div>
+  );
+}
 function MediaListRow({
   item,
   isSelected,
@@ -655,111 +613,80 @@ function MediaListRow({
   onToggleSelection,
   onCopy,
   onDelete,
-}: {
-  item: MediaItem;
-  isSelected: boolean;
-  isSelectionMode: boolean;
-  isPending: boolean;
-  onSelect: (item: MediaItem) => void;
-  onRename: (item: MediaItem) => void;
-  onToggleSelection: (item: MediaItem) => void;
-  onCopy: (url: string) => void;
-  onDelete: (item: MediaItem) => void;
-}) {
+}: MediaRowProps) {
   return (
     <div
       className={cn(
-        "flex flex-col xl:items-center gap-3 xl:grid hover:bg-muted/20 px-3 py-3 min-w-0 text-left transition-colors",
+        "xl:items-center grid hover:bg-muted/20 min-w-0 text-left transition-colors",
         isSelectionMode
-          ? "xl:grid-cols-[24px_minmax(0,1fr)_110px_120px_130px_92px]"
-          : "xl:grid-cols-[minmax(0,1fr)_110px_120px_130px_92px]",
+          ? "grid-cols-[44px_minmax(0,1fr)]"
+          : "grid-cols-[minmax(0,1fr)]",
+        isSelectionMode ? MEDIA_COLUMNS_SELECTED : MEDIA_COLUMNS,
         isSelected && "bg-primary/5",
       )}
-      role="button"
-      tabIndex={0}
-      aria-pressed={isSelected}
-      onClick={() => {
-        if (isSelectionMode) {
-          onToggleSelection(item);
-          return;
-        }
-
-        onSelect(item);
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          if (isSelectionMode) {
-            onToggleSelection(item);
-            return;
-          }
-
-          onSelect(item);
-        }
-      }}
     >
       {isSelectionMode && (
-        <div
-          className="flex xl:justify-center items-center"
-          onClick={(event) => event.stopPropagation()}
-        >
+        <div className="flex justify-center items-center self-stretch row-span-2 xl:row-span-1 border-border border-r">
           <Checkbox
+            disabled={isPending}
+            className="after:-inset-x-3.5 after:-inset-y-3.5"
             checked={isSelected}
             onCheckedChange={() => onToggleSelection(item)}
             aria-label={`Select ${item.filename}`}
           />
         </div>
       )}
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="relative bg-muted/35 border border-border/50 rounded-xl w-20 h-14 overflow-hidden shrink-0">
-          <Image
-            src={item.url}
-            alt={item.filename}
-            fill
-            className="object-cover"
-            sizes="80px"
-          />
+      <button
+        type="button"
+        disabled={isPending}
+        className="flex items-center gap-3 p-3 min-w-0 text-left"
+        aria-label={`${isSelectionMode ? "Select" : "Preview"} ${item.filename}`}
+        aria-pressed={isSelectionMode ? isSelected : undefined}
+        onClick={(event) => {
+          event.currentTarget.focus();
+          if (isSelectionMode) onToggleSelection(item);
+          else onSelect(item);
+        }}
+      >
+        <div
+          data-media-list-thumbnail
+          className="relative bg-muted/35 border border-border/50 rounded-xl w-28 h-16 overflow-hidden shrink-0"
+        >
+          <MediaThumbnail item={item} sizes="112px" />
         </div>
-        <div className="min-w-0">
-          <p className="font-medium text-sm truncate" title={item.filename}>
-            {item.filename}
-          </p>
-          <p className="mt-1 text-muted-foreground text-xs truncate">
-            {item.publicId}
-          </p>
-        </div>
-      </div>
-      <div className="hidden xl:block">
-        <FormatBadge format={item.format} />
-      </div>
-      <div className="hidden xl:block text-muted-foreground text-sm">
+        <MediaFilename
+          filename={item.filename}
+          format={item.format}
+          className="font-semibold text-sm"
+        />
+      </button>
+      <div className="hidden xl:block p-3 text-muted-foreground text-sm">
         {formatBytes(item.size)}
       </div>
-      <div className="hidden xl:block text-muted-foreground text-sm">
+      <div className="hidden xl:block p-3 text-muted-foreground text-sm">
         {getDimensions(item)}
       </div>
-      <div className="xl:hidden flex justify-between items-center gap-3 min-w-0">
-        <div className="flex flex-wrap items-center gap-2 min-w-0 text-muted-foreground text-xs">
-          <FormatBadge format={item.format} />
-          <span className="shrink-0">{formatBytes(item.size)}</span>
-          <span aria-hidden="true">·</span>
-          <span className="min-w-0 truncate">{getDimensions(item)}</span>
-        </div>
-        <div className="shrink-0" onClick={(event) => event.stopPropagation()}>
-          <MediaActionsMenu
-            item={item}
-            isPending={isPending}
-            onSelect={onSelect}
-            onRename={onRename}
-            onCopy={onCopy}
-            onDelete={onDelete}
-          />
-        </div>
-      </div>
       <div
-        className="hidden xl:flex justify-end xl:justify-end gap-1"
-        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          "xl:hidden flex justify-between items-center gap-3 px-3 pb-3 min-w-0",
+          isSelectionMode ? "col-start-2" : "col-start-1",
+        )}
       >
+        <div className="flex flex-wrap items-center gap-2 min-w-0 text-muted-foreground text-xs">
+          <span>{formatBytes(item.size)}</span>
+          <span aria-hidden>·</span>
+          <span>{getDimensions(item)}</span>
+        </div>
+        <MediaActionsMenu
+          item={item}
+          isPending={isPending}
+          onSelect={onSelect}
+          onRename={onRename}
+          onCopy={onCopy}
+          onDelete={onDelete}
+        />
+      </div>
+      <div className="hidden xl:flex justify-center p-3">
         <MediaActionsMenu
           item={item}
           isPending={isPending}
@@ -800,35 +727,40 @@ function MediaPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="rounded-xl size-8"
         disabled={page <= 1}
         onClick={() => onPageChange(Math.max(1, page - 1))}
         aria-label="Previous page"
       >
         <CaretLeftIcon />
       </Button>
-      {Array.from({ length: pageCount }).map((_, index) => {
-        const pageNumber = index + 1;
-
-        return (
-          <Button
-            key={pageNumber}
-            type="button"
-            size="icon"
-            variant={pageNumber === page ? "default" : "outline"}
-            className="rounded-xl size-8"
-            onClick={() => onPageChange(pageNumber)}
-            aria-current={pageNumber === page ? "page" : undefined}
-          >
-            {pageNumber}
-          </Button>
-        );
-      })}
+      <span className="md:hidden px-2 text-sm" aria-live="polite">
+        Page {page} of {pageCount}
+      </span>
+      <div className="hidden md:flex items-center gap-1">
+        {getPageItems(page, pageCount).map((value, index) =>
+          value === "ellipsis" ? (
+            <span key={`gap-${index}`} className="px-1" aria-hidden>
+              …
+            </span>
+          ) : (
+            <Button
+              key={value}
+              type="button"
+              size="icon"
+              variant={value === page ? "default" : "outline"}
+              onClick={() => onPageChange(value)}
+              aria-label={`Page ${value}`}
+              aria-current={value === page ? "page" : undefined}
+            >
+              {value}
+            </Button>
+          ),
+        )}
+      </div>
       <Button
         type="button"
         size="icon"
         variant="outline"
-        className="rounded-xl size-8"
         disabled={page >= pageCount}
         onClick={() => onPageChange(Math.min(pageCount, page + 1))}
         aria-label="Next page"
@@ -892,7 +824,7 @@ function MediaItemsPerPageDropdown({
               type="button"
               variant="outline"
               size="sm"
-              className="bg-input/35 rounded-xl"
+              aria-label="Items per page"
             />
           }
         >
@@ -905,7 +837,11 @@ function MediaItemsPerPageDropdown({
             onValueChange={(nextValue) => onValueChange(Number(nextValue))}
           >
             {options.map((option) => (
-              <DropdownMenuRadioItem key={option} value={String(option)}>
+              <DropdownMenuRadioItem
+                key={option}
+                value={String(option)}
+                closeOnClick={true}
+              >
                 {option}
               </DropdownMenuRadioItem>
             ))}
@@ -918,401 +854,207 @@ function MediaItemsPerPageDropdown({
 
 export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
   const [media, setMedia] = useState(initialMedia);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [query, setQuery] = useState("");
-  const [format, setFormat] = useState("all");
-  const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [sortMode, setSortMode] = useState<MediaSortField>("date");
+  const [sortDirection, setSortDirection] =
+    useState<MediaSortDirection>("desc");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [itemsPerPage, setItemsPerPage] = useState<number>(
     getDefaultItemsPerPage("grid"),
   );
   const [page, setPage] = useState(1);
-  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
-  const [renameTarget, setRenameTarget] = useState<MediaItem | null>(null);
-  const [renameValue, setRenameValue] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<MediaItem | null>(null);
+  const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
+  const selectedMedia =
+    media.find((item) => item.id === selectedMediaId) ?? null;
+  const [renameId, setRenameId] = useState<string | null>(null);
+  const renameTarget = media.find((item) => item.id === renameId) ?? null;
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const deleteTarget = media.find((item) => item.id === deleteId) ?? null;
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchPreview, setBatchPreview] = useState<MediaUsagePreview | null>(
     null,
   );
-  const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false);
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [actionError, setActionError] = useState<string>();
+  const [isPending, startTransition] = useTransition();
+  const actionLock = useRef(false);
+  const detailTriggerRef = useRef<HTMLElement | null>(null);
   const [drawerDirection, setDrawerDirection] = useState<"down" | "right">(
     "down",
   );
-  const [isPending, startTransition] = useTransition();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [draftSort, setDraftSort] = useState<MediaSortField>("date");
+  const [draftDirection, setDraftDirection] =
+    useState<MediaSortDirection>("desc");
+  const [draftView, setDraftView] = useState<ViewMode>("grid");
+  const filtersTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
+  const desktopSearchRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const uploadManual = useRef(false);
+  const uploaded = useCallback(
+    (data: UploadResponse) =>
+      setMedia((previous) => [
+        { ...data, createdAt: new Date() },
+        ...previous.filter((item) => item.id !== data.id),
+      ]),
+    [],
+  );
+  const queue = useMediaUploadQueue({ onUploaded: uploaded });
+  const addFiles = useRef(queue.addFiles);
+  addFiles.current = queue.addFiles;
+  const queueSize = useRef(queue.items.length);
+  queueSize.current = queue.items.length;
+  const selectedItems = media.filter((item) => selectedIds.has(item.id));
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 768px)");
-
-    const syncDrawerDirection = () => {
-      setDrawerDirection(mediaQuery.matches ? "right" : "down");
-    };
-
-    syncDrawerDirection();
-    mediaQuery.addEventListener("change", syncDrawerDirection);
-
-    return () => mediaQuery.removeEventListener("change", syncDrawerDirection);
+    const ids = new Set(media.map((item) => item.id));
+    setSelectedIds((previous) => {
+      const next = new Set([...previous].filter((id) => ids.has(id)));
+      return next.size === previous.size ? previous : next;
+    });
+  }, [media]);
+  useEffect(() => {
+    const mq = matchMedia("(min-width:768px)");
+    const sync = () => setDrawerDirection(mq.matches ? "right" : "down");
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
   }, []);
-
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const key = (event: KeyboardEvent) => {
       if (
         event.key.toLowerCase() !== "k" ||
-        !(event.ctrlKey || event.metaKey)
+        !(event.ctrlKey || event.metaKey) ||
+        selectedMediaId ||
+        renameId ||
+        deleteId ||
+        batchOpen ||
+        filtersOpen
+      )
+        return;
+      event.preventDefault();
+      const input = matchMedia("(max-width:767px)").matches
+        ? mobileSearchRef.current
+        : desktopSearchRef.current;
+      input?.focus();
+      input?.select();
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [selectedMediaId, renameId, deleteId, batchOpen, filtersOpen]);
+  useEffect(() => {
+    let depth = 0;
+    const isFiles = (event: globalThis.DragEvent) =>
+      Array.from(event.dataTransfer?.types ?? []).includes("Files");
+    const enter = (event: globalThis.DragEvent) => {
+      if (!isFiles(event)) return;
+      event.preventDefault();
+      depth++;
+      setDragging(true);
+      setUploadOpen(true);
+    };
+    const over = (event: globalThis.DragEvent) => {
+      if (!isFiles(event)) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    };
+    const leave = (event: globalThis.DragEvent) => {
+      if (!isFiles(event)) return;
+      depth = Math.max(0, depth - 1);
+      if (!depth) {
+        setDragging(false);
+        if (!uploadManual.current && !queueSize.current) setUploadOpen(false);
+      }
+    };
+    const drop = (event: globalThis.DragEvent) => {
+      if (!isFiles(event)) return;
+      event.preventDefault();
+      depth = 0;
+      setDragging(false);
+      uploadManual.current = true;
+      setUploadOpen(true);
+      addFiles.current(Array.from(event.dataTransfer?.files ?? []));
+    };
+    document.addEventListener("dragenter", enter);
+    document.addEventListener("dragover", over);
+    document.addEventListener("dragleave", leave);
+    document.addEventListener("drop", drop);
+    return () => {
+      document.removeEventListener("dragenter", enter);
+      document.removeEventListener("dragover", over);
+      document.removeEventListener("dragleave", leave);
+      document.removeEventListener("drop", drop);
+    };
+  }, []);
+  useEffect(() => {
+    if (!queue.busy) return;
+    const unload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const navigate = (event: MouseEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return;
+      const anchor =
+        event.target instanceof Element
+          ? event.target.closest("a[href]")
+          : null;
+      if (
+        !(anchor instanceof HTMLAnchorElement) ||
+        anchor.target === "_blank" ||
+        anchor.hasAttribute("download")
+      )
+        return;
+      const next = new URL(anchor.href, location.href);
+      if (
+        !["http:", "https:"].includes(next.protocol) ||
+        (next.origin === location.origin &&
+          next.pathname === location.pathname &&
+          next.search === location.search)
+      )
+        return;
+      if (
+        !window.confirm(
+          "Leave Media? Uploads may be interrupted. Completed images remain in the library.",
+        )
       ) {
-        return;
+        event.preventDefault();
+        event.stopPropagation();
       }
-
-      event.preventDefault();
-      searchInputRef.current?.focus();
-      searchInputRef.current?.select();
     };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  const uploadFile = useCallback(async (file: File) => {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      toast.add({
-        title: "Invalid file type. Use jpg, png, webp, or gif.",
-        type: "error",
-      });
-      return;
-    }
-
-    if (file.size > MAX_SIZE) {
-      toast.add({ title: "File too large. Maximum 10MB.", type: "error" });
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const data = await uploadImageFile(file);
-      setMedia((prev) => [
-        {
-          id: data.id,
-          url: data.url,
-          publicId: data.publicId,
-          filename: data.filename,
-          size: data.size,
-          format: data.format,
-          width: data.width ?? null,
-          height: data.height ?? null,
-          aspectRatio: data.aspectRatio ?? null,
-          blurDataUrl: data.blurDataUrl ?? null,
-          createdAt: new Date(),
-        },
-        ...prev,
-      ]);
-      toast.add({ title: "Image uploaded successfully", type: "success" });
-    } catch (err) {
-      toast.add({
-        title: err instanceof Error ? err.message : "Upload failed",
-        type: "error",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setIsDragging(false);
-
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length > 0) {
-        uploadFile(files[0]);
-      }
-    },
-    [uploadFile],
-  );
-
-  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const handleFileSelect = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        uploadFile(file);
-      }
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
-    },
-    [uploadFile],
-  );
-
-  const handleCopyUrl = useCallback((url: string) => {
-    navigator.clipboard.writeText(url);
-    toast.add({ title: "URL copied to clipboard", type: "success" });
-  }, []);
-
-  const scheduleOverlayOpen = useCallback((open: () => void) => {
-    const schedule =
-      typeof requestAnimationFrame === "function"
-        ? requestAnimationFrame
-        : (callback: FrameRequestCallback) => window.setTimeout(callback, 0);
-
-    schedule(open);
-  }, []);
-
-  const openMediaDetails = useCallback(
-    (item: MediaItem) => {
-      scheduleOverlayOpen(() => setSelectedMedia(item));
-    },
-    [scheduleOverlayOpen],
-  );
-
-  const openDeleteDialog = useCallback(
-    (item: MediaItem) => {
-      scheduleOverlayOpen(() => setDeleteTarget(item));
-    },
-    [scheduleOverlayOpen],
-  );
-
-  const openRenameDialog = useCallback(
-    (item: MediaItem) => {
-      scheduleOverlayOpen(() => {
-        setRenameTarget(item);
-        setRenameValue(item.filename);
-      });
-    },
-    [scheduleOverlayOpen],
-  );
-
-  const closeRenameDialog = useCallback(() => {
-    setRenameTarget(null);
-    setRenameValue("");
-  }, []);
-
-  const handleRename = useCallback(
-    (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-
-      if (!renameTarget) {
-        return;
-      }
-
-      const mediaId = renameTarget.id;
-      const nextFilename = renameValue.trim();
-
-      startTransition(async () => {
-        const result = await actionRenameMedia(mediaId, nextFilename);
-
-        if (result.success) {
-          const filename = result.data?.filename ?? nextFilename;
-
-          setMedia((prev) =>
-            prev.map((item) =>
-              item.id === mediaId ? { ...item, filename } : item,
-            ),
-          );
-          setSelectedMedia((current) =>
-            current?.id === mediaId ? { ...current, filename } : current,
-          );
-          setDeleteTarget((current) =>
-            current?.id === mediaId ? { ...current, filename } : current,
-          );
-          closeRenameDialog();
-          toast.add({ title: "Media renamed", type: "success" });
-        } else {
-          toast.add({ title: result.error, type: "error" });
-        }
-      });
-    },
-    [closeRenameDialog, renameTarget, renameValue],
-  );
-
-  const toggleMediaSelection = useCallback((item: MediaItem) => {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-
-      if (next.has(item.id)) {
-        next.delete(item.id);
-      } else {
-        next.add(item.id);
-        setIsSelectionMode(true);
-      }
-
-      if (next.size === 0) {
-        setIsSelectionMode(false);
-      }
-
-      return next;
-    });
-  }, []);
-
-  const clearSelection = useCallback(() => {
-    setSelectedIds(new Set());
-    setIsSelectionMode(false);
-    setBatchPreview(null);
-    setIsBatchDialogOpen(false);
-  }, []);
-
-  const handleBatchDeletePreview = useCallback(() => {
-    const ids = Array.from(selectedIds);
-
-    if (ids.length === 0) {
-      toast.add({ title: "Select media to delete first", type: "error" });
-      return;
-    }
-
-    startTransition(async () => {
-      const result = await actionCheckMediaUsage(ids);
-
-      if (result.success) {
-        setBatchPreview(result.data ?? { canDelete: [], blocked: [] });
-        setIsBatchDialogOpen(true);
-      } else {
-        toast.add({ title: result.error, type: "error" });
-      }
-    });
-  }, [selectedIds]);
-
-  const handleBatchDelete = useCallback(() => {
-    const deleteIds = batchPreview?.canDelete.map((item) => item.id) ?? [];
-
-    if (deleteIds.length === 0) {
-      return;
-    }
-
-    startTransition(async () => {
-      const result = await actionDeleteMediaBatch(deleteIds);
-
-      if (result.success) {
-        const deletedIds = new Set(result.data?.deletedIds ?? deleteIds);
-        setMedia((prev) => prev.filter((item) => !deletedIds.has(item.id)));
-        setSelectedIds((current) => {
-          const next = new Set(current);
-          for (const id of deletedIds) {
-            next.delete(id);
-          }
-          return next;
-        });
-        setSelectedMedia((current) =>
-          current && deletedIds.has(current.id) ? null : current,
-        );
-        setBatchPreview(null);
-        setIsBatchDialogOpen(false);
-        setIsSelectionMode(false);
-        toast.add({
-          title: `${deletedIds.size} media deleted`,
-          type: "success",
-        });
-      } else {
-        toast.add({ title: result.error, type: "error" });
-      }
-    });
-  }, [batchPreview]);
-
-  const handleDelete = useCallback(() => {
-    if (!deleteTarget) return;
-
-    const targetId = deleteTarget.id;
-    startTransition(async () => {
-      const result = await actionDeleteMedia(targetId);
-      if (result.success) {
-        setMedia((prev) => prev.filter((m) => m.id !== targetId));
-        setSelectedIds((current) => {
-          const next = new Set(current);
-          next.delete(targetId);
-          if (next.size === 0) {
-            setIsSelectionMode(false);
-          }
-          return next;
-        });
-        setSelectedMedia((current) =>
-          current?.id === targetId ? null : current,
-        );
-        toast.add({ title: "Media deleted", type: "success" });
-      } else {
-        toast.add({ title: result.error, type: "error" });
-      }
-      setDeleteTarget(null);
-    });
-  }, [deleteTarget]);
-
-  const stats = useMemo(() => {
-    const totalSize = media.reduce((sum, item) => sum + item.size, 0);
-    const optimized = media.filter(
-      (item) => item.width && item.height && item.blurDataUrl,
-    ).length;
-    const largeFiles = media.filter(
-      (item) => item.size > 2 * 1024 * 1024,
-    ).length;
-
-    return {
-      total: media.length,
-      totalSize,
-      optimized,
-      largeFiles,
+    window.addEventListener("beforeunload", unload);
+    document.addEventListener("click", navigate, true);
+    return () => {
+      window.removeEventListener("beforeunload", unload);
+      document.removeEventListener("click", navigate, true);
     };
-  }, [media]);
-
-  const formats = useMemo(
-    () =>
-      Array.from(new Set(media.map((item) => item.format.toLowerCase()))).sort(
-        (a, b) => a.localeCompare(b),
-      ),
-    [media],
-  );
+  }, [queue.busy]);
 
   const filteredMedia = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return [...media]
-      .filter((item) => {
-        if (format !== "all" && item.format.toLowerCase() !== format) {
-          return false;
-        }
-
-        if (!normalizedQuery) {
-          return true;
-        }
-
-        return [item.filename, item.publicId, item.format].some((value) =>
-          value.toLowerCase().includes(normalizedQuery),
-        );
-      })
-      .sort((a, b) => {
-        if (sortMode === "oldest") {
-          return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          );
-        }
-
-        if (sortMode === "largest") {
-          return b.size - a.size;
-        }
-
-        if (sortMode === "smallest") {
-          return a.size - b.size;
-        }
-
-        if (sortMode === "name") {
-          return a.filename.localeCompare(b.filename);
-        }
-
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      });
-  }, [format, media, query, sortMode]);
-
+    const search = query.trim().toLowerCase();
+    return sortMediaItems(
+      media.filter(
+        (item) =>
+          !search ||
+          [item.filename, item.publicId, item.format].some((value) =>
+            value.toLowerCase().includes(search),
+          ),
+      ),
+      sortMode,
+      sortDirection,
+    );
+  }, [media, query, sortMode, sortDirection]);
   const {
     items: paginatedMedia,
     pageCount,
@@ -1321,492 +1063,733 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
     lastIndex,
   } = paginateItems(filteredMedia, page, itemsPerPage);
   const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
-
-  useEffect(() => {
-    setPage(1);
-  }, [format, itemsPerPage, query, sortMode]);
-
-  const handleViewModeChange = (nextViewMode: ViewMode) => {
-    setViewMode(nextViewMode);
-    setItemsPerPage(getDefaultItemsPerPage(nextViewMode));
+  const pageSelected =
+    paginatedMedia.length > 0 &&
+    paginatedMedia.every((item) => selectedIds.has(item.id));
+  const outsideCount = selectedItems.filter(
+    (item) => !paginatedMedia.some((row) => row.id === item.id),
+  ).length;
+  const filterCount = Number(sortMode !== "date" || sortDirection !== "desc");
+  const refined = filterCount > 0 || !!query.trim();
+  useEffect(() => setPage(1), [itemsPerPage, query, sortMode, sortDirection]);
+  const changeView = (value: ViewMode) => {
+    setViewMode(value);
+    if (value !== viewMode) setItemsPerPage(getDefaultItemsPerPage(value));
   };
-
-  const handleSelectAllFiltered = useCallback(() => {
-    setIsSelectionMode(true);
-    setSelectedIds(new Set(filteredMedia.map((item) => item.id)));
-  }, [filteredMedia]);
-
-  const formatDisplay =
-    format === "all" ? "All formats" : getFormatLabel(format);
-  const sortDisplay =
-    sortOptions.find((option) => option.value === sortMode)?.label ?? "Newest";
-  const selectedCount = selectedIds.size;
-  const canDeleteCount = batchPreview?.canDelete.length ?? 0;
-  const blockedCount = batchPreview?.blocked.length ?? 0;
+  const clearFilters = () => {
+    setQuery("");
+    setSortMode("date");
+    setSortDirection("desc");
+  };
+  const openFilters = (open: boolean) => {
+    if (open) {
+      setDraftSort(sortMode);
+      setDraftDirection(sortDirection);
+      setDraftView(viewMode);
+    }
+    setFiltersOpen(open);
+  };
+  const applyFilters = () => {
+    setSortMode(draftSort);
+    setSortDirection(draftDirection);
+    changeView(draftView);
+    setFiltersOpen(false);
+  };
+  const clearSelection = () => {
+    if (actionLock.current) return;
+    setSelectedIds(new Set());
+    setIsSelectionMode(false);
+    setBatchPreview(null);
+    setBatchOpen(false);
+  };
+  const selectionLimit = () =>
+    toast.add({
+      title: `Select no more than ${MEDIA_BATCH_LIMIT} images at a time.`,
+      type: "error",
+    });
+  const toggleSelection = (item: MediaItem) => {
+    if (actionLock.current) return;
+    if (!selectedIds.has(item.id) && selectedIds.size >= MEDIA_BATCH_LIMIT) {
+      selectionLimit();
+      return;
+    }
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(item.id)) next.delete(item.id);
+      else next.add(item.id);
+      return next;
+    });
+  };
+  const togglePage = () => {
+    if (actionLock.current) return;
+    const next = new Set(selectedIds);
+    for (const item of paginatedMedia) {
+      if (pageSelected) next.delete(item.id);
+      else if (next.size < MEDIA_BATCH_LIMIT) next.add(item.id);
+    }
+    if (!pageSelected && paginatedMedia.some((item) => !next.has(item.id)))
+      selectionLimit();
+    setSelectedIds(next);
+  };
+  const openDetails = (item: MediaItem) => {
+    detailTriggerRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    requestAnimationFrame(() => setSelectedMediaId(item.id));
+  };
+  const onRename = (item: MediaItem) =>
+    requestAnimationFrame(() => setRenameId(item.id));
+  const onDelete = (item: MediaItem) => {
+    setActionError(undefined);
+    requestAnimationFrame(() => setDeleteId(item.id));
+  };
+  const copy = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.add({ title: "Image URL copied.", type: "success" });
+    } catch {
+      setSelectedMediaId(media.find((item) => item.url === url)?.id ?? null);
+      toast.add({
+        title:
+          "Could not copy the URL. Select Image URL in the details to copy it manually.",
+        type: "error",
+      });
+    }
+  };
+  const checkUsage = () => {
+    if (actionLock.current || !selectedItems.length) return;
+    const ids = selectedItems.map((item) => item.id);
+    actionLock.current = true;
+    setActionError(undefined);
+    startTransition(async () => {
+      try {
+        const result = await actionCheckMediaUsage(ids);
+        if (!result.success) {
+          toast.add({ title: result.error, type: "error" });
+          return;
+        }
+        setBatchPreview(result.data ?? { canDelete: [], blocked: [] });
+        setBatchOpen(true);
+      } catch {
+        toast.add({
+          title:
+            "Could not check image usage. Your selection is kept; try again.",
+          type: "error",
+        });
+      } finally {
+        actionLock.current = false;
+      }
+    });
+  };
+  const removeRows = (ids: string[]) => {
+    const removed = new Set(ids);
+    setMedia((previous) => previous.filter((item) => !removed.has(item.id)));
+    setSelectedIds(
+      (previous) => new Set([...previous].filter((id) => !removed.has(id))),
+    );
+    if (selectedMediaId && removed.has(selectedMediaId))
+      setSelectedMediaId(null);
+  };
+  const confirmBatch = () => {
+    const ids = batchPreview?.canDelete.map((item) => item.id) ?? [];
+    if (actionLock.current || !ids.length) return;
+    actionLock.current = true;
+    setActionError(undefined);
+    startTransition(async () => {
+      try {
+        const result = await actionDeleteMediaBatch(ids);
+        if (!result.success) {
+          setActionError(result.error);
+          return;
+        }
+        const deleted = result.data?.deletedIds ?? [];
+        removeRows(deleted);
+        const failed = result.data?.failedItems ?? [];
+        if (failed.length) {
+          setActionError(
+            `${deleted.length} ${deleted.length === 1 ? "image" : "images"} deleted. Could not delete ${failed.map((item) => `${item.filename}: ${item.error}`).join("; ")}. Retry the remaining images.`,
+          );
+          const failedIds = new Set(failed.map((item) => item.id));
+          setBatchPreview((previous) =>
+            previous
+              ? {
+                  ...previous,
+                  canDelete: previous.canDelete.filter((item) =>
+                    failedIds.has(item.id),
+                  ),
+                }
+              : null,
+          );
+        } else {
+          setBatchOpen(false);
+          setBatchPreview(null);
+          setIsSelectionMode(
+            selectedItems.some((item) => !deleted.includes(item.id)),
+          );
+          toast.add({
+            title: `${deleted.length} ${deleted.length === 1 ? "image" : "images"} deleted.`,
+            type: "success",
+          });
+        }
+      } catch {
+        setActionError(
+          "Could not delete these images. Your selection is kept; try again.",
+        );
+      } finally {
+        actionLock.current = false;
+      }
+    });
+  };
+  const confirmSingle = () => {
+    if (!deleteTarget || actionLock.current) return;
+    const id = deleteTarget.id;
+    actionLock.current = true;
+    setActionError(undefined);
+    startTransition(async () => {
+      try {
+        const result = await actionDeleteMedia(id);
+        if (!result.success) {
+          setActionError(result.error);
+          return;
+        }
+        removeRows([id]);
+        setDeleteId(null);
+        toast.add({ title: "Image deleted.", type: "success" });
+      } catch {
+        setActionError("Could not delete this image. Try again.");
+      } finally {
+        actionLock.current = false;
+      }
+    });
+  };
+  const browse = () => {
+    uploadManual.current = true;
+    setUploadOpen(true);
+    inputRef.current?.click();
+  };
+  const renderFilters = (mobile = false) => (
+    <DashboardSort
+      value={mobile ? draftSort : sortMode}
+      options={sortOptions}
+      onValueChange={(value) =>
+        mobile ? setDraftSort(value) : setSortMode(value)
+      }
+      direction={mobile ? draftDirection : sortDirection}
+      onDirectionChange={mobile ? setDraftDirection : setSortDirection}
+    />
+  );
+  const rowProps = (item: MediaItem) => ({
+    item,
+    isSelected: selectedIds.has(item.id),
+    isSelectionMode,
+    isPending,
+    onSelect: openDetails,
+    onRename,
+    onToggleSelection: toggleSelection,
+    onCopy: copy,
+    onDelete,
+  });
 
   return (
-    <div className={dashboardStyles.page}>
-      <div className="flex justify-between items-start gap-4">
-        <div className="min-w-0">
-          <h1 className="font-heading font-bold text-3xl">Media Library</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
-            Upload, inspect, copy, and manage image assets used across Storylio.
-          </p>
-        </div>
-        <Button
-          onClick={() => inputRef.current?.click()}
-          disabled={isUploading}
-          size="icon"
-          className="md:px-4 rounded-full md:rounded-3xl md:w-auto md:h-9 size-10 shrink-0"
-        >
-          <CloudArrowUpIcon data-icon="inline-start" />
-          <span className="sr-only md:not-sr-only">Upload</span>
-        </Button>
-      </div>
-
-      <div className={dashboardStyles.statGrid}>
-        <MediaStatCard
-          label="Total Images"
-          value={stats.total}
-          description="Stored in Cloudinary"
-          icon={<ImageIcon />}
-          iconClassName="bg-sky-500/12 text-sky-300"
-        />
-        <MediaStatCard
-          label="Storage Used"
-          value={formatBytes(stats.totalSize)}
-          description="Original uploaded size"
-          icon={<CloudArrowUpIcon />}
-          iconClassName="bg-emerald-500/12 text-emerald-300"
-        />
-        <MediaStatCard
-          label="Optimized Metadata"
-          value={`${stats.optimized}/${stats.total}`}
-          description="Dimensions and blur ready"
-          icon={<CopyIcon />}
-          iconClassName="bg-fuchsia-500/12 text-fuchsia-300"
-        />
-        <MediaStatCard
-          label="Large Files"
-          value={stats.largeFiles}
-          description="Larger than 2MB"
-          icon={<DownloadSimpleIcon />}
-          iconClassName="bg-amber-500/12 text-amber-300"
-        />
-      </div>
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        className="hidden"
-        onChange={handleFileSelect}
-        disabled={isUploading}
-      />
-
-      <Card className={dashboardStyles.toolbarCard}>
-        <CardContent className={dashboardStyles.toolbarContent}>
-          <div className="xl:items-center gap-3 grid xl:grid-cols-[minmax(240px,1fr)_auto]">
-            <div className="relative min-w-0">
-              <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
-              <Input
-                ref={searchInputRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search media..."
-                className="bg-input/45 pr-14 pl-9 rounded-2xl h-11"
-                aria-label="Search media"
-              />
-              <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
-                ⌘ K
-              </Kbd>
-            </div>
-            <div className="items-center gap-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] min-w-0">
-              <div className="min-w-0">
-                <FilterDropdown
-                  label="Format"
-                  value={format}
-                  displayValue={formatDisplay}
-                  options={[
-                    { value: "all", label: "All formats" },
-                    ...formats.map((itemFormat) => ({
-                      value: itemFormat,
-                      label: getFormatLabel(itemFormat),
-                    })),
-                  ]}
-                  onValueChange={setFormat}
-                />
-              </div>
-              <div className="min-w-0">
-                <FilterDropdown
-                  label="Sort by"
-                  value={sortMode}
-                  displayValue={sortDisplay}
-                  options={sortOptions}
-                  onValueChange={setSortMode}
-                />
-              </div>
-              <ViewToggle
-                viewMode={viewMode}
-                onViewModeChange={handleViewModeChange}
-              />
-            </div>
+    <Drawer
+      open={filtersOpen}
+      onOpenChange={openFilters}
+      swipeDirection="down"
+      showSwipeHandle
+    >
+      <div className={dashboardStyles.page}>
+        <div className={dashboardStyles.header}>
+          <div className="min-w-0">
+            <h1 className="font-heading font-bold text-3xl">Media Library</h1>
+            <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
+              Upload, inspect, and manage images used across Storylio.
+            </p>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card className={dashboardStyles.toolbarCard}>
-        <CardContent className={dashboardStyles.toolbarContent}>
-          <div
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onClick={() => !isUploading && inputRef.current?.click()}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                if (!isUploading) inputRef.current?.click();
+          <Button type="button" onClick={browse} className="shrink-0">
+            <CloudArrowUpIcon data-icon="inline-start" />
+            Upload
+          </Button>
+        </div>
+        <DashboardSummary
+          items={[
+            { label: "Images", value: media.length },
+            {
+              label: "Storage",
+              value: formatBytes(
+                media.reduce((sum, item) => sum + item.size, 0),
+              ),
+            },
+          ]}
+        />
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="hidden"
+          aria-label="Choose images to upload"
+          onChange={(event) => {
+            queue.addFiles(Array.from(event.currentTarget.files ?? []));
+            event.currentTarget.value = "";
+          }}
+        />
+        <Card className={dashboardStyles.toolbarCard}>
+          <CardContent
+            className={cn(
+              dashboardStyles.toolbarContent,
+              "[&_input]:min-h-11 [&_button]:min-h-11",
+            )}
+          >
+            <div className={cn("md:hidden", toolbarStyles.mobileToolbar)}>
+              <div className={toolbarStyles.mobileRow}>
+                <div className={toolbarStyles.mobileSearch}>
+                  <MagnifyingGlassIcon
+                    aria-hidden
+                    className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none"
+                  />
+                  <Input
+                    ref={mobileSearchRef}
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search..."
+                    aria-label="Search media"
+                    className="pr-3 pl-9"
+                  />
+                </div>
+                <DrawerTrigger
+                  render={
+                    <Button
+                      ref={filtersTriggerRef}
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      className="relative p-0 size-11"
+                      aria-label={
+                        filterCount ? `Filters (${filterCount})` : "Filters"
+                      }
+                      title="Filters"
+                    />
+                  }
+                >
+                  <FunnelSimpleIcon aria-hidden />
+                  {filterCount > 0 && (
+                    <span
+                      aria-hidden
+                      className="-top-1 -right-1 absolute bg-primary px-1 rounded-full min-w-4 h-4 text-primary-foreground text-xs"
+                    >
+                      {filterCount}
+                    </span>
+                  )}
+                </DrawerTrigger>
+                <Button
+                  type="button"
+                  variant={isSelectionMode ? "secondary" : "outline"}
+                  size="icon"
+                  className="p-0 size-11"
+                  disabled={isPending}
+                  aria-label={
+                    isSelectionMode ? "Exit selection mode" : "Select media"
+                  }
+                  aria-pressed={isSelectionMode}
+                  onClick={() =>
+                    isSelectionMode
+                      ? clearSelection()
+                      : setIsSelectionMode(true)
+                  }
+                >
+                  <CheckSquareIcon aria-hidden />
+                </Button>
+              </div>
+            </div>
+            <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(180px,1fr)_240px_auto] min-w-0">
+              <div className="flex flex-col gap-1.5 md:col-span-2 xl:col-span-1 min-w-0">
+                <span className="text-muted-foreground text-xs">Search</span>
+                <div className="relative">
+                  <MagnifyingGlassIcon
+                    aria-hidden
+                    className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none"
+                  />
+                  <Input
+                    ref={desktopSearchRef}
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search images..."
+                    aria-label="Search media"
+                    className="pr-14 pl-9"
+                  />
+                  <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
+                    ⌘ K
+                  </Kbd>
+                </div>
+              </div>
+              {renderFilters()}
+              <div className="flex items-center gap-2">
+                <DashboardViewToggle
+                  value={viewMode}
+                  onValueChange={changeView}
+                />
+                <Button
+                  type="button"
+                  variant={isSelectionMode ? "secondary" : "outline"}
+                  disabled={isPending}
+                  onClick={() =>
+                    isSelectionMode
+                      ? clearSelection()
+                      : setIsSelectionMode(true)
+                  }
+                >
+                  {isSelectionMode ? "Cancel" : "Select media"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        {uploadOpen && (
+          <MediaUploadPanel
+            queue={queue}
+            onBrowse={browse}
+            dragging={dragging}
+            onClose={() => {
+              if (!queue.busy) {
+                setUploadOpen(false);
+                uploadManual.current = false;
               }
             }}
-            className={cn(
-              "hidden md:flex flex-col justify-center items-center gap-2 mb-4 p-5 border border-dashed rounded-2xl transition-all duration-200 cursor-pointer",
-              isDragging
-                ? "border-primary bg-primary/5 shadow-[0_0_24px_-4px] shadow-primary/20"
-                : "border-border hover:border-primary/50 hover:bg-muted/20",
-              isUploading && "pointer-events-none opacity-50",
-            )}
-            role="button"
-            tabIndex={0}
+            onViewMedia={(id) => {
+              detailTriggerRef.current =
+                document.activeElement instanceof HTMLElement
+                  ? document.activeElement
+                  : null;
+              setSelectedMediaId(id);
+            }}
+          />
+        )}
+        {refined && (
+          <div
+            className="flex flex-wrap items-center gap-3 text-muted-foreground text-sm"
+            role="status"
           >
-            {isUploading ? (
-              <>
-                <CloudArrowUpIcon className="size-8 text-primary animate-pulse" />
-                <p className="text-muted-foreground text-sm">Uploading...</p>
-              </>
-            ) : (
-              <>
-                <ImageIcon className="size-8 text-muted-foreground" />
-                <div className="text-center">
-                  <p className="font-medium text-sm">
-                    Drop an image here or click to upload
-                  </p>
-                  <p className="mt-1 text-muted-foreground text-xs">
-                    JPG, PNG, WebP, GIF — max 10MB
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-
-          {media.length > 0 && (
-            <div className="flex md:flex-row flex-col md:justify-between md:items-center gap-3 bg-background/35 mb-4 p-3 border border-border/70 rounded-2xl">
-              <div className="min-w-0">
-                <p className="font-medium text-sm">
-                  {isSelectionMode
-                    ? `${selectedCount} selected`
-                    : "Batch actions"}
-                </p>
-                <p className="mt-0.5 text-muted-foreground text-xs">
-                  Select media first. Delete checks usage before removing files.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {isSelectionMode ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSelectAllFiltered}
-                      disabled={filteredMedia.length === 0 || isPending}
-                    >
-                      Select all
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={clearSelection}
-                      disabled={isPending}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleBatchDeletePreview}
-                      disabled={selectedCount === 0 || isPending}
-                    >
-                      Delete selected
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsSelectionMode(true)}
-                    disabled={filteredMedia.length === 0}
-                  >
-                    Select media
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {media.length === 0 ? (
-            <div className={dashboardStyles.emptyState}>
-              <ImageIcon className="size-16 text-muted-foreground/40" />
-              <p className="font-medium">No media uploaded yet</p>
-              <p className="text-muted-foreground text-sm">
-                Upload your first image to get started.
-              </p>
-            </div>
-          ) : filteredMedia.length === 0 ? (
-            <div className={dashboardStyles.emptyState}>
-              <MagnifyingGlassIcon className="size-12 text-muted-foreground/50" />
-              <p className="font-medium">No media found</p>
-              <p className="text-muted-foreground text-sm">
-                Adjust search or format filters.
-              </p>
-            </div>
-          ) : viewMode === "grid" ? (
-            <div className="gap-4 grid sm:grid-cols-2 xl:grid-cols-4">
-              {paginatedMedia.map((item) => (
-                <MediaCard
-                  key={item.id}
-                  item={item}
-                  isSelected={selectedIds.has(item.id)}
-                  isSelectionMode={isSelectionMode}
-                  isPending={isPending}
-                  onSelect={openMediaDetails}
-                  onRename={openRenameDialog}
-                  onToggleSelection={toggleMediaSelection}
-                  onCopy={handleCopyUrl}
-                  onDelete={openDeleteDialog}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className={dashboardStyles.listSurface}>
-              <div
-                className={cn(
-                  "hidden xl:grid",
-                  isSelectionMode
-                    ? "grid-cols-[24px_minmax(0,1fr)_110px_120px_130px_92px]"
-                    : "grid-cols-[minmax(0,1fr)_110px_120px_130px_92px]",
-                  dashboardStyles.listHeader,
-                )}
-              >
-                {isSelectionMode && <div />}
-                <div>Name</div>
-                <div>Type</div>
-                <div>Size</div>
-                <div>Dimensions</div>
-                <div className="text-right">Actions</div>
-              </div>
-              <div className={dashboardStyles.listRows}>
-                {paginatedMedia.map((item) => (
-                  <MediaListRow
-                    key={item.id}
-                    item={item}
-                    isSelected={selectedIds.has(item.id)}
-                    isSelectionMode={isSelectionMode}
-                    isPending={isPending}
-                    onSelect={openMediaDetails}
-                    onRename={openRenameDialog}
-                    onToggleSelection={toggleMediaSelection}
-                    onCopy={handleCopyUrl}
-                    onDelete={openDeleteDialog}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {filteredMedia.length > 0 && (
-            <MediaPagination
-              firstIndex={firstIndex}
-              lastIndex={lastIndex}
-              total={filteredMedia.length}
-              page={currentPage}
-              pageCount={pageCount}
-              itemsPerPage={itemsPerPage}
-              itemsPerPageOptions={itemsPerPageOptions}
-              onPageChange={setPage}
-              onItemsPerPageChange={setItemsPerPage}
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      <MediaDetailDrawer
-        item={selectedMedia}
-        direction={drawerDirection}
-        isPending={isPending}
-        onClose={() => setSelectedMedia(null)}
-        onRename={openRenameDialog}
-        onCopy={handleCopyUrl}
-        onDelete={openDeleteDialog}
-      >
-        <Dialog
-          open={!!renameTarget}
-          onOpenChange={(open) => {
-            if (!open) {
-              closeRenameDialog();
-            }
-          }}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Rename media</DialogTitle>
-              <DialogDescription>
-                Update the library file name. This does not rename the
-                Cloudinary asset or change the image URL.
-              </DialogDescription>
-            </DialogHeader>
-            <form
-              id="media-rename-form"
-              className="space-y-2"
-              onSubmit={handleRename}
+            <span>
+              {filteredMedia.length}{" "}
+              {filteredMedia.length === 1 ? "image" : "images"} found
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="link"
+              className="px-0"
+              onClick={clearFilters}
             >
-              <Label htmlFor="media-filename">File name</Label>
-              <Input
-                id="media-filename"
-                value={renameValue}
-                onChange={(event) => setRenameValue(event.target.value)}
-                maxLength={160}
-                autoFocus
-              />
-            </form>
-            <DialogFooter>
+              Clear filters and search
+            </Button>
+          </div>
+        )}
+        {isSelectionMode && (
+          <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-3 bg-card p-3 border border-border rounded-lg">
+            <div className="min-w-0">
+              <p className="font-medium text-sm">
+                {selectedItems.length} selected
+              </p>
+              <p className="text-muted-foreground text-xs">
+                Up to {MEDIA_BATCH_LIMIT} images per batch.{" "}
+                {outsideCount > 0 &&
+                  `${outsideCount} selected outside this page.`}
+              </p>
+              {selectedItems.length > 0 && (
+                <details className="mt-2 text-sm">
+                  <summary className="cursor-pointer">
+                    Review selected images
+                  </summary>
+                  <ul
+                    aria-label="Selected images"
+                    className="space-y-1 mt-2 max-h-40 overflow-y-auto"
+                  >
+                    {selectedItems.map((item) => (
+                      <li key={item.id} className="wrap-anywhere">
+                        {item.filename}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
+                size="sm"
                 variant="outline"
-                onClick={closeRenameDialog}
-                disabled={isPending}
+                disabled={isPending || !paginatedMedia.length}
+                onClick={togglePage}
               >
-                Cancel
+                {pageSelected ? "Deselect page" : "Select page"}
               </Button>
               <Button
-                type="submit"
-                form="media-rename-form"
-                disabled={isPending || renameValue.trim().length === 0}
-              >
-                {isPending ? "Saving..." : "Save name"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <AlertDialog
-          open={isBatchDialogOpen}
-          onOpenChange={(open: boolean) => {
-            setIsBatchDialogOpen(open);
-            if (!open) {
-              setBatchPreview(null);
-            }
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete selected media?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Storylio checked where each selected image is used. Media still
-                referenced by content will be skipped until those references are
-                removed.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-
-            {batchPreview && (
-              <div className="space-y-4">
-                <div className="gap-3 grid grid-cols-2">
-                  <div className="bg-emerald-500/10 p-3 border border-emerald-500/20 rounded-2xl">
-                    <p className="font-heading font-bold text-emerald-300 text-2xl">
-                      {canDeleteCount}
-                    </p>
-                    <p className="text-emerald-100/80 text-xs">Can delete</p>
-                  </div>
-                  <div className="bg-amber-500/10 p-3 border border-amber-500/20 rounded-2xl">
-                    <p className="font-heading font-bold text-amber-300 text-2xl">
-                      {blockedCount}
-                    </p>
-                    <p className="text-amber-100/80 text-xs">Still in use</p>
-                  </div>
-                </div>
-
-                {batchPreview.blocked.length > 0 && (
-                  <div className="space-y-2 bg-background/35 p-3 border border-border/70 rounded-2xl max-h-48 overflow-y-auto scrollbar-none">
-                    {batchPreview.blocked.map((item) => (
-                      <div key={item.id} className="min-w-0 text-sm">
-                        <p
-                          className="font-medium truncate"
-                          title={item.filename}
-                        >
-                          {item.filename}
-                        </p>
-                        <p className="mt-1 text-muted-foreground text-xs">
-                          Used by {formatReferenceSummary(item.references)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleBatchDelete}
-                disabled={isPending || canDeleteCount === 0}
-                variant="destructive"
-              >
-                {isPending
-                  ? "Deleting..."
-                  : canDeleteCount > 0
-                    ? `Delete ${canDeleteCount} media`
-                    : "Nothing to delete"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog
-          open={!!deleteTarget}
-          onOpenChange={(open: boolean) => {
-            if (!open) setDeleteTarget(null);
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete media?</AlertDialogTitle>
-              <AlertDialogDescription>
-                If this image is not used by CMS content, this will permanently
-                delete{" "}
-                <span className="font-medium text-foreground">
-                  {deleteTarget?.filename}
-                </span>{" "}
-                from Cloudinary and the database. Images still in use cannot be
-                deleted.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
+                type="button"
+                size="sm"
+                variant="outline"
                 disabled={isPending}
-                variant="destructive"
+                onClick={clearSelection}
               >
-                {isPending ? "Deleting..." : "Delete"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </MediaDetailDrawer>
-    </div>
+                Clear selection
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                disabled={isPending || !selectedItems.length}
+                onClick={checkUsage}
+              >
+                {isPending ? "Checking..." : "Review deletion"}
+              </Button>
+            </div>
+          </div>
+        )}
+        {!filteredMedia.length ? (
+          <div className={dashboardStyles.emptyState}>
+            <ImageIcon
+              aria-hidden
+              className="size-12 text-muted-foreground/50"
+            />
+            <div>
+              <p className="font-medium">
+                {media.length
+                  ? "No images match these filters"
+                  : "No media yet"}
+              </p>
+              <p className="mt-1 text-muted-foreground text-sm">
+                {media.length
+                  ? "Clear filters or try another search."
+                  : "Upload your first images to get started."}
+              </p>
+            </div>
+            {media.length ? (
+              <Button type="button" variant="outline" onClick={clearFilters}>
+                Clear filters and search
+              </Button>
+            ) : (
+              <Button type="button" onClick={browse}>
+                Upload images
+              </Button>
+            )}
+          </div>
+        ) : viewMode === "grid" ? (
+          <div className={dashboardStyles.gridCards}>
+            {paginatedMedia.map((item) => (
+              <MediaCard key={item.id} {...rowProps(item)} />
+            ))}
+          </div>
+        ) : (
+          <div className={dashboardStyles.listSurface}>
+            <MediaListHeader selecting={isSelectionMode} />
+            <div className={dashboardStyles.listRows}>
+              {paginatedMedia.map((item) => (
+                <MediaListRow key={item.id} {...rowProps(item)} />
+              ))}
+            </div>
+          </div>
+        )}
+        {filteredMedia.length > 0 && (
+          <MediaPagination
+            firstIndex={firstIndex}
+            lastIndex={lastIndex}
+            total={filteredMedia.length}
+            page={currentPage}
+            pageCount={pageCount}
+            itemsPerPage={itemsPerPage}
+            itemsPerPageOptions={itemsPerPageOptions}
+            onPageChange={setPage}
+            onItemsPerPageChange={setItemsPerPage}
+          />
+        )}
+        <MediaDetailDrawer
+          item={selectedMedia}
+          returnFocus={detailTriggerRef}
+          direction={drawerDirection}
+          isPending={isPending}
+          onClose={() => setSelectedMediaId(null)}
+          onRename={onRename}
+          onCopy={copy}
+          onDelete={onDelete}
+        >
+          <MediaRenameDialog
+            item={renameTarget}
+            onClose={() => setRenameId(null)}
+            onRenamed={(data) => {
+              setMedia((previous) =>
+                previous.map((item) =>
+                  item.id === data.id
+                    ? { ...item, filename: data.filename }
+                    : item,
+                ),
+              );
+              setRenameId(null);
+              toast.add({ title: "Image renamed.", type: "success" });
+            }}
+          />
+          <AlertDialog
+            open={!!deleteTarget}
+            onOpenChange={(open, details) => {
+              if (!open) {
+                if (actionLock.current) {
+                  details.cancel();
+                  return;
+                }
+                setDeleteId(null);
+              }
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete media?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Permanently delete {deleteTarget?.filename}? Images still used
+                  by content are protected. This cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              {actionError && (
+                <p
+                  role="alert"
+                  className="text-destructive text-sm wrap-anywhere"
+                >
+                  {actionError}
+                </p>
+              )}
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isPending}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  disabled={isPending}
+                  onClick={confirmSingle}
+                >
+                  {isPending ? "Deleting..." : "Delete image"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <AlertDialog
+            open={batchOpen}
+            onOpenChange={(open, details) => {
+              if (!open) {
+                if (actionLock.current) {
+                  details.cancel();
+                  return;
+                }
+                setBatchOpen(false);
+                setBatchPreview(null);
+              }
+            }}
+          >
+            <AlertDialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete selected media?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Review the images below. Images still in use are protected;
+                  references are checked again before deletion.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              {batchPreview && (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold text-sm">
+                      Can delete ({batchPreview.canDelete.length})
+                    </h3>
+                    <ul
+                      aria-label="Images to delete"
+                      className="space-y-1 mt-2 max-h-40 overflow-y-auto text-sm"
+                    >
+                      {batchPreview.canDelete.map((item) => (
+                        <li key={item.id} className="wrap-anywhere">
+                          {item.filename}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {batchPreview.blocked.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-sm">
+                        Still in use ({batchPreview.blocked.length})
+                      </h3>
+                      <ul
+                        aria-label="Protected images"
+                        className="space-y-2 mt-2 max-h-40 overflow-y-auto text-sm"
+                      >
+                        {batchPreview.blocked.map((item) => (
+                          <li key={item.id} className="wrap-anywhere">
+                            {item.filename}
+                            <p className="text-muted-foreground text-xs">
+                              Used by {formatReferenceSummary(item.references)}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+              {actionError && (
+                <p
+                  role="alert"
+                  className="text-destructive text-sm wrap-anywhere"
+                >
+                  {actionError}
+                </p>
+              )}
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isPending}>
+                  Close
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  disabled={isPending || !batchPreview?.canDelete.length}
+                  onClick={confirmBatch}
+                >
+                  {isPending
+                    ? "Deleting..."
+                    : `Delete ${batchPreview?.canDelete.length ?? 0} ${batchPreview?.canDelete.length === 1 ? "image" : "images"}`}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </MediaDetailDrawer>
+      </div>
+      <DrawerContent finalFocus={filtersTriggerRef} className="p-0">
+        <DrawerHeader>
+          <DrawerTitle>Filters</DrawerTitle>
+          <DrawerDescription>
+            Choose how to order your images.
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="gap-4 grid px-4 pb-2 max-h-[52dvh] overflow-y-auto">
+          {renderFilters(true)}
+          <div className="space-y-1.5">
+            <p className="text-muted-foreground text-xs">View</p>
+            <DashboardViewToggle
+              value={draftView}
+              onValueChange={setDraftView}
+            />
+          </div>
+        </div>
+        <DrawerFooter>
+          <div className="gap-2 grid grid-cols-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setDraftSort("date");
+                setDraftDirection("desc");
+              }}
+            >
+              Reset filters
+            </Button>
+            <Button type="button" onClick={applyFilters}>
+              Apply filters
+            </Button>
+          </div>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }

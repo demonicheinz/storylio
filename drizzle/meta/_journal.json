@@ -22,6 +22,20 @@
       "when": 1793091840144,
       "tag": "0002_auth_rate_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793153685299,
+      "tag": "0003_auth_two_factor",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793181020908,
+      "tag": "0004_retire_testimonials",
+      "breakpoints": true
     }
   ]
 }

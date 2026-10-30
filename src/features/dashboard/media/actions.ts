@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, inArray, like } from "drizzle-orm";
+import { eq, inArray, like, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/action-result";
 import { actionError, actionSuccess } from "@/lib/action-result";
@@ -9,15 +9,18 @@ import { deleteFromCloudinary } from "@/lib/cloudinary";
 import { db } from "@/lib/db";
 import { containsPattern } from "@/lib/db/query-utils";
 import {
+  aboutContent,
   galleryItem,
   homeSection,
   media as mediaTable,
   post,
   project,
   projectScreenshot,
-  testimonial,
   user,
 } from "@/lib/db/schema";
+import { MEDIA_BATCH_LIMIT } from "./constants";
+
+const MEDIA_CONCURRENCY = 3;
 
 export type MediaUsageItem = {
   id: string;
@@ -30,48 +33,82 @@ export type MediaUsagePreview = {
   blocked: MediaUsageItem[];
 };
 
-async function getMediaReferences(url: string) {
-  const [
-    profiles,
-    postCovers,
-    postContent,
-    projectCovers,
-    projectThumbnails,
-    projectOgImages,
-    projectContent,
-    projectScreenshots,
-    galleryItems,
-    testimonials,
-    homeSections,
-  ] = await Promise.all([
-    db.$count(user, eq(user.image, url)),
-    db.$count(post, eq(post.coverImage, url)),
-    db.$count(post, like(post.content, containsPattern(url))),
-    db.$count(project, eq(project.coverImage, url)),
-    db.$count(project, eq(project.thumbnailImageUrl, url)),
-    db.$count(project, eq(project.ogImageUrl, url)),
-    db.$count(project, like(project.content, containsPattern(url))),
-    db.$count(projectScreenshot, eq(projectScreenshot.imageUrl, url)),
-    db.$count(galleryItem, eq(galleryItem.imageUrl, url)),
-    db.$count(testimonial, eq(testimonial.avatar, url)),
-    db.$count(homeSection, eq(homeSection.imageUrl, url)),
-  ]);
+export type MediaBatchDeleteResult = {
+  deletedIds: string[];
+  failedItems?: Array<{ id: string; filename: string; error: string }>;
+  blocked?: MediaUsageItem[];
+};
 
-  const references: [string, number][] = [
-    ["profile", profiles],
-    ["post cover", postCovers],
-    ["post content", postContent],
-    ["project cover", projectCovers],
-    ["project thumbnail", projectThumbnails],
-    ["project OG image", projectOgImages],
-    ["project content", projectContent],
-    ["project screenshot", projectScreenshots],
-    ["gallery item", galleryItems],
-    ["testimonial avatar", testimonials],
-    ["home section", homeSections],
+async function mapMediaConcurrent<T, R>(
+  items: T[],
+  processItem: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+  await Promise.all(
+    Array.from(
+      { length: Math.min(MEDIA_CONCURRENCY, items.length) },
+      async () => {
+        while (next < items.length) {
+          const index = next++;
+          results[index] = await processItem(items[index]);
+        }
+      },
+    ),
+  );
+  return results;
+}
+
+async function getMediaReferences(url: string) {
+  const pattern = containsPattern(url);
+  const checks: Array<[string, () => PromiseLike<number>]> = [
+    ["profile", () => db.$count(user, eq(user.image, url))],
+    ["post cover", () => db.$count(post, eq(post.coverImage, url))],
+    ["post content", () => db.$count(post, like(post.content, pattern))],
+    ["project cover", () => db.$count(project, eq(project.coverImage, url))],
+    [
+      "project thumbnail",
+      () => db.$count(project, eq(project.thumbnailImageUrl, url)),
+    ],
+    ["project OG image", () => db.$count(project, eq(project.ogImageUrl, url))],
+    [
+      "project content",
+      () => db.$count(project, like(project.content, pattern)),
+    ],
+    [
+      "project screenshot",
+      () => db.$count(projectScreenshot, eq(projectScreenshot.imageUrl, url)),
+    ],
+    [
+      "gallery item",
+      () => db.$count(galleryItem, eq(galleryItem.imageUrl, url)),
+    ],
+    [
+      "home section",
+      () => db.$count(homeSection, eq(homeSection.imageUrl, url)),
+    ],
+    [
+      "about content",
+      () =>
+        db.$count(
+          aboutContent,
+          or(
+            like(aboutContent.howIWorkEn, pattern),
+            like(aboutContent.howIWorkId, pattern),
+            like(aboutContent.whatIValueEn, pattern),
+            like(aboutContent.whatIValueId, pattern),
+          ),
+        ),
+    ],
   ];
 
-  return references.filter(([, count]) => count > 0);
+  // One query per active image keeps the shared reference check limit at three.
+  const references: [string, number][] = [];
+  for (const [label, check] of checks) {
+    const count = await check();
+    if (count > 0) references.push([label, count]);
+  }
+  return references;
 }
 
 function serializeReferences(references: [string, number][]) {
@@ -106,6 +143,58 @@ function validateMediaFilename(filename: string): string | null {
   return null;
 }
 
+function validateMediaBatch(mediaIds: string[]): string | null {
+  if (!Array.isArray(mediaIds)) {
+    return "Select valid media IDs";
+  }
+  if (mediaIds.length > MEDIA_BATCH_LIMIT) {
+    return `Select at most ${MEDIA_BATCH_LIMIT} media items at a time`;
+  }
+  if (mediaIds.some((id) => typeof id !== "string" || !id.trim())) {
+    return "Select valid media IDs";
+  }
+  return null;
+}
+
+function revalidateMedia() {
+  try {
+    revalidatePath("/dashboard/media");
+  } catch {
+    console.error("Media changes saved, but media page revalidation failed");
+  }
+}
+
+async function deleteMediaRecord(media: {
+  id: string;
+  publicId: string;
+}): Promise<string | null> {
+  try {
+    if ((await deleteFromCloudinary(media.publicId)) !== true) {
+      return "Remote deletion was not confirmed. The media record was kept; retry deletion.";
+    }
+  } catch {
+    return "Could not confirm remote deletion. The media record was kept; retry deletion.";
+  }
+
+  try {
+    // This is reconciliation across two systems, not an atomic transaction.
+    const deleted = await db
+      .delete(mediaTable)
+      .where(eq(mediaTable.id, media.id))
+      .returning({ id: mediaTable.id });
+    if (deleted.length === 0) {
+      const remaining = await db.query.media.findFirst({
+        where: eq(mediaTable.id, media.id),
+        columns: { id: true },
+      });
+      if (remaining) throw new Error("Media record was not deleted");
+    }
+    return null;
+  } catch {
+    return "The remote image was removed, but its media record could not be deleted. Retry deletion to remove the record.";
+  }
+}
+
 async function getUsagePreview(mediaIds: string[]): Promise<MediaUsagePreview> {
   const uniqueIds = Array.from(new Set(mediaIds)).filter(Boolean);
 
@@ -122,19 +211,15 @@ async function getUsagePreview(mediaIds: string[]): Promise<MediaUsagePreview> {
     },
   });
 
-  const usageItems = await Promise.all(
-    mediaItems.map(async (media) => {
-      const references = serializeReferences(
-        await getMediaReferences(media.url),
-      );
+  const usageItems = await mapMediaConcurrent(mediaItems, async (media) => {
+    const references = serializeReferences(await getMediaReferences(media.url));
 
-      return {
-        id: media.id,
-        filename: media.filename,
-        references,
-      };
-    }),
-  );
+    return {
+      id: media.id,
+      filename: media.filename,
+      references,
+    };
+  });
 
   return {
     canDelete: usageItems.filter((item) => item.references.length === 0),
@@ -176,10 +261,10 @@ export async function actionRenameMedia(
       .returning({ id: mediaTable.id, filename: mediaTable.filename });
     if (!media) throw new Error("Media not found");
 
-    revalidatePath("/dashboard/media");
+    revalidateMedia();
     return actionSuccess(media);
-  } catch (error) {
-    console.error("Rename media failed:", error);
+  } catch {
+    console.error("Rename media failed");
     return actionError("Failed to rename media");
   }
 }
@@ -193,11 +278,14 @@ export async function actionCheckMediaUsage(
     return actionError("Unauthorized");
   }
 
+  const validationError = validateMediaBatch(mediaIds);
+  if (validationError) return actionError(validationError);
+
   try {
     const preview = await getUsagePreview(mediaIds);
     return actionSuccess(preview);
-  } catch (error) {
-    console.error("Check media usage failed:", error);
+  } catch {
+    console.error("Check media usage failed");
     return actionError("Failed to check media usage");
   }
 }
@@ -229,29 +317,28 @@ export async function actionDeleteMedia(
       );
     }
 
-    await deleteFromCloudinary(media.publicId);
-    const deleted = await db
-      .delete(mediaTable)
-      .where(eq(mediaTable.id, mediaId))
-      .returning({ id: mediaTable.id });
-    if (deleted.length === 0) throw new Error("Media not found");
+    const error = await deleteMediaRecord(media);
+    if (error) return actionError(error);
 
-    revalidatePath("/dashboard/media");
+    revalidateMedia();
     return actionSuccess(undefined);
-  } catch (error) {
-    console.error("Delete media failed:", error);
+  } catch {
+    console.error("Delete media failed");
     return actionError("Failed to delete media");
   }
 }
 
 export async function actionDeleteMediaBatch(
   mediaIds: string[],
-): Promise<ActionResult<{ deletedIds: string[] }>> {
+): Promise<ActionResult<MediaBatchDeleteResult>> {
   try {
     await getActionSession();
   } catch {
     return actionError("Unauthorized");
   }
+
+  const validationError = validateMediaBatch(mediaIds);
+  if (validationError) return actionError(validationError);
 
   try {
     const preview = await getUsagePreview(mediaIds);
@@ -279,19 +366,29 @@ export async function actionDeleteMediaBatch(
       columns: {
         id: true,
         publicId: true,
+        filename: true,
       },
     });
 
-    await Promise.all(
-      mediaItems.map((media) => deleteFromCloudinary(media.publicId)),
-    );
+    const outcomes = await mapMediaConcurrent(mediaItems, async (media) => ({
+      id: media.id,
+      filename: media.filename,
+      error: await deleteMediaRecord(media),
+    }));
+    const deletedIds: string[] = [];
+    const failedItems: NonNullable<MediaBatchDeleteResult["failedItems"]> = [];
+    for (const item of outcomes) {
+      if (item.error) failedItems.push({ ...item, error: item.error });
+      else deletedIds.push(item.id);
+    }
 
-    await db.delete(mediaTable).where(inArray(mediaTable.id, deleteIds));
-
-    revalidatePath("/dashboard/media");
-    return actionSuccess({ deletedIds: deleteIds });
-  } catch (error) {
-    console.error("Delete media batch failed:", error);
+    if (deletedIds.length > 0) revalidateMedia();
+    return actionSuccess({
+      deletedIds,
+      ...(failedItems.length > 0 ? { failedItems } : {}),
+    });
+  } catch {
+    console.error("Delete media batch failed");
     return actionError("Failed to delete selected media");
   }
 }

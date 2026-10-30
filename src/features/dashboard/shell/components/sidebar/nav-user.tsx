@@ -7,7 +7,6 @@ import {
   SignOutIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ProfileAvatar } from "@/components/common/profile-avatar";
 import {
@@ -34,10 +33,12 @@ type User = {
 };
 
 export function NavUser({ user }: { user: User }) {
-  const router = useRouter();
   const { isMobile } = useSidebar();
   const [currentUser, setCurrentUser] = useState(user);
   const optimisticUserRef = useRef<Partial<User> | null>(null);
+  const logoutLock = useRef(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
 
   useEffect(() => {
     const optimisticUser = optimisticUserRef.current;
@@ -78,9 +79,21 @@ export function NavUser({ user }: { user: User }) {
   }, []);
 
   const handleLogout = async () => {
-    await authClient.signOut();
-    router.push("/sign-in");
-    router.refresh();
+    if (logoutLock.current) return;
+    logoutLock.current = true;
+    setLoggingOut(true);
+    setLogoutError(null);
+    try {
+      const result = await authClient.signOut();
+      if (result.error) throw new Error("Sign out failed");
+      // Discard cached authenticated pages and read the cleared session cookie
+      // in a fresh document, rather than racing SPA navigation and refresh.
+      window.location.replace("/sign-in");
+    } catch {
+      logoutLock.current = false;
+      setLoggingOut(false);
+      setLogoutError("Unable to sign out. Please try again.");
+    }
   };
 
   return (
@@ -88,6 +101,7 @@ export function NavUser({ user }: { user: User }) {
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger
+            aria-label="Account menu"
             render={
               <SidebarMenuButton
                 size="lg"
@@ -142,13 +156,22 @@ export function NavUser({ user }: { user: User }) {
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} variant="destructive">
+              <DropdownMenuItem
+                onClick={handleLogout}
+                disabled={loggingOut}
+                variant="destructive"
+              >
                 <SignOutIcon />
-                Sign out
+                {loggingOut ? "Signing out…" : "Sign out"}
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
+        {logoutError && (
+          <p role="alert" className="px-2 py-1 text-destructive text-xs">
+            {logoutError}
+          </p>
+        )}
       </SidebarMenuItem>
     </SidebarMenu>
   );

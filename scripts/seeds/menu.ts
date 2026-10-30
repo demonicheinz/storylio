@@ -4,7 +4,6 @@ export const seedChoices = [
   { id: "owner", label: "Owner account and profile" },
   { id: "home", label: "Initial approach phases and technology logos" },
   { id: "about", label: "Initial About content" },
-  { id: "testimonials", label: "Demo testimonials" },
   { id: "projects", label: "Demo projects (replaces matching demo slugs)" },
   {
     id: "posts",

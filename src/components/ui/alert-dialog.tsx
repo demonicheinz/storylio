@@ -54,7 +54,7 @@ function AlertDialogContent({
         data-size={size}
         className={(state) =>
           cn(
-            "group/alert-dialog-content top-1/2 left-1/2 z-50 fixed gap-6 grid bg-popover data-ending-style:opacity-0 data-starting-style:opacity-0 shadow-xl p-6 rounded-4xl outline-none ring-1 ring-foreground/5 dark:ring-foreground/10 w-full data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-md text-popover-foreground data-ending-style:scale-95 data-starting-style:scale-95 transition-[opacity,scale] -translate-x-1/2 -translate-y-1/2 duration-100",
+            "group/alert-dialog-content top-1/2 left-1/2 z-50 fixed gap-6 grid bg-popover data-ending-style:opacity-0 data-starting-style:opacity-0 p-6 border border-border rounded-lg outline-none w-full data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-md text-popover-foreground data-ending-style:scale-95 data-starting-style:scale-95 transition-[opacity,scale] -translate-x-1/2 -translate-y-1/2 duration-100",
             typeof className === "function" ? className(state) : className,
           )
         }
@@ -121,7 +121,7 @@ function AlertDialogTitle({
       data-slot="alert-dialog-title"
       className={(state) =>
         cn(
-          "sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2 font-heading font-medium text-lg",
+          "sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2 font-sans font-semibold text-lg",
           typeof className === "function" ? className(state) : className,
         )
       }

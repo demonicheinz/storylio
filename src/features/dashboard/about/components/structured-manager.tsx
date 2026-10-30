@@ -63,9 +63,17 @@ import {
   actionUpdateSkillCategory,
   actionUpdateWorkExperience,
 } from "@/features/dashboard/about/structured-actions";
+import {
+  educationSchema,
+  skillCategorySchema,
+  skillSchema,
+  workExperienceSchema,
+} from "@/features/dashboard/about/validations";
+import { DashboardSelect } from "@/features/dashboard/shared/components/filter-controls";
 import { DashboardSortableList } from "@/features/dashboard/shared/components/sortable-list";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { cn } from "@/lib/utils";
+import { useAboutDraftGuard } from "./use-about-draft-guard";
 
 export type AboutStructuredData = {
   experiences: Array<
@@ -192,42 +200,51 @@ function EditDialog({
   item,
   categoryId,
   trigger,
+  categories = [],
 }: {
   kind: Kind;
   item?: Item;
   categoryId?: string;
   trigger: ReactNode;
+  categories?: AboutStructuredData["categories"];
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [formError, setFormError] = useState<string>();
+  const [currentValues, setCurrentValues] = useState<Record<string, unknown>>(
+    item ?? {},
+  );
+  const [dirty, setDirty] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(categoryId ?? "");
+  useAboutDraftGuard(open && dirty);
+  const close = (next: boolean) => {
+    if (pending) return;
+    if (
+      !next &&
+      dirty &&
+      !window.confirm("Discard unsaved changes to this item?")
+    )
+      return;
+    setOpen(next);
+  };
   const config = configs[kind];
   const fieldValue = (field: string) => {
     const value = item?.[field];
     return Array.isArray(value) ? value.join("\n") : String(value ?? "");
   };
-  const isScrollableExperienceField = (field: string) =>
+  const isExperienceNarrativeField = (field: string) =>
     kind === "experience" &&
     (field.startsWith("description") || field.startsWith("highlights"));
-  const isScrollableDescriptionField = (field: string) =>
-    (kind === "education" || kind === "category") &&
-    field.startsWith("description");
   const getFieldClassName = (field: string) => {
     if (!config.multiline.includes(field as never)) {
       return "flex min-w-0 flex-col gap-2";
     }
-
-    return isScrollableExperienceField(field)
+    return isExperienceNarrativeField(field)
       ? "flex min-w-0 flex-col gap-2"
       : "flex min-w-0 flex-col gap-2 sm:col-span-2";
   };
-  const getTextareaClassName = (field: string) =>
-    isScrollableExperienceField(field)
-      ? "max-h-32 min-h-24 overflow-y-auto scrollbar-none field-sizing-fixed wrap-anywhere"
-      : isScrollableDescriptionField(field)
-        ? "max-h-36 min-h-24 overflow-y-auto scrollbar-none field-sizing-fixed wrap-anywhere"
-        : "min-h-24 max-w-full field-sizing-fixed wrap-anywhere";
-
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = Object.fromEntries(
@@ -236,41 +253,103 @@ function EditDialog({
     data.isVisible = data.isVisible === "on";
     data.isCurrent = data.isCurrent === "on";
     data.order = Number(data.order || 0);
-    if (categoryId) data.categoryId = categoryId;
+    if (kind === "skill") data.categoryId = selectedCategory;
+    setFieldErrors({});
+    setFormError(undefined);
+    const schema =
+      kind === "experience"
+        ? workExperienceSchema
+        : kind === "education"
+          ? educationSchema
+          : kind === "category"
+            ? skillCategorySchema
+            : skillSchema;
+    const parsed = schema.safeParse(data);
+    if (!parsed.success) {
+      setFieldErrors(
+        parsed.error.flatten().fieldErrors as Record<string, string[]>,
+      );
+      setFormError("Please fix the highlighted fields.");
+      return;
+    }
+    const start = String(data.startDate ?? data.startYear ?? "");
+    const end = String(data.endDate ?? data.endYear ?? "");
+    if (
+      !data.isCurrent &&
+      /^(\d{4}|\d{4}-\d{2})$/.test(start) &&
+      start.length === end.length &&
+      start > end
+    ) {
+      setFieldErrors({
+        [kind === "experience" ? "endDate" : "endYear"]: [
+          "End must be on or after the start.",
+        ],
+      });
+      return;
+    }
     startTransition(async () => {
-      const result =
-        kind === "experience"
-          ? item
-            ? await actionUpdateWorkExperience(item.id, data as never)
-            : await actionCreateWorkExperience(data as never)
-          : kind === "education"
+      try {
+        const result =
+          kind === "experience"
             ? item
-              ? await actionUpdateEducation(item.id, data as never)
-              : await actionCreateEducation(data as never)
-            : kind === "category"
+              ? await actionUpdateWorkExperience(item.id, data as never)
+              : await actionCreateWorkExperience(data as never)
+            : kind === "education"
               ? item
-                ? await actionUpdateSkillCategory(item.id, data as never)
-                : await actionCreateSkillCategory(data as never)
-              : item
-                ? await actionUpdateSkill(item.id, data as never)
-                : await actionCreateSkill(data as never);
-      if (result.success) {
-        toast.add({ title: result.message, type: "success" });
-        setOpen(false);
-        router.refresh();
-      } else toast.add({ title: result.error, type: "error" });
+                ? await actionUpdateEducation(item.id, data as never)
+                : await actionCreateEducation(data as never)
+              : kind === "category"
+                ? item
+                  ? await actionUpdateSkillCategory(item.id, data as never)
+                  : await actionCreateSkillCategory(data as never)
+                : item
+                  ? await actionUpdateSkill(item.id, data as never)
+                  : await actionCreateSkill(data as never);
+        if (result.success) {
+          toast.add({ title: result.message, type: "success" });
+          setDirty(false);
+          setOpen(false);
+          router.refresh();
+        } else {
+          setFieldErrors(result.fieldErrors ?? {});
+          setFormError(result.error);
+        }
+      } catch {
+        setFormError(
+          "Could not save this item. Your changes are still here; try again.",
+        );
+      }
     });
   };
-
   return (
     <>
-      <div className="contents" onClick={() => setOpen(true)}>
+      <div
+        className="contents"
+        onClick={() => {
+          setFieldErrors({});
+          setFormError(undefined);
+          setCurrentValues(item ?? {});
+          setSelectedCategory(categoryId ?? "");
+          setDirty(false);
+          setOpen(true);
+        }}
+      >
         {trigger}
       </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[calc(100vh-2rem)] overflow-x-hidden overflow-y-auto">
-          <form onSubmit={submit} className="flex flex-col gap-5 min-w-0">
-            <DialogHeader>
+      <Dialog open={open} onOpenChange={close}>
+        <DialogContent className="flex flex-col gap-0 p-0 sm:max-w-2xl max-h-[calc(100dvh-2rem)] overflow-hidden">
+          <form
+            noValidate
+            onSubmit={submit}
+            onChange={(event) => {
+              setDirty(true);
+              setCurrentValues(
+                Object.fromEntries(new FormData(event.currentTarget).entries()),
+              );
+            }}
+            className="flex flex-col gap-0 min-w-0 min-h-0 max-h-[inherit]"
+          >
+            <DialogHeader className="px-4 sm:px-6 pt-5 sm:pt-6 pr-14 sm:pr-14 pb-4 sm:pb-5 shrink-0">
               <DialogTitle>
                 {item ? "Edit" : "Add"} {config.title}
               </DialogTitle>
@@ -279,48 +358,161 @@ function EditDialog({
                 publicly.
               </DialogDescription>
             </DialogHeader>
-            <div className="gap-4 grid sm:grid-cols-2 min-w-0">
-              {config.fields.map((field) => (
-                <div key={field} className={getFieldClassName(field)}>
-                  <Label htmlFor={`${kind}-${field}`}>{labels[field]}</Label>
-                  {config.multiline.includes(field as never) ? (
-                    <Textarea
-                      id={`${kind}-${field}`}
-                      name={field}
-                      defaultValue={fieldValue(field)}
-                      wrap="soft"
-                      className={getTextareaClassName(field)}
-                    />
-                  ) : (
-                    <Input
-                      id={`${kind}-${field}`}
-                      name={field}
-                      required={field === config.required}
-                      defaultValue={fieldValue(field)}
-                      className="min-w-0 truncate"
-                    />
+            <div className="flex flex-col gap-5 px-4 sm:px-6 pb-5 sm:pb-6 min-h-0 overflow-y-auto overscroll-contain">
+              {kind !== "skill" && (
+                <div
+                  className="flex flex-wrap gap-x-5 gap-y-1 text-muted-foreground text-xs"
+                  aria-live="polite"
+                >
+                  {(["En", "Id"] as const).map((language) => {
+                    const fields = config.fields.filter((field) =>
+                      field.endsWith(language),
+                    );
+                    const filled = fields.filter((field) => {
+                      const value = currentValues[field];
+                      return Array.isArray(value)
+                        ? value.some((entry) => String(entry).trim())
+                        : String(value ?? "").trim();
+                    }).length;
+                    const errorCount = fields.filter(
+                      (field) => fieldErrors[field]?.length,
+                    ).length;
+                    return (
+                      <p key={language}>
+                        {language === "En" ? "English" : "Indonesia"}: {filled}/
+                        {fields.length} optional fields filled
+                        {errorCount > 0 ? ` · ${errorCount} errors` : ""}
+                      </p>
+                    );
+                  })}
+                </div>
+              )}
+              {formError && (
+                <p role="alert" className="text-destructive text-sm">
+                  {formError}
+                </p>
+              )}
+              {kind === "skill" && (
+                <div className="flex flex-col gap-2">
+                  <DashboardSelect
+                    label="Category"
+                    value={selectedCategory}
+                    options={categories.map((category) => ({
+                      value: category.id,
+                      label: category.name,
+                    }))}
+                    disabled={pending}
+                    onValueChange={(value) => {
+                      setSelectedCategory(value);
+                      setDirty(true);
+                    }}
+                  />
+                  {fieldErrors.categoryId?.[0] && (
+                    <p role="alert" className="text-destructive text-sm">
+                      {fieldErrors.categoryId[0]}
+                    </p>
                   )}
                 </div>
-              ))}
-            </div>
-            {kind === "experience" && (
+              )}
+              <div className="gap-4 grid sm:grid-cols-2 min-w-0">
+                {config.fields.map((field) => (
+                  <div key={field} className={getFieldClassName(field)}>
+                    <Label htmlFor={`${kind}-${field}`}>
+                      {labels[field]}
+                      {field === config.required ? " *" : ""}
+                    </Label>
+                    {config.multiline.includes(field as never) ? (
+                      <Textarea
+                        id={`${kind}-${field}`}
+                        name={field}
+                        defaultValue={fieldValue(field)}
+                        wrap="soft"
+                        className="max-w-full min-h-28 field-sizing-content wrap-anywhere"
+                        disabled={pending}
+                        aria-invalid={!!fieldErrors[field]?.length}
+                        aria-describedby={`${kind}-${field}-error`}
+                      />
+                    ) : (
+                      <Input
+                        id={`${kind}-${field}`}
+                        name={field}
+                        required={field === config.required}
+                        defaultValue={fieldValue(field)}
+                        className="min-w-0 truncate"
+                        disabled={pending}
+                        type={
+                          (field === "startDate" || field === "endDate") &&
+                          (!fieldValue(field) ||
+                            /^\d{4}-\d{2}$/.test(fieldValue(field)))
+                            ? "month"
+                            : "text"
+                        }
+                        placeholder={
+                          field.endsWith("Date")
+                            ? "YYYY-MM"
+                            : field.endsWith("Year")
+                              ? "YYYY"
+                              : undefined
+                        }
+                        inputMode={
+                          field.endsWith("Year") ? "numeric" : undefined
+                        }
+                        aria-invalid={!!fieldErrors[field]?.length}
+                        aria-describedby={`${kind}-${field}-help ${kind}-${field}-error`}
+                      />
+                    )}
+                    {field === "endDate" && (
+                      <label className="flex items-center gap-3">
+                        <Switch
+                          name="isCurrent"
+                          defaultChecked={Boolean(item?.isCurrent)}
+                          disabled={pending}
+                        />{" "}
+                        <span className="text-sm">Current role</span>
+                      </label>
+                    )}
+                    {(field.endsWith("Date") || field.endsWith("Year")) && (
+                      <p
+                        id={`${kind}-${field}-help`}
+                        className="text-muted-foreground text-xs"
+                      >
+                        {field.endsWith("Date")
+                          ? "Month and year, if known. Existing date text is preserved."
+                          : "Year, if known. Existing year text is preserved."}{" "}
+                        Leave blank when unknown.
+                      </p>
+                    )}
+                    {fieldErrors[field]?.[0] && (
+                      <p
+                        id={`${kind}-${field}-error`}
+                        role="alert"
+                        className="text-destructive text-sm"
+                      >
+                        {fieldErrors[field][0]}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
               <label className="flex items-center gap-3">
                 <Switch
-                  name="isCurrent"
-                  defaultChecked={Boolean(item?.isCurrent)}
+                  name="isVisible"
+                  defaultChecked={item?.isVisible ?? true}
+                  disabled={pending}
                 />{" "}
-                <span className="text-sm">Current role</span>
+                <span className="text-sm">Visible publicly</span>
               </label>
-            )}
-            <label className="flex items-center gap-3">
-              <Switch
-                name="isVisible"
-                defaultChecked={item?.isVisible ?? true}
-              />{" "}
-              <span className="text-sm">Visible publicly</span>
-            </label>
-            <input type="hidden" name="order" value={item?.order ?? 0} />
-            <DialogFooter>
+              <input type="hidden" name="order" value={item?.order ?? 0} />
+            </div>
+            <DialogFooter className="flex-row flex-wrap sm:[&>button]:flex-initial [&>button]:flex-[1_1_100px] px-4 sm:px-6 py-4 border-border border-t [&>button]:min-h-11 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending}
+                onClick={() => close(false)}
+              >
+                Cancel
+              </Button>
               <Button type="submit" disabled={pending}>
                 {pending ? "Saving..." : "Save"}
               </Button>
@@ -333,25 +525,7 @@ function EditDialog({
 }
 
 function VisibilityBadge({ isVisible }: { isVisible: boolean }) {
-  return (
-    <Badge
-      variant={isVisible ? "default" : "secondary"}
-      className={cn(
-        "gap-1.5",
-        isVisible
-          ? "bg-emerald-500/12 text-emerald-300"
-          : "bg-amber-500/12 text-amber-300",
-      )}
-    >
-      <span
-        className={cn(
-          "rounded-full size-1.5",
-          isVisible ? "bg-emerald-300" : "bg-amber-300",
-        )}
-      />
-      {isVisible ? "Visible" : "Hidden"}
-    </Badge>
-  );
+  return <Badge variant="secondary">{isVisible ? "Visible" : "Hidden"}</Badge>;
 }
 
 function SkillLevel({ value }: { value: string }) {
@@ -372,7 +546,7 @@ function SectionHeader({
   return (
     <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-4">
       <div className="min-w-0">
-        <h2 className="font-heading font-semibold text-xl">{title}</h2>
+        <h2 className="font-semibold text-lg">{title}</h2>
         <p className="text-muted-foreground text-sm leading-6">{subtitle}</p>
       </div>
       {action}
@@ -385,11 +559,13 @@ function ManagedList({
   items,
   categoryId,
   children,
+  categories = [],
 }: {
   kind: Kind;
   items: Item[];
   categoryId?: string;
   children?: (item: Item) => ReactNode;
+  categories?: AboutStructuredData["categories"];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -405,9 +581,7 @@ function ManagedList({
       ? actionReorderWorkExperiences
       : kind === "education"
         ? actionReorderEducationItems
-        : kind === "category"
-          ? actionReorderSkillCategories
-          : actionReorderSkills;
+        : actionReorderSkillCategories;
   const deleteAction =
     kind === "experience"
       ? actionDeleteWorkExperience
@@ -416,17 +590,26 @@ function ManagedList({
         : kind === "category"
           ? actionDeleteSkillCategory
           : actionDeleteSkill;
-
-  const reorder = (next: Item[]) => {
-    startTransition(async () => {
-      const result = await reorderAction(
-        next.map((item, order) => ({ id: item.id, order })),
-      );
-      result.success
-        ? (toast.add({ title: result.message, type: "success" }),
-          router.refresh())
-        : toast.add({ title: result.error, type: "error" });
-    });
+  const reorder = async (next: Item[]) => {
+    try {
+      const input = next.map((item, order) => ({ id: item.id, order }));
+      const result =
+        kind === "skill"
+          ? await actionReorderSkills(input, categoryId ?? "")
+          : await reorderAction(input);
+      toast.add({
+        title: result.success ? result.message : result.error,
+        type: result.success ? "success" : "error",
+      });
+      if (result.success) router.refresh();
+      return result.success;
+    } catch {
+      toast.add({
+        title: "Could not save the order. Try again.",
+        type: "error",
+      });
+      return false;
+    }
   };
   const title = (item: Item) => String(item[titleKey] ?? "Untitled");
   const subtitle = (item: Item) =>
@@ -447,7 +630,7 @@ function ManagedList({
         : "";
   const secondary = (item: Item) =>
     kind === "category"
-      ? `${((item.skills as unknown[]) ?? []).length} skills`
+      ? `${((item.skills as unknown[]) ?? []).length} ${((item.skills as unknown[]) ?? []).length === 1 ? "skill" : "skills"}`
       : period(item);
   const level = (item: Item) => String(item.level ?? "Not set");
   const titleColumnLabel =
@@ -456,10 +639,10 @@ function ManagedList({
     kind === "skill" ? "Category" : kind === "category" ? "Skills" : "Period";
   const metaColumnLabel = kind === "skill" ? "Level" : "Visibility";
   return (
-    <div className={cn(dashboardStyles.listSurface, "rounded-3xl bg-card/55")}>
+    <div className={dashboardStyles.listSurface}>
       <div
         className={cn(
-          "hidden lg:grid px-4 tracking-[0.18em]",
+          "hidden lg:grid px-4",
           dashboardStyles.listHeader,
           kind === "skill"
             ? "grid-cols-[44px_minmax(0,1.5fr)_minmax(0,1fr)_minmax(8rem,0.8fr)_7rem]"
@@ -474,8 +657,7 @@ function ManagedList({
       </div>
       {items.length === 0 && (
         <div className="bg-background/30 m-4 px-4 py-5 border border-border/70 border-dashed rounded-2xl text-muted-foreground text-sm">
-          No CMS items yet. Public About continues using static fallback
-          content.
+          No entries yet. Add one when you are ready to include it on About.
         </div>
       )}
       <DashboardSortableList
@@ -483,6 +665,8 @@ function ManagedList({
         disabled={pending}
         className="flex flex-col gap-3 p-3"
         onReorder={reorder}
+        getItemLabel={title}
+        handleVariant="button"
         renderItem={({ item, handle }) => (
           <div
             className={cn(
@@ -490,17 +674,17 @@ function ManagedList({
               dashboardStyles.listRow,
               "hover:border-brand-soft/35",
               kind === "skill"
-                ? "grid-cols-[44px_minmax(0,1fr)_auto] lg:grid-cols-[44px_minmax(0,1.5fr)_minmax(0,1fr)_minmax(8rem,0.8fr)_7rem]"
-                : "grid-cols-[44px_minmax(0,1fr)_auto] lg:grid-cols-[44px_minmax(0,1.4fr)_minmax(8rem,0.8fr)_7rem_7rem]",
+                ? "grid-cols-[44px_minmax(0,1fr)_44px] lg:grid-cols-[44px_minmax(0,1.5fr)_minmax(0,1fr)_minmax(8rem,0.8fr)_7rem]"
+                : "grid-cols-[44px_minmax(0,1fr)_44px] lg:grid-cols-[44px_minmax(0,1.4fr)_minmax(8rem,0.8fr)_7rem_7rem]",
             )}
           >
-            <div className="flex self-stretch">{handle}</div>
-            <div className="p-4 lg:py-3 lg:pr-4 min-w-0">
-              <p className="font-heading font-semibold truncate">
+            <div className="flex justify-center self-start py-3">{handle}</div>
+            <div className="py-4 lg:py-3 pr-2 lg:pr-4 min-w-0">
+              <p className="font-semibold text-sm wrap-anywhere">
                 {title(item)}
               </p>
               {subtitle(item) && (
-                <p className="text-muted-foreground text-xs truncate">
+                <p className="text-muted-foreground text-xs wrap-anywhere">
                   {subtitle(item)}
                 </p>
               )}
@@ -509,6 +693,12 @@ function ManagedList({
                   {secondary(item)}
                 </p>
               )}
+              <div className="lg:hidden flex flex-wrap items-center gap-2 mt-2">
+                <VisibilityBadge
+                  isVisible={item.isVisible && item.categoryVisible !== false}
+                />
+                {kind === "skill" && <SkillLevel value={level(item)} />}
+              </div>
               {children?.(item)}
             </div>
             <div className="hidden lg:block text-muted-foreground text-sm truncate">
@@ -518,19 +708,17 @@ function ManagedList({
             </div>
             <div className="hidden lg:block">
               {kind === "skill" ? (
-                <SkillLevel value={level(item)} />
+                <div className="flex flex-wrap gap-2">
+                  <SkillLevel value={level(item)} />
+                  <VisibilityBadge
+                    isVisible={item.isVisible && item.categoryVisible !== false}
+                  />
+                </div>
               ) : (
                 <VisibilityBadge isVisible={item.isVisible} />
               )}
             </div>
-            <div className="flex justify-end items-center gap-2 pr-4">
-              <div className="lg:hidden flex items-center shrink-0">
-                {kind === "skill" ? (
-                  <SkillLevel value={level(item)} />
-                ) : (
-                  <VisibilityBadge isVisible={item.isVisible} />
-                )}
-              </div>
+            <div className="flex justify-end items-center self-start lg:self-center gap-2 py-3 lg:pr-4">
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
@@ -548,6 +736,7 @@ function ManagedList({
                     <DropdownMenuLabel>{configs[kind].title}</DropdownMenuLabel>
                     <EditDialog
                       kind={kind}
+                      categories={categories}
                       item={item}
                       categoryId={(item as SkillItem).categoryId ?? categoryId}
                       trigger={
@@ -581,8 +770,13 @@ function ManagedList({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete item?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete {deleting ? title(deleting) : "item"}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
+              {kind === "category"
+                ? `This also deletes ${((deleting?.skills as unknown[]) ?? []).length} skills in this category. `
+                : ""}
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -618,15 +812,6 @@ export function AboutStructuredManager({
   data: AboutStructuredData;
   section: Section;
 }) {
-  const skillItems: SkillItem[] = data.categories.flatMap((category) =>
-    ((category.skills as Item[]) ?? []).map((skill) => ({
-      ...skill,
-      categoryId: category.id,
-      categoryName: category.name,
-    })),
-  );
-  const firstCategory = data.categories[0];
-
   if (section === "experience") {
     return (
       <div className={dashboardStyles.page}>
@@ -637,7 +822,7 @@ export function AboutStructuredManager({
             <EditDialog
               kind="experience"
               trigger={
-                <Button className="rounded-2xl w-full sm:w-auto">
+                <Button className="w-full sm:w-auto">
                   <PlusIcon data-icon="inline-start" />
                   Add experience
                 </Button>
@@ -651,7 +836,7 @@ export function AboutStructuredManager({
           render={<Link href="/about#work-experience" target="_blank" />}
           nativeButton={false}
           variant="link"
-          className="px-0 w-fit text-brand-soft"
+          className="px-0 w-fit"
         >
           View on public page
           <ArrowSquareOutIcon data-icon="inline-end" />
@@ -659,7 +844,6 @@ export function AboutStructuredManager({
       </div>
     );
   }
-
   if (section === "education") {
     return (
       <div className={dashboardStyles.page}>
@@ -670,7 +854,7 @@ export function AboutStructuredManager({
             <EditDialog
               kind="education"
               trigger={
-                <Button className="rounded-2xl w-full sm:w-auto">
+                <Button className="w-full sm:w-auto">
                   <PlusIcon data-icon="inline-start" />
                   Add education
                 </Button>
@@ -684,7 +868,7 @@ export function AboutStructuredManager({
           render={<Link href="/about#education-history" target="_blank" />}
           nativeButton={false}
           variant="link"
-          className="px-0 w-fit text-brand-soft"
+          className="px-0 w-fit"
         >
           View on public page
           <ArrowSquareOutIcon data-icon="inline-end" />
@@ -692,7 +876,6 @@ export function AboutStructuredManager({
       </div>
     );
   }
-
   return (
     <div className={dashboardStyles.page}>
       <SectionHeader
@@ -703,54 +886,74 @@ export function AboutStructuredManager({
             <EditDialog
               kind="category"
               trigger={
-                <Button
-                  variant="outline"
-                  className="rounded-2xl w-full sm:w-auto"
-                >
+                <Button variant="outline" className="w-full sm:w-auto">
                   <PlusIcon data-icon="inline-start" />
                   Add category
                 </Button>
               }
             />
-            {firstCategory ? (
-              <EditDialog
-                kind="skill"
-                categoryId={firstCategory.id}
-                trigger={
-                  <Button className="rounded-2xl w-full sm:w-auto">
-                    <PlusIcon data-icon="inline-start" />
-                    Add skill
-                  </Button>
-                }
-              />
-            ) : null}
           </div>
         }
       />
       <div className="flex flex-col gap-3 min-w-0">
         <div className="min-w-0">
-          <h3 className="font-heading font-semibold text-base">Categories</h3>
+          <h3 className="font-semibold text-base">Categories</h3>
           <p className="text-muted-foreground text-sm">
             Organize skill groups, descriptions, and category order.
           </p>
         </div>
         <ManagedList kind="category" items={data.categories} />
       </div>
-      <div className="flex flex-col gap-3 min-w-0">
-        <div className="min-w-0">
-          <h3 className="font-heading font-semibold text-base">Skills</h3>
-          <p className="text-muted-foreground text-sm">
-            Manage individual skills and their assigned category metadata.
-          </p>
-        </div>
-        <ManagedList kind="skill" items={skillItems} />
-      </div>
+      {data.categories.map((category) => (
+        <section
+          key={category.id}
+          className="flex flex-col gap-3 min-w-0"
+          aria-label={`${category.name} skills`}
+        >
+          <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-base wrap-anywhere">
+                {category.name}
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                {category.skills.length}{" "}
+                {category.skills.length === 1 ? "skill" : "skills"} ·{" "}
+                {category.isVisible
+                  ? "Reorder within this category"
+                  : "Category hidden publicly"}
+              </p>
+            </div>
+            <EditDialog
+              kind="skill"
+              categoryId={category.id}
+              categories={data.categories}
+              trigger={
+                <Button className="w-full sm:w-auto">
+                  <PlusIcon data-icon="inline-start" />
+                  Add skill
+                </Button>
+              }
+            />
+          </div>
+          <ManagedList
+            kind="skill"
+            categoryId={category.id}
+            categories={data.categories}
+            items={category.skills.map((entry) => ({
+              ...entry,
+              categoryId: category.id,
+              categoryName: category.name,
+              categoryVisible: category.isVisible,
+            }))}
+          />
+        </section>
+      ))}
       <Button
         role="link"
         render={<Link href="/about#technical-skills" target="_blank" />}
         nativeButton={false}
         variant="link"
-        className="px-0 w-fit text-brand-soft"
+        className="px-0 w-fit"
       >
         View on public page
         <ArrowSquareOutIcon data-icon="inline-end" />

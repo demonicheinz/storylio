@@ -5,14 +5,17 @@ import HomeManagePage from "@/app/(dashboard)/dashboard/home/page";
 
 const queries = vi.hoisted(() => ({
   sections: vi.fn(),
-  testimonials: vi.fn(),
+  profile: vi.fn(),
+  connection: vi.fn(() => new Promise<void>(() => {})),
+  session: vi.fn(),
 }));
-vi.mock("next/server", () => ({ connection: () => new Promise(() => {}) }));
+vi.mock("next/server", () => ({ connection: queries.connection }));
+vi.mock("@/lib/auth-session", () => ({ getActionSession: queries.session }));
 vi.mock("@/lib/db", () => ({
   db: {
     query: {
       homeSection: { findMany: queries.sections },
-      testimonial: { findMany: queries.testimonials },
+      user: { findFirst: queries.profile },
     },
   },
 }));
@@ -30,6 +33,32 @@ describe("dashboard Home streaming", () => {
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('data-slot="skeleton"');
     expect(queries.sections).not.toHaveBeenCalled();
-    expect(queries.testimonials).not.toHaveBeenCalled();
+    expect(queries.profile).not.toHaveBeenCalled();
+  });
+  it("passes the owner bio preview and editable collections without a testimonial query", async () => {
+    queries.connection.mockResolvedValueOnce(undefined);
+    queries.session.mockResolvedValueOnce({ user: { id: "owner" } });
+    queries.profile.mockResolvedValueOnce({ bio: "Owner bio preview" });
+    const createdAt = new Date("2026-01-01");
+    queries.sections.mockResolvedValueOnce([
+      { id: "home-hero", type: "HERO", label: "Headline", createdAt },
+      { id: "phase", type: "PHASE", label: "Build", createdAt },
+      { id: "logo", type: "LOGO", label: "Logo", createdAt },
+    ]);
+    const shell = HomeManagePage();
+    const boundary = shell.props.children[1];
+    const manager = await boundary.props.children.type();
+    expect(manager.props).toMatchObject({
+      headline: "Headline",
+      subheadline: "Owner bio preview",
+      phases: [
+        { id: "phase", type: "PHASE", createdAt: createdAt.toISOString() },
+      ],
+      logos: [{ id: "logo", type: "LOGO", createdAt: createdAt.toISOString() }],
+    });
+    expect(manager.props).not.toHaveProperty("testimonials");
+    expect(queries.profile).toHaveBeenCalledWith(
+      expect.objectContaining({ columns: { bio: true } }),
+    );
   });
 });

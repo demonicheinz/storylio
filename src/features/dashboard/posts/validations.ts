@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const postStatusSchema = z.enum(["draft", "published"]);
+export const postPublicationIntentSchema = z.enum(["keep", "schedule", "now"]);
 
 const optionalUrlSchema = z
   .string()
@@ -65,12 +66,36 @@ const postBaseSchema = z.object({
     .transform((value) => value || ""),
   coverImage: optionalUrlSchema,
   status: postStatusSchema,
+  publicationIntent: postPublicationIntentSchema.default("keep"),
   scheduledPublishDate: optionalDateSchema,
   content: z
     .string()
     .optional()
     .transform((value) => value ?? ""),
 });
+
+function validatePublication(
+  value: z.output<typeof postBaseSchema>,
+  ctx: z.RefinementCtx,
+) {
+  if (value.status !== "published") return;
+
+  if (!value.content.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["content"],
+      message: "Content is required before publishing",
+    });
+  }
+
+  if (value.publicationIntent === "schedule" && !value.scheduledPublishDate) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["scheduledPublishDate"],
+      message: "Scheduled publish date is required",
+    });
+  }
+}
 
 export const postFormSchema = postBaseSchema
   .extend({
@@ -79,29 +104,13 @@ export const postFormSchema = postBaseSchema
       .optional()
       .transform((value) => value ?? ""),
   })
-  .superRefine((value, ctx) => {
-    if (value.status === "published" && value.content.trim().length === 0) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["content"],
-        message: "Content is required before publishing",
-      });
-    }
-  });
+  .superRefine(validatePublication);
 
 export const postActionSchema = postBaseSchema
   .extend({
     tags: normalizedTagsSchema,
   })
-  .superRefine((value, ctx) => {
-    if (value.status === "published" && value.content.trim().length === 0) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["content"],
-        message: "Content is required before publishing",
-      });
-    }
-  });
+  .superRefine(validatePublication);
 
 export type PostFormValues = z.infer<typeof postFormSchema>;
 export type PostFormInput = z.input<typeof postFormSchema>;

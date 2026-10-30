@@ -9,7 +9,8 @@ describe("private dashboard return URLs", () => {
     "/dashboard/posts/abc-123/edit",
     "/dashboard/projects/?page=2&keep=yes",
   ])("retains an internal return URL: %s", (path) =>
-    expect(getAuthRedirect(path)).toBe(path));
+    expect(getAuthRedirect(path)).toBe(path),
+  );
   it.each([
     undefined,
     "",
@@ -25,7 +26,8 @@ describe("private dashboard return URLs", () => {
     "/dashboard/%2f%2fevil.test",
     "/dashboard/\nsettings",
   ])("rejects an unsafe or unrelated destination: %s", (path) =>
-    expect(getAuthRedirect(path)).toBe("/dashboard"));
+    expect(getAuthRedirect(path)).toBe("/dashboard"),
+  );
   it("normalizes repeated callback parameters to the first value", () => {
     expect(getAuthRedirect(["/dashboard/settings", "//evil.test"])).toBe(
       "/dashboard/settings",

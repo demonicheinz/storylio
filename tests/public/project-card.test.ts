@@ -54,20 +54,21 @@ describe("project archive cards", () => {
       "Drizzle",
     ]);
   });
-  it.each([
-    0, 1, 3,
-  ])("does not add an overflow indicator for %s technologies", (count) => {
-    const html = renderToStaticMarkup(
-      createElement(ProjectCard, {
-        project: {
-          ...project,
-          techStack: ["Next.js", "React", "TypeScript"].slice(0, count),
-        },
-      }),
-    );
-    expect(html.match(/<li\b/g) ?? []).toHaveLength(count);
-    expect(html).not.toContain("more technologies");
-  });
+  it.each([0, 1, 3])(
+    "does not add an overflow indicator for %s technologies",
+    (count) => {
+      const html = renderToStaticMarkup(
+        createElement(ProjectCard, {
+          project: {
+            ...project,
+            techStack: ["Next.js", "React", "TypeScript"].slice(0, count),
+          },
+        }),
+      );
+      expect(html.match(/<li\b/g) ?? []).toHaveLength(count);
+      expect(html).not.toContain("more technologies");
+    },
+  );
   it("keeps full title and description text available to CSS and assistive technology", () => {
     const title = "A detailed project title ".repeat(10);
     const description =
@@ -80,18 +81,18 @@ describe("project archive cards", () => {
     expect(html).toContain(title);
     expect(html).toContain(description);
   });
-  it.each([
-    false,
-    true,
-  ])("has one case-study link and preserves external links (featured=%s)", (featured) => {
-    const html = renderToStaticMarkup(
-      createElement(ProjectCard, { project, featured }),
-    );
-    expect(html.match(/href="\/projects\/example"/g)).toHaveLength(1);
-    expect(html).toContain('href="https://demo.example.com"');
-    expect(html).toContain('href="https://github.com/example/demo"');
-    expect(html.match(/<h2\b/g)).toHaveLength(1);
-  });
+  it.each([false, true])(
+    "has one case-study link and preserves external links (featured=%s)",
+    (featured) => {
+      const html = renderToStaticMarkup(
+        createElement(ProjectCard, { project, featured }),
+      );
+      expect(html.match(/href="\/projects\/example"/g)).toHaveLength(1);
+      expect(html).toContain('href="https://demo.example.com"');
+      expect(html).toContain('href="https://github.com/example/demo"');
+      expect(html.match(/<h2\b/g)).toHaveLength(1);
+    },
+  );
   it("uses the same cover-first layout with a badge for featured projects", () => {
     const html = renderToStaticMarkup(
       createElement(ProjectCard, { project, featured: true }),

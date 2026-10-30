@@ -1,16 +1,13 @@
 "use client";
 
-import {
-  CloudArrowUpIcon,
-  CropIcon,
-  ImageIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { CloudArrowUpIcon, CropIcon, ImageIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import {
+  type AriaAttributes,
   type ChangeEvent,
   type DragEvent,
   useCallback,
+  useId,
   useRef,
   useState,
 } from "react";
@@ -24,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ImageRemoveButton } from "@/features/dashboard/shared/components/image-remove-button";
 import { uploadFile as uploadImageFile } from "@/features/dashboard/shared/utils/upload";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +48,10 @@ type ImageUploadProps = {
   priority?: boolean;
   maxSizeBytes?: number;
   maxSizeLabel?: string;
+  "aria-labelledby"?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: AriaAttributes["aria-invalid"];
+  onUploadingChange?: (uploading: boolean) => void;
 };
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
@@ -127,9 +129,15 @@ export function ImageUpload({
   priority = false,
   maxSizeBytes = MAX_SIZE,
   maxSizeLabel = "10MB",
+  "aria-labelledby": labelledBy,
+  "aria-describedby": describedBy,
+  "aria-invalid": invalid,
+  onUploadingChange,
 }: ImageUploadProps) {
+  const id = useId();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const uploading = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [cropSource, setCropSource] = useState<string | null>(null);
@@ -154,6 +162,7 @@ export function ImageUpload({
 
   const uploadFile = useCallback(
     async (file: File) => {
+      if (disabled || uploading.current) return;
       setError(null);
 
       const validationError = validateFile(file);
@@ -162,7 +171,9 @@ export function ImageUpload({
         return;
       }
 
+      uploading.current = true;
       setIsUploading(true);
+      onUploadingChange?.(true);
       try {
         const data = await uploadImageFile(file);
         onChange(data.url, {
@@ -175,14 +186,17 @@ export function ImageUpload({
       } catch (err) {
         setError(err instanceof Error ? err.message : "Upload failed");
       } finally {
+        uploading.current = false;
         setIsUploading(false);
+        onUploadingChange?.(false);
       }
     },
-    [onChange],
+    [onChange, disabled, onUploadingChange],
   );
 
   const prepareFile = useCallback(
     (file: File) => {
+      if (disabled || uploading.current) return;
       setError(null);
 
       const validationError = validateFile(file);
@@ -210,28 +224,29 @@ export function ImageUpload({
 
       uploadFile(file);
     },
-    [cropAspect, uploadFile],
+    [cropAspect, uploadFile, disabled],
   );
 
   const handleDrop = useCallback(
-    (e: DragEvent<HTMLDivElement>) => {
+    (e: DragEvent<HTMLButtonElement>) => {
       e.preventDefault();
       setIsDragging(false);
+      if (disabled || uploading.current) return;
 
       const file = e.dataTransfer.files[0];
       if (file) {
         prepareFile(file);
       }
     },
-    [prepareFile],
+    [prepareFile, disabled],
   );
 
-  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+  const handleDragOver = useCallback((e: DragEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setIsDragging(true);
+    if (!uploading.current) setIsDragging(true);
   }, []);
 
-  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = useCallback((e: DragEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setIsDragging(false);
   }, []);
@@ -291,7 +306,13 @@ export function ImageUpload({
 
   if (value) {
     return (
-      <div className={cn("relative", className)}>
+      <div
+        className={cn("relative", className)}
+        role={labelledBy ? "group" : undefined}
+        aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
+        aria-invalid={invalid}
+      >
         <div
           className={cn(
             "relative border border-border rounded-lg w-full aspect-video overflow-hidden",
@@ -309,38 +330,39 @@ export function ImageUpload({
           />
         </div>
         {onRemove && (
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="-top-2 -right-2 absolute rounded-full size-7"
-            onClick={onRemove}
-            disabled={disabled}
-          >
-            <XIcon className="size-4" />
-          </Button>
+          <ImageRemoveButton
+            label="Remove image"
+            disabled={disabled || isUploading}
+            onRemove={onRemove}
+          />
         )}
       </div>
     );
   }
 
   return (
-    <div className={className}>
-      <div
+    <div
+      className={className}
+      onDragOverCapture={(event) => event.preventDefault()}
+      onDropCapture={(event) => event.preventDefault()}
+    >
+      <button
+        type="button"
+        aria-labelledby={labelledBy}
+        aria-describedby={
+          [describedBy, error ? `${id}-error` : undefined]
+            .filter(Boolean)
+            .join(" ") || undefined
+        }
+        aria-invalid={error ? true : invalid}
+        aria-busy={isUploading}
+        disabled={disabled || isUploading}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => !disabled && !isUploading && inputRef.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            if (!disabled && !isUploading) {
-              inputRef.current?.click();
-            }
-          }
-        }}
         className={cn(
-          "flex flex-col justify-center items-center gap-3 p-8 border-2 border-dashed rounded-lg transition-colors cursor-pointer",
+          "flex flex-col justify-center items-center gap-3 p-8 border-2 border-dashed rounded-lg focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2 w-full transition-colors cursor-pointer",
           isDragging
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/50 hover:bg-muted/30",
@@ -350,31 +372,34 @@ export function ImageUpload({
         {isUploading ? (
           <>
             <CloudArrowUpIcon className="size-10 text-primary animate-pulse" />
-            <p className="text-muted-foreground text-sm">Uploading...</p>
+            <span className="text-muted-foreground text-sm">Uploading...</span>
           </>
         ) : (
           <>
             <ImageIcon className="size-10 text-muted-foreground" />
-            <div className="text-center">
-              <p className="font-medium text-sm">
+            <span className="text-center">
+              <span className="block font-medium text-sm">
                 Drop an image here or click to upload
-              </p>
-              <p className="mt-1 text-muted-foreground text-xs">
+              </span>
+              <span className="block mt-1 text-muted-foreground text-xs">
                 JPG, PNG, WebP, GIF — max {maxSizeLabel}
-              </p>
+              </span>
               {cropAspect && (
-                <p className="inline-flex justify-center items-center gap-1 mt-1 text-brand-soft text-xs">
+                <span className="inline-flex justify-center items-center gap-1 mt-1 text-brand-soft text-xs">
                   <CropIcon size={14} />
                   Crop available before upload
-                </p>
+                </span>
               )}
-            </div>
+            </span>
           </>
         )}
-      </div>
+      </button>
 
       <input
         ref={inputRef}
+        aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
+        aria-invalid={invalid}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         className="hidden"
@@ -382,7 +407,15 @@ export function ImageUpload({
         disabled={disabled || isUploading}
       />
 
-      {error && <p className="mt-2 text-destructive text-sm">{error}</p>}
+      {error && (
+        <p
+          id={`${id}-error`}
+          role="alert"
+          className="mt-2 text-destructive text-sm"
+        >
+          {error}
+        </p>
+      )}
 
       <Dialog
         open={cropDialogOpen}
@@ -421,13 +454,13 @@ export function ImageUpload({
 
           <div className="flex flex-col gap-2">
             <label
-              htmlFor="image-crop-zoom"
+              htmlFor={`${id}-crop-zoom`}
               className="font-medium text-foreground text-sm"
             >
               Zoom
             </label>
             <input
-              id="image-crop-zoom"
+              id={`${id}-crop-zoom`}
               type="range"
               min={1}
               max={3}

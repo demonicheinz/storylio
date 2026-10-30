@@ -9,6 +9,13 @@
   "files.trimFinalNewlines": true,
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.biome": "never",
+      "source.organizeImports.biome": "never"
+    }
+  },
   "[markdown]": {
     "editor.defaultFormatter": null,
     "editor.formatOnSave": false,

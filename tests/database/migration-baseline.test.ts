@@ -21,7 +21,7 @@ import { createTestDatabase } from "../helpers/database";
 let fixture: Awaited<ReturnType<typeof createTestDatabase>>;
 let connection: MigrationConnection;
 beforeAll(async () => {
-  fixture = await createTestDatabase();
+  fixture = await createTestDatabase({ authMfa: false, currentSchema: false });
   connection = {
     execute: (query) => fixture.db.execute<Record<string, unknown>>(query),
     transaction: (callback) =>
@@ -40,9 +40,9 @@ describe("Drizzle migration baseline safety", () => {
   });
 
   it("checks an existing database without creating a migration ledger", async () => {
-    await fixture.db
-      .insert(schema.user)
-      .values({ id: "legacy-owner", email: "legacy-baseline@example.test" });
+    await fixture.client.exec(
+      `INSERT INTO "User" ("id", "email", "updatedAt") VALUES ('legacy-owner', 'legacy-baseline@example.test', NOW())`,
+    );
     const result = await adoptBaseline(connection);
     expect(result).toMatchObject({
       tables: 20,
@@ -68,7 +68,11 @@ describe("Drizzle migration baseline safety", () => {
       applied: 1,
       pending: migrationFiles().length - 1,
     });
-    expect(await fixture.db.query.user.findMany()).toMatchObject([
+    expect(
+      await fixture.db.query.user.findMany({
+        columns: { id: true, email: true },
+      }),
+    ).toMatchObject([
       { id: "legacy-owner", email: "legacy-baseline@example.test" },
     ]);
   });
@@ -123,7 +127,16 @@ describe("Drizzle migration baseline safety", () => {
         db.execute<Record<string, unknown>>(query),
       );
       const expected = {
-        ...baseline.schema,
+        ...Object.fromEntries(
+          Object.entries(baseline.schema).map(([section, rows]) => [
+            section,
+            rows.filter((row) =>
+              section === "tables"
+                ? row.name !== "Testimonial"
+                : !("table_name" in row) || row.table_name !== "Testimonial",
+            ),
+          ]),
+        ),
         enums: baseline.schema.enums.map((entry) =>
           entry.name === "HomeSectionType"
             ? { ...entry, values: [...entry.values, "HERO"] }
@@ -154,8 +167,13 @@ describe("Drizzle migration baseline safety", () => {
           section,
           rows.filter((row) =>
             section === "tables"
-              ? row.name !== "RateLimit"
-              : row.table_name !== "RateLimit",
+              ? !["RateLimit", "TwoFactor"].includes(String(row.name))
+              : !["RateLimit", "TwoFactor"].includes(String(row.table_name)) &&
+                !(
+                  section === "columns" &&
+                  row.table_name === "User" &&
+                  row.name === "twoFactorEnabled"
+                ),
           ),
         ]),
       );
@@ -170,6 +188,19 @@ describe("Drizzle migration baseline safety", () => {
         .values({ email: "fresh@example.test" })
         .returning();
       expect(owner.id).toBeTruthy();
+      expect(owner.twoFactorEnabled).toBe(false);
+      expect(
+        actual.columns.filter((row) => row.table_name === "TwoFactor"),
+      ).toHaveLength(7);
+      expect(
+        actual.indexes
+          .filter((row) => row.table_name === "TwoFactor")
+          .map((row) => row.name),
+      ).toEqual([
+        "TwoFactor_pkey",
+        "TwoFactor_secret_idx",
+        "TwoFactor_userId_key",
+      ]);
     } finally {
       await empty.close();
     }

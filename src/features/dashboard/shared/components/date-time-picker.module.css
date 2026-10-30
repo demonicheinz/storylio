@@ -1,0 +1,165 @@
+.field {
+  display: grid;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.trigger {
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  border-color: var(--input);
+  border-radius: 8px;
+  font-weight: 400;
+}
+
+.trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.positioner {
+  z-index: 100;
+}
+
+.panel {
+  box-sizing: border-box;
+  width: min(22rem, calc(100vw - 2rem), var(--available-width));
+  max-height: min(40rem, calc(100dvh - 2rem), var(--available-height));
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  scrollbar-color: var(--border-hover) var(--popover);
+}
+
+.title {
+  margin: 0 0 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.description {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.monthNavigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-block: 0.75rem 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.calendar {
+  width: 100%;
+  table-layout: fixed;
+  border-spacing: 0;
+  text-align: center;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar th {
+  padding-block: 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.calendar td {
+  padding: 1px;
+}
+
+.day {
+  width: 100%;
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.outsideMonth {
+  color: var(--muted-foreground);
+}
+
+.day:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.day[aria-current="date"] {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.calendar [aria-selected="true"] .day {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+}
+
+.day:focus-visible,
+.time select:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.time {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.time > div {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.time label {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.time select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.5rem;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  font: inherit;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+@media (pointer: coarse), (max-width: 767px) {
+  .day {
+    min-height: 2.75rem;
+  }
+}

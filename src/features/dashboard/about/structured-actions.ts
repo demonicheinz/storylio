@@ -1,6 +1,6 @@
 "use server";
 
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath, updateTag } from "next/cache";
 import {
   aboutReorderSchema,
@@ -328,17 +328,33 @@ export async function actionUpdateSkill(id: string, input: SkillInput) {
   const parsed = skillSchema.safeParse(input);
   if (!parsed.success) return actionError("Please fix the highlighted fields.");
   try {
-    const updated = await db
-      .update(skill)
-      .set({
-        ...parsed.data,
-        level: parsed.data.level || null,
-        icon: parsed.data.icon || null,
-        updatedAt: new Date(),
-      })
-      .where(eq(skill.id, id))
-      .returning({ id: skill.id });
-    if (updated.length === 0) throw new Error("Item not found");
+    await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ categoryId: skill.categoryId })
+        .from(skill)
+        .where(eq(skill.id, id));
+      if (!existing) throw new Error("Item not found");
+      let order = parsed.data.order;
+      if (existing.categoryId !== parsed.data.categoryId) {
+        const [last] = await tx
+          .select({ order: skill.order })
+          .from(skill)
+          .where(eq(skill.categoryId, parsed.data.categoryId))
+          .orderBy(desc(skill.order))
+          .limit(1);
+        order = (last?.order ?? -1) + 1;
+      }
+      await tx
+        .update(skill)
+        .set({
+          ...parsed.data,
+          order,
+          level: parsed.data.level || null,
+          icon: parsed.data.icon || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(skill.id, id));
+    });
     revalidateAbout();
     return actionSuccess({ id }, "Skill updated.");
   } catch (error) {
@@ -350,6 +366,43 @@ export async function actionUpdateSkill(id: string, input: SkillInput) {
 export async function actionDeleteSkill(id: string) {
   return remove("skill", id);
 }
-export async function actionReorderSkills(input: unknown) {
-  return reorder("skill", input);
+export async function actionReorderSkills(input: unknown, categoryId: string) {
+  if (!(await authorized())) return actionError("Unauthorized");
+  const parsed = aboutReorderSchema.safeParse(input);
+  if (
+    !parsed.success ||
+    typeof categoryId !== "string" ||
+    !categoryId.trim() ||
+    !parsed.data.length ||
+    new Set(parsed.data.map((entry) => entry.id)).size !== parsed.data.length ||
+    parsed.data.some((entry, index) => entry.order !== index)
+  )
+    return actionError("Invalid order.");
+  try {
+    await db.transaction(async (tx) => {
+      const members = await tx
+        .select({ id: skill.id })
+        .from(skill)
+        .where(eq(skill.categoryId, categoryId));
+      const ids = new Set(members.map((entry) => entry.id));
+      if (
+        members.length !== parsed.data.length ||
+        parsed.data.some((entry) => !ids.has(entry.id))
+      )
+        throw new Error("Category membership changed");
+      for (const entry of parsed.data) {
+        const changed = await tx
+          .update(skill)
+          .set({ order: entry.order, updatedAt: new Date() })
+          .where(and(eq(skill.id, entry.id), eq(skill.categoryId, categoryId)))
+          .returning({ id: skill.id });
+        if (!changed.length) throw new Error("Category membership changed");
+      }
+    });
+    revalidateAbout();
+    return actionSuccess(undefined, "Order updated.");
+  } catch (error) {
+    console.error("Reorder skills failed:", error);
+    return actionError("The skill list changed. Refresh and try again.");
+  }
 }

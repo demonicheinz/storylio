@@ -43,7 +43,7 @@ vi.mock("next/cache", () => ({
 }));
 let fixture: Fixture;
 beforeAll(async () => {
-  fixture = await createTestDatabase();
+  fixture = await createTestDatabase({ currentSchema: false });
   effects.db = fixture.db;
   // The unchanged legacy schema remains readable before the additive migration.
   expect(

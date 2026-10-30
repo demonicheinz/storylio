@@ -104,6 +104,11 @@ export function MultiSelectContent({
     window.innerWidth - contentWidth - VIEWPORT_PADDING,
   );
   const left = Math.min(Math.max(desiredLeft, VIEWPORT_PADDING), maxLeft);
+  // Keep popovers within a modal's focus/interaction boundary. The modal can be
+  // transformed, so absolute coordinates must be relative to its own rectangle.
+  const modal =
+    context.triggerRef.current?.closest<HTMLElement>('[role="dialog"]');
+  const modalRect = modal?.getBoundingClientRect();
   const surfaceHeight = layout?.content.height ?? 0;
   const availableHeight = Math.max(
     120,
@@ -119,6 +124,13 @@ export function MultiSelectContent({
     <motion.div
       ref={context.contentRef}
       data-multi-select-content=""
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          context.setOpen(false, true);
+        }
+      }}
       data-lenis-prevent
       data-side={actualSide}
       inert={!context.open}
@@ -137,14 +149,17 @@ export function MultiSelectContent({
       }
       style={
         {
-          left,
+          position: modal ? "absolute" : "fixed",
+          left: left - (modalRect?.left ?? 0),
           top:
             actualSide === "bottom" && layout
-              ? layout.trigger.top + layout.trigger.height
+              ? layout.trigger.top +
+                layout.trigger.height -
+                (modalRect?.top ?? 0)
               : undefined,
           bottom:
             actualSide === "top" && layout
-              ? window.innerHeight - layout.trigger.top
+              ? (modalRect?.bottom ?? window.innerHeight) - layout.trigger.top
               : undefined,
           minWidth: triggerWidth,
           pointerEvents: context.open ? "auto" : "none",
@@ -170,6 +185,6 @@ export function MultiSelectContent({
         {children}
       </motion.div>
     </motion.div>,
-    document.body,
+    modal ?? document.body,
   );
 }

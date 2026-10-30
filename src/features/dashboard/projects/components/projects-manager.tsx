@@ -25,12 +25,10 @@ import {
   CaretLeftIcon,
   CaretRightIcon,
   CheckCircleIcon,
+  CheckSquareIcon,
   DotsSixVerticalIcon,
   DotsThreeVerticalIcon,
-  EyeIcon,
   FunnelSimpleIcon,
-  GridFourIcon,
-  ListBulletsIcon,
   MagnifyingGlassIcon,
   PencilSimpleIcon,
   PlusIcon,
@@ -70,6 +68,7 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
+  DrawerTrigger,
 } from "@/components/ui/drawer";
 import {
   DropdownMenu,
@@ -86,9 +85,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { toast } from "@/components/ui/toast";
+import toolbarStyles from "@/features/dashboard/shared/components/collection-toolbar.module.css";
+import {
+  DashboardMultiFilter,
+  DashboardSelect,
+  DashboardSort,
+  DashboardViewToggle,
+} from "@/features/dashboard/shared/components/filter-controls";
+import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
+import { useDashboardFilter } from "@/features/dashboard/shared/hooks/use-dashboard-filter";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
-import { blurBeforeOpen } from "@/features/dashboard/shared/utils/overlay-focus";
 import type { ActionResult } from "@/lib/action-result";
+import { getPageItems } from "@/lib/archive-pagination";
 import { ProjectStatus } from "@/lib/db/enums";
 import {
   getDefaultItemsPerPage,
@@ -127,9 +135,15 @@ type ViewMode = "list" | "grid";
 type StatusFilter = "all" | "published" | "draft";
 type FeaturedFilter = "all" | "featured" | "standard";
 type SortMode = "order" | "updated" | "created" | "title";
+type SortDirection = "asc" | "desc";
+
+// Header and rows share the same tracks; padding belongs to their cells.
+const PROJECT_COLUMNS = "xl:grid-cols-[minmax(0,1fr)_130px_180px_68px]";
+const PROJECT_COLUMNS_WITH_GUTTER =
+  "xl:grid-cols-[44px_minmax(0,1fr)_130px_180px_68px]";
 
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
-  { value: "all", label: "All Status" },
+  { value: "all", label: "All" },
   { value: "published", label: "Published" },
   { value: "draft", label: "Draft" },
 ];
@@ -141,11 +155,36 @@ const featuredOptions: Array<{ value: FeaturedFilter; label: string }> = [
 ];
 
 const sortOptions: Array<{ value: SortMode; label: string }> = [
-  { value: "order", label: "Order (asc)" },
-  { value: "updated", label: "Recently Updated" },
-  { value: "created", label: "Newest Created" },
-  { value: "title", label: "Title A-Z" },
+  { value: "order", label: "Display order" },
+  { value: "updated", label: "Last updated" },
+  { value: "created", label: "Date created" },
+  { value: "title", label: "Title" },
 ];
+
+export function compareProjects(
+  a: DashboardProject,
+  b: DashboardProject,
+  field: SortMode,
+  direction: SortDirection,
+) {
+  const multiplier = direction === "asc" ? 1 : -1;
+  if (field === "updated") {
+    return (
+      multiplier *
+      (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
+    );
+  }
+  if (field === "created") {
+    return (
+      multiplier *
+      (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    );
+  }
+  if (field === "title") {
+    return multiplier * a.title.localeCompare(b.title);
+  }
+  return multiplier * (a.order - b.order);
+}
 
 function isPublished(project: DashboardProject) {
   return project.status === ProjectStatus.PUBLISHED;
@@ -174,21 +213,52 @@ function ProjectStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-xs",
-        published
-          ? "bg-emerald-500/12 text-emerald-300"
-          : "bg-amber-500/12 text-amber-300",
-        compact && "px-2 py-0.5",
+        "inline-flex items-center gap-1.5 bg-surface px-2 border border-border rounded-md h-6 font-medium text-xs",
+        published ? "text-success" : "text-muted-foreground",
+        compact && "px-2",
       )}
     >
       <span
         className={cn(
-          "rounded-full size-1.5",
-          published ? "bg-emerald-300" : "bg-amber-300",
+          "rounded-full size-1.5 shrink-0",
+          published ? "bg-success" : "bg-muted-foreground",
         )}
       />
       {published ? "Published" : "Draft"}
     </span>
+  );
+}
+
+function FeaturedProjectBadge() {
+  return (
+    <span className="inline-flex items-center gap-1.5 bg-surface px-2 border border-border rounded-md h-6 font-medium text-brand-soft text-xs">
+      <SparkleIcon className="size-3" aria-hidden="true" />
+      Featured
+    </span>
+  );
+}
+
+function ProjectUpdatedAt({ value }: { value: Date }) {
+  const date = new Date(value);
+  return (
+    <time
+      dateTime={date.toISOString()}
+      className="flex flex-col gap-1 whitespace-nowrap"
+    >
+      <span>
+        {new Intl.DateTimeFormat("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }).format(date)}
+      </span>
+      <span className="text-xs">
+        {new Intl.DateTimeFormat("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(date)}
+      </span>
+    </time>
   );
 }
 
@@ -207,7 +277,7 @@ function ProjectThumbnail({
   return (
     <div
       className={cn(
-        "relative bg-muted/30 border border-border/60 rounded-2xl aspect-video overflow-hidden",
+        "relative bg-muted/30 border border-border/60 rounded-xl aspect-video overflow-hidden",
         className,
       )}
     >
@@ -221,7 +291,7 @@ function ProjectThumbnail({
           onError={() => setFailed(true)}
         />
       ) : (
-        <div className="flex justify-center items-center bg-[radial-gradient(circle_at_20%_20%,rgba(139,92,246,0.28),transparent_36%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(10,10,20,0.96))] h-full text-muted-foreground">
+        <div className="flex justify-center items-center bg-muted h-full text-muted-foreground">
           <BriefcaseIcon className="size-8" />
         </div>
       )}
@@ -229,45 +299,9 @@ function ProjectThumbnail({
   );
 }
 
-function ProjectsStatCard({
-  label,
-  value,
-  description,
-  icon,
-  iconClassName,
-  className,
-}: {
-  label: string;
-  value: string | number;
-  description: string;
-  icon: ReactNode;
-  iconClassName: string;
-  className?: string;
-}) {
-  return (
-    <Card className={dashboardStyles.statCard}>
-      <CardContent className={dashboardStyles.statContent}>
-        <div className={cn(dashboardStyles.statIcon, iconClassName)}>
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <p className={cn("font-heading font-bold text-xl", className)}>
-            {value}
-          </p>
-          <p className="text-[11px] text-muted-foreground">{label}</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground/80">
-            {description}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function FilterDropdown<T extends string>({
   label,
   value,
-  displayValue,
   options,
   onValueChange,
 }: {
@@ -278,98 +312,36 @@ function FilterDropdown<T extends string>({
   onValueChange: (value: T) => void;
 }) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
-          />
-        }
-      >
-        <span className="min-w-0 text-left">
-          <span className="block text-[10px] text-muted-foreground leading-none">
-            {label}
-          </span>
-          <span className="block mt-1 font-medium text-xs truncate">
-            {displayValue}
-          </span>
-        </span>
-        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        <DropdownMenuRadioGroup
-          value={value}
-          onValueChange={(nextValue) => onValueChange(nextValue as T)}
-        >
-          {options.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
-              {option.label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <DashboardSelect
+      label={label}
+      triggerClassName="min-h-11"
+      value={value}
+      options={options}
+      onValueChange={onValueChange}
+    />
   );
 }
 
 function TechStackDropdown({
   techStacks,
   selectedTechStacks,
-  onToggleTechStack,
-  onClear,
+  onValueChange,
 }: {
   techStacks: string[];
   selectedTechStacks: string[];
-  onToggleTechStack: (techStack: string) => void;
-  onClear: () => void;
+  onValueChange: (values: string[]) => void;
 }) {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            variant="outline"
-            className="justify-between bg-input/35 px-3 rounded-2xl min-w-0 h-11"
-          />
-        }
-      >
-        <span className="min-w-0 text-left">
-          <span className="block text-[10px] text-muted-foreground leading-none">
-            Tech stack
-          </span>
-          <span className="block mt-1 font-medium text-xs truncate">
-            {selectedTechStacks.length === 0
-              ? "All Tech"
-              : `${selectedTechStacks.length} selected`}
-          </span>
-        </span>
-        <CaretDownIcon className="ml-2 size-3.5 text-muted-foreground shrink-0" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-60">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Filter by tech stack</DropdownMenuLabel>
-          <DropdownMenuItem onClick={onClear}>All Tech</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {techStacks.length === 0 ? (
-            <DropdownMenuItem disabled>No tech stack yet</DropdownMenuItem>
-          ) : (
-            techStacks.map((techStack) => (
-              <DropdownMenuCheckboxItem
-                key={techStack}
-                checked={selectedTechStacks.includes(techStack)}
-                onCheckedChange={() => onToggleTechStack(techStack)}
-                closeOnClick={false}
-              >
-                {techStack}
-              </DropdownMenuCheckboxItem>
-            ))
-          )}
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="min-w-40">
+      <DashboardMultiFilter
+        label="Tech stack"
+        labelPlacement="above"
+        values={selectedTechStacks}
+        options={techStacks}
+        onValueChange={onValueChange}
+        emptyLabel="All technologies"
+      />
+    </div>
   );
 }
 
@@ -381,30 +353,7 @@ function ViewToggle({
   onViewModeChange: (mode: ViewMode) => void;
 }) {
   return (
-    <div className="justify-self-end grid grid-cols-2 bg-background/35 p-1 border border-border/60 rounded-xl w-fit shrink-0">
-      <Button
-        type="button"
-        size="icon"
-        variant={viewMode === "list" ? "default" : "ghost"}
-        className="rounded-lg size-8"
-        onClick={() => onViewModeChange("list")}
-        aria-label="List view"
-        aria-pressed={viewMode === "list"}
-      >
-        <ListBulletsIcon />
-      </Button>
-      <Button
-        type="button"
-        size="icon"
-        variant={viewMode === "grid" ? "default" : "ghost"}
-        className="rounded-lg size-8"
-        onClick={() => onViewModeChange("grid")}
-        aria-label="Grid view"
-        aria-pressed={viewMode === "grid"}
-      >
-        <GridFourIcon />
-      </Button>
-    </div>
+    <DashboardViewToggle value={viewMode} onValueChange={onViewModeChange} />
   );
 }
 
@@ -428,7 +377,7 @@ function TechPills({
         <Badge
           key={tech}
           variant="outline"
-          className="max-w-28 text-[11px] truncate"
+          className="max-w-28 text-xs truncate"
         >
           {tech}
         </Badge>
@@ -443,9 +392,11 @@ function TechPills({
 function ProjectActions({
   project,
   align = "end",
+  overlay = false,
 }: {
   project: DashboardProject;
   align?: "start" | "end";
+  overlay?: boolean;
 }) {
   return (
     <DropdownMenu>
@@ -454,8 +405,12 @@ function ProjectActions({
           <Button
             type="button"
             size="icon"
-            variant="ghost"
-            className="bg-background/70 hover:bg-background backdrop-blur rounded-xl size-8 text-foreground"
+            variant={overlay ? "secondary" : "ghost"}
+            className={cn(
+              "size-11",
+              overlay &&
+                "bg-popover/80 border-border shadow-sm hover:bg-surface-hover/90",
+            )}
             aria-label={`Open actions for ${project.title}`}
           />
         }
@@ -465,6 +420,9 @@ function ProjectActions({
       <DropdownMenuContent align={align} className="w-44">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Project</DropdownMenuLabel>
+          <DropdownMenuLabel>
+            Created {formatDateTime(project.createdAt)}
+          </DropdownMenuLabel>
           {isPublished(project) && (
             <DropdownMenuItem
               render={
@@ -472,7 +430,7 @@ function ProjectActions({
               }
             >
               <ArrowSquareOutIcon data-icon="inline-start" />
-              Preview
+              View live
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
@@ -516,7 +474,7 @@ function ProjectsGrid({
         <article
           key={project.id}
           className={cn(
-            "group bg-background/45 hover:shadow-[0_20px_70px_rgba(0,0,0,0.22)] border border-border/70 hover:border-brand-soft/40 rounded-2xl min-w-0 overflow-hidden transition-[border-color,transform,box-shadow] hover:-translate-y-0.5",
+            "group flex flex-col bg-card border border-border hover:border-border-hover rounded-lg min-w-0 overflow-hidden transition-colors",
             selectedIds.has(project.id) && "border-brand-soft/60 bg-brand/5",
             batchMode && "cursor-pointer",
           )}
@@ -529,10 +487,10 @@ function ProjectsGrid({
               sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
             />
             <div
-              className="top-3 right-3 absolute opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 transition-opacity"
+              className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
-              <ProjectActions project={project} />
+              <ProjectActions project={project} overlay />
             </div>
             {batchMode && (
               <div
@@ -546,23 +504,23 @@ function ProjectsGrid({
                 />
               </div>
             )}
-            <div
-              className={cn(
-                "left-3 absolute flex flex-wrap gap-1.5 transition-[top]",
-                batchMode ? "top-11" : "top-3",
-              )}
-            >
-              <ProjectStatusBadge project={project} compact />
-              {project.isFeatured && (
-                <Badge className="px-2 rounded-full h-5 text-[11px]">
-                  featured
-                </Badge>
-              )}
-            </div>
           </div>
-          <div className="flex flex-col p-4 min-h-56">
-            <h2 className="mt-2 font-heading font-semibold text-base wrap-break-word line-clamp-2 leading-snug">
-              {project.title}
+          <div className="flex flex-col flex-1 p-4">
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              <ProjectStatusBadge project={project} compact />
+              {project.isFeatured && <FeaturedProjectBadge />}
+            </div>
+            <h2 className="font-sans font-semibold text-base wrap-break-word line-clamp-2 leading-snug">
+              {batchMode ? (
+                project.title
+              ) : (
+                <Link
+                  href={`/dashboard/projects/${project.id}/edit`}
+                  className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring hover:text-link"
+                >
+                  {project.title}
+                </Link>
+              )}
             </h2>
             <p className="mt-1 text-muted-foreground text-xs truncate">
               /projects/{project.slug}
@@ -600,7 +558,11 @@ function ProjectListRow({
   return (
     <div
       className={cn(
-        "xl:items-center grid grid-cols-[44px_minmax(0,1fr)] xl:grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px] bg-background/30 border border-border/70 rounded-2xl min-w-0 overflow-hidden",
+        "xl:items-center grid min-w-0 overflow-hidden",
+        batchMode || dragHandle
+          ? "grid-cols-[44px_minmax(0,1fr)]"
+          : "grid-cols-1",
+        batchMode || dragHandle ? PROJECT_COLUMNS_WITH_GUTTER : PROJECT_COLUMNS,
         selected && "border-brand-soft/60 bg-brand/5",
         batchMode && "cursor-pointer",
         isDragging &&
@@ -612,26 +574,28 @@ function ProjectListRow({
           : undefined
       }
     >
-      <div className="row-span-2 xl:row-span-1">
-        {batchMode ? (
-          <div
-            className="flex justify-center items-center border-border/50 border-r h-full min-h-24"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <Checkbox
-              checked={selected}
-              onCheckedChange={() => onToggleProject?.(project.id)}
-              aria-label={`Select ${project.title}`}
-            />
-          </div>
-        ) : (
-          dragHandle
-        )}
-      </div>
+      {(batchMode || dragHandle) && (
+        <div className="row-span-2 xl:row-span-1">
+          {batchMode ? (
+            <div
+              className="flex justify-center items-center border-border/50 border-r h-full min-h-24"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Checkbox
+                checked={selected}
+                onCheckedChange={() => onToggleProject?.(project.id)}
+                aria-label={`Select ${project.title}`}
+              />
+            </div>
+          ) : (
+            dragHandle
+          )}
+        </div>
+      )}
       <div className="flex items-start gap-3 p-4 xl:p-3 xl:pr-4 min-w-0">
         <ProjectThumbnail
           project={project}
-          className="hidden sm:block rounded-xl w-28 h-16 shrink-0"
+          className="hidden sm:block rounded-lg w-28 h-16 shrink-0"
           sizes="112px"
         />
         <div className="flex-1 min-w-0">
@@ -639,11 +603,20 @@ function ProjectListRow({
             <span
               className={cn(
                 "xl:hidden rounded-full size-2 shrink-0",
-                isPublished(project) ? "bg-emerald-300" : "bg-amber-300",
+                isPublished(project) ? "bg-success" : "bg-muted-foreground",
               )}
             />
-            <h2 className="font-heading font-semibold xl:text-sm text-base wrap-break-word line-clamp-2 leading-snug">
-              {project.title}
+            <h2 className="font-sans font-semibold xl:text-sm text-base wrap-break-word line-clamp-2 leading-snug">
+              {batchMode ? (
+                project.title
+              ) : (
+                <Link
+                  href={`/dashboard/projects/${project.id}/edit`}
+                  className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring hover:text-link"
+                >
+                  {project.title}
+                </Link>
+              )}
             </h2>
           </div>
           <p className="mt-1 text-muted-foreground text-xs truncate">
@@ -666,29 +639,25 @@ function ProjectListRow({
       <div className="hidden xl:flex items-center p-3">
         <div className="flex flex-wrap items-center gap-2">
           <ProjectStatusBadge project={project} compact />
-          {project.isFeatured && (
-            <Badge className="px-2 rounded-full h-5 text-[11px]">
-              featured
-            </Badge>
-          )}
+          {project.isFeatured && <FeaturedProjectBadge />}
         </div>
       </div>
       <div className="hidden xl:block p-3 text-muted-foreground text-sm">
-        {formatDateTime(project.createdAt)}
+        <ProjectUpdatedAt value={project.updatedAt} />
       </div>
-      <div className="hidden xl:block p-3 text-muted-foreground text-sm">
-        {formatDateTime(project.updatedAt)}
-      </div>
-      <div className="hidden xl:flex justify-end p-3">
+      <div className="hidden xl:flex justify-center p-3">
         <div onClick={(event) => event.stopPropagation()}>
           <ProjectActions project={project} />
         </div>
       </div>
-      <div className="xl:hidden flex flex-wrap items-center gap-2 col-start-2 px-4 pb-4">
-        <ProjectStatusBadge project={project} compact />
-        {project.isFeatured && (
-          <Badge className="px-2 rounded-full h-5 text-[11px]">featured</Badge>
+      <div
+        className={cn(
+          "xl:hidden flex flex-wrap items-center gap-2 px-4 pb-4",
+          (batchMode || dragHandle) && "col-start-2",
         )}
+      >
+        <ProjectStatusBadge project={project} compact />
+        {project.isFeatured && <FeaturedProjectBadge />}
         <span className="text-muted-foreground text-xs">
           Updated {formatDate(project.updatedAt)}
         </span>
@@ -741,7 +710,7 @@ function SortableProjectListRow({
             type="button"
             variant="ghost"
             size="icon"
-            className="justify-center items-center p-0 border-border/50 border-r rounded-none w-full h-full min-h-24 text-muted-foreground touch-none cursor-grab active:cursor-grabbing disabled:cursor-not-allowed"
+            className="justify-center items-center p-0 w-full h-full min-h-24 touch-none cursor-grab active:cursor-grabbing disabled:cursor-not-allowed"
             disabled={disabled}
             aria-label={`Drag ${project.title} to reorder`}
             {...attributes}
@@ -755,20 +724,20 @@ function SortableProjectListRow({
   );
 }
 
-function ProjectsListHeader() {
+function ProjectsListHeader({ hasGutter = false }: { hasGutter?: boolean }) {
   return (
     <div
       className={cn(
-        "hidden xl:grid grid-cols-[44px_minmax(360px,1fr)_130px_160px_160px_56px]",
-        dashboardStyles.listHeader,
+        "hidden xl:grid border-border border-b font-medium text-muted-foreground text-xs",
+        hasGutter ? PROJECT_COLUMNS_WITH_GUTTER : PROJECT_COLUMNS,
       )}
+      data-project-list-header
     >
-      <div />
-      <div>Title</div>
-      <div>Status</div>
-      <div>Created at</div>
-      <div>Updated at</div>
-      <div className="text-right">Actions</div>
+      {hasGutter && <div />}
+      <div className="py-3 pr-3 pl-34">Title</div>
+      <div className="p-3">Status</div>
+      <div className="p-3">Updated at</div>
+      <div className="p-3 text-center">Actions</div>
     </div>
   );
 }
@@ -810,28 +779,37 @@ function ProjectsList({
 
   const persistOrder = (nextProjects: DashboardProject[]) => {
     startTransition(async () => {
-      const result = await actionReorderProjects(
-        nextProjects.map((project, index) => ({
-          id: project.id,
-          order: index,
-        })),
-      );
+      try {
+        const result = await actionReorderProjects(
+          nextProjects.map((project, index) => ({
+            id: project.id,
+            order: index,
+          })),
+        );
 
-      if (result.success) {
+        if (result.success) {
+          toast.add({
+            title: result.message ?? "Project order updated.",
+            type: "success",
+          });
+          router.refresh();
+          return;
+        }
+
+        onReorder(projects);
+        toast.add({ title: result.error, type: "error" });
+      } catch {
+        onReorder(projects);
         toast.add({
-          title: result.message ?? "Project order updated.",
-          type: "success",
+          title: "Could not save order. Previous order restored.",
+          type: "error",
         });
-        router.refresh();
-        return;
       }
-
-      onReorder(projects);
-      toast.add({ title: result.error, type: "error" });
     });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (!canReorder || isPending) return;
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -859,8 +837,8 @@ function ProjectsList({
   if (!canReorder) {
     return (
       <div className={dashboardStyles.listSurface}>
-        <ProjectsListHeader />
-        <div className="flex flex-col gap-3 p-3 min-w-0">
+        <ProjectsListHeader hasGutter={canReorder || batchMode} />
+        <div className="flex flex-col divide-y divide-border min-w-0">
           {projects.map((project) => (
             <ProjectListRow
               key={project.id}
@@ -868,11 +846,6 @@ function ProjectsList({
               batchMode={batchMode}
               selected={selectedIds.has(project.id)}
               onToggleProject={onToggleProject}
-              dragHandle={
-                <div className="flex justify-center items-center border-border/50 border-r h-full min-h-24 text-muted-foreground">
-                  <DotsSixVerticalIcon />
-                </div>
-              }
             />
           ))}
         </div>
@@ -882,14 +855,14 @@ function ProjectsList({
 
   return (
     <div className={dashboardStyles.listSurface}>
-      <ProjectsListHeader />
+      <ProjectsListHeader hasGutter={canReorder || batchMode} />
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col gap-3 p-3 min-w-0">
+          <div className="flex flex-col divide-y divide-border min-w-0">
             {projects.map((project) => (
               <SortableProjectListRow
                 key={project.id}
@@ -934,35 +907,40 @@ function ProjectsPagination({
         type="button"
         size="icon"
         variant="outline"
-        className="rounded-xl size-8"
         disabled={page <= 1}
         onClick={() => onPageChange(Math.max(1, page - 1))}
         aria-label="Previous page"
       >
         <CaretLeftIcon />
       </Button>
-      {Array.from({ length: pageCount }).map((_, index) => {
-        const pageNumber = index + 1;
-
-        return (
-          <Button
-            key={pageNumber}
-            type="button"
-            size="icon"
-            variant={pageNumber === page ? "default" : "outline"}
-            className="rounded-xl size-8"
-            onClick={() => onPageChange(pageNumber)}
-            aria-current={pageNumber === page ? "page" : undefined}
-          >
-            {pageNumber}
-          </Button>
-        );
-      })}
+      <span className="md:hidden px-2 text-sm" aria-live="polite">
+        Page {page} of {pageCount}
+      </span>
+      <div className="hidden md:flex items-center gap-1">
+        {getPageItems(page, pageCount).map((value, index) =>
+          value === "ellipsis" ? (
+            <span key={`gap-${index}`} className="px-1" aria-hidden>
+              …
+            </span>
+          ) : (
+            <Button
+              key={value}
+              type="button"
+              size="icon"
+              variant={value === page ? "default" : "outline"}
+              onClick={() => onPageChange(value)}
+              aria-label={`Page ${value}`}
+              aria-current={value === page ? "page" : undefined}
+            >
+              {value}
+            </Button>
+          ),
+        )}
+      </div>
       <Button
         type="button"
         size="icon"
         variant="outline"
-        className="rounded-xl size-8"
         disabled={page >= pageCount}
         onClick={() => onPageChange(Math.min(pageCount, page + 1))}
         aria-label="Next page"
@@ -1026,7 +1004,7 @@ function ItemsPerPageDropdown({
               type="button"
               variant="outline"
               size="sm"
-              className="bg-input/35 rounded-xl"
+              aria-label="Items per page"
             />
           }
         >
@@ -1039,7 +1017,11 @@ function ItemsPerPageDropdown({
             onValueChange={(nextValue) => onValueChange(Number(nextValue))}
           >
             {options.map((option) => (
-              <DropdownMenuRadioItem key={option} value={String(option)}>
+              <DropdownMenuRadioItem
+                key={option}
+                value={String(option)}
+                closeOnClick={true}
+              >
                 {option}
               </DropdownMenuRadioItem>
             ))}
@@ -1052,6 +1034,10 @@ function ItemsPerPageDropdown({
 
 function ProjectsBatchActionsBar({
   selectedCount,
+  selectedTitles,
+  outsideViewCount,
+  onSelectPage,
+  pageSelected,
   isPending,
   onPublish,
   onMoveToDraft,
@@ -1059,6 +1045,10 @@ function ProjectsBatchActionsBar({
   onCancel,
 }: {
   selectedCount: number;
+  selectedTitles: string[];
+  outsideViewCount: number;
+  onSelectPage: () => void;
+  pageSelected: boolean;
   isPending: boolean;
   onPublish: () => void;
   onMoveToDraft: () => void;
@@ -1073,14 +1063,25 @@ function ProjectsBatchActionsBar({
           selected
         </p>
         <p className="text-muted-foreground text-xs">
-          Drag ordering is paused while selecting projects.
+          {outsideViewCount > 0
+            ? `${outsideViewCount} selected outside this page. `
+            : ""}
+          Selection includes all chosen pages and filters.
         </p>
       </div>
       <div className="sm:flex sm:flex-wrap sm:justify-end gap-2 grid grid-cols-2">
         <Button
           type="button"
           size="sm"
-          className="rounded-xl"
+          variant="outline"
+          disabled={isPending}
+          onClick={onSelectPage}
+        >
+          {pageSelected ? "Deselect page" : "Select page"}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
           disabled={isPending || selectedCount === 0}
           onClick={onPublish}
         >
@@ -1091,7 +1092,6 @@ function ProjectsBatchActionsBar({
           type="button"
           size="sm"
           variant="outline"
-          className="bg-input/35 rounded-xl"
           disabled={isPending || selectedCount === 0}
           onClick={onMoveToDraft}
         >
@@ -1104,7 +1104,6 @@ function ProjectsBatchActionsBar({
                 type="button"
                 size="sm"
                 variant="destructive"
-                className="rounded-xl"
                 disabled={isPending || selectedCount === 0}
               />
             }
@@ -1121,6 +1120,13 @@ function ProjectsBatchActionsBar({
                 cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            <ul className="space-y-1 max-h-48 overflow-y-auto text-sm">
+              {selectedTitles.map((title, index) => (
+                <li key={`${index}-${title}`} className="wrap-anywhere">
+                  {title}
+                </li>
+              ))}
+            </ul>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
               <AlertDialogAction
@@ -1137,11 +1143,10 @@ function ProjectsBatchActionsBar({
           type="button"
           size="sm"
           variant="ghost"
-          className="rounded-xl"
           disabled={isPending}
           onClick={onCancel}
         >
-          Cancel
+          Cancel selection
         </Button>
       </div>
     </div>
@@ -1152,10 +1157,19 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   const router = useRouter();
   const [items, setItems] = useState(projects);
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("all");
-  const [featured, setFeatured] = useState<FeaturedFilter>("all");
+  const [status, setStatus] = useDashboardFilter<StatusFilter>(
+    "status",
+    ["all", "published", "draft"],
+    "all",
+  );
+  const [featured, setFeatured] = useDashboardFilter<FeaturedFilter>(
+    "featured",
+    ["all", "featured", "standard"],
+    "all",
+  );
   const [selectedTechStacks, setSelectedTechStacks] = useState<string[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>("order");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [itemsPerPage, setItemsPerPage] = useState<number>(
     getDefaultItemsPerPage("list"),
@@ -1165,16 +1179,37 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBatchPending, startBatchTransition] = useTransition();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersTriggerRef = useRef<HTMLButtonElement>(null);
+  const [reorderMode, setReorderMode] = useState(false);
+  const previousView = useRef<{
+    query: string;
+    status: StatusFilter;
+    featured: FeaturedFilter;
+    tech: string[];
+    sort: SortMode;
+    direction: SortDirection;
+    view: ViewMode;
+    page: number;
+    size: number;
+  } | null>(null);
+  const restorePage = useRef<number | null>(null);
   const [draftStatus, setDraftStatus] = useState<StatusFilter>(status);
   const [draftFeatured, setDraftFeatured] = useState<FeaturedFilter>(featured);
   const [draftTechStacks, setDraftTechStacks] =
     useState<string[]>(selectedTechStacks);
   const [draftSort, setDraftSort] = useState<SortMode>(sortMode);
+  const [draftSortDirection, setDraftSortDirection] =
+    useState<SortDirection>(sortDirection);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
   const desktopSearchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setItems(projects);
+    const available = new Set(projects.map((project) => project.id));
+    setSelectedIds((current) => {
+      const next = new Set([...current].filter((id) => available.has(id)));
+      return next.size === current.size ? current : next;
+    });
   }, [projects]);
 
   useEffect(() => {
@@ -1284,26 +1319,16 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
 
         return searchable.includes(normalizedQuery);
       })
-      .sort((a, b) => {
-        if (sortMode === "updated") {
-          return (
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-          );
-        }
-
-        if (sortMode === "created") {
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        }
-
-        if (sortMode === "title") {
-          return a.title.localeCompare(b.title);
-        }
-
-        return a.order - b.order;
-      });
-  }, [featured, items, query, selectedTechStacks, sortMode, status]);
+      .sort((a, b) => compareProjects(a, b, sortMode, sortDirection));
+  }, [
+    featured,
+    items,
+    query,
+    selectedTechStacks,
+    sortMode,
+    sortDirection,
+    status,
+  ]);
 
   const {
     items: paginatedProjects,
@@ -1315,19 +1340,20 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
 
   useEffect(() => {
-    setPage(1);
-  }, [featured, itemsPerPage, query, selectedTechStacks, sortMode, status]);
+    setPage(restorePage.current ?? 1);
+    restorePage.current = null;
+  }, [
+    featured,
+    itemsPerPage,
+    query,
+    selectedTechStacks,
+    sortMode,
+    sortDirection,
+    status,
+  ]);
 
   const toggleTechStack = (techStack: string) => {
     setSelectedTechStacks((currentTechStacks) =>
-      currentTechStacks.includes(techStack)
-        ? currentTechStacks.filter((item) => item !== techStack)
-        : [...currentTechStacks, techStack],
-    );
-  };
-
-  const toggleDraftTechStack = (techStack: string) => {
-    setDraftTechStacks((currentTechStacks) =>
       currentTechStacks.includes(techStack)
         ? currentTechStacks.filter((item) => item !== techStack)
         : [...currentTechStacks, techStack],
@@ -1339,6 +1365,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     setDraftFeatured(featured);
     setDraftTechStacks(selectedTechStacks);
     setDraftSort(sortMode);
+    setDraftSortDirection(sortDirection);
     setFiltersOpen(true);
   };
 
@@ -1356,6 +1383,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     setFeatured(draftFeatured);
     setSelectedTechStacks(draftTechStacks);
     setSortMode(draftSort);
+    setSortDirection(draftSortDirection);
     setFiltersOpen(false);
   };
 
@@ -1364,10 +1392,12 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     setDraftFeatured("all");
     setDraftTechStacks([]);
     setDraftSort("order");
+    setDraftSortDirection("asc");
     setStatus("all");
     setFeatured("all");
     setSelectedTechStacks([]);
     setSortMode("order");
+    setSortDirection("asc");
   };
 
   const handleViewModeChange = (nextViewMode: ViewMode) => {
@@ -1431,316 +1461,448 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     });
   };
 
+  const activeFilterCount =
+    Number(status !== "all") +
+    Number(featured !== "all") +
+    selectedTechStacks.length +
+    Number(sortMode !== "order" || sortDirection !== "asc");
+  const hasRefinements = activeFilterCount > 0 || query.trim().length > 0;
+  const selectedProjects = items.filter((item) => selectedIds.has(item.id));
+  const outsideViewCount = selectedProjects.filter(
+    (item) => !paginatedProjects.some((visible) => visible.id === item.id),
+  ).length;
+  const pageSelected =
+    paginatedProjects.length > 0 &&
+    paginatedProjects.every((item) => selectedIds.has(item.id));
+  const selectPage = () =>
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      for (const item of paginatedProjects) {
+        if (pageSelected) next.delete(item.id);
+        else next.add(item.id);
+      }
+      return next;
+    });
+  const clearFilters = () => {
+    resetFilters();
+    setQuery("");
+  };
   const statusDisplay =
     statusOptions.find((option) => option.value === status)?.label ??
     "All Status";
   const featuredDisplay =
     featuredOptions.find((option) => option.value === featured)?.label ??
     "All Projects";
-  const sortDisplay =
-    sortOptions.find((option) => option.value === sortMode)?.label ??
-    "Order asc";
   const canReorder =
+    reorderMode &&
     viewMode === "list" &&
     !batchMode &&
     sortMode === "order" &&
+    sortDirection === "asc" &&
     status === "all" &&
     featured === "all" &&
     selectedTechStacks.length === 0 &&
     query.trim().length === 0 &&
-    filteredProjects.length <= itemsPerPage;
+    filteredProjects.length === items.length;
+
+  const toggleReorderMode = () => {
+    if (reorderMode) {
+      const previous = previousView.current;
+      if (previous) {
+        restorePage.current = previous.page;
+        setQuery(previous.query);
+        setStatus(previous.status);
+        setFeatured(previous.featured);
+        setSelectedTechStacks(previous.tech);
+        setSortMode(previous.sort);
+        setSortDirection(previous.direction);
+        setViewMode(previous.view);
+        setItemsPerPage(previous.size);
+        setPage(previous.page);
+      }
+      setReorderMode(false);
+      return;
+    }
+    previousView.current = {
+      query,
+      status,
+      featured,
+      tech: selectedTechStacks,
+      sort: sortMode,
+      direction: sortDirection,
+      view: viewMode,
+      page: currentPage,
+      size: itemsPerPage,
+    };
+    resetFilters();
+    setQuery("");
+    clearSelection();
+    setPage(1);
+    setViewMode("list");
+    setReorderMode(true);
+  };
 
   const handleReorder = (nextProjects: DashboardProject[]) => {
     setItems(nextProjects);
   };
 
   return (
-    <div className={dashboardStyles.page}>
-      <div className="flex justify-between items-start gap-4">
-        <div className="min-w-0">
-          <h1 className="font-heading font-bold text-3xl">Projects</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
-            Manage portfolio drafts, published case studies, media, and display
-            order.
+    <Drawer
+      open={filtersOpen}
+      onOpenChange={handleFiltersOpenChange}
+      swipeDirection="down"
+      showSwipeHandle
+    >
+      <div className={dashboardStyles.page}>
+        <div className="flex sm:flex-row flex-col sm:justify-between sm:items-start gap-4">
+          <div className="min-w-0">
+            <h1 className="font-heading font-bold text-3xl">Projects</h1>
+            <p className="mt-2 max-w-2xl text-muted-foreground text-sm leading-6">
+              Manage portfolio drafts, published case studies, media, and
+              display order.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={toggleReorderMode}
+              aria-pressed={reorderMode}
+              disabled={items.length < 2}
+            >
+              {reorderMode ? "Done reordering" : "Reorder"}
+            </Button>
+            <Button
+              role="link"
+              render={<Link href="/dashboard/projects/new" />}
+              nativeButton={false}
+              className="md:px-4 md:w-auto shrink-0"
+            >
+              <PlusIcon data-icon="inline-start" />
+              <span>New Project</span>
+            </Button>
+          </div>
+        </div>
+
+        <DashboardSummary
+          items={[
+            { label: "Projects", value: stats.total },
+            { label: "Published", value: stats.published },
+            { label: "Drafts", value: stats.drafts },
+            {
+              label: "Marked featured",
+              value: stats.featured,
+              description: "Includes drafts",
+            },
+          ]}
+        />
+
+        {reorderMode && (
+          <p className="text-muted-foreground text-sm" role="status">
+            Reordering all projects. Changes save after each move; Done restores
+            your previous filters and view.
           </p>
-        </div>
-        <Button
-          role="link"
-          render={<Link href="/dashboard/projects/new" />}
-          nativeButton={false}
-          size="icon"
-          className="md:px-4 rounded-full md:rounded-3xl md:w-auto md:h-9 size-10 shrink-0"
-        >
-          <PlusIcon data-icon="inline-start" />
-          <span className="sr-only md:not-sr-only">New Project</span>
-        </Button>
-      </div>
+        )}
 
-      <div className={dashboardStyles.statGrid}>
-        <ProjectsStatCard
-          label="Total Projects"
-          value={stats.total}
-          description="All time"
-          icon={<BriefcaseIcon />}
-          iconClassName="bg-sky-500/12 text-sky-300"
-          className="text-sky-300"
-        />
-        <ProjectsStatCard
-          label="Published"
-          value={stats.published}
-          description={`${stats.total ? Math.round((stats.published / stats.total) * 100) : 0}% of total`}
-          icon={<EyeIcon />}
-          iconClassName="bg-emerald-500/12 text-emerald-300"
-          className="text-emerald-300"
-        />
-        <ProjectsStatCard
-          label="Drafts"
-          value={stats.drafts}
-          description={`${stats.total ? Math.round((stats.drafts / stats.total) * 100) : 0}% of total`}
-          icon={<PencilSimpleIcon />}
-          iconClassName="bg-amber-500/12 text-amber-300"
-          className="text-amber-300"
-        />
-        <ProjectsStatCard
-          label="Featured"
-          value={stats.featured}
-          description="Home and projects priority"
-          icon={<SparkleIcon />}
-          iconClassName="bg-fuchsia-500/12 text-fuchsia-300"
-          className="text-fuchsia-300"
-        />
-      </div>
-
-      <Card className={dashboardStyles.toolbarCard}>
-        <CardContent className={dashboardStyles.toolbarContent}>
-          <div className="md:hidden gap-3 grid">
-            <div className="flex gap-2 min-w-0">
-              <div className="relative flex-1 min-w-0">
-                <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
-                <Input
-                  ref={mobileSearchInputRef}
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search projects..."
-                  className="bg-input/45 pr-14 pl-9 rounded-2xl h-10"
-                  aria-label="Search projects"
-                />
-                <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
-                  ⌘ K
-                </Kbd>
+        {!reorderMode && (
+          <Card className={dashboardStyles.toolbarCard}>
+            <CardContent
+              className={cn(
+                dashboardStyles.toolbarContent,
+                "[&_input]:min-h-11 [&_button]:min-h-11",
+              )}
+            >
+              <div className={cn("md:hidden", toolbarStyles.mobileToolbar)}>
+                <div className={toolbarStyles.mobileRow}>
+                  <div className={toolbarStyles.mobileSearch}>
+                    <MagnifyingGlassIcon
+                      className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none"
+                      aria-hidden="true"
+                    />
+                    <Input
+                      ref={mobileSearchInputRef}
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Search..."
+                      className="pr-3 pl-9"
+                      aria-label="Search projects"
+                    />
+                  </div>
+                  <DrawerTrigger
+                    render={
+                      <Button
+                        ref={filtersTriggerRef}
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="relative p-0 size-11"
+                        aria-label={
+                          activeFilterCount > 0
+                            ? `Filters (${activeFilterCount})`
+                            : "Filters"
+                        }
+                        title={
+                          activeFilterCount > 0
+                            ? `Filters (${activeFilterCount})`
+                            : "Filters"
+                        }
+                      />
+                    }
+                  >
+                    <FunnelSimpleIcon aria-hidden="true" />
+                    {activeFilterCount > 0 && (
+                      <span
+                        className="-top-1 -right-1 absolute flex justify-center items-center bg-primary px-1 rounded-full min-w-4 h-4 font-semibold text-[10px] text-primary-foreground pointer-events-none"
+                        aria-hidden="true"
+                      >
+                        {activeFilterCount > 99 ? "99+" : activeFilterCount}
+                      </span>
+                    )}
+                  </DrawerTrigger>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant={batchMode ? "secondary" : "outline"}
+                    className="p-0 size-11"
+                    aria-label={batchMode ? "Exit selection mode" : "Select"}
+                    title={
+                      batchMode ? "Exit selection mode" : "Select projects"
+                    }
+                    aria-pressed={batchMode}
+                    onClick={toggleBatchMode}
+                  >
+                    <CheckSquareIcon aria-hidden="true" />
+                  </Button>
+                </div>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="bg-input/35 rounded-2xl h-10 shrink-0"
-                onClick={(event) => blurBeforeOpen(event, openFilters)}
-              >
-                <FunnelSimpleIcon data-icon="inline-start" />
-                Filters
-              </Button>
-              <Button
-                type="button"
-                variant={batchMode ? "secondary" : "outline"}
-                className="bg-input/35 rounded-2xl h-10 shrink-0"
-                onClick={toggleBatchMode}
-              >
-                {batchMode ? "Cancel" : "Select"}
-              </Button>
-            </div>
-          </div>
 
-          <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_140px_140px_140px_160px_auto] min-w-0">
-            <div className="relative md:col-span-2 xl:col-span-1 min-w-0">
-              <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
-              <Input
-                ref={desktopSearchInputRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search projects..."
-                className="bg-input/45 pr-14 pl-9 rounded-2xl h-11"
-                aria-label="Search projects"
-              />
-              <Kbd className="top-1/2 right-2 absolute bg-background/60 border border-border/50 -translate-y-1/2">
-                ⌘ K
-              </Kbd>
-            </div>
-            <FilterDropdown
-              label="Status"
-              value={status}
-              displayValue={statusDisplay}
-              options={statusOptions}
-              onValueChange={setStatus}
-            />
-            <FilterDropdown
-              label="Featured"
-              value={featured}
-              displayValue={featuredDisplay}
-              options={featuredOptions}
-              onValueChange={setFeatured}
-            />
-            <TechStackDropdown
-              techStacks={techStacks}
-              selectedTechStacks={selectedTechStacks}
-              onToggleTechStack={toggleTechStack}
-              onClear={() => setSelectedTechStacks([])}
-            />
-            <FilterDropdown
-              label="Sort by"
-              value={sortMode}
-              displayValue={sortDisplay}
-              options={sortOptions}
-              onValueChange={setSortMode}
-            />
-            <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
-              <ViewToggle
-                viewMode={viewMode}
-                onViewModeChange={handleViewModeChange}
-              />
-              <Button
-                type="button"
-                variant={batchMode ? "secondary" : "outline"}
-                className="bg-input/35 rounded-2xl h-11 shrink-0"
-                onClick={toggleBatchMode}
-              >
-                {batchMode ? "Cancel" : "Select"}
-              </Button>
-            </div>
-          </div>
-          {selectedTechStacks.length > 0 && (
-            <div className="hidden md:flex flex-wrap items-center gap-2 mt-3">
-              <span className="text-muted-foreground text-xs">
-                Active tech:
-              </span>
-              {selectedTechStacks.map((techStack) => (
-                <Button
-                  key={techStack}
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  className="px-2.5 rounded-full h-7 text-xs"
-                  onClick={() => toggleTechStack(techStack)}
-                >
-                  {techStack}
-                  <span className="ml-1 text-muted-foreground">×</span>
-                </Button>
-              ))}
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="px-2.5 rounded-full h-7 text-xs"
-                onClick={() => setSelectedTechStacks([])}
-              >
-                Clear
-              </Button>
-            </div>
-          )}
-          {!canReorder && viewMode === "list" && (
-            <p className="mt-3 text-muted-foreground text-xs">
-              {batchMode
-                ? "Reordering is paused while selecting projects."
-                : "Reordering is available only in list view with order sorting, no active filters, and all projects visible on one page."}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+              <div className="hidden items-end gap-3 md:grid md:grid-cols-2 xl:grid-cols-[minmax(140px,1fr)_minmax(90px,0.6fr)_minmax(100px,0.7fr)_minmax(150px,1fr)_minmax(220px,1fr)_auto] min-w-0">
+                <div className="flex flex-col gap-1.5 md:col-span-2 xl:col-span-1 min-w-0">
+                  <span className="text-muted-foreground text-xs">Search</span>
+                  <div className="relative min-w-0">
+                    <MagnifyingGlassIcon className="top-1/2 left-3 absolute size-4 text-muted-foreground -translate-y-1/2 pointer-events-none" />
+                    <Input
+                      ref={desktopSearchInputRef}
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Search projects..."
+                      className="pr-14 pl-9"
+                      aria-label="Search projects"
+                    />
+                    <Kbd className="top-1/2 right-2 absolute -translate-y-1/2">
+                      ⌘ K
+                    </Kbd>
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <FilterDropdown
+                    label="Status"
+                    value={status}
+                    displayValue={statusDisplay}
+                    options={statusOptions}
+                    onValueChange={setStatus}
+                  />
+                </div>
 
-      {batchMode && (
-        <ProjectsBatchActionsBar
-          selectedCount={selectedIds.size}
-          isPending={isBatchPending}
-          onPublish={() =>
-            runBatchAction(
-              actionPublishProjects,
-              "Selected projects published.",
-            )
-          }
-          onMoveToDraft={() =>
-            runBatchAction(
-              actionMoveProjectsToDraft,
-              "Selected projects moved to draft.",
-            )
-          }
-          onDelete={() =>
-            runBatchAction(actionDeleteProjects, "Selected projects deleted.")
-          }
-          onCancel={clearSelection}
-        />
-      )}
+                <FilterDropdown
+                  label="Featured"
+                  value={featured}
+                  displayValue={featuredDisplay}
+                  options={featuredOptions}
+                  onValueChange={setFeatured}
+                />
+                <TechStackDropdown
+                  techStacks={techStacks}
+                  selectedTechStacks={selectedTechStacks}
+                  onValueChange={setSelectedTechStacks}
+                />
+                <DashboardSort
+                  value={sortMode}
+                  options={sortOptions}
+                  onValueChange={setSortMode}
+                  direction={sortDirection}
+                  onDirectionChange={setSortDirection}
+                />
+                <div className="flex justify-self-end md:justify-self-start xl:justify-self-auto items-center gap-2 w-fit">
+                  <ViewToggle
+                    viewMode={viewMode}
+                    onViewModeChange={handleViewModeChange}
+                  />
+                  <Button
+                    type="button"
+                    variant={batchMode ? "secondary" : "outline"}
+                    className="shrink-0"
+                    onClick={toggleBatchMode}
+                  >
+                    {batchMode ? "Cancel" : "Select"}
+                  </Button>
+                </div>
+              </div>
+              {selectedTechStacks.length > 0 && (
+                <div className="hidden md:flex flex-wrap items-center gap-2 mt-3">
+                  <span className="text-muted-foreground text-xs">
+                    Active tech:
+                  </span>
+                  {selectedTechStacks.map((techStack) => (
+                    <Button
+                      key={techStack}
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      className="px-2.5"
+                      onClick={() => toggleTechStack(techStack)}
+                    >
+                      {techStack}
+                      <span className="ml-1 text-muted-foreground">×</span>
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="px-2.5"
+                    onClick={() => setSelectedTechStacks([])}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-      {filteredProjects.length === 0 ? (
-        <div className={dashboardStyles.emptyState}>
-          <BriefcaseIcon className="size-12 text-muted-foreground/50" />
-          <div>
-            <p className="font-medium">No projects found</p>
-            <p className="mt-1 text-muted-foreground text-sm">
-              Adjust the filters or create a new portfolio entry.
-            </p>
-          </div>
-          <Button
-            role="link"
-            render={<Link href="/dashboard/projects/new" />}
-            nativeButton={false}
+        {!reorderMode && hasRefinements && (
+          <div
+            className="flex flex-wrap items-center gap-3 text-muted-foreground text-sm"
+            role="status"
           >
-            <PlusIcon data-icon="inline-start" />
-            New Project
-          </Button>
-        </div>
-      ) : (
-        <>
-          {viewMode === "grid" ? (
-            <>
-              <div className="hidden md:block">
-                <ProjectsGrid
-                  projects={paginatedProjects}
-                  batchMode={batchMode}
-                  selectedIds={selectedIds}
-                  onToggleProject={toggleProjectSelection}
-                />
-              </div>
-              <div className="md:hidden">
-                <ProjectsList
-                  projects={paginatedProjects}
-                  canReorder={false}
-                  batchMode={batchMode}
-                  selectedIds={selectedIds}
-                  onReorder={handleReorder}
-                  onToggleProject={toggleProjectSelection}
-                />
-              </div>
-            </>
-          ) : (
-            <ProjectsList
-              projects={paginatedProjects}
-              canReorder={canReorder}
-              batchMode={batchMode}
-              selectedIds={selectedIds}
-              onReorder={handleReorder}
-              onToggleProject={toggleProjectSelection}
-            />
-          )}
-
-          <ProjectsPagination
-            firstIndex={firstIndex}
-            lastIndex={lastIndex}
-            total={filteredProjects.length}
-            page={currentPage}
-            pageCount={pageCount}
-            itemsPerPage={itemsPerPage}
-            itemsPerPageOptions={itemsPerPageOptions}
-            onPageChange={setPage}
-            onItemsPerPageChange={setItemsPerPage}
+            <span>
+              {filteredProjects.length}{" "}
+              {filteredProjects.length === 1 ? "project" : "projects"} found
+            </span>
+            {hasRefinements && (
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="px-0"
+                onClick={clearFilters}
+              >
+                Clear filters and search
+              </Button>
+            )}
+          </div>
+        )}
+        {batchMode && (
+          <ProjectsBatchActionsBar
+            selectedCount={selectedIds.size}
+            selectedTitles={selectedProjects.map((item) => item.title)}
+            outsideViewCount={outsideViewCount}
+            onSelectPage={selectPage}
+            pageSelected={pageSelected}
+            isPending={isBatchPending}
+            onPublish={() =>
+              runBatchAction(
+                actionPublishProjects,
+                "Selected projects published.",
+              )
+            }
+            onMoveToDraft={() =>
+              runBatchAction(
+                actionMoveProjectsToDraft,
+                "Selected projects moved to draft.",
+              )
+            }
+            onDelete={() =>
+              runBatchAction(actionDeleteProjects, "Selected projects deleted.")
+            }
+            onCancel={clearSelection}
           />
-        </>
-      )}
+        )}
 
-      <Drawer
-        open={filtersOpen}
-        onOpenChange={handleFiltersOpenChange}
-        swipeDirection="down"
-        showSwipeHandle
-      >
-        <DrawerContent className="before:top-2 before:bottom-0 before:inset-x-0 p-0 before:rounded-t-4xl before:rounded-b-none">
+        {filteredProjects.length === 0 ? (
+          <div className={dashboardStyles.emptyState}>
+            <BriefcaseIcon className="size-12 text-muted-foreground/50" />
+            <div>
+              <p className="font-medium">
+                {items.length
+                  ? "No projects match these filters"
+                  : "No projects yet"}
+              </p>
+              <p className="mt-1 text-muted-foreground text-sm">
+                {items.length
+                  ? "Clear filters or try another search."
+                  : "Add your first portfolio project."}
+              </p>
+            </div>
+            {items.length > 0 && (
+              <Button type="button" variant="outline" onClick={clearFilters}>
+                Clear filters and search
+              </Button>
+            )}
+            <Button
+              role="link"
+              render={<Link href="/dashboard/projects/new" />}
+              nativeButton={false}
+            >
+              <PlusIcon data-icon="inline-start" />
+              New Project
+            </Button>
+          </div>
+        ) : (
+          <>
+            {viewMode === "grid" ? (
+              <>
+                <div className="hidden md:block">
+                  <ProjectsGrid
+                    projects={paginatedProjects}
+                    batchMode={batchMode}
+                    selectedIds={selectedIds}
+                    onToggleProject={toggleProjectSelection}
+                  />
+                </div>
+                <div className="md:hidden">
+                  <ProjectsList
+                    projects={paginatedProjects}
+                    canReorder={false}
+                    batchMode={batchMode}
+                    selectedIds={selectedIds}
+                    onReorder={handleReorder}
+                    onToggleProject={toggleProjectSelection}
+                  />
+                </div>
+              </>
+            ) : (
+              <ProjectsList
+                projects={reorderMode ? filteredProjects : paginatedProjects}
+                canReorder={canReorder}
+                batchMode={batchMode}
+                selectedIds={selectedIds}
+                onReorder={handleReorder}
+                onToggleProject={toggleProjectSelection}
+              />
+            )}
+
+            {!reorderMode && (
+              <ProjectsPagination
+                firstIndex={firstIndex}
+                lastIndex={lastIndex}
+                total={filteredProjects.length}
+                page={currentPage}
+                pageCount={pageCount}
+                itemsPerPage={itemsPerPage}
+                itemsPerPageOptions={itemsPerPageOptions}
+                onPageChange={setPage}
+                onItemsPerPageChange={setItemsPerPage}
+              />
+            )}
+          </>
+        )}
+
+        <DrawerContent
+          finalFocus={filtersTriggerRef}
+          className="before:top-2 before:bottom-0 before:inset-x-0 p-0"
+        >
           <DrawerHeader>
             <DrawerTitle>Filters</DrawerTitle>
             <DrawerDescription>
@@ -1768,47 +1930,17 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               options={featuredOptions}
               onValueChange={setDraftFeatured}
             />
-            <div>
-              <p className="mb-2 font-medium text-muted-foreground text-xs">
-                Tech stack
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={draftTechStacks.length === 0 ? "default" : "outline"}
-                  className="rounded-xl"
-                  onClick={() => setDraftTechStacks([])}
-                >
-                  All Tech
-                </Button>
-                {techStacks.map((techStack) => (
-                  <Button
-                    key={techStack}
-                    type="button"
-                    size="sm"
-                    variant={
-                      draftTechStacks.includes(techStack)
-                        ? "default"
-                        : "outline"
-                    }
-                    className="rounded-xl"
-                    onClick={() => toggleDraftTechStack(techStack)}
-                  >
-                    {techStack}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <FilterDropdown
-              label="Sort by"
+            <TechStackDropdown
+              techStacks={techStacks}
+              selectedTechStacks={draftTechStacks}
+              onValueChange={setDraftTechStacks}
+            />
+            <DashboardSort
               value={draftSort}
-              displayValue={
-                sortOptions.find((option) => option.value === draftSort)
-                  ?.label ?? "Order (asc)"
-              }
               options={sortOptions}
               onValueChange={setDraftSort}
+              direction={draftSortDirection}
+              onDirectionChange={setDraftSortDirection}
             />
           </div>
           <DrawerFooter>
@@ -1816,22 +1948,23 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-2xl"
-                onClick={resetFilters}
+                onClick={() => {
+                  setDraftStatus("all");
+                  setDraftFeatured("all");
+                  setDraftTechStacks([]);
+                  setDraftSort("order");
+                  setDraftSortDirection("asc");
+                }}
               >
                 Reset filters
               </Button>
-              <Button
-                type="button"
-                className="rounded-2xl"
-                onClick={applyFilters}
-              >
+              <Button type="button" onClick={applyFilters}>
                 Apply filters
               </Button>
             </div>
           </DrawerFooter>
         </DrawerContent>
-      </Drawer>
-    </div>
+      </div>
+    </Drawer>
   );
 }

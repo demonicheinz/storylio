@@ -72,13 +72,14 @@ describe("partial-prefetch route shells", () => {
     expect(nextConfig.partialPrefetching).toBe(true);
   });
 
-  it.each(
-    routes,
-  )("%s returns a shell before URL or request data resolves", (_name, render) => {
-    const pending = new Promise<never>(() => {});
-    const shell = Reflect.apply(render, undefined, [
-      { params: pending, searchParams: pending },
-    ]);
-    expect(isValidElement(shell)).toBe(true);
-  });
+  it.each(routes)(
+    "%s returns a shell before URL or request data resolves",
+    (_name, render) => {
+      const pending = new Promise<never>(() => {});
+      const shell = Reflect.apply(render, undefined, [
+        { params: pending, searchParams: pending },
+      ]);
+      expect(isValidElement(shell)).toBe(true);
+    },
+  );
 });

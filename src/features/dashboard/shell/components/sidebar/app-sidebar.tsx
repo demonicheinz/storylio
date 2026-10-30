@@ -90,10 +90,10 @@ function AppSidebarContent({ ...props }: React.ComponentProps<typeof Sidebar>) {
               tooltip="Storylio"
             >
               <div className="flex justify-center items-center rounded-xl size-9 aspect-square">
-                <Logo alt="" />
+                <Logo alt="" loading="eager" />
               </div>
               <div className="flex-1 grid text-left leading-tight">
-                <span className="font-heading font-semibold text-[15px] truncate">
+                <span className="font-heading font-semibold text-base truncate">
                   Storylio
                 </span>
               </div>
