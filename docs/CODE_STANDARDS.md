@@ -31,6 +31,9 @@ CMS contracts, and security behavior unless the task explicitly changes them.
   serve different contracts; similar code alone is not proof they are interchangeable.
 - Follow [IMAGE_DELIVERY.md](IMAGE_DELIVERY.md) for responsive image sizes and
   quality. Use [DESIGN.md](../DESIGN.md) for visual tokens and component geometry.
+- Public Blog/Project cover adapters keep their fallback copy and hover styles;
+  `ContentCover` owns image loading/failure behavior and shared geometry. Scope
+  failure state to the source so replacing a failed URL can load a new image.
 
 ## Validation and error handling
 

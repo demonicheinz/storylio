@@ -16,6 +16,11 @@ Run these files with `run-code --filename=...`:
   page-size choices and keyboard behavior at 320/390/768/1440px. Create
   `task/code-standardization/` before running screenshots; manually inspect
   `/?kind=pagination`.
+- `tests/browser/content-covers.js`: missing/failed/valid cover transitions,
+  source recovery and narrow fallback bounds at 320/390/768/1440px. Inspect
+  `/?kind=covers`. Valid images are inline SVG fixtures, and broken input is
+  deliberate. The Next Image component is stubbed; optimizer URLs are tested
+  separately by `tests/public/image-delivery.test.ts`.
 
 The fixture renders the actual New route components, editors, skeletons,
 Blog card, shared controls, and project CSS/fonts. React StrictMode and Activity

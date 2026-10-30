@@ -19,6 +19,8 @@ describe("responsive cover delivery", () => {
             quality,
             sizes: PUBLIC_COVER_IMAGE_SIZES,
             className: "aspect-video",
+            loading: "eager",
+            fetchPriority: "high",
           }),
         );
       const thumbnail = render();
@@ -28,6 +30,26 @@ describe("responsive cover delivery", () => {
       expect(detail).toContain("srcSet=");
       expect(detail).toContain(`sizes="${PUBLIC_COVER_IMAGE_SIZES}"`);
       expect(detail).not.toContain("q=75");
+      expect(detail).toContain('loading="eager"');
+      expect(detail).toContain('fetchPriority="high"');
+      expect(detail).toContain('alt="Example cover"');
+    });
+    it(`${name} keeps its own hover effect optional`, () => {
+      const render = (appearance: "default" | "home") =>
+        renderWithImages(
+          createElement(Cover, {
+            src: "/images/auth-earth.avif",
+            alt: "Cover",
+            appearance,
+            className: "aspect-video",
+          }),
+        );
+      expect(render("default")).toContain(
+        name === "Blog"
+          ? "group-hover/post:scale-105"
+          : "group-hover/project:scale-105",
+      );
+      expect(render("home")).not.toContain("scale-105");
     });
   }
 });
