@@ -19,6 +19,7 @@ bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/brows
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-upload-queue.js
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-detail-panel.js
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-deletion.js
+bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-renderers.js
 bunx --no-install playwright-cli -s=media-polish close
 ```
 
@@ -54,3 +55,8 @@ errors, protected-selection retention, single-delete retry, and preventing Escap
 from closing a confirmation while a request is in flight. It uses only synthetic
 rows and mocked actions. Controller tests separately exercise same-tick locking
 and partial deletion reconciliation in `tests/public/media-deletion.test.ts`.
+
+`media-renderers.js` exercises grid/list at 320/1440px: keyboard preview/focus
+restoration, copy callback, intercepted successful download/filename, keyboard
+selection and checkbox deselection. Screenshots go to `task/code-standardization/`.
+The download response is synthetic; no external media/provider request is made.

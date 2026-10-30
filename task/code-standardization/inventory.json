@@ -32,7 +32,7 @@
       "empty_catches": 0,
       "any_casts": 0,
       "ts_ignore": 0,
-      "current_lines": 1128
+      "current_lines": 786
     },
     {
       "file": "src/features/dashboard/posts/components/posts-manager.tsx",
@@ -40,7 +40,7 @@
       "empty_catches": 0,
       "any_casts": 0,
       "ts_ignore": 0,
-      "current_lines": 1527
+      "current_lines": 1533
     },
     {
       "file": "src/features/dashboard/settings/components/profile-settings-form.tsx",
@@ -48,7 +48,7 @@
       "empty_catches": 0,
       "any_casts": 0,
       "ts_ignore": 0,
-      "current_lines": 1411
+      "current_lines": 1418
     },
     {
       "file": "src/components/common/gooey-nav.tsx",
@@ -64,7 +64,7 @@
       "empty_catches": 0,
       "any_casts": 0,
       "ts_ignore": 0,
-      "current_lines": 1131
+      "current_lines": 1100
     },
     {
       "file": "src/features/dashboard/projects/components/project-editor.tsx",
@@ -72,7 +72,7 @@
       "empty_catches": 0,
       "any_casts": 0,
       "ts_ignore": 0,
-      "current_lines": 1000
+      "current_lines": 1006
     },
     {
       "file": "src/components/effects/gravity-stars.tsx",
@@ -88,7 +88,7 @@
       "empty_catches": 0,
       "any_casts": 0,
       "ts_ignore": 0,
-      "current_lines": 963
+      "current_lines": 970
     },
     {
       "file": "src/features/dashboard/posts/components/post-editor.tsx",
@@ -96,7 +96,7 @@
       "empty_catches": 2,
       "any_casts": 0,
       "ts_ignore": 0,
-      "current_lines": 911
+      "current_lines": 917
     },
     {
       "file": "src/components/common/live-orb.tsx",

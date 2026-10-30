@@ -419,7 +419,7 @@ function GalleryGrid({
             />
             {batchMode && (
               <div
-                className="top-3 left-3 z-10 absolute flex justify-center items-center bg-popover border border-border rounded-md size-11"
+                className="top-3 left-3 z-10 absolute"
                 onClick={(event) => event.stopPropagation()}
               >
                 <Checkbox
