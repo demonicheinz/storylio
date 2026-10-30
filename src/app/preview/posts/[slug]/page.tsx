@@ -14,6 +14,7 @@ import { getPostPublicationState } from "@/features/dashboard/posts/publication-
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";
+import { IMAGE_QUALITY } from "@/lib/image-policy";
 import { renderMDX } from "@/lib/mdx";
 import { calculateReadingTime, formatDate, slugify } from "@/lib/utils";
 
@@ -205,6 +206,7 @@ async function PreviewPostContent({ params }: PreviewPostPageProps) {
           </div>
 
           <BlogCover
+            quality={IMAGE_QUALITY.detail}
             src={post.coverImage}
             alt={post.title}
             fetchPriority="high"

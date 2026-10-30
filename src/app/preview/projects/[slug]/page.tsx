@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { ProjectStatus } from "@/lib/db/enums";
+import { IMAGE_QUALITY } from "@/lib/image-policy";
 import { renderMDX } from "@/lib/mdx";
 import { getProjectContribution } from "@/lib/project-contribution";
 import { calculateReadingTime, formatDate, slugify } from "@/lib/utils";
@@ -166,6 +167,7 @@ async function PreviewProjectContent({ params }: PreviewProjectPageProps) {
         <div className="lg:items-start gap-6 md:gap-8 grid lg:grid-cols-[1.08fr_0.92fr]">
           <div className="lg:top-28 lg:sticky">
             <ProjectCover
+              quality={IMAGE_QUALITY.detail}
               src={project.coverImage}
               alt={project.title}
               className="shadow-[0_0_80px_rgba(139,92,246,0.14)] aspect-video"

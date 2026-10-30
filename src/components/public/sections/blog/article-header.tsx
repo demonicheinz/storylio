@@ -1,4 +1,5 @@
 import page from "@/components/public/public-page.module.css";
+import { IMAGE_QUALITY, PUBLIC_COVER_IMAGE_SIZES } from "@/lib/image-policy";
 import { calculateReadingTime, formatDate } from "@/lib/utils";
 import styles from "./article.module.css";
 import { BlogCover } from "./blog-cover";
@@ -22,7 +23,8 @@ export function ArticleHeader({ post }: { post: BlogPostListItem }) {
             fetchPriority="high"
             loading="eager"
             className="aspect-video"
-            sizes="(min-width:1328px) 1280px, 96vw"
+            sizes={PUBLIC_COVER_IMAGE_SIZES}
+            quality={IMAGE_QUALITY.detail}
           />
         </div>
       )}

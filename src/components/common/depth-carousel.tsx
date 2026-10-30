@@ -14,6 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { IMAGE_QUALITY } from "@/lib/image-policy";
 import styles from "./depth-carousel.module.css";
 
 export type DepthCarouselImage = {
@@ -264,6 +265,7 @@ function CarouselImage({ item }: { item: DepthCarouselImage }) {
       width={item.width || 1600}
       height={item.height || 900}
       draggable={false}
+      quality={IMAGE_QUALITY.detail}
       sizes="(min-width:1120px) 968px, (min-width:768px) calc(100vw - 120px), calc(100vw - 60px)"
       onError={() => setFailed(true)}
       {...(item.blurDataUrl

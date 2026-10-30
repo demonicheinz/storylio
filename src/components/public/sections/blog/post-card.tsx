@@ -1,6 +1,7 @@
 import { FlowButton } from "@/components/common/flow-button";
 import { TiltedCard } from "@/components/common/tilted-card";
 import page from "@/components/public/public-page.module.css";
+import { PUBLIC_CARD_IMAGE_SIZES } from "@/lib/image-policy";
 import { calculateReadingTime, formatDate } from "@/lib/utils";
 import styles from "./blog.module.css";
 import { BlogCover } from "./blog-cover";
@@ -23,7 +24,7 @@ export function PostCard({
             appearance="home"
             className="aspect-video"
             loading={featured ? "eager" : "lazy"}
-            sizes="(min-width:1328px) 400px, (min-width:1200px) 31vw, (min-width:768px) 46vw, 94vw"
+            sizes={PUBLIC_CARD_IMAGE_SIZES}
           />
         </TiltedCard>
       </div>
