@@ -81,10 +81,11 @@ export function VenomButton({ href, children, className }: VenomButtonProps) {
         canvas.dataset.venomCanvas = "true";
         // Share the navbar's stacking context; a body portal would escape it.
         (link.closest("[data-public-chrome]") ?? document.body).append(canvas);
+        // Own the canvas before calling third-party initialization, which may throw.
+        cleanup = () => canvas.remove();
         scene = renderer.createVenomScene(canvas, link);
         if (!scene) {
-          canvas.remove();
-          active = false;
+          stop();
           return;
         }
         const mountedScene = scene;
