@@ -61,11 +61,11 @@ async (sessionPage) => {
           })),
         };
       });
-      assert(!result.overflow, "Horizontal overflow at " + width);
+      assert(!result.overflow, `Horizontal overflow at ${width}`);
       assert(result.projects <= 3, "Home project limit");
       assert(
         result.columns === (width >= 1200 ? 3 : width >= 768 ? 2 : 1),
-        "Wrong columns at " + width,
+        `Wrong columns at ${width}`,
       );
       assert(result.ctaHeight >= 44, "CTA target below 44px");
       assert(
@@ -93,10 +93,10 @@ async (sessionPage) => {
         await page.waitForFunction(() => document.querySelector('[data-home-hero]')?.dataset.introComplete === 'true');
         await page.waitForTimeout(300); // Finish the CSS-to-WebGL crossfade.
         await page.screenshot({
-          path: ".playwright-cli/home-redesign-" + width + "-hero.png",
+          path: `.playwright-cli/home-redesign-${width}-hero.png`,
         });
         await page.screenshot({
-          path: ".playwright-cli/home-redesign-" + width + "-full.png",
+          path: `.playwright-cli/home-redesign-${width}-full.png`,
           fullPage: true,
         });
         await page
@@ -105,13 +105,13 @@ async (sessionPage) => {
             el.scrollIntoView({ block: "end", behavior: "instant" }),
           );
         await page.screenshot({
-          path: ".playwright-cli/home-redesign-" + width + "-footer.png",
+          path: `.playwright-cli/home-redesign-${width}-footer.png`,
         });
       }
     }
     await page.setViewportSize({ width: 1440, height: 1000 });
     for (const reducedMotion of ["no-preference", "reduce"]) {
-      stage = "anchor " + reducedMotion;
+      stage = `anchor ${reducedMotion}`;
       await page.emulateMedia({ reducedMotion });
       const targetY = await page.evaluate(() => {
         window.scrollTo({ top: 0, behavior: "instant" });
@@ -137,7 +137,7 @@ async (sessionPage) => {
       // Let the interpolator finish before the test performs a native scroll jump.
       await page.waitForFunction(() => !document.documentElement.classList.contains('lenis-scrolling'));
       await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
-      stage = "footer top " + reducedMotion;
+      stage = `footer top ${reducedMotion}`;
       await page.locator('a[href="#home-title"]').click();
       await page.waitForFunction(() => scrollY < 1);
       measurements.push({ reducedMotion, behavior, intermediate, backToTop: true });
@@ -187,7 +187,7 @@ async (sessionPage) => {
       "Footer keyboard focus is clipped/invisible",
     );
     await footerLink.click();
-    await page.waitForURL(origin + "/projects");
+    await page.waitForURL(`${origin}/projects`);
     assert(
       (await page.locator("[data-home-footer]").count()) === 0,
       "Home footer leaked to Projects",
@@ -203,7 +203,7 @@ async (sessionPage) => {
       "Duplicate footer on Home after Back",
     );
     const missing = await page.request.get(
-      origin + "/blog/home-redesign-missing-post",
+      `${origin}/blog/home-redesign-missing-post`,
     );
     assert(missing.status() === 404, "Missing post lost HTTP 404");
     const touchContext = await page.context().browser().newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
@@ -218,7 +218,7 @@ async (sessionPage) => {
       assert(await touch.locator("[data-venom-canvas]").count() === 0, "Touch loaded the Venom renderer");
       await touch.screenshot({ path: ".playwright-cli/home-redesign-touch.png" });
       await touch.locator("[data-venom-link]").tap();
-      await touch.waitForURL(origin + "/#selected-projects");
+      await touch.waitForURL(`${origin}/#selected-projects`);
       await touch.waitForFunction(() => Math.abs(document.getElementById("selected-projects").getBoundingClientRect().top) < 2);
     } finally { await touchContext.close(); }
     const fallback = await page.context().newPage();
@@ -252,7 +252,7 @@ async (sessionPage) => {
     };
   } catch (error) {
     await page.screenshot({ path: ".playwright-cli/home-redesign-failure.png" });
-    error.message += "\nStage: " + stage + "\nURL: " + page.url() + "\nHeadings: " + JSON.stringify(await page.locator("h1").allTextContents()) + "\nScroll: " + await page.evaluate(() => JSON.stringify({y:scrollY,target:document.getElementById("selected-projects")?.getBoundingClientRect().top}));
+    error.message += `\nStage: ${stage}\nURL: ${page.url()}\nHeadings: ${JSON.stringify(await page.locator("h1").allTextContents())}\nScroll: ${await page.evaluate(() => JSON.stringify({y:scrollY,target:document.getElementById("selected-projects")?.getBoundingClientRect().top}))}`;
     throw error;
   } finally {
     await page.close();

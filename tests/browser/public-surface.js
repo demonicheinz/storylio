@@ -19,11 +19,11 @@ async sessionPage => {
         return true;
       }),'Heading is hidden by a reveal under reduced motion');
       const state=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,h1:document.querySelectorAll('h1').length,footer:document.querySelectorAll('footer').length,text:document.querySelector('h1')?.textContent}));
-      assert(state.scrollWidth<=width+1,'Overflow: '+JSON.stringify(state));
+      assert(state.scrollWidth<=width+1,`Overflow: ${JSON.stringify(state)}`);
       assert(state.h1===1&&state.footer===1,'Duplicate heading or footer');
       sizes.push(state);
       if(width===1440||width===390){
-        await page.screenshot({path:'.playwright-cli/public-'+url.pathname.replaceAll('/','-')+'-'+width+'.png'});
+        await page.screenshot({path:`.playwright-cli/public-${url.pathname.replaceAll('/','-')}-${width}.png`});
       }
     }
     await page.locator('[data-public-footer-wrapper]').evaluate(el=>el.scrollIntoView({block:'end',behavior:'instant'}));

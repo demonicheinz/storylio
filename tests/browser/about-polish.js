@@ -10,7 +10,7 @@ async sessionPage => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     for (const [width, height] of [[1440,1000],[1024,768],[768,600],[390,844],[320,740]]) {
       await page.setViewportSize({ width, height });
-      await page.goto(origin + '/about?lang=en');
+      await page.goto(`${origin}/about?lang=en`);
       await page.locator('main h1').waitFor();
       await page.evaluate(() => document.fonts.ready);
       const state = await page.evaluate(() => {
@@ -46,16 +46,16 @@ async sessionPage => {
           }),
         };
       });
-      assert(!state.overflow, 'Horizontal overflow: ' + JSON.stringify(state));
-      assert(state.profileCenters.every(center => Math.abs(center-state.sidebarCenter)<1), 'Profile elements must be centered at every width: '+JSON.stringify(state));
+      assert(!state.overflow, `Horizontal overflow: ${JSON.stringify(state)}`);
+      assert(state.profileCenters.every(center => Math.abs(center-state.sidebarCenter)<1), `Profile elements must be centered at every width: ${JSON.stringify(state)}`);
       assert(state.languageHeight===52 && state.languageTargets.every(height=>height>=44), 'Language frame/targets have wrong height');
-      assert(state.firstSkill.border==='0px' && state.firstSkill.padding==='0px' && Math.abs(state.firstSkill.gap-24)<1, 'First skill has a stacked divider or excess spacing: '+JSON.stringify(state.firstSkill));
-      if (width===390) assert(state.introTop<600,'Mobile opening is still too tall: '+state.introTop);
+      assert(state.firstSkill.border==='0px' && state.firstSkill.padding==='0px' && Math.abs(state.firstSkill.gap-24)<1, `First skill has a stacked divider or excess spacing: ${JSON.stringify(state.firstSkill)}`);
+      if (width===390) assert(state.introTop<600,`Mobile opening is still too tall: ${state.introTop}`);
       for (const item of state.timelines) {
         if (item.last) assert(item.lineContent === 'none', 'Timeline extends beyond its last dot');
-        else assert(item.lineTop === item.dotTop + item.dotSize && item.lineBottom === -item.dotTop && item.dotCenter === item.lineCenter, 'Timeline connector is misaligned: ' + JSON.stringify(item));
+        else assert(item.lineTop === item.dotTop + item.dotSize && item.lineBottom === -item.dotTop && item.dotCenter === item.lineCenter, `Timeline connector is misaligned: ${JSON.stringify(item)}`);
       }
-      assert(state.avatar === (width < 768 ? 96 : 144), 'Wrong avatar size: ' + JSON.stringify(state));
+      assert(state.avatar === (width < 768 ? 96 : 144), `Wrong avatar size: ${JSON.stringify(state)}`);
       if (width < 768) {
         assert(Math.abs(state.avatarCenter - width/2) < 2, 'Avatar is not centered');
         assert(state.titleAlign === 'center' && state.socials === 'center', 'Identity is not centered');
@@ -65,7 +65,7 @@ async sessionPage => {
         assert(state.sidebar === 'sticky', 'Sidebar must remain sticky on tablet');
         await page.locator('#working-principles').evaluate(el => el.scrollIntoView({ behavior:'instant' }));
         const sideTop = await page.locator('main > div > aside').evaluate(el => el.getBoundingClientRect().top);
-        assert(Math.abs(sideTop - 112) < 2, 'Sticky offset is wrong: ' + sideTop);
+        assert(Math.abs(sideTop - 112) < 2, `Sticky offset is wrong: ${sideTop}`);
         if (height === 600) {
           const nativeScroll = await page.locator('main > div > aside').evaluate(el => {
             el.scrollTop = el.scrollHeight;
@@ -76,12 +76,12 @@ async sessionPage => {
       }
       await page.evaluate(() => scrollTo({ top:0, behavior:'instant' }));
       if (width === 1440 || width === 390) {
-        await page.screenshot({ path:'.playwright-cli/about-polish-' + width + '.png', fullPage:true });
+        await page.screenshot({ path:`.playwright-cli/about-polish-${width}.png`, fullPage:true });
       }
       results.push(state);
     }
     await page.setViewportSize({ width:1024, height:768 });
-    await page.goto(origin + '/about?lang=en');
+    await page.goto(`${origin}/about?lang=en`);
     const link = page.getByRole('navigation', { name:'On this page' }).getByRole('link', { name:'Work Experience', exact:true });
     await link.focus(); await page.keyboard.press('Enter');
     await page.waitForFunction(() => document.activeElement?.id === 'work-experience');
@@ -92,7 +92,7 @@ async sessionPage => {
     assert(new URL(page.url()).searchParams.get('lang') === 'en', 'Anchor discarded language query');
     for (const language of ['en', 'id']) {
       await page.setViewportSize({ width:768, height:600 });
-      await page.goto(origin + '/about?lang=' + language);
+      await page.goto(`${origin}/about?lang=${language}`);
       const nav = page.locator('main aside nav');
       for (const target of await nav.locator('a').all()) {
         const href = await target.getAttribute('href');
@@ -104,7 +104,7 @@ async sessionPage => {
           const right = el.getBoundingClientRect().right;
           return sidebar.scrollWidth > sidebar.clientWidth + 1 || [...el.querySelectorAll('a')].some(link => link.getBoundingClientRect().right > right + 1) || document.documentElement.scrollWidth > innerWidth + 1;
         });
-        assert(!overflow, 'TOC overflow at tablet width: ' + language + href);
+        assert(!overflow, `TOC overflow at tablet width: ${language}${href}`);
       }
     }
     assert(errors.length === 0, errors.join('\n'));

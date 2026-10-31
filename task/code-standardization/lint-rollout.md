@@ -389,3 +389,6 @@ expression parsing was verified. Remaining browser scripts and fixtures are pend
 
 Locator/literal follow-up: ten more CLI scripts covered; 554 files selected, no
 diagnostics, identical executable output. See browser-lint.md.
+
+Template-only follow-up: 26 scripts covered with preserved normalized AST and CLI
+parsing; 580 selected lint files, zero diagnostics. See browser-lint.md.

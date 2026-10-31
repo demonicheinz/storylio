@@ -56,3 +56,17 @@ JavaScript interpolation. Only comments/configuration changed, all ten CLI entry
 points parse and their comment-free compiled output is byte-identical to HEAD.
 Lint now selects 554 files without diagnostics. Browser backlog: 45 scripts;
 fixture lint is separate. No new browser rerun is claimed for these comments.
+
+## Template-only follow-up
+
+Twenty-six scripts with only useTemplate findings now use interpolation for URL
+paths, screenshot paths and diagnostic strings. The conversion preserves literal
+segments and interpolation expressions in order. A TypeScript AST comparison
+normalizes concatenation/template forms and verifies all other statements,
+operators, locators and assertions stay unchanged; all entry points parse as CLI
+function expressions. Reviewed operands are primitive strings/numbers (including
+JSON.stringify results), not objects with differing coercion hooks. This is not
+a claim of byte-identical transpilation or a fresh end-to-end run of these old
+scenarios. Lint is clean with 580 selected files; 19 browser scripts remain.
+Existing formatter exceptions keep CLI expression syntax intact. No production
+source/dependency update and no repeated full suite/build for string-only changes.

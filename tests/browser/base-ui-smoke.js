@@ -53,12 +53,12 @@ async (page) => {
       for (const name of ['Menu form input', 'Menu form textarea']) {
         const field = page.getByRole('textbox', { name, exact: true });
         await field.focus(); await page.keyboard.type('a b');
-        check(await field.inputValue() === 'a b', 'Menu swallowed text or Space: ' + name);
+        check(await field.inputValue() === 'a b', `Menu swallowed text or Space: ${name}`);
         await field.press('ArrowLeft'); await page.keyboard.type('x');
-        check(await field.inputValue() === 'a xb', 'Menu swallowed ArrowLeft: ' + name);
+        check(await field.inputValue() === 'a xb', `Menu swallowed ArrowLeft: ${name}`);
         await field.press('ArrowRight'); await page.keyboard.type('y');
-        check(await field.inputValue() === 'a xby', 'Menu swallowed ArrowRight: ' + name);
-        check(await field.evaluate(el => el === document.activeElement), 'Menu stole dialog focus: ' + name);
+        check(await field.inputValue() === 'a xby', `Menu swallowed ArrowRight: ${name}`);
+        check(await field.evaluate(el => el === document.activeElement), `Menu stole dialog focus: ${name}`);
       }
       await page.keyboard.press('Escape'); await hidden(menuForm);
       check(await menu.isVisible(), 'Escape dismissed the parent menu with the form');

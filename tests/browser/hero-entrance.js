@@ -87,6 +87,6 @@ async sessionPage => {
     await page.waitForFunction(()=>Math.abs(document.getElementById('selected-projects').getBoundingClientRect().top)<2);
     assert(errors.length===0,errors.join('\n'));
     return {timing,wordTiming,stars,resumeFrames,visiblePausedMaterial:true,pausedRenderingStopped:true,sameCanvas:true,offscreenHidden:true,noReplay:true,mobile:true,reducedMotion:true,cta:true,errors};
-  }catch(error){await page.screenshot({path:'.playwright-cli/hero-entrance-failure.png'});error.message+='\nStage: '+stage;throw error}
+  }catch(error){await page.screenshot({path:'.playwright-cli/hero-entrance-failure.png'});error.message+=`\nStage: ${stage}`;throw error}
   finally{await page.close()}
 }

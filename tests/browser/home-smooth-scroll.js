@@ -71,7 +71,7 @@ async sessionPage => {
     stage='route cleanup and history';
     await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));
     await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Projects',exact:true}).click();
-    await page.waitForURL(origin+'/projects');
+    await page.waitForURL(`${origin}/projects`);
     await active();
     assert(await page.evaluate(()=>getComputedStyle(document.documentElement).scrollBehavior)==='auto','Public route lost Lenis');
     await page.goBack();await active();
@@ -104,6 +104,6 @@ async sessionPage => {
     }
     assert(errors.length===0,errors.join('\n'));
     return {passed:true,samples,nested,anchor:true,footer:true,focusPause:true,routeCleanup:true,history:true,reducedMotion:true,touch:true,errors};
-  }catch(error){error.message+='\nStage: '+stage;throw error}
+  }catch(error){error.message+=`\nStage: ${stage}`;throw error}
   finally{await page.close()}
 }

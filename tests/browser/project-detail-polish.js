@@ -9,7 +9,7 @@ async sessionPage => {
     await page.emulateMedia({reducedMotion:'reduce'});
     for(const [width,height] of [[1440,1000],[1024,900],[768,1024],[390,844],[320,740],[844,390]]) {
       await page.setViewportSize({width,height});
-      await page.goto(origin+'/projects/storylio');
+      await page.goto(`${origin}/projects/storylio`);
       await page.locator('h1').waitFor();await page.evaluate(()=>document.fonts.ready);
       const geometry=await page.evaluate(()=>{
         const main=document.querySelector('main[data-public-page="project-detail"]');
@@ -23,18 +23,18 @@ async sessionPage => {
         const layout=main.querySelector('[data-has-toc]'),toc=layout.querySelector(':scope > aside'),firstHeading=layout.querySelector(':scope > div > h2');
         return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+1,coverTop:cover.top,coverBottom:cover.bottom,factsTop:facts.top,paragraphWidth:p.getBoundingClientRect().width,paragraphFont:parseFloat(getComputedStyle(p).fontSize),copy:[copy.width,copy.height],headingWordLines:range.getClientRects().length,tocItemGap:parseFloat(getComputedStyle(toc.querySelector('ol')).rowGap),tocHeadingGap:firstHeading.getBoundingClientRect().top-toc.getBoundingClientRect().bottom};
       });
-      assert(!geometry.overflow,'Horizontal overflow: '+width);
-      assert(geometry.tocItemGap===4,'TOC items are too far apart: '+width);
-      if(width<1200)assert(Math.abs(geometry.tocHeadingGap-32)<1,'TOC touches the next heading: '+JSON.stringify(geometry));
-      assert(geometry.copy.every(value=>value>=43.99),'Copy target below 44px: '+width);
+      assert(!geometry.overflow,`Horizontal overflow: ${width}`);
+      assert(geometry.tocItemGap===4,`TOC items are too far apart: ${width}`);
+      if(width<1200)assert(Math.abs(geometry.tocHeadingGap-32)<1,`TOC touches the next heading: ${JSON.stringify(geometry)}`);
+      assert(geometry.copy.every(value=>value>=43.99),`Copy target below 44px: ${width}`);
       if(width<768) {
-        assert(geometry.coverTop<600&&geometry.factsTop>=geometry.coverBottom,'Mobile cover does not precede facts: '+JSON.stringify(geometry));
-        assert(geometry.headingWordLines===1,'Implementation word still breaks on mobile: '+width);
-      } else assert(geometry.paragraphWidth<=641,'Reading measure exceeds 640px: '+JSON.stringify(geometry));
+        assert(geometry.coverTop<600&&geometry.factsTop>=geometry.coverBottom,`Mobile cover does not precede facts: ${JSON.stringify(geometry)}`);
+        assert(geometry.headingWordLines===1,`Implementation word still breaks on mobile: ${width}`);
+      } else assert(geometry.paragraphWidth<=641,`Reading measure exceeds 640px: ${JSON.stringify(geometry)}`);
       const toggle=page.getByRole('button',{name:'On this page',exact:true});
       const toc=page.getByRole('navigation',{name:'Project case study table of contents'});
       if(width<1200) {
-        assert(await toggle.isVisible(),'Missing mobile/tablet TOC: '+width);
+        assert(await toggle.isVisible(),`Missing mobile/tablet TOC: ${width}`);
         assert(!await toc.isVisible(),'TOC initially expanded');
         await toggle.focus();await page.keyboard.press('Enter');await toc.waitFor();
         await toc.getByRole('button',{name:'Overview',exact:true}).focus();await page.keyboard.press('Escape');
@@ -45,13 +45,13 @@ async sessionPage => {
         const center=el=>{const box=el.getBoundingClientRect();return box.top+box.height/2};
         return {label:center(button.children[1])-center(button),marker:center(button.children[0])-center(button),textAlign:getComputedStyle(button).textAlign};
       });
-      assert(Math.abs(row.label)<1&&Math.abs(row.marker)<1&&row.textAlign==='left','TOC row is not vertically centered: '+JSON.stringify(row));
+      assert(Math.abs(row.label)<1&&Math.abs(row.marker)<1&&row.textAlign==='left',`TOC row is not vertically centered: ${JSON.stringify(row)}`);
       await toc.getByRole('button',{name:'Outcome',exact:true}).click();
       const anchor=await page.evaluate(()=>({hash:location.hash,focused:document.activeElement?.id,top:document.getElementById('outcome').getBoundingClientRect().top}));
-      assert(anchor.hash==='#outcome'&&anchor.focused==='outcome'&&Math.abs(anchor.top-112)<3,'Incorrect anchor: '+JSON.stringify(anchor));
+      assert(anchor.hash==='#outcome'&&anchor.focused==='outcome'&&Math.abs(anchor.top-112)<3,`Incorrect anchor: ${JSON.stringify(anchor)}`);
       if(width===1440||width===390) {
         await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
-        await page.screenshot({path:'task/project-detail-polish/desktop-mobile-'+width+'.png'});
+        await page.screenshot({path:`task/project-detail-polish/desktop-mobile-${width}.png`});
       }
       results.push({...geometry,toc:true,anchor:true});
     }
@@ -72,7 +72,7 @@ async sessionPage => {
     const normalMotion=[];
     await page.emulateMedia({reducedMotion:'no-preference'});
     for(const width of [1440,390]) {
-      await page.setViewportSize({width,height:900});await page.goto(origin+'/projects/storylio');await page.locator('h1').waitFor();
+      await page.setViewportSize({width,height:900});await page.goto(`${origin}/projects/storylio`);await page.locator('h1').waitFor();
       await page.evaluate(()=>document.fonts.ready);
       await page.waitForFunction(()=>document.hasFocus()&&document.documentElement.classList.contains('lenis'));
       const toggle=page.getByRole('button',{name:'On this page',exact:true});if(await toggle.isVisible())await toggle.click();

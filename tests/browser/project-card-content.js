@@ -9,7 +9,7 @@ async sessionPage => {
     await page.emulateMedia({reducedMotion:'reduce'});
     for(const width of [1440,768,390,320]){
       await page.setViewportSize({width,height:1000});
-      await page.goto(origin+'/projects');
+      await page.goto(`${origin}/projects`);
       await page.locator('[data-project-card]').first().waitFor();
       await page.evaluate(()=>document.fonts.ready);
       // Exercise a client control before replacing DOM text for the fixture.
@@ -31,11 +31,11 @@ async sessionPage => {
           cards:cards.map(card=>({top:card.getBoundingClientRect().top,title:measure(card.querySelector('h2')),description:measure(card.querySelector('p')),gap:card.querySelector('p').getBoundingClientRect().top-card.querySelector('h2').getBoundingClientRect().bottom,tags:card.querySelectorAll('ul[aria-label="Technology stack"] li').length,tagTop:card.querySelector('ul').getBoundingClientRect().top,actionTop:card.querySelector('[data-flow-button]').getBoundingClientRect().top})),
         };
       });
-      assert(!state.overflow&&state.titleIntact&&state.descriptionIntact,'Content or layout changed: '+width);
+      assert(!state.overflow&&state.titleIntact&&state.descriptionIntact,`Content or layout changed: ${width}`);
       for(const card of state.cards){
-        assert(card.title.clamp==='2'&&card.title.height<=card.title.leading*2+1,'Title exceeds two lines: '+JSON.stringify(card));
-        assert(Math.abs(card.gap-16)<1,'Description must directly follow title: '+JSON.stringify(card));
-        assert(card.description.clamp==='3'&&Math.abs(card.description.height-card.description.leading*3)<1,'Description must reserve/clamp three lines: '+JSON.stringify(card));
+        assert(card.title.clamp==='2'&&card.title.height<=card.title.leading*2+1,`Title exceeds two lines: ${JSON.stringify(card)}`);
+        assert(Math.abs(card.gap-16)<1,`Description must directly follow title: ${JSON.stringify(card)}`);
+        assert(card.description.clamp==='3'&&Math.abs(card.description.height-card.description.leading*3)<1,`Description must reserve/clamp three lines: ${JSON.stringify(card)}`);
         assert(card.tags<=4,'Too many stack tags');
       }
       assert(state.cards[0].title.scroll>state.cards[0].title.visible&&state.cards[0].description.scroll>state.cards[0].description.visible,'Long content was not clipped');
@@ -44,10 +44,10 @@ async sessionPage => {
         const row=state.cards.filter(other=>Math.abs(other.top-card.top)<1);
         assert(row.every(other=>Math.abs(other.tagTop-card.tagTop)<1&&Math.abs(other.actionTop-card.actionTop)<1),'Card footers do not align within their row');
       }
-      if(width===1440||width===390)await page.screenshot({path:'.playwright-cli/project-card-content-long-'+width+'.png',fullPage:true});
+      if(width===1440||width===390)await page.screenshot({path:`.playwright-cli/project-card-content-long-${width}.png`,fullPage:true});
       results.push({width,cards:state.cards.length,titleLines:2,descriptionLines:3,overflow:state.overflow});
     }
-    await page.goto(origin+'/projects?tech=Next.js');
+    await page.goto(`${origin}/projects?tech=Next.js`);
     await page.locator('[data-project-card]').first().waitFor();
     await page.getByRole('button',{name:'Filter stack',exact:true}).click();
     await page.getByRole('combobox',{name:'Search technologies'}).fill('Tailwind CSS');
