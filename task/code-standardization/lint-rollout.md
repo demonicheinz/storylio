@@ -290,6 +290,26 @@ Sixty-one shell/cache/404/auth-redirect tests, standalone TypeScript, lint and
 whitespace checks passed. The preceding shared production build remains the latest
 build; no new build claim is made for this annotation/import-only route batch.
 
+Route coverage committed as `806d8a9` with normal hooks.
+
+## Public TypeScript components
+
+Cover 65 public TS/TSX modules (306 source files total). Preserve intentional
+tech-stack timer/count triggers and fixed animation-slot identity with local
+explanations. Repeated ordered achievement text remains supported. Project filter
+controls use a named fieldset; Gallery details use a named section with retained
+keyboard scroll focus, and its measuring ref now accepts HTMLElement. The extra
+Home project technology count exposes real screen-reader text instead of an
+unsupported aria-label on a generic span. No design tokens or visual CSS changed.
+
+Forty-seven filter/technology/image/heading/shell tests passed. Production build
+passed with 38/38 pages. Read-only checks on the local production build passed for
+Home/Projects/Gallery at 1440/390/320px with no overflow; filter grouping is named.
+Published Gallery lightbox details resolved as a section, accepted keyboard focus
+and closed with Escape. These read-only checks used existing dev content; no CMS
+writes or seeds were performed. Public CSS and common/effect engines remain
+separate review surfaces, not claimed lint-clean here.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:

@@ -81,6 +81,7 @@ export function ExperienceSection({
               <ul className="flex flex-col gap-3 ml-5 marker:text-brand-soft list-disc">
                 {experience.highlights.map((achievement, index) => (
                   <li
+                    // biome-ignore lint/suspicious/noArrayIndexKey: Highlight paragraphs are stateless ordered text and duplicate achievements must remain visible.
                     key={`${index}:${achievement}`}
                     className="text-muted-foreground text-base"
                   >

@@ -48,7 +48,8 @@
       "src/features/dashboard/analytics/**",
       "src/components/auth/**",
       "src/features/dashboard/shared/**",
-      "src/app/**/*.{ts,tsx,css}"
+      "src/app/**/*.{ts,tsx,css}",
+      "src/components/public/**/*.{ts,tsx}"
     ]
   },
   "javascript": {
