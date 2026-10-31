@@ -27,7 +27,6 @@ import {
 } from "react";
 import { useForm } from "react-hook-form";
 import { ProfileAvatar } from "@/components/common/profile-avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,7 +45,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
@@ -306,12 +304,12 @@ function PasswordStrengthMeter({ password }: { password: string }) {
       aria-atomic="true"
     >
       <div className="flex items-center gap-1.5" aria-hidden="true">
-        {Array.from({ length: 5 }).map((_, index) => (
+        {[1, 2, 3, 4, 5].map((level) => (
           <span
-            key={index}
+            key={level}
             className={cn(
               "flex-1 bg-muted rounded-full h-1.5 transition-colors",
-              index < strength.score && strength.className,
+              level <= strength.score && strength.className,
             )}
           />
         ))}

@@ -39,7 +39,8 @@
       "src/features/dashboard/{projects,posts,gallery,media}/*.ts",
       "src/lib/**",
       "src/features/dashboard/shared/hooks/**",
-      "src/features/dashboard/shared/*.ts"
+      "src/features/dashboard/shared/*.ts",
+      "src/features/dashboard/settings/**"
     ]
   },
   "javascript": {

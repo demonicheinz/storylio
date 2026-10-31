@@ -47,3 +47,16 @@ No authentication or database policy changes. The resulting source lint selects
 passed (57), plus eight schema tests including literal LIKE wildcard handling.
 Build is not repeated for annotation/equivalent string syntax alone; commit
 hooks still require TypeScript. No broad rule suppression or unsafe fix.
+
+Shared foundations committed as `5e70a27`; normal hooks passed.
+
+## Settings
+
+Cover all nine Settings source files. Remove two unused imports and use fixed
+strength levels 1–5 as password-meter segment keys, retaining the same score
+thresholds and rendering. Source lint now selects 118 files without diagnostics.
+Fifty Settings security/MFA tests passed. The full Settings browser suite passed
+at 1440/1024/768/390/360/320px, including empty/typed strength, profile recovery,
+provider unlink across tabs, session errors, MFA locks/codes and login TOTP.
+Production build passed with 38/38 pages. All service calls were fixture mocks;
+no real accounts, sessions or providers changed.
