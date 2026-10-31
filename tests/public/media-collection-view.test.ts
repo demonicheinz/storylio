@@ -1,3 +1,5 @@
+import type { Element, RootContent } from "hast";
+import { fromHtml } from "hast-util-from-html";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
@@ -33,11 +35,53 @@ const callbacks = {
   onDelete() {},
   async onDownload() {},
 };
+function buttons(nodes: RootContent[]): Element[] {
+  return nodes.flatMap((node) => {
+    if (node.type !== "element") return [];
+    return node.tagName === "button" ? [node] : buttons(node.children);
+  });
+}
 describe("media collection renderers", () => {
   for (const [name, View] of [
     ["grid", MediaCard],
     ["list", MediaListRow],
   ] as const) {
+    it(`${name} reserves batch Tab stops for its checkbox and menu`, () => {
+      for (const isSelectionMode of [false, true]) {
+        const html = renderToStaticMarkup(
+          createElement(View, {
+            item,
+            ...callbacks,
+            isSelected: false,
+            isSelectionMode,
+            isPending: false,
+          }),
+        );
+        const controls = buttons(fromHtml(html, { fragment: true }).children);
+        const previews = controls.filter(
+          (button) =>
+            button.properties.role !== "checkbox" &&
+            button.properties.ariaHasPopup !== "menu",
+        );
+        expect(previews.length).toBeGreaterThan(0);
+        expect(
+          previews.every(
+            (button) =>
+              (button.properties.tabIndex ?? 0) === (isSelectionMode ? -1 : 0),
+          ),
+        ).toBe(true);
+        const menu = controls.find(
+          (button) => button.properties.ariaHasPopup === "menu",
+        );
+        expect(menu?.properties.tabIndex).not.toBe(-1);
+        if (isSelectionMode) {
+          expect(
+            controls.find((button) => button.properties.role === "checkbox")
+              ?.properties.tabIndex,
+          ).not.toBe(-1);
+        }
+      }
+    });
     it(`${name} preserves names, extensions and metadata`, () => {
       const html = renderToStaticMarkup(
         createElement(View, {

@@ -367,6 +367,7 @@ function GalleryGrid({
               altText={item.altText}
             />
             <button
+              tabIndex={batchMode ? -1 : 0}
               type="button"
               disabled={selectionPending}
               className="absolute inset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset cursor-pointer"
@@ -420,6 +421,7 @@ function GalleryGrid({
                 title={getItemTitle(item)}
               >
                 <button
+                  tabIndex={batchMode ? -1 : 0}
                   type="button"
                   className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring max-w-full hover:text-link text-left truncate"
                   disabled={selectionPending}
@@ -535,6 +537,7 @@ function GalleryListRow({
         </div>
       )}
       <button
+        tabIndex={batchMode ? -1 : 0}
         type="button"
         className="flex items-center gap-3 p-3 min-w-0 text-left disabled:cursor-pointer"
         disabled={selectionPending}

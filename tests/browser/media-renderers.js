@@ -95,7 +95,7 @@ async function mediaRenderers(sessionPage) {
           .getByRole("button", { name: "Select media", exact: true })
           .filter({ visible: true })
           .click();
-        const selection = page.getByRole("button", {
+        const selection = page.getByRole("checkbox", {
           name: `Select ${filename}`,
           exact: true,
         });

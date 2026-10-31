@@ -150,6 +150,7 @@ export function MediaCard({
       <div className="relative bg-muted/35 aspect-square overflow-hidden">
         <MediaThumbnail item={item} />
         <button
+          tabIndex={isSelectionMode ? -1 : 0}
           type="button"
           disabled={isPending}
           className="absolute inset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset cursor-pointer"
@@ -187,6 +188,7 @@ export function MediaCard({
       <div className="space-y-2 p-3">
         <h2 className="font-sans font-semibold text-sm truncate leading-snug">
           <button
+            tabIndex={isSelectionMode ? -1 : 0}
             type="button"
             disabled={isPending}
             className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring w-full min-w-0 hover:text-link text-left"
@@ -261,6 +263,7 @@ export function MediaListRow({
         </div>
       )}
       <button
+        tabIndex={isSelectionMode ? -1 : 0}
         type="button"
         disabled={isPending}
         className="flex items-center gap-3 p-3 min-w-0 text-left"

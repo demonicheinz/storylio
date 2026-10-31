@@ -149,6 +149,24 @@ Tab order only during batch selection, leaving pointer and ordinary preview
 behavior intact. That follow-up preference remains pending; no changes were made
 to those features' focus contracts in these commits.
 
+## Asset batch Tab order — approved behavior change
+
+The user approved removing Gallery/Media preview-image and title buttons from
+sequential Tab navigation only while batch selection is active. Apply conditional
+tabIndex to the three existing preview/title controls in each feature's grid/list.
+Pointer selection remains available; outside batch mode preview controls return
+to normal Tab order. Checkboxes and menu triggers remain keyboard accessible.
+
+Two new Media renderer tests failed before the change and passed afterward.
+Forty-three Media-renderer/Gallery batch+reorder tests and standalone TypeScript
+passed. New browser verification covers Gallery and Media at 1440/320px in both
+views: ordinary preview tab stops, actual Tab from checkbox directly to menu,
+Space selection, Enter/Escape menu behavior, pointer selection, and restored Tab
+order after exiting batch mode. Test locators were refined for Base UI checkbox
+elements, Gallery's nested list rail, accessible names including image alt text,
+and responsive exit-button names; no product behavior was changed for those
+test assumptions. Production build passed with 38/38 pages. No service writes.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:

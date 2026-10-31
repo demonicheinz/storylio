@@ -20,6 +20,7 @@ bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/brows
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-detail-panel.js
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-deletion.js
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-renderers.js
+bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/asset-selection-keyboard.js
 bunx --no-install playwright-cli -s=media-polish close
 ```
 
