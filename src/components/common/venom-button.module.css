@@ -102,6 +102,13 @@
   transition: none;
 }
 
+/* Context recovery swaps the already-formed label/material without an entrance. */
+.link[data-venom-recovery],
+.link[data-venom-recovery]::before,
+.link[data-venom-recovery]::after {
+  transition: none;
+}
+
 @keyframes orbit {
   to {
     --venom-orbit-angle: 360deg;

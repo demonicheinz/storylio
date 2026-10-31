@@ -60,8 +60,13 @@ opacity transition; the 180ms crossfade is reserved for initial startup.
 The CSS rim also pauses when
 offscreen, hidden, unfocused, or covered by the ready scene.
 The paused scene retains GPU resources. Unmounting or a live reduced-motion/
-coarse-pointer preference disposes them. Context loss leaves the CSS
-fallback until a preference-driven rebuild or component remount.
+coarse-pointer preference disposes them. Context loss disposes the current scene
+and shows the CSS fallback. The React adapter retains that canvas until its
+context-restored event, then creates one fresh idle scene. It uses the existing
+pause/resume rest path, full label, and retained-frame transition rules so recovery
+does not replay an entrance. Recovery while blurred/offscreen stays paused.
+If rebuilding fails, cleanup removes the canvas and keeps the native fallback.
+Live reduced-motion/coarse-pointer changes and unmount cancel pending recovery.
 
 The numerical vendor JS is intentionally not rewritten into bespoke TS physics.
 Its typed boundary is `engine.d.ts`; changes to integration must be checked in

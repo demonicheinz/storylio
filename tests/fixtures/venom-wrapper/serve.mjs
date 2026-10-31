@@ -1,5 +1,11 @@
+import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
+import { resolve } from "node:path";
+import tailwind from "@tailwindcss/postcss";
 import { build } from "esbuild";
+import postcss from "postcss";
+
+const real = process.argv.includes("--real");
 
 const mocks = {
   "next/link":
@@ -13,6 +19,7 @@ const bundle = await build({
   entryPoints: ["tests/fixtures/venom-wrapper/app.jsx"],
   bundle: true,
   write: false,
+  outfile: "app.js",
   format: "iife",
   jsx: "automatic",
   define: { "process.env.NODE_ENV": '"development"' },
@@ -21,30 +28,54 @@ const bundle = await build({
       name: "mock-renderer",
       setup(builder) {
         builder.onResolve({ filter: /.*/ }, ({ path }) =>
-          mocks[path] ? { path, namespace: "fixture" } : undefined,
+          mocks[path] && !(real && path === "@/components/effects/venom/engine")
+            ? { path, namespace: "fixture" }
+            : undefined,
         );
         builder.onLoad({ filter: /.*/, namespace: "fixture" }, ({ path }) => ({
           contents: mocks[path],
           loader: "jsx",
           resolveDir: process.cwd(),
         }));
-        builder.onLoad({ filter: /\.module\.css$/ }, () => ({
-          contents: "export default {};",
-          loader: "js",
-        }));
+        if (!real)
+          builder.onLoad({ filter: /\.module\.css$/ }, () => ({
+            contents: "export default {};",
+            loader: "js",
+          }));
       },
     },
   ],
 });
+const css = real
+  ? (
+      await postcss([tailwind()]).process(
+        await readFile("src/app/globals.css", "utf8"),
+        { from: resolve("src/app/globals.css") },
+      )
+    ).css +
+    "\n" +
+    bundle.outputFiles
+      .filter((file) => file.path.endsWith(".css"))
+      .map((file) => file.text)
+      .join("\n")
+  : "";
+const js = bundle.outputFiles.find((file) => file.path.endsWith(".js")).text;
 const html =
-  '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div><script src="/app.js"></script></body></html>';
+  '<!doctype html><html class="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body style="background:#070c15;color:#edf7ff"><div id="root"></div><script src="/app.js"></script></body></html>';
 createServer((request, response) => {
   const script = request.url === "/app.js";
+  const style = request.url === "/style.css";
   response.writeHead(200, {
-    "Content-Type": script ? "text/javascript" : "text/html",
+    "Content-Type": script
+      ? "text/javascript"
+      : style
+        ? "text/css"
+        : "text/html",
     "Cache-Control": "no-store",
   });
-  response.end(script ? bundle.outputFiles[0].text : html);
-}).listen(3214, "127.0.0.1", () =>
-  console.log(`Venom wrapper fixture http://127.0.0.1:3214 PID ${process.pid}`),
+  response.end(script ? js : style ? css : html);
+}).listen(real ? 3215 : 3214, "127.0.0.1", () =>
+  console.log(
+    `Venom wrapper fixture http://127.0.0.1:${real ? 3215 : 3214} PID ${process.pid}`,
+  ),
 );
