@@ -1,15 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
-import {
-  compareProjects,
-  type DashboardProject,
-} from "@/features/dashboard/projects/components/projects-manager";
+import { describe, expect, it } from "vitest";
+import { compareProjects } from "@/features/dashboard/projects/sorting";
+import type { DashboardProject } from "@/features/dashboard/projects/types";
 import { ProjectStatus } from "@/lib/db/enums";
-
-vi.mock("@/features/dashboard/projects/actions", () => ({}));
-vi.mock(
-  "@/features/dashboard/projects/components/project-delete-button",
-  () => ({ ProjectDeleteButton: () => null }),
-);
 
 const projects: DashboardProject[] = [
   { id: "middle", title: "Bravo", order: 5, day: 2 },

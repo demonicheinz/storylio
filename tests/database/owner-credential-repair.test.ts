@@ -1,5 +1,13 @@
 import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  assert,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 import type { Database } from "@/lib/db";
 import { account, user } from "@/lib/db/schema";
 import { repairOwnerCredential } from "../../scripts/auth/repair-owner-credential";
@@ -65,7 +73,8 @@ describe("legacy owner credential repair", () => {
     ).toBe(1);
     const after = await fixture.db.query.account.findMany();
     for (const row of before) {
-      const current = after.find((a) => a.id === row.id)!;
+      const current = after.find((a) => a.id === row.id);
+      assert.exists(current);
       expect({
         ...current,
         accountId: row.accountId,

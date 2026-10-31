@@ -2,6 +2,7 @@ import { hashPassword } from "better-auth/crypto";
 import { eq } from "drizzle-orm";
 import {
   afterAll,
+  assert,
   beforeAll,
   beforeEach,
   describe,
@@ -20,7 +21,7 @@ let hash: string;
 const ownerId = "recovery-owner";
 const request = (path: string, body: unknown, ip = "192.0.2.1") =>
   auth.handler(
-    new Request(origin + "/api/auth" + path, {
+    new Request(`${origin}/api/auth${path}`, {
       method: "POST",
       headers: {
         Origin: origin,
@@ -33,7 +34,7 @@ const request = (path: string, body: unknown, ip = "192.0.2.1") =>
 const resetRequest = (email = "owner@example.test", ip?: string) =>
   request(
     "/request-password-reset",
-    { email, redirectTo: origin + "/reset-password" },
+    { email, redirectTo: `${origin}/reset-password` },
     ip,
   );
 const token = () => {
@@ -105,16 +106,15 @@ describe("password recovery", () => {
     await resetRequest();
     const value = token();
     const record = await fixture.db.query.verification.findFirst({
-      where: eq(schema.verification.identifier, "reset-password:" + value),
+      where: eq(schema.verification.identifier, `reset-password:${value}`),
     });
-    expect(record!.expiresAt.getTime() - start).toBeGreaterThan(29 * 60_000);
-    expect(record!.expiresAt.getTime() - start).toBeLessThanOrEqual(
-      31 * 60_000,
-    );
+    assert.exists(record);
+    expect(record.expiresAt.getTime() - start).toBeGreaterThan(29 * 60_000);
+    expect(record.expiresAt.getTime() - start).toBeLessThanOrEqual(31 * 60_000);
     await fixture.db
       .update(schema.verification)
       .set({ expiresAt: new Date(Date.now() - 1000) })
-      .where(eq(schema.verification.id, record!.id));
+      .where(eq(schema.verification.id, record.id));
     expect(
       (
         await request("/reset-password", {
@@ -129,7 +129,7 @@ describe("password recovery", () => {
     await fixture.db.insert(schema.session).values(
       [1, 2].map((n) => ({
         userId: ownerId,
-        token: "session-" + n,
+        token: `session-${n}`,
         expiresAt: new Date(Date.now() + 3600_000),
       })),
     );
@@ -197,7 +197,7 @@ describe("password recovery", () => {
       ["first", "second"].map((suffix, index) =>
         request(
           "/reset-password",
-          { token: value, newPassword: suffix + "-replacement-password" },
+          { token: value, newPassword: `${suffix}-replacement-password` },
           `192.0.2.${30 + index}`,
         ),
       ),

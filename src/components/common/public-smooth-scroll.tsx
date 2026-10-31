@@ -47,6 +47,7 @@ export function PublicSmoothScroll() {
     };
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Route changes must rebuild Lenis ownership and restore scroll/history behavior.
   useEffect(() => {
     const preference = matchMedia(
       "(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)",

@@ -15,6 +15,7 @@ In another terminal:
 ```powershell
 bunx --no-install playwright-cli -s=gallery-polish open http://127.0.0.1:3199 --config=playwright-cli.config.json
 bunx --no-install playwright-cli -s=gallery-polish run-code --filename=tests/browser/dashboard-gallery.js
+bunx --no-install playwright-cli -s=gallery-polish run-code --filename=tests/browser/asset-selection-keyboard.js
 bunx --no-install playwright-cli -s=gallery-polish close
 ```
 

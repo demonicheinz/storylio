@@ -15,6 +15,9 @@ In another terminal:
 ```powershell
 bunx --no-install playwright-cli -s=projects-polish open http://127.0.0.1:3197 --config=playwright-cli.config.json
 bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/dashboard-projects.js
+bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/projects-reorder.js
+bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/projects-batch-actions.js
+bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/collection-selection-keyboard.js
 bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/drawer-handle.js
 bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/project-list-presentation.js
 bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/projects-mobile-toolbar.js
@@ -37,6 +40,15 @@ The session router/filter and write endpoints are mocked. Production publication
 validation/atomicity and authentication use PGlite integration tests in
 `tests/database/project-batch-publish.test.ts`; this fixture is not an
 authenticated end-to-end test.
+
+`projects-reorder.js` uses keyboard sorting to verify failed-write rollback,
+successful full-collection ordering and a canonical 85-item payload. It also
+checks that passive lists have no handles and batch titles do not navigate.
+The test waits for a handle to become enabled before sending keyboard input.
+
+`projects-batch-actions.js` verifies page selection/deselection, empty-selection
+guards, cancelled deletion, and the exact selected IDs passed to publish, draft
+and confirmed delete actions at 1440/320px. These are mocked writes.
 
 For populated media/tag and toolbar consistency checks, also start
 `bun tests/fixtures/dashboard-about/serve.mjs` in another terminal (port 3196),

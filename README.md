@@ -284,6 +284,17 @@ The auth checks use dummy credentials and no live database. Their fixture
 enables production mode before importing Better Auth because Better Auth skips
 origin checks in test mode. Keep that guard active when extending these tests.
 
+The Home PPR resume regression uses a production build and the same database
+configuration, with read-only queries. It checks the normal root and Next's
+internal `/index` resume alias, including a Notes query. The build needs a Home
+dynamic boundary (the published Notes section); this is not part of the
+credential-free Vitest suite. Request-error reporting is captured locally.
+
+```powershell
+bun run build
+infisical sm run --env=dev --path=/ -- node scripts/check-home-resume.mjs
+```
+
 Use the pinned Playwright CLI for browser flows and debugging. Install its
 Chromium once:
 

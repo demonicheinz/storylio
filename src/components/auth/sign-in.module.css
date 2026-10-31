@@ -181,10 +181,12 @@
   top: 14px;
   font-size: 16px;
 }
+/* biome-ignore lint/style/noDescendingSpecificity: Autofill must retain the floating label position after the placeholder state rule. */
 .input:autofill + .label {
   top: 6px;
   font-size: 12px;
 }
+/* biome-ignore lint/style/noDescendingSpecificity: Focus intentionally overrides label color without changing its state-dependent position. */
 .input:focus + .label {
   color: var(--link);
 }

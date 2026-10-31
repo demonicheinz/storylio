@@ -70,6 +70,6 @@ export async function seedOwner(
         throw new SeedInputError("The owner profile no longer exists.");
     }
     if (headline !== undefined) await saveHomeHeadline(tx, headline);
-    return owner!;
+    return owner;
   });
 }

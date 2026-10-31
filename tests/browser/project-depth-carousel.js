@@ -15,7 +15,7 @@ async sessionPage => {
       for(const width of [1440,1024,768,390,320]) {
         step=`${width}/${reducedMotion}: load`;
         await page.setViewportSize({width,height:1000});
-        await page.goto(origin+'/projects/storylio');await carousel().waitFor();
+        await page.goto(`${origin}/projects/storylio`);await carousel().waitFor();
         await page.evaluate(()=>document.fonts.ready);
         await carousel().scrollIntoViewIfNeeded();await settled();
         const geometry=await carousel().evaluate(root=>{
@@ -26,10 +26,10 @@ async sessionPage => {
           const image=active.querySelector('img'),imageBox=image.getBoundingClientRect(),frame=active.getBoundingClientRect(),nav=root.querySelector('button[aria-label="Next screenshot"]').parentElement;
           return {width:innerWidth,height:root.getBoundingClientRect().height,overflow:document.documentElement.scrollWidth>innerWidth+1,images:root.querySelectorAll('img').length,fit:getComputedStyle(image).objectFit,imageFillsFrame:Math.abs(imageBox.width-frame.width)<1&&Math.abs(imageBox.height-frame.height)<1,radius:getComputedStyle(image).borderRadius,background:s.backgroundColor,border:s.borderWidth,controlsCentered:Math.abs((nav.getBoundingClientRect().left+nav.getBoundingClientRect().right)/2-(root.getBoundingClientRect().left+root.getBoundingClientRect().right)/2)<1,visibleCaptions:root.querySelectorAll('p:not([role="status"])').length,flat:Math.abs(matrix.m13)<.001&&Math.abs(matrix.m31)<.001&&Math.abs(matrix.m11-1)<.001,controls:controlSizes,touchAction:getComputedStyle(stage).touchAction,transition:s.transitionDuration};
         });
-        assert(!geometry.overflow&&geometry.flat&&geometry.fit==='contain','Active image distorted: '+JSON.stringify(geometry));
-        assert(geometry.imageFillsFrame&&geometry.controlsCentered&&geometry.visibleCaptions===0,'Image sizing or controls differ: '+JSON.stringify(geometry));
+        assert(!geometry.overflow&&geometry.flat&&geometry.fit==='contain',`Active image distorted: ${JSON.stringify(geometry)}`);
+        assert(geometry.imageFillsFrame&&geometry.controlsCentered&&geometry.visibleCaptions===0,`Image sizing or controls differ: ${JSON.stringify(geometry)}`);
         assert(geometry.radius==='8px','Screenshot corners should be 8px');
-        assert(geometry.controls.every(control=>control.w>=43.99&&control.h>=43.99),'Small control: '+JSON.stringify(geometry));
+        assert(geometry.controls.every(control=>control.w>=43.99&&control.h>=43.99),`Small control: ${JSON.stringify(geometry)}`);
         assert(geometry.touchAction==='pan-y','Vertical touch scrolling blocked');
         if(reducedMotion==='reduce')assert(geometry.transition.split(',').every(value=>parseFloat(value)===0),'Reduced motion animates');
         step=`${width}/${reducedMotion}: next`;
@@ -69,14 +69,14 @@ async sessionPage => {
           await carousel().getByRole('button',{name:'Next screenshot',exact:true}).click();
           await page.locator('#project-screenshots').scrollIntoViewIfNeeded();await settled();
           await page.waitForTimeout(500);
-          await page.locator('section[aria-labelledby="project-screenshots"]').screenshot({path:'task/project-depth-carousel/carousel-'+width+'.png'});
+          await page.locator('section[aria-labelledby="project-screenshots"]').screenshot({path:`task/project-depth-carousel/carousel-${width}.png`});
         }
       }
     }
     assert(!errors.length,errors.join('\n'));
     return {results,errors};
   } catch(error) {
-    error.message+='\nStage: '+step+'\n'+JSON.stringify(await page.evaluate(()=>({y:scrollY,focus:document.hasFocus(),index:document.querySelector('[data-depth-carousel]')?.dataset.currentIndex,dialog:!!document.querySelector('[role="dialog"]'),classes:document.documentElement.className})));
+    error.message+=`\nStage: ${step}\n${JSON.stringify(await page.evaluate(()=>({y:scrollY,focus:document.hasFocus(),index:document.querySelector('[data-depth-carousel]')?.dataset.currentIndex,dialog:!!document.querySelector('[role="dialog"]'),classes:document.documentElement.className})))}`;
     throw error;
   } finally {await page.close()}
 }

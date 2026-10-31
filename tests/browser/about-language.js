@@ -58,7 +58,7 @@ async (page) => {
       const requests = navigationRequests.length - before;
       const elapsedMs = Date.now() - started;
       results.push({ language, elapsedMs, navigationRequests: requests });
-      if (requests !== 0 || elapsedMs >= 800) throw new Error("Language switch waited on the server: " + JSON.stringify(results));
+      if (requests !== 0 || elapsedMs >= 800) throw new Error(`Language switch waited on the server: ${JSON.stringify(results)}`);
       if (Math.abs(scrollAfter - scrollBefore) > 2) throw new Error("Language switch changed scroll position");
     }
     return { injectedRscDelayMs: 800, results };

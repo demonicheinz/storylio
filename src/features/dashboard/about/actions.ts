@@ -1,7 +1,6 @@
 "use server";
 
 import { asc, desc, eq, inArray } from "drizzle-orm";
-import { revalidatePath, updateTag } from "next/cache";
 import { ABOUT_CONTENT_SINGLETON_ID } from "@/features/about/data";
 import {
   type AboutContentActionInput,
@@ -15,6 +14,7 @@ import { db } from "@/lib/db";
 import { aboutContent as aboutContentTable } from "@/lib/db/schema";
 import { getMdxSafetyError } from "@/lib/mdx-safety";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { revalidatePath, updateTag } from "@/lib/revalidation";
 
 export async function actionUpdateAboutContent(
   input: AboutContentActionInput,

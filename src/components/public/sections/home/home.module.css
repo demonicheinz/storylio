@@ -7,7 +7,9 @@
 }
 /* Home is visible in SSR; a transformed route wrapper also traps fixed footers. */
 :global([data-route-motion]):has(.page) {
+  /* biome-ignore lint/complexity/noImportantStyles: Home entrance and reduced-motion ownership must override nested route/reveal animation styles. */
   opacity: 1 !important;
+  /* biome-ignore lint/complexity/noImportantStyles: Home entrance and reduced-motion ownership must override nested route/reveal animation styles. */
   transform: none !important;
 }
 .content {
@@ -476,13 +478,18 @@
 @media (prefers-reduced-motion: reduce) {
   .section > div,
   .stack > div {
+    /* biome-ignore lint/complexity/noImportantStyles: Home entrance and reduced-motion ownership must override nested route/reveal animation styles. */
     opacity: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Home entrance and reduced-motion ownership must override nested route/reveal animation styles. */
     transform: none !important;
   }
   .logo {
     animation: none;
+    /* biome-ignore lint/complexity/noImportantStyles: Home entrance and reduced-motion ownership must override nested route/reveal animation styles. */
     clip-path: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Home entrance and reduced-motion ownership must override nested route/reveal animation styles. */
     filter: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Home entrance and reduced-motion ownership must override nested route/reveal animation styles. */
     opacity: 1 !important;
   }
   .card {

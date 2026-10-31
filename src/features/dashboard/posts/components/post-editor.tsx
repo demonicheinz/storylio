@@ -50,6 +50,7 @@ import { DateTimePicker } from "@/features/dashboard/shared/components/date-time
 import { DashboardSelect } from "@/features/dashboard/shared/components/filter-controls";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { TagsInput } from "@/features/dashboard/shared/components/tag-input";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { useUnsavedChangesGuard } from "@/features/dashboard/shared/hooks/use-unsaved-changes-guard";
 import { createSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
@@ -483,10 +484,15 @@ export function PostEditor({ mode, post }: PostEditorProps) {
     }
   };
 
-  const moveToDraft = () => {
+  const moveToDraft = async () => {
     if (
-      window.confirm(
+      await confirmAction(
         "Move this post to draft? It will no longer be public. Your current edits will be saved.",
+        {
+          title: "Move post to draft?",
+          confirmLabel: "Move to draft",
+          cancelLabel: "Cancel",
+        },
       )
     ) {
       void submitWithStatus("draft")();
@@ -532,7 +538,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
           </div>
         </div>
       </div>
-      <div
+      <fieldset
         className="top-14 z-20 sticky flex flex-wrap items-center gap-2 bg-background py-3 border-border border-y min-w-0"
         aria-label="Post save actions"
       >
@@ -602,7 +608,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-      </div>
+      </fieldset>
       <p className="text-muted-foreground text-xs" role="note">
         {mode === "create"
           ? "Save your first draft to enable preview."

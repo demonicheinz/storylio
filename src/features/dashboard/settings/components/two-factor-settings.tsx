@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { useUnsavedChangesGuard } from "@/features/dashboard/shared/hooks/use-unsaved-changes-guard";
 import { authClient } from "@/lib/auth-client";
 import styles from "./two-factor-settings.module.css";
@@ -88,16 +89,22 @@ export function TwoFactorSettings({
     setCopyError(null);
     onFlowStateChange?.({ dirty: false, pending: lock.current || flowPending });
   };
-  const cancel = () => {
+  const cancel = async () => {
     if (lock.current || copyLock.current) return;
     if (
       codes.length > 0 &&
       !saved &&
-      !window.confirm(
+      !(await confirmAction(
         "Close setup and discard these unsaved backup codes? Closing this view does not undo changes already made to your account.",
-      )
+        {
+          title: "Close setup?",
+          confirmLabel: "Close setup",
+          cancelLabel: "Cancel",
+        },
+      ))
     )
       return;
+    if (!mounted.current || lock.current || copyLock.current) return;
     clearSecrets();
     setError(null);
     setMessage(
@@ -139,17 +146,29 @@ export function TwoFactorSettings({
     if (action !== "verify" && !password) return;
     if (
       action === "disable" &&
-      !window.confirm(
+      !(await confirmAction(
         "Disable two-factor authentication? Authenticator and backup codes will no longer protect sign-in. GitHub and passkey sign-in will become available again.",
-      )
+        {
+          title: "Disable two-factor authentication?",
+          confirmLabel: "Disable two-factor",
+          cancelLabel: "Cancel",
+        },
+      ))
     )
       return;
     if (
       action === "regenerate" &&
-      !window.confirm(
+      !(await confirmAction(
         "Regenerate backup codes? All previous backup codes will stop working immediately. Save the new codes before leaving this view.",
-      )
+        {
+          title: "Regenerate backup codes?",
+          confirmLabel: "Regenerate codes",
+          cancelLabel: "Cancel",
+        },
+      ))
     )
+      return;
+    if (!mounted.current || lock.current || copyLock.current || flowPending)
       return;
     lock.current = true;
     setPending(true);

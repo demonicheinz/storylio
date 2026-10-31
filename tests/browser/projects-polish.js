@@ -19,7 +19,7 @@ async sessionPage => {
     await page.emulateMedia({reducedMotion:'reduce'});
     for(const width of [1440,1024,768,390,320]){
       await page.setViewportSize({width,height:width<768?844:1000});
-      await page.goto(origin+'/projects?keep=projects-review');
+      await page.goto(`${origin}/projects?keep=projects-review`);
       await page.locator('[data-project-card]').first().waitFor();await page.evaluate(()=>document.fonts.ready);
       const state=await page.evaluate(()=>{
         const card=document.querySelector('[data-featured]');const title=card.querySelector('h2');
@@ -28,21 +28,21 @@ async sessionPage => {
         const widths=[...document.querySelectorAll('[data-project-card]')].map(el=>el.getBoundingClientRect().width);
         return{width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+1,cardTop:card.getBoundingClientRect().top,titleTop:title.getBoundingClientRect().top,mediaTop:media.getBoundingClientRect().top,filterHeight:group.getBoundingClientRect().height,triggerHeight:button.getBoundingClientRect().height,columns:getComputedStyle(document.querySelector('[data-project-grid]')).gridTemplateColumns.split(' ').length,links:card.querySelectorAll('a[href^="/projects/"]').length,equalCards:Math.max(...widths)-Math.min(...widths)<1,titleSize:getComputedStyle(title).fontSize,flow:!!card.querySelector('[data-flow-button]')};
       });
-      assert(!state.overflow,'Overflow '+width);assert(state.columns===(width<768?1:width<1200?2:3),'Wrong grid');
+      assert(!state.overflow,`Overflow ${width}`);assert(state.columns===(width<768?1:width<1200?2:3),'Wrong grid');
       assert(state.links===1,'Repeated primary link');assert(state.triggerHeight>=44,'Small filter target');
       assert(state.equalCards&&state.titleSize==='22px'&&state.flow,'Cards must share the Home item scale and Flow CTA');
-      if(width<768)assert(state.titleTop<750&&state.mediaTop<state.titleTop&&state.filterHeight<90,'Compact uniform cards are not visible: '+JSON.stringify(state));
+      if(width<768)assert(state.titleTop<750&&state.mediaTop<state.titleTop&&state.filterHeight<90,`Compact uniform cards are not visible: ${JSON.stringify(state)}`);
       await trigger().click();await search().waitFor();
       const popup=page.locator('[data-multi-select-content]');
       const box=await popup.boundingBox();assert(box.x>=0&&box.x+box.width<=width+1,'Popup overflow');
       await search().fill('no-such-technology');await page.getByText('No technologies found.',{exact:true}).waitFor();
       await page.keyboard.press('Escape');await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')==='Filter stack');
       assert(await page.evaluate(()=>!document.activeElement?.closest('[inert], [aria-hidden="true"]')),'Focus remained in a hidden popup');
-      if(width===1440||width===390)await page.screenshot({path:'.playwright-cli/projects-polish-'+width+'.png'});
+      if(width===1440||width===390)await page.screenshot({path:`.playwright-cli/projects-polish-${width}.png`});
       results.push(state);
     }
     await page.setViewportSize({width:390,height:844});
-    await page.goto(origin+'/projects?keep=projects-review');
+    await page.goto(`${origin}/projects?keep=projects-review`);
     await choose('Next.js');await choose('TypeScript');
     assert(new URL(page.url()).searchParams.get('keep')==='projects-review','Lost query state');
     assert(await page.locator('[data-project-card]').count()===1,'AND filter should return Storylio only');
@@ -56,6 +56,7 @@ async sessionPage => {
     await page.keyboard.press('Escape');
     await page.goBack();await page.waitForURL(url=>url.searchParams.getAll('tech').length===2);
     await page.waitForFunction(()=>document.querySelector('button[aria-label="Filter stack"]')?.getAttribute('aria-description')?.split(', ').length===2);
+    // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
     assert((await trigger().innerText()).includes('2 technologies'),'Back did not restore selection');
     await page.goForward();await page.waitForURL(url=>url.searchParams.getAll('tech').length===1);
     await page.waitForFunction(()=>document.querySelector('button[aria-label="Filter stack"]')?.getAttribute('aria-description')?.split(', ').length===1);
@@ -66,7 +67,7 @@ async sessionPage => {
     assert(await trigger().evaluate(el=>el.getBoundingClientRect().height)===closedHeight,'Selection changes trigger height');
     await page.setViewportSize({width:390,height:600});await trigger().click();
     const shortPanel=await page.locator('[data-multi-select-content]').boundingBox();
-    assert(shortPanel.y>=0&&shortPanel.y+shortPanel.height<=600,'Dropdown clipped on short screen: '+JSON.stringify(shortPanel));
+    assert(shortPanel.y>=0&&shortPanel.y+shortPanel.height<=600,`Dropdown clipped on short screen: ${JSON.stringify(shortPanel)}`);
     await page.keyboard.press('Escape');await page.setViewportSize({width:390,height:844});
     await trigger().click();await search().fill('Next.js');await selected('Next.js').click();
     await page.waitForURL(url=>url.searchParams.has('tech'));

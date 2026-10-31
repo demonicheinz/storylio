@@ -225,6 +225,7 @@
 .inventory li {
   border-top: 1px solid var(--border);
 }
+/* biome-ignore lint/style/noDescendingSpecificity: Inventory links and metric definition-list links belong to separate sections. */
 .inventory a {
   display: flex;
   align-items: center;

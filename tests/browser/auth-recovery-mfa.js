@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function authRecoveryMfa(page) {
   async function openMfaConfirmation() {
     if (
@@ -134,11 +135,11 @@ async function authRecoveryMfa(page) {
         }));
         assert(
           !layout.overflow && layout.mains === 1,
-          "Layout invalid " + route + JSON.stringify(layout),
+          `Layout invalid ${route}${JSON.stringify(layout)}`,
         );
         assert(
           layout.controls.every((height) => height >= 44),
-          "Small controls " + route,
+          `Small controls ${route}`,
         );
         assert(
           layout.indexed.includes("noindex") &&
@@ -152,7 +153,7 @@ async function authRecoveryMfa(page) {
       }
     }
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(origin + "/forgot-password");
+    await page.goto(`${origin}/forgot-password`);
     await page
       .getByLabel("Email", { exact: true })
       .fill("unknown@example.test");
@@ -164,7 +165,7 @@ async function authRecoveryMfa(page) {
       .filter({ hasText: "If an eligible account" })
       .waitFor();
     mode = "throttle";
-    await page.goto(origin + "/forgot-password");
+    await page.goto(`${origin}/forgot-password`);
     await page.getByLabel("Email", { exact: true }).fill("owner@example.test");
     await page
       .getByRole("button", { name: "Send reset link", exact: true })
@@ -174,12 +175,12 @@ async function authRecoveryMfa(page) {
       .filter({ hasText: "Too many attempts" })
       .waitFor();
     mode = "success";
-    await page.goto(origin + "/reset-password");
+    await page.goto(`${origin}/reset-password`);
     await page
       .getByRole("alert")
       .filter({ hasText: "invalid or expired" })
       .waitFor();
-    await page.goto(origin + "/reset-password?token=fixture-token");
+    await page.goto(`${origin}/reset-password?token=fixture-token`);
     await page
       .getByLabel("New password", { exact: true })
       .fill("fixture-new-password");
@@ -213,7 +214,7 @@ async function authRecoveryMfa(page) {
       !new URL(page.url()).searchParams.has("token"),
       "Reset token retained after success",
     );
-    await page.goto(origin + "/sign-in?callbackUrl=%2Fdashboard%2Fsettings");
+    await page.goto(`${origin}/sign-in?callbackUrl=%2Fdashboard%2Fsettings`);
     await page.getByLabel("Email", { exact: true }).fill("owner@example.test");
     await page.getByLabel("Password", { exact: true }).fill("fixture-password");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
@@ -238,7 +239,7 @@ async function authRecoveryMfa(page) {
     await page.screenshot({
       path: "task/auth-recovery-mfa/two-factor-390.png",
     });
-    await page.goto(origin + "/auth-security-fixture-check");
+    await page.goto(`${origin}/auth-security-fixture-check`);
     await openMfaConfirmation();
     await page
       .getByLabel("Confirm your password", { exact: true })
@@ -266,8 +267,14 @@ async function authRecoveryMfa(page) {
     await page
       .getByLabel("Confirm your password", { exact: true })
       .fill("fixture-password");
-    page.once("dialog", (dialog) => dialog.accept());
+
     await page.getByRole("button", { name: "Regenerate backup codes" }).click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await page.getByRole("list", { name: "Backup codes" }).waitFor();
     assert(
       await page
@@ -282,16 +289,22 @@ async function authRecoveryMfa(page) {
     await page
       .getByLabel("Confirm your password", { exact: true })
       .fill("fixture-password");
-    page.once("dialog", (dialog) => dialog.accept());
+
     await page
       .getByRole("button", { name: "Disable two-factor", exact: true })
       .click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await page.getByRole("button", { name: "Set up authenticator" }).waitFor();
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.goto(origin + "/forgot-password");
+    await page.goto(`${origin}/forgot-password`);
     await page.getByRole("heading", { level: 1 }).waitFor();
     await page.keyboard.press("Tab");
-    assert(errors.length === 0, "Unexpected errors: " + errors.join(";"));
+    assert(errors.length === 0, `Unexpected errors: ${errors.join(";")}`);
     return {
       passed: true,
       viewports: 4,

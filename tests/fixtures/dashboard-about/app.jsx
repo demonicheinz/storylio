@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToastProvider } from "@/components/ui/toast";
 import { AboutContentForm } from "@/features/dashboard/about/components/content-form";
 import { AboutStructuredManager } from "@/features/dashboard/about/components/structured-manager";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
 
 const data = {
   experiences: [
@@ -115,31 +116,34 @@ function PublicExperienceRegression() {
   );
 }
 createRoot(document.getElementById("root")).render(
-  location.search.includes("public-experience") ? (
-    <PublicExperienceRegression />
-  ) : (
-    <ToastProvider>
-      <main className="mx-auto p-4 md:p-8 w-full max-w-6xl">
-        <Logo loading="eager" />
-        <h1 className="mb-6 font-semibold text-3xl">About</h1>
-        <Tabs defaultValue="content" className="gap-5 min-w-0">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-4 [&>button]:px-2 w-full sm:w-fit h-auto [&>button]:min-h-11">
-            {["content", "experience", "education", "skills"].map((value) => (
-              <TabsTrigger key={value} value={value}>
-                {value[0].toUpperCase() + value.slice(1)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          <TabsContent value="content" keepMounted>
-            <AboutContentForm content={content} />
-          </TabsContent>
-          {["experience", "education", "skills"].map((section) => (
-            <TabsContent key={section} value={section}>
-              <AboutStructuredManager data={data} section={section} />
+  <>
+    <DashboardConfirmationHost />
+    {location.search.includes("public-experience") ? (
+      <PublicExperienceRegression />
+    ) : (
+      <ToastProvider>
+        <main className="mx-auto p-4 md:p-8 w-full max-w-6xl">
+          <Logo loading="eager" />
+          <h1 className="mb-6 font-semibold text-3xl">About</h1>
+          <Tabs defaultValue="content" className="gap-5 min-w-0">
+            <TabsList className="grid grid-cols-2 sm:grid-cols-4 [&>button]:px-2 w-full sm:w-fit h-auto [&>button]:min-h-11">
+              {["content", "experience", "education", "skills"].map((value) => (
+                <TabsTrigger key={value} value={value}>
+                  {value[0].toUpperCase() + value.slice(1)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <TabsContent value="content" keepMounted>
+              <AboutContentForm content={content} />
             </TabsContent>
-          ))}
-        </Tabs>
-      </main>
-    </ToastProvider>
-  ),
+            {["experience", "education", "skills"].map((section) => (
+              <TabsContent key={section} value={section}>
+                <AboutStructuredManager data={data} section={section} />
+              </TabsContent>
+            ))}
+          </Tabs>
+        </main>
+      </ToastProvider>
+    )}
+  </>,
 );

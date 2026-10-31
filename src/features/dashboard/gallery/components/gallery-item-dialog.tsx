@@ -30,7 +30,8 @@ import {
   galleryItemActionSchema,
 } from "@/features/dashboard/gallery/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
-import type { DashboardGalleryItem } from "./gallery-item-form";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
+import type { DashboardGalleryItem } from "../types";
 
 type GalleryItemDialogProps = {
   item?: DashboardGalleryItem;
@@ -131,12 +132,14 @@ export function GalleryItemDialog({
       details?.cancel();
       return;
     }
-    if (
-      !nextOpen &&
-      isDirty &&
-      !window.confirm("Discard unsaved changes to this gallery item?")
-    ) {
+    if (!nextOpen && isDirty) {
       details?.cancel();
+      void confirmAction("Discard unsaved changes to this gallery item?").then(
+        (approved) => {
+          if (approved && !pendingRef.current && !uploadingRef.current)
+            setOpen(false);
+        },
+      );
       return;
     }
     if (nextOpen) {

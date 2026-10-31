@@ -12,6 +12,20 @@ Run these files with `run-code --filename=...`:
 - `tests/browser/control-cursors.js`: computed cursor checks for shared controls,
   disabled states, Select options, and dropdown submenu triggers. Open
   `/?kind=controls` for manual inspection.
+- `tests/browser/dashboard-pagination.js`: shared pagination range, boundaries,
+  page-size choices and keyboard behavior at 320/390/768/1440px. Create
+  `task/code-standardization/` before running screenshots; manually inspect
+  `/?kind=pagination`.
+- `tests/browser/content-covers.js`: missing/failed/valid cover transitions,
+  source recovery and narrow fallback bounds at 320/390/768/1440px. Inspect
+  `/?kind=covers`. Valid images are inline SVG fixtures, and broken input is
+  deliberate. The Next Image component is stubbed; optimizer URLs are tested
+  separately by `tests/public/image-delivery.test.ts`.
+- `tests/browser/dashboard-confirmations.js`: uses the Media fixture on port 3201
+  and this fixture on 3205. Verifies nested discard, Cancel/Escape/focus, no native
+  confirms, one approved link replay, coalesced dirty guards, and native unload
+  protection. Inspect `/?kind=confirmation`; screenshots go to
+  `task/code-standardization/`.
 
 The fixture renders the actual New route components, editors, skeletons,
 Blog card, shared controls, and project CSS/fonts. React StrictMode and Activity

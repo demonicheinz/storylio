@@ -20,7 +20,7 @@ async sessionPage=>{
   try {
     for(const width of [1440,390]){
     await page.setViewportSize({width,height:1000});await page.emulateMedia({reducedMotion:'no-preference'});
-    await page.goto(origin+'/sign-in');await page.locator('[data-auth-form]').waitFor();
+    await page.goto(`${origin}/sign-in`);await page.locator('[data-auth-form]').waitFor();
     await page.waitForFunction(()=>document.querySelector('[data-auth-intro]')?.dataset.authIntro==='complete');
     const samples=await page.evaluate(()=>window.entranceSamples);
     assert(samples.some(frame=>frame.earth?.animation!=='none'&&frame.earth?.duration==='0.7s'),'Earth entrance absent');
@@ -37,19 +37,19 @@ async sessionPage=>{
     await page.screenshot({path:`task/auth-entrance/signin-${width}.png`});
     results.push({width,earth:true,stars:true,groupedForm:true,noReplay:true});
     }
-    stage='interaction';await page.goto(origin+'/sign-in');await page.getByLabel('Email',{exact:true}).focus();
+    stage='interaction';await page.goto(`${origin}/sign-in`);await page.getByLabel('Email',{exact:true}).focus();
     await page.waitForFunction(()=>document.querySelector('[data-auth-intro]')?.dataset.authIntro==='complete');
     assert(await page.locator('[data-auth-form]').evaluate(el=>getComputedStyle(el).animationName)==='none','Focus did not finish animation');
-    stage='reduced motion';await page.emulateMedia({reducedMotion:'reduce'});await page.goto(origin+'/sign-in');await page.locator('[data-auth-form]').waitFor();
+    stage='reduced motion';await page.emulateMedia({reducedMotion:'reduce'});await page.goto(`${origin}/sign-in`);await page.locator('[data-auth-form]').waitFor();
     assert(await page.locator('[data-auth-form], [data-auth-earth], [data-auth-stars] [data-gravity-stars]').evaluateAll(nodes=>nodes.every(el=>getComputedStyle(el).animationName==='none')),'Reduced motion retained entrance');
-    stage='navbar';await page.emulateMedia({reducedMotion:'no-preference'});await page.goto(origin+'/');
+    stage='navbar';await page.emulateMedia({reducedMotion:'no-preference'});await page.goto(`${origin}/`);
     await page.getByRole('navigation',{name:'Main navigation',exact:true}).waitFor();
     await page.waitForFunction(()=>window.entranceSamples.some(frame=>frame.nav&&frame.hero==='false'));
     const navFrames=await page.evaluate(()=>window.entranceSamples.filter(frame=>frame.nav&&frame.hero==='false'));
-    assert(navFrames.every(frame=>frame.nav.opacity===1&&frame.nav.animation==='none'),'Hero conceals navbar: '+JSON.stringify(navFrames));
+    assert(navFrames.every(frame=>frame.nav.opacity===1&&frame.nav.animation==='none'),`Hero conceals navbar: ${JSON.stringify(navFrames)}`);
     await page.getByRole('navigation',{name:'Main navigation',exact:true}).getByRole('link',{name:'About',exact:true}).focus();await page.keyboard.press('Enter');
     await page.waitForURL(url=>url.pathname==='/about');
     return {results,focusCompletes:true,reducedMotion:true,homeNavIndependent:true,navFrames:navFrames.length};
-  }catch(error){error.message+=' Stage: '+stage;throw error}
+  }catch(error){error.message+=` Stage: ${stage}`;throw error}
   finally{await context.close()}
 }

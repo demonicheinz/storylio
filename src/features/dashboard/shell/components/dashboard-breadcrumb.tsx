@@ -31,7 +31,7 @@ type BreadcrumbItemData = {
 };
 
 type BreadcrumbLabelMap = Record<string, BreadcrumbItemData>;
-type BreadcrumbItem = BreadcrumbItemData & {
+type ResolvedBreadcrumbItem = BreadcrumbItemData & {
   isDynamic: boolean;
 };
 
@@ -78,7 +78,7 @@ function getStoredLabels(pathname: string): BreadcrumbLabelMap {
 function getBreadcrumbItems(
   pathname: string,
   dynamicLabels: BreadcrumbLabelMap,
-): BreadcrumbItem[] {
+): ResolvedBreadcrumbItem[] {
   const segments = pathname.split("/").filter(Boolean);
   const dashboardIndex = segments.indexOf("dashboard");
   const dashboardSegments =
@@ -147,7 +147,7 @@ export function DashboardBreadcrumb() {
           }
 
           return (
-            <Fragment key={`${item.href}-${index}`}>
+            <Fragment key={item.href}>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 {isLast || item.isDynamic ? (

@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function visualChecks(sessionPage) {
   const page = await sessionPage.context().newPage();
   const results = [];
@@ -11,7 +12,7 @@ async function visualChecks(sessionPage) {
         "post-detail",
         "gallery",
       ]) {
-        await page.goto("http://127.0.0.1:3205/?variant=" + variant);
+        await page.goto(`http://127.0.0.1:3205/?variant=${variant}`);
         await page.getByRole("status").waitFor();
         const result = await page.evaluate(() => ({
           overflow: document.documentElement.scrollWidth > innerWidth,
@@ -31,17 +32,17 @@ async function visualChecks(sessionPage) {
               )
             : null,
         }));
-        if (result.overflow) throw Error(variant + " overflows at " + width);
+        if (result.overflow) throw Error(`${variant} overflows at ${width}`);
         if (
           ["projects", "blog"].includes(variant) &&
           result.cardColumns !== (width < 768 ? 1 : width < 1200 ? 2 : 3)
         )
-          throw Error(variant + " has incorrect grid columns at " + width);
+          throw Error(`${variant} has incorrect grid columns at ${width}`);
         if (
           variant === "gallery" &&
           result.masonryColumns !== (width < 688 ? 1 : width < 1008 ? 2 : 3)
         )
-          throw Error("Gallery has incorrect masonry columns at " + width);
+          throw Error(`Gallery has incorrect masonry columns at ${width}`);
         results.push({ width, variant, ...result });
         if ([320, 1440].includes(width))
           await page.screenshot({
@@ -61,7 +62,7 @@ async function visualChecks(sessionPage) {
         .locator("..")
         .evaluate((el) => el.parentElement.getBoundingClientRect().toJSON());
       if (Math.abs(rect.width / rect.height - 16 / 9) > 0.03)
-        throw Error("Cover aspect ratio changed at " + width);
+        throw Error(`Cover aspect ratio changed at ${width}`);
     }
     return results;
   } finally {

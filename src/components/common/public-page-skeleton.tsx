@@ -228,7 +228,11 @@ function Content({ variant }: PublicPageSkeletonProps) {
                 "aspect-3/4",
                 "aspect-4/3",
               ].map((aspect, index) => (
-                <div className={loading.photo} key={index}>
+                <div
+                  className={loading.photo}
+                  // biome-ignore lint/suspicious/noArrayIndexKey: Skeleton cells are fixed decorative layout positions with no mutable item state.
+                  key={index}
+                >
                   <Bar className={`w-full ${aspect}`} />
                 </div>
               ))}

@@ -48,6 +48,7 @@ import {
 } from "@/features/dashboard/projects/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { TagsInput } from "@/features/dashboard/shared/components/tag-input";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { useUnsavedChangesGuard } from "@/features/dashboard/shared/hooks/use-unsaved-changes-guard";
 import { createSlug } from "@/lib/slug";
 import { cn } from "@/lib/utils";
@@ -429,10 +430,15 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
     }
   };
 
-  const moveToDraft = () => {
+  const moveToDraft = async () => {
     if (
-      window.confirm(
+      await confirmAction(
         "Move this project to draft? It will no longer be public. Your current edits will be saved.",
+        {
+          title: "Move project to draft?",
+          confirmLabel: "Move to draft",
+          cancelLabel: "Cancel",
+        },
       )
     ) {
       void submitWithStatus("draft")();
@@ -482,7 +488,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
           </div>
         </div>
       </div>
-      <div
+      <fieldset
         className="top-14 z-20 sticky flex flex-wrap items-center gap-2 bg-background py-3 border-border border-y min-w-0"
         aria-label="Project save actions"
       >
@@ -548,7 +554,7 @@ export function ProjectEditor({ mode, project }: ProjectEditorProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-      </div>
+      </fieldset>
       <p className="text-muted-foreground text-xs" role="note">
         {status === "published"
           ? "Edits autosave every 30 seconds directly to the live project."

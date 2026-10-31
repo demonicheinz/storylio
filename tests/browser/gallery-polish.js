@@ -12,9 +12,9 @@ async sessionPage => {
   try {
     await page.emulateMedia({reducedMotion:'reduce'});
     for(const width of [1440,1024,768,390,320]) {
-      stage='responsive '+width;
+      stage=`responsive ${width}`;
       await page.setViewportSize({width,height:1000});
-      await page.goto(origin+'/gallery?keep=gallery-test');await photos().first().waitFor();
+      await page.goto(`${origin}/gallery?keep=gallery-test`);await photos().first().waitFor();
       await page.evaluate(()=>document.fonts.ready);
       await page.waitForFunction(columns=>new Set([...document.querySelectorAll('[data-gallery-photo]')].map(el=>Math.round(el.getBoundingClientRect().left))).size===columns,width>=1024?3:width>=768?2:1);
       await photos().first().locator('img').evaluate(image=>image.decode().catch(()=>{}));
@@ -22,8 +22,8 @@ async sessionPage => {
         const cards=[...document.querySelectorAll('[data-gallery-photo]')],first=cards[0].getBoundingClientRect();
         return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+1,firstTop:first.top,columns:new Set(cards.map(el=>Math.round(el.getBoundingClientRect().left))).size,heading:getComputedStyle(document.querySelector('h1')).fontSize,count:cards.length,description:document.querySelector('header p')?.textContent};
       });
-      assert(!data.overflow&&data.firstTop<600,'Gallery opening too tall or overflowing: '+JSON.stringify(data));
-      assert(data.columns===(width>=1024?3:width>=768?2:1),'Unexpected column count: '+JSON.stringify(data));
+      assert(!data.overflow&&data.firstTop<600,`Gallery opening too tall or overflowing: ${JSON.stringify(data)}`);
+      assert(data.columns===(width>=1024?3:width>=768?2:1),`Unexpected column count: ${JSON.stringify(data)}`);
       assert(data.heading===(width<768?'40px':'56px'),'Heading drift');
       if(width===1440||width===390)await page.screenshot({path:`task/gallery-polish/gallery-${width}.png`});
       await trigger().click();
@@ -41,7 +41,7 @@ async sessionPage => {
       await page.waitForURL(url=>!url.searchParams.has('category'));await waitSelection();
       await page.waitForFunction(count=>document.querySelectorAll('[data-gallery-photo]').length===count,data.count);
 
-      stage='lightbox '+width;
+      stage=`lightbox ${width}`;
       const originPhoto=photos().first();await originPhoto.click();
       const dialog=page.getByRole('dialog',{name:'Lightbox',exact:true});await dialog.waitFor();
       await dialog.getByRole('status',{name:`Image 1 of ${data.count}`,exact:true}).waitFor();
@@ -50,7 +50,7 @@ async sessionPage => {
         return container&&details&&Math.abs(container.bottom-details.top)<1;
       });
       const controls=await dialog.getByRole('button').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none').map(n=>({label:n.getAttribute('aria-label'),width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height})));
-      assert(controls.every(c=>c.width>=44&&c.height>=44),'Lightbox control target shrank: '+JSON.stringify(controls));
+      assert(controls.every(c=>c.width>=44&&c.height>=44),`Lightbox control target shrank: ${JSON.stringify(controls)}`);
       await page.locator('.yarl__slide_current img').evaluate(image=>image.decode().catch(()=>{}));
       if(width===1440||width===390)await page.screenshot({path:`task/gallery-polish/lightbox-${width}.png`});
       const zoomIn=dialog.getByRole('button',{name:'Zoom in',exact:true});
@@ -65,13 +65,13 @@ async sessionPage => {
       results.push({...data,filter:true,history:true,zoom:true,keyboard:true});
     }
     stage='unknown filter';
-    await page.goto(origin+'/gallery?category=gallery-missing-category&keep=yes');
+    await page.goto(`${origin}/gallery?category=gallery-missing-category&keep=yes`);
     await page.getByRole('heading',{name:'No frames in this category',exact:true}).waitFor();
     await page.getByRole('button',{name:'Reset category',exact:true}).click();
     await waitSelection();await photos().first().waitFor();
     stage='Lenis and short landscape description';
     await page.emulateMedia({reducedMotion:'no-preference'});
-    await page.setViewportSize({width:844,height:390});await page.goto(origin+'/gallery');
+    await page.setViewportSize({width:844,height:390});await page.goto(`${origin}/gallery`);
     await page.waitForFunction(()=>document.documentElement.classList.contains('lenis'));
     await photos().first().click();
     const dialog=page.getByRole('dialog',{name:'Lightbox',exact:true});await dialog.waitFor();
@@ -87,6 +87,6 @@ async sessionPage => {
     await page.waitForFunction(()=>!document.documentElement.classList.contains('lenis-stopped'));
     assert(errors.length===0&&warnings.length===0,[...errors,...warnings].join('\n'));
     return {results,empty:true,longDescription:true,lenis:true,errors,warnings};
-  } catch(error) {error.message+='\nStage: '+stage;throw error}
+  } catch(error) {error.message+=`\nStage: ${stage}`;throw error}
   finally {await page.close()}
 }

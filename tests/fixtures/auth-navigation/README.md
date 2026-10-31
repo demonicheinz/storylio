@@ -11,6 +11,7 @@ In another terminal:
 ```powershell
 bunx --no-install playwright-cli -s=storylio-auth-navigation open http://127.0.0.1:3204/sign-in --config=playwright-cli.config.json
 bunx --no-install playwright-cli -s=storylio-auth-navigation run-code --filename=tests/browser/auth-navigation.js
+bunx --no-install playwright-cli -s=storylio-auth-navigation run-code --filename=tests/browser/auth-recovery-form.js
 bunx --no-install playwright-cli -s=storylio-auth-navigation close
 ```
 
@@ -34,3 +35,9 @@ redirects locked until departure; synchronous navigation exceptions; returned
 and thrown logout errors and retry; fresh-document logout; and duplicate logout.
 They collect unhandled page errors. Real Next RSC/session-cookie integration,
 real OAuth redirects, and real WebAuthn are outside this fixture.
+
+`/forgot-password` and `/reset-password?token=fixture-token` render the actual
+RecoveryForm. The recovery check covers invalid/absent/oversized tokens, password
+mismatch, token forwarding and URL cleanup, generic confirmation and retry. Auth
+methods record calls in memory; background visuals are stubbed along with branding.
+No email is sent and no real password is changed.

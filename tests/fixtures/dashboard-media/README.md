@@ -17,6 +17,10 @@ In another terminal:
 bunx --no-install playwright-cli -s=media-polish open http://127.0.0.1:3201 --config=playwright-cli.config.json
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/dashboard-media.js
 bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-upload-queue.js
+bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-detail-panel.js
+bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-deletion.js
+bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/media-renderers.js
+bunx --no-install playwright-cli -s=media-polish run-code --filename=tests/browser/asset-selection-keyboard.js
 bunx --no-install playwright-cli -s=media-polish close
 ```
 
@@ -40,3 +44,20 @@ contracts are separately covered by PGlite/mocked tests in
 `tests/database/security/media-safety.test.ts`, `upload-safety.test.ts`, and
 `tests/security/media-download.test.ts`. These fixtures do not verify real
 provider responses or the full Next router/history lifecycle.
+
+`media-detail-panel.js` checks the extracted detail panel at 320/768/1440px:
+keyboard opening, metadata, URL selection and copy, View target, nested rename
+refresh, and restoring focus to the preview after Escape. Its screenshots go to
+`task/code-standardization/` (create that directory before running).
+
+`media-deletion.js` checks the deletion controller through the real library:
+usage-review failures, held requests, duplicate-call counts, returned/thrown batch
+errors, protected-selection retention, single-delete retry, and preventing Escape
+from closing a confirmation while a request is in flight. It uses only synthetic
+rows and mocked actions. Controller tests separately exercise same-tick locking
+and partial deletion reconciliation in `tests/public/media-deletion.test.ts`.
+
+`media-renderers.js` exercises grid/list at 320/1440px: keyboard preview/focus
+restoration, copy callback, intercepted successful download/filename, keyboard
+selection and checkbox deselection. Screenshots go to `task/code-standardization/`.
+The download response is synthetic; no external media/provider request is made.

@@ -359,6 +359,7 @@ const createStarController = (
   let cellItems = new Int32Array(MAX_COUNT);
 
   const startedAt = performance.now();
+  let motionElapsed = 0;
   let settings: StarSettings = {
     connect: false,
     connectDistance: DEFAULT_CONNECT_DISTANCE,
@@ -408,6 +409,7 @@ const createStarController = (
   };
 
   const resize = () => {
+    if (destroyed) return;
     const rect = canvas.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     const previousWidth = width;
@@ -639,7 +641,7 @@ const createStarController = (
   };
 
   const drawStars = () => {
-    const elapsed = (performance.now() - startedAt) / MS_PER_SECOND;
+    const elapsed = motionElapsed / MS_PER_SECOND;
     const { glow, starSize, still, twinkle } = settings;
 
     for (let i = 0; i < activeCount; i++) {
@@ -695,6 +697,7 @@ const createStarController = (
       return;
     }
     const now = performance.now();
+    motionElapsed += Math.max(0, now - lastFrameAt);
     const delta = Math.min((now - lastFrameAt) / MS_PER_SECOND, MAX_DELTA);
     lastFrameAt = now;
     step(delta);
@@ -712,9 +715,11 @@ const createStarController = (
 
   return {
     destroy: () => {
+      if (destroyed) return;
       destroyed = true;
       running = false;
       cancelAnimationFrame(frame);
+      canvas.dataset.starRunning = "false";
       context.setTransform(1, 0, 0, 1, 0, 0);
       context.clearRect(0, 0, canvas.width, canvas.height);
       canvas.width = 0;
@@ -725,16 +730,19 @@ const createStarController = (
       }
     },
     render: () => {
+      if (destroyed) return;
       resize();
       renderStatic();
     },
     resize: () => {
+      if (destroyed) return;
       resize();
       if (!running) {
         renderStatic();
       }
     },
     setPointer: (x: number, y: number, active: boolean) => {
+      if (destroyed) return;
       pointerX = x;
       pointerY = y;
       pointerActive = active;
@@ -753,6 +761,7 @@ const createStarController = (
       }
     },
     setSettings: (next: StarSettings) => {
+      if (destroyed) return;
       const changedCount = next.count !== settings.count;
       const changedSprites =
         next.tint !== settings.tint ||
@@ -845,7 +854,7 @@ const GravityStars = ({
     }
 
     let isOnScreen = true;
-    let isFocused = true;
+    let isFocused = document.hasFocus();
     const sync = () => {
       setIsActive(isOnScreen && !document.hidden && isFocused);
     };

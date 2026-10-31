@@ -12,6 +12,7 @@ export function useTagInput(
 ) {
   const { max = 10, onChange } = options;
   const initialTagsKey = initialTags.join("\u0000");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: The content key intentionally stabilizes equivalent tag arrays supplied by parent renders.
   const normalizedInitialTags = useMemo(
     () =>
       Array.from(
@@ -21,13 +22,12 @@ export function useTagInput(
       ),
     [initialTagsKey],
   );
-  const normalizedInitialTagsKey = normalizedInitialTags.join("\u0000");
   const [tags, setTags] = useState<string[]>(normalizedInitialTags);
   const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
     setTags(normalizedInitialTags);
-  }, [normalizedInitialTags, normalizedInitialTagsKey]);
+  }, [normalizedInitialTags]);
 
   const addTags = useCallback(
     (rawTags: string[]) => {

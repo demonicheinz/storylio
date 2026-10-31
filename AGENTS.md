@@ -52,3 +52,26 @@ Keep reviewable task plans, reports, and non-secret evidence in `task/<task-name
 Keep temporary scripts and local diagnostics in `.tmp/<task-name>/`; `.tmp/` is
 ignored by Git and excluded from TypeScript checks. Durable setup and operating
 guides belong in `docs/`. Do not put new task artifacts in the legacy `.docs/`.
+
+## Graphify freshness
+
+When `graphify-out/graph.json` exists, run `graphify update .` from the repository
+root after each successful commit that changes source, tests, scripts or
+documentation. Also update after a pull, merge, rebase or branch switch before
+using the graph to analyze changed code. Do not rebuild the entire graph for
+routine updates.
+
+Before querying the graph, check whether relevant working-tree changes have
+occurred since its last successful update. If so, run `graphify update .` first;
+do not wait for a commit. Update once per completed batch rather than every edit.
+Verify the command succeeds before describing the graph as current. If it fails
+or Graphify is unavailable, report the limitation and inspect current source
+directly. A graph remains a navigation aid, not proof of current code behavior.
+
+The CLI update refreshes code through AST extraction; its success does not mean
+changed documents, images or other semantic content were re-extracted. Report
+any semantic refresh still pending instead of claiming the entire graph is current.
+
+Keep generated graph output local and ignored. Do not install tools, initialize
+a missing graph, or enable paid/external semantic processing merely to satisfy
+this rule; existing external-action approval requirements still apply.

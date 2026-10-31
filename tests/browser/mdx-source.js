@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function mdxSource(sessionPage) {
   const page = await sessionPage.context().newPage();
   try {
@@ -49,6 +50,7 @@ async function mdxSource(sessionPage) {
       .filter({ hasText: "All changes saved" })
       .waitFor();
     const saved = await page.evaluate(() => window.aboutSaved.howIWorkEn);
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: The editor fixture must preserve JavaScript interpolation as literal Markdown.
     if (!saved.includes("${nama}") || !saved.includes("```js"))
       throw new Error("Code fences or braces were lost on save");
     if (!saved.includes("\\{contoh}"))

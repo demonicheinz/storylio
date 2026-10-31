@@ -34,6 +34,7 @@
 }
 @media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
   .body {
+    /* biome-ignore lint/complexity/noImportantStyles: Reduced-motion and coarse-pointer preferences override pointer-driven inline tilt. */
     transform: none !important;
   }
   .glare {

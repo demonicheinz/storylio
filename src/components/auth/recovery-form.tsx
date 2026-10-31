@@ -42,15 +42,17 @@ export function RecoveryForm({ reset = false }: { reset?: boolean }) {
     lock.current = true;
     setPending(true);
     try {
-      const result = reset
-        ? await authClient.resetPassword({
-            token: token!,
-            newPassword: password,
-          })
-        : await authClient.requestPasswordReset({
-            email: String(values.get("email") ?? "").trim(),
-            redirectTo: new URL("/reset-password", window.location.origin).href,
-          });
+      const result =
+        reset && token
+          ? await authClient.resetPassword({
+              token,
+              newPassword: password,
+            })
+          : await authClient.requestPasswordReset({
+              email: String(values.get("email") ?? "").trim(),
+              redirectTo: new URL("/reset-password", window.location.origin)
+                .href,
+            });
       if (!mounted.current) return;
       if (result.error) {
         setError(
@@ -147,11 +149,9 @@ export function RecoveryForm({ reset = false }: { reset?: boolean }) {
               : "If an eligible account matches that address, we’ll send a password reset link."}
           </p>
           {!reset && (
-            <>
-              <p className="text-muted-foreground">
-                The link expires in 30 minutes. Check your spam folder too.
-              </p>
-            </>
+            <p className="text-muted-foreground">
+              The link expires in 30 minutes. Check your spam folder too.
+            </p>
           )}
         </div>
       ) : invalidLink ? (

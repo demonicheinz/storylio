@@ -7,13 +7,16 @@
 
 /* Lenis owns interpolation while mounted; native anchors keep the rule below. */
 html.lenis {
+  /* biome-ignore lint/complexity/noImportantStyles: Lenis interpolation must override native smooth-anchor rules while mounted. */
   scroll-behavior: auto !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
   [data-motion-reveal],
   [data-route-motion] {
+    /* biome-ignore lint/complexity/noImportantStyles: Reduced-motion visibility must override reveal animation inline styles. */
     opacity: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Reduced-motion settings must override animated inline transforms. */
     transform: none !important;
   }
 }

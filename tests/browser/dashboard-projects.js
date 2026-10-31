@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardProjects(sessionPage) {
   const context = await sessionPage.context().browser().newContext();
   const page = await context.newPage();
@@ -60,6 +61,7 @@ async function dashboardProjects(sessionPage) {
           !(
             await page
               .getByRole("button", { name: "Filter tech stack", exact: true })
+              // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
               .innerText()
           ).includes("Tech stack"),
           "Tech stack label remains inside trigger",
@@ -211,14 +213,14 @@ async function dashboardProjects(sessionPage) {
       "Preview used unsaved slug",
     );
     await preview.close();
-    await page.evaluate(() => {
-      window.confirm = () => false;
-    });
     await page.getByRole("link", { name: "Projects", exact: true }).click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-cancel"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(page.url().includes("editor=draft"), "Dirty navigation not guarded");
-    await page.evaluate(() => {
-      window.confirm = () => true;
-    });
     await page.goto(`${origin}/?upload`);
     const drop = page.getByRole("button", {
       name: "Add screenshots",

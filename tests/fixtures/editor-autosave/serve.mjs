@@ -11,7 +11,7 @@ import postcss from "postcss";
 
 const replacements = {
   "@/features/dashboard/shared/components/mdx-editor": `export const DashboardMdxEditor = () => null;`,
-  "next/navigation": `const router = { refresh() { window.editorFixture.refreshes++; }, replace(href) { window.editorFixture.replaced = href; } }; export const useRouter = () => router;`,
+  "next/navigation": `const router = { refresh() { window.editorFixture.refreshes++; }, replace(href) { window.editorFixture.replaced = href; } }; export const usePathname=()=>location.pathname;export const useRouter = () => router;`,
   "next/link": `export default function Link(props) { return <a {...props} />; }`,
   "next/dynamic": `export default () => function Editor({value, onChange, disabled}) { return <textarea aria-label="Content" className="min-h-105 w-full text-base leading-7" value={value} onChange={e => onChange(e.target.value)} disabled={disabled} />; };`,
   "@/components/ui/toast": `export const toast = { add() {} };`,

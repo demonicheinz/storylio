@@ -163,7 +163,9 @@
   }
   .avatar,
   .avatar [data-slot="live-orb"] {
+    /* biome-ignore lint/complexity/noImportantStyles: The approved mobile avatar size overrides the component inline canvas dimensions. */
     width: 96px !important;
+    /* biome-ignore lint/complexity/noImportantStyles: The approved mobile avatar size overrides the component inline canvas dimensions. */
     height: 96px !important;
   }
   .bio {

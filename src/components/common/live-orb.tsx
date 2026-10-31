@@ -270,7 +270,7 @@ export function resolveVariant(
     eye = BLACK.eyeColor;
   } else if (preset === "webgl") {
     palette = colors && colors.length > 0 ? colors : WEBGL_COLORS;
-    body = palette[1] ?? WEBGL_COLORS[1]!;
+    body = palette[1] ?? WEBGL_COLORS[1];
     eye = "#0C0C10";
     mode = 1;
   } else if (preset === "custom") {
@@ -353,6 +353,22 @@ export function createLiveOrb(
   let uC2: WebGLUniformLocation | null = null;
   let uC3: WebGLUniformLocation | null = null;
 
+  const forgetGl = () => {
+    program = null;
+    vs = null;
+    fs = null;
+    buf = null;
+  };
+  const releaseGl = () => {
+    if (!gl.isContextLost()) {
+      gl.deleteProgram(program);
+      gl.deleteShader(vs);
+      gl.deleteShader(fs);
+      gl.deleteBuffer(buf);
+    }
+    forgetGl();
+  };
+
   // Builds every GL resource. Runs at startup and again after a context restore.
   const initGl = () => {
     vs = compile(gl, gl.VERTEX_SHADER, VERT);
@@ -374,9 +390,11 @@ export function createLiveOrb(
       }
       return false;
     }
+    // biome-ignore lint/correctness/useHookAtTopLevel: WebGL useProgram selects a GPU program; it is not a React hook.
     gl.useProgram(prog);
 
     buf = gl.createBuffer();
+    if (!buf) return false;
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(
       gl.ARRAY_BUFFER,
@@ -405,13 +423,17 @@ export function createLiveOrb(
     return true;
   };
 
-  if (!initGl()) return null;
+  if (!initGl()) {
+    releaseGl();
+    return null;
+  }
   options.onHasGl?.(true);
 
   let raf = 0;
   let destroyed = false;
   // Set while the GPU context is gone; nothing touches gl until it returns.
   let lost = false;
+  let focused = document.hasFocus();
   let onScreen = true;
   let last = 0;
   // Milliseconds of motion so far; only advances while the orb is moving.
@@ -424,6 +446,7 @@ export function createLiveOrb(
 
   /** Returns whether the backing size changed (which clears the canvas). */
   const resize = () => {
+    if (destroyed || lost || gl.isContextLost()) return false;
     const parent = canvas.parentElement;
     if (!parent) return false;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -443,11 +466,12 @@ export function createLiveOrb(
 
   const mqReduce = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-  const moving = () =>
-    onScreen && !mqReduce.matches && document.visibilityState !== "hidden";
+  const drawable = () =>
+    onScreen && focused && document.visibilityState !== "hidden";
+  const moving = () => drawable() && !mqReduce.matches;
 
   function wake() {
-    if (raf || destroyed || lost) return;
+    if (raf || destroyed || lost || !drawable()) return;
     last = performance.now();
     raf = requestAnimationFrame(tick);
   }
@@ -462,11 +486,20 @@ export function createLiveOrb(
     cancelAnimationFrame(raf);
     raf = 0;
     last = performance.now();
-    tick(last);
+    tick(last, true);
   }
 
+  const pause = () => {
+    cancelAnimationFrame(raf);
+    raf = 0;
+  };
+  const syncActivity = () => {
+    if (drawable()) wake();
+    else pause();
+  };
+
   const onMove = (e: PointerEvent) => {
-    if (!options.interactive) return;
+    if (destroyed || lost || !drawable() || !options.interactive) return;
     const parent = canvas.parentElement;
     if (!parent) return;
     const rect = parent.getBoundingClientRect();
@@ -481,9 +514,15 @@ export function createLiveOrb(
   };
   window.addEventListener("pointermove", onMove, { passive: true });
 
-  const tick = (now: number) => {
+  const tick = (now: number, redrawStill = false) => {
     raf = 0;
-    if (lost) return;
+    if (
+      destroyed ||
+      lost ||
+      gl.isContextLost() ||
+      (!redrawStill && !drawable())
+    )
+      return;
     const dt = Math.min(50, Math.max(0, now - last));
     last = now;
     const live = moving();
@@ -510,7 +549,7 @@ export function createLiveOrb(
     }
     const goal = steering ? targetLook : reduce ? REST_LOOK : glance;
     // A still frame skips the easing and shows where the gaze settles.
-    const ease = live ? (steering ? 0.16 : 0.1) : 1;
+    const ease = live ? (steering ? 0.16 : 0.1) : reduce ? 1 : 0;
     look.x += (goal.x - look.x) * ease;
     look.y += (goal.y - look.y) * ease;
 
@@ -529,7 +568,7 @@ export function createLiveOrb(
     const eye = hexToRgb(resolved.eye);
     const palette = [0, 1, 2].map((i) =>
       hexToRgb(
-        resolved.palette[i % resolved.palette.length] ?? WEBGL_COLORS[i]!,
+        resolved.palette[i % resolved.palette.length] ?? WEBGL_COLORS[i],
       ),
     );
 
@@ -543,9 +582,9 @@ export function createLiveOrb(
     gl.uniform1f(uMode, resolved.mode);
     gl.uniform3f(uBody, body[0], body[1], body[2]);
     gl.uniform3f(uEye, eye[0], eye[1], eye[2]);
-    gl.uniform3f(uC1, palette[0]![0], palette[0]![1], palette[0]![2]);
-    gl.uniform3f(uC2, palette[1]![0], palette[1]![1], palette[1]![2]);
-    gl.uniform3f(uC3, palette[2]![0], palette[2]![1], palette[2]![2]);
+    gl.uniform3f(uC1, palette[0][0], palette[0][1], palette[0][2]);
+    gl.uniform3f(uC2, palette[1][0], palette[1][1], palette[1][2]);
+    gl.uniform3f(uC3, palette[2][0], palette[2][1], palette[2][2]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     if (live && !destroyed) raf = requestAnimationFrame(tick);
@@ -557,12 +596,25 @@ export function createLiveOrb(
   if (canvas.parentElement) ro.observe(canvas.parentElement);
   const io = new IntersectionObserver(([entry]) => {
     onScreen = entry?.isIntersecting ?? true;
-    wake();
+    syncActivity();
   });
   io.observe(canvas);
-  const onVisibility = () => wake();
+  const onVisibility = syncActivity;
   document.addEventListener("visibilitychange", onVisibility);
-  const onReduce = () => wake();
+  const onFocus = () => {
+    focused = true;
+    syncActivity();
+  };
+  const onBlur = () => {
+    focused = false;
+    syncActivity();
+  };
+  window.addEventListener("focus", onFocus);
+  window.addEventListener("blur", onBlur);
+  const onReduce = () => {
+    if (mqReduce.matches && drawable()) redraw();
+    else syncActivity();
+  };
   mqReduce.addEventListener("change", onReduce);
   const syncTheme = () => {
     const next = resolveDark(options.theme);
@@ -578,6 +630,9 @@ export function createLiveOrb(
     lost = true;
     cancelAnimationFrame(raf);
     raf = 0;
+    // Context loss already invalidated these resources; do not delete old handles
+    // against a restored context or retain them through a failed rebuild.
+    forgetGl();
     // A lost canvas paints a broken-image icon over the CSS fallback.
     canvas.style.visibility = "hidden";
     options.onHasGl?.(false);
@@ -585,11 +640,15 @@ export function createLiveOrb(
   const onRestored = () => {
     if (destroyed) return;
     // A failed rebuild leaves the orb on its CSS fallback.
-    if (!initGl()) return;
+    if (!initGl()) {
+      releaseGl();
+      return;
+    }
     lost = false;
+    resize();
+    redraw();
     canvas.style.visibility = "";
     options.onHasGl?.(true);
-    wake();
   };
   canvas.addEventListener("webglcontextlost", onLost);
   canvas.addEventListener("webglcontextrestored", onRestored);
@@ -599,17 +658,21 @@ export function createLiveOrb(
 
   return {
     setOptions(next) {
+      if (destroyed) return;
       options = { ...options, ...next };
       dark = resolveDark(options.theme);
       wake();
     },
     destroy() {
+      if (destroyed) return;
       destroyed = true;
       cancelAnimationFrame(raf);
       raf = 0;
       ro.disconnect();
       io.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("blur", onBlur);
       mqReduce.removeEventListener("change", onReduce);
       unwatchTheme();
       window.removeEventListener("pointermove", onMove);
@@ -617,10 +680,7 @@ export function createLiveOrb(
       canvas.removeEventListener("webglcontextrestored", onRestored);
       if (lost) canvas.style.visibility = "";
       options.onHasGl?.(false);
-      gl.deleteProgram(program);
-      gl.deleteShader(vs);
-      gl.deleteShader(fs);
-      gl.deleteBuffer(buf);
+      releaseGl();
       // Free the GPU context once the canvas has left the page; browsers cap
       // live contexts at about 16. A canvas still in the page (a React
       // Strict Mode replay) keeps it, so a new engine can reuse it.

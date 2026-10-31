@@ -226,6 +226,7 @@ export function OverviewFallback() {
     <div className={styles.page}>
       <OverviewHeader />
       <div
+        role="status"
         aria-busy="true"
         aria-label="Loading dashboard overview"
         className={styles.loading}

@@ -2,6 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import {
   afterAll,
   afterEach,
+  assert,
   beforeAll,
   beforeEach,
   describe,
@@ -105,12 +106,13 @@ describe("management actions against PostgreSQL", () => {
         where: eq(schema.homeSection.id, id),
       });
     const visible = await read();
-    expect(getHomeLogoSettings(visible!)).toEqual({
+    assert.exists(visible);
+    expect(getHomeLogoSettings(visible)).toEqual({
       category: "TECHNOLOGY",
       showOnHome: true,
       description: "Original note",
     });
-    expect(selectHomeTechnologies([visible!])).toHaveLength(1);
+    expect(selectHomeTechnologies([visible])).toHaveLength(1);
     expect(
       await actionUpdateHomeSection(id, {
         type: "LOGO",
@@ -121,7 +123,9 @@ describe("management actions against PostgreSQL", () => {
         imageUrl: "https://example.test/astro.svg",
       }),
     ).toMatchObject({ success: true });
-    expect(selectHomeTechnologies([(await read())!])).toHaveLength(0);
+    const hidden = await read();
+    assert.exists(hidden);
+    expect(selectHomeTechnologies([hidden])).toHaveLength(0);
     expect(
       await actionUpdateHomeSection(id, {
         type: "PHASE",

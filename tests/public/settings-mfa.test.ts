@@ -6,7 +6,15 @@ import {
   type ReactNode,
 } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  assert,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { OtpInput } from "@/components/common/otp-input";
 import { TwoFactorSettings } from "@/features/dashboard/settings/components/two-factor-settings";
 
@@ -36,6 +44,9 @@ const mocks = vi.hoisted(() => ({
   changed: vi.fn(),
   confirm: vi.fn(),
 }));
+vi.mock("@/features/dashboard/shared/confirmation", () => ({
+  confirmAction: async (message: string) => window.confirm(message),
+}));
 vi.mock("@/lib/auth-client", () => ({
   authClient: { useSession: () => mocks.session, twoFactor: mocks },
 }));
@@ -48,6 +59,7 @@ vi.mock("react", async (original) => {
   return {
     ...react,
     useState: (initial: unknown) => {
+      // biome-ignore lint/correctness/useHookAtTopLevel: The test dispatcher delegates to React outside its controlled render; these are mock hook implementations.
       if (!hooks.active) return react.useState(initial);
       const index = hooks.stateIndex++;
       if (!(index in hooks.states)) hooks.states[index] = initial;
@@ -60,6 +72,7 @@ vi.mock("react", async (original) => {
       ];
     },
     useRef: (initial: unknown) => {
+      // biome-ignore lint/correctness/useHookAtTopLevel: The test dispatcher delegates to React outside its controlled render; these are mock hook implementations.
       if (!hooks.active) return react.useRef(initial);
       const index = hooks.refIndex++;
       hooks.refs[index] ??= { current: initial };
@@ -135,8 +148,8 @@ function button(label: string) {
   const match = render().nodes.find(
     (node) => node.onClick && node.children === label,
   );
-  expect(match, label).toBeDefined();
-  return match!;
+  assert.exists(match, label);
+  return match;
 }
 function fill(id: string, value: string) {
   if (id === "mfa-password" && !render().nodes.some((node) => node.id === id)) {
@@ -261,7 +274,8 @@ describe("MFA settings", () => {
     expect(render().html).not.toContain("fixture-backup");
     fill("mfa-code", "123456");
     await submit();
-    const checkbox = render().nodes.find((node) => node.type === "checkbox")!;
+    const checkbox = render().nodes.find((node) => node.type === "checkbox");
+    assert.exists(checkbox);
     checkbox.onChange?.({ target: { checked: true, value: "" } });
     expect(mocks.flow).toHaveBeenLastCalledWith({
       dirty: false,
@@ -359,7 +373,8 @@ describe("MFA settings", () => {
       }),
     );
     fill("mfa-password", "fixture-password");
-    const start = render().nodes.find((node) => node.onSubmit)!;
+    const start = render().nodes.find((node) => node.onSubmit);
+    assert.exists(start);
     mocks.flow.mockClear();
     start.onSubmit?.({ preventDefault: vi.fn() });
     // No rerender or microtask: the parent must block the very next tab click.
@@ -464,10 +479,10 @@ describe("MFA settings", () => {
     await submit();
     fill("mfa-code", "123456");
     mocks.confirm.mockReturnValue(false);
-    button("Cancel setup").onClick?.();
+    await button("Cancel setup").onClick?.();
     expect(render().html).toContain("Scan this QR code");
     mocks.confirm.mockReturnValue(true);
-    button("Cancel setup").onClick?.();
+    await button("Cancel setup").onClick?.();
     const { html, nodes } = render();
     expect(html).not.toContain("FIXTURE");
     expect(html).not.toContain("fixture-backup");

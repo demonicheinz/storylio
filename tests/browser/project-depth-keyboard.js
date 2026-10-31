@@ -3,7 +3,7 @@ async sessionPage => {
   const page=await sessionPage.context().newPage();
   const origin=new URL(sessionPage.url()).origin;
   try {
-    await page.goto(origin+'/projects/storylio');
+    await page.goto(`${origin}/projects/storylio`);
     const gallery=page.getByRole('region',{name:'Project screenshots',exact:true});await gallery.waitFor();
     // Exercise a hydrated control before dispatching cancelable keyboard events.
     const next=gallery.getByRole('button',{name:'Next screenshot',exact:true});await next.click();
@@ -20,7 +20,7 @@ async sessionPage => {
       }
       return results;
     });
-    if(modified.some(event=>event.prevented))throw Error('Modified key intercepted: '+JSON.stringify(modified.filter(event=>event.prevented)));
+    if(modified.some(event=>event.prevented))throw Error(`Modified key intercepted: ${JSON.stringify(modified.filter(event=>event.prevented))}`);
     if(await page.locator('[data-depth-carousel]').getAttribute('data-current-index')!=='1')throw Error('Modified keys changed the active screenshot');
     await page.keyboard.press('ArrowRight');
     await page.waitForFunction(()=>document.querySelector('[data-depth-carousel]').dataset.currentIndex==='2');

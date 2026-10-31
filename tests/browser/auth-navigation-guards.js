@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function navigationGuard(page) {
   const origin = new URL(page.url()).origin;
   const assert = (condition, message) => {
@@ -31,7 +32,7 @@ async function navigationGuard(page) {
       [390, 844],
     ]) {
       await page.setViewportSize({ width, height });
-      await page.goto(origin + "/forgot-password");
+      await page.goto(`${origin}/forgot-password`);
       await page.waitForFunction(
         () =>
           document.querySelector("main")?.getAttribute("data-auth-intro") ===
@@ -52,7 +53,7 @@ async function navigationGuard(page) {
         "Missing noindex header",
       );
     }
-    await page.goto(origin + "/reset-password?token=fixture-token");
+    await page.goto(`${origin}/reset-password?token=fixture-token`);
     await page
       .getByLabel("New password", { exact: true })
       .fill("fixture-new-password");
@@ -91,7 +92,7 @@ async function navigationGuard(page) {
       "Late reset response rewrote the sign-in URL",
     );
     held = null;
-    await page.goto(origin + "/two-factor");
+    await page.goto(`${origin}/two-factor`);
     await page.getByLabel("Authenticator code", { exact: true }).fill("123456");
     await page.getByRole("button", { name: "Verify and sign in" }).click();
     await page

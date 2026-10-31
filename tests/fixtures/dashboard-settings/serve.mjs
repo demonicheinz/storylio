@@ -7,7 +7,7 @@ import postcss from "postcss";
 
 const stubs = {
   "next/navigation":
-    "export const useRouter=()=>({refresh(){},push(){},replace(){}});export const useSearchParams=()=>new URLSearchParams(location.search);",
+    "export const usePathname=()=>location.pathname;export const useRouter=()=>({refresh(){},push(){},replace(){}});export const useSearchParams=()=>new URLSearchParams(location.search);",
   "./auth-flow":
     "export function AuthFormHeading({title,description,children}){return <section style={{maxWidth:400,margin:'auto'}}><h1>{title}</h1><p>{description}</p>{children}</section>}",
   "next/image":
@@ -45,7 +45,7 @@ const result = await build({
           resolveDir: process.cwd(),
         }));
         b.onLoad({ filter: /\.svg$/ }, async (a) => ({
-          contents: `export default {src:${JSON.stringify("data:image/svg+xml;base64," + Buffer.from(await readFile(a.path)).toString("base64"))}}`,
+          contents: `export default {src:${JSON.stringify(`data:image/svg+xml;base64,${Buffer.from(await readFile(a.path)).toString("base64")}`)}}`,
           loader: "js",
         }));
       },

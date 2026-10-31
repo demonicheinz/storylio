@@ -485,8 +485,16 @@ const GooeyNav = ({
     let raf = 0;
     let last = 0;
     let disposed = false;
+    let focused = document.hasFocus();
+    let onScreen = true;
+    let pausedAt: number | null = null;
+    let pausedDuration = 0;
+    const drawable = () =>
+      focused && onScreen && document.visibilityState !== "hidden";
+    const animationNow = () => (pausedAt ?? performance.now()) - pausedDuration;
 
     const measure = () => {
+      if (disposed || !canvas.isConnected) return;
       const box = stage.getBoundingClientRect();
       const ratio = Math.min(window.devicePixelRatio || 1, 2);
       view.width = box.width;
@@ -667,6 +675,7 @@ const GooeyNav = ({
     };
 
     const render = () => {
+      if (disposed || !canvas.isConnected) return;
       const s = settingsRef.current;
       const height = rects[target]?.h ?? rects[0]?.h ?? 36;
       const smooth = height * (0.18 + 0.5 * clamp01(s.gooeyness));
@@ -699,7 +708,7 @@ const GooeyNav = ({
         });
       }
 
-      if (!pipeline || !gl) {
+      if (!pipeline || !gl || gl.isContextLost()) {
         const box = shape(target, 1);
         overlay.style.clipPath = box
           ? `path('${pillPath(box.x, box.y, box.w, box.h)}')`
@@ -753,6 +762,7 @@ const GooeyNav = ({
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
+      // biome-ignore lint/correctness/useHookAtTopLevel: WebGL useProgram binds a GPU program, not a React hook.
       gl.useProgram(program);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.enableVertexAttribArray(position);
@@ -791,8 +801,10 @@ const GooeyNav = ({
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
 
-    const frame = (now: number) => {
+    const frame = (timestamp: number) => {
       raf = 0;
+      if (disposed || !drawable() || !pipeline || gl?.isContextLost()) return;
+      const now = timestamp - pausedDuration;
       const s = settingsRef.current;
       const dt = Math.min(0.05, (now - last) / 1000 || 0);
       last = now;
@@ -914,16 +926,39 @@ const GooeyNav = ({
     };
 
     const wake = () => {
-      if (raf || disposed) return;
+      if (raf || disposed || !drawable()) return;
       if (reduced || !pipeline) {
         render();
         return;
       }
-      last = performance.now();
+      last = animationNow();
       raf = requestAnimationFrame(frame);
     };
 
+    const syncActivity = () => {
+      if (!drawable()) {
+        if (pausedAt === null) pausedAt = performance.now();
+        cancelAnimationFrame(raf);
+        raf = 0;
+        return;
+      }
+      if (pausedAt !== null) {
+        pausedDuration += performance.now() - pausedAt;
+        pausedAt = null;
+      }
+      wake();
+    };
+    const onFocus = () => {
+      focused = true;
+      syncActivity();
+    };
+    const onBlur = () => {
+      focused = false;
+      syncActivity();
+    };
+
     const settle = (index: number) => {
+      if (disposed) return;
       pills.clear();
       drops.length = 0;
       target = index;
@@ -935,12 +970,13 @@ const GooeyNav = ({
     };
 
     const go = (index: number, animate: boolean) => {
+      if (disposed) return;
       if (index === target) return;
       if (!rects[index] || !animate || reduced || !pipeline || target < 0) {
         settle(index);
         return;
       }
-      const now = performance.now();
+      const now = animationNow();
       target = index;
       pill(index);
       for (const drop of drops) {
@@ -984,12 +1020,22 @@ const GooeyNav = ({
     };
 
     const resizeObserver = new ResizeObserver(() => {
+      if (disposed) return;
       measure();
       if (!drops.length) settle(target < 0 ? indexRef.current : target);
       else render();
     });
     resizeObserver.observe(stage);
     resizeObserver.observe(list);
+    const intersectionObserver = new IntersectionObserver(([entry]) => {
+      if (disposed) return;
+      onScreen = entry?.isIntersecting ?? true;
+      syncActivity();
+    });
+    intersectionObserver.observe(stage);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", syncActivity);
 
     list.addEventListener("pointerover", onOver);
     list.addEventListener("pointerleave", onLeave);
@@ -1013,6 +1059,7 @@ const GooeyNav = ({
 
     measure();
     settle(indexRef.current);
+    syncActivity();
     document.fonts?.ready.then(() => {
       if (disposed) return;
       measure();
@@ -1031,6 +1078,10 @@ const GooeyNav = ({
       disposed = true;
       cancelAnimationFrame(raf);
       resizeObserver.disconnect();
+      intersectionObserver.disconnect();
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", syncActivity);
       list.removeEventListener("pointerover", onOver);
       list.removeEventListener("pointerleave", onLeave);
       canvas.removeEventListener("webglcontextlost", onLost);
@@ -1039,6 +1090,11 @@ const GooeyNav = ({
         gl.deleteBuffer(pipeline.buffer);
         gl.deleteProgram(pipeline.program);
       }
+      const lose = gl?.getExtension("WEBGL_lose_context");
+      queueMicrotask(() => {
+        if (!canvas.isConnected && gl && !gl.isContextLost())
+          lose?.loseContext();
+      });
       engineRef.current = null;
     };
   }, [items.length, reducedMotion]);
@@ -1047,6 +1103,7 @@ const GooeyNav = ({
     engineRef.current?.go(current);
   }, [current]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Theme/material/geometry props must refresh the existing engine after their settings ref updates.
   useEffect(() => {
     engineRef.current?.refresh();
   }, [pillColor, palette, gooeyness, size, frame]);
@@ -1132,6 +1189,7 @@ const GooeyNav = ({
       {frame && <span className={RIM} />}
       <div ref={stageRef} className="relative max-w-full">
         <canvas
+          tabIndex={-1}
           ref={canvasRef}
           className="top-0 left-0 absolute pointer-events-none"
           aria-hidden="true"

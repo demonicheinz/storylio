@@ -1,7 +1,6 @@
 "use server";
 
 import { and, eq, inArray } from "drizzle-orm";
-import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import {
   type PostActionInput,
@@ -17,6 +16,7 @@ import { PostStatus } from "@/lib/db/enums";
 import { post as postTable, postToTag, tag as tagTable } from "@/lib/db/schema";
 import { getMdxSafetyError } from "@/lib/mdx-safety";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { revalidatePath, updateTag } from "@/lib/revalidation";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -322,7 +322,15 @@ async function updatePost(
                 ),
               }),
         })
-        .where(eq(postTable.id, postId))
+        // Check at the write so a publish in another tab cannot accept blank live content.
+        .where(
+          and(
+            eq(postTable.id, postId),
+            preservePublication && !parsed.data.content.trim()
+              ? eq(postTable.status, PostStatus.DRAFT)
+              : undefined,
+          ),
+        )
         .returning({
           id: postTable.id,
           slug: postTable.slug,

@@ -61,6 +61,7 @@ async (page) => {
       const trigger = page.getByRole("button", { name: "Filter topic", exact: true });
       await trigger.click();
       const option = page.getByRole("listbox", { name: "Topics", exact: true }).getByRole("option").first();
+      // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
       const value = (await option.innerText()).trim();
       const scrollBefore = await page.evaluate(() => scrollY);
       await option.click();

@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import GooeyNav from "@/components/common/gooey-nav";
-import { introCopy } from "@/components/public/sections/about/data";
+import type { introCopy } from "@/components/public/sections/about/data";
 import styles from "./about.module.css";
 
 export type AboutLanguage = keyof typeof introCopy;

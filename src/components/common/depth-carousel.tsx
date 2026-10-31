@@ -54,10 +54,7 @@ export function DepthCarousel({
   const select = (next: number) =>
     onIndexChange((next + items.length) % items.length);
 
-  const finishDrag = (
-    event: PointerEvent<HTMLDivElement>,
-    cancelled = false,
-  ) => {
+  const finishDrag = (event: PointerEvent<HTMLElement>, cancelled = false) => {
     const gesture = drag.current;
     drag.current = null;
     event.currentTarget.style.removeProperty("--drag-x");
@@ -81,9 +78,8 @@ export function DepthCarousel({
   };
 
   return (
-    <div
+    <section
       className={styles.carousel}
-      role="region"
       aria-roledescription="carousel"
       aria-label="Project screenshots"
       onKeyDown={(event) => {
@@ -159,6 +155,7 @@ export function DepthCarousel({
           const depth = (itemIndex - current + items.length) % items.length;
           return (
             <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: Duplicate screenshot URLs are allowed and deck positions are their local identity.
               key={`${item.src}-${itemIndex}`}
               className={styles.card}
               data-depth={depth}
@@ -214,7 +211,7 @@ export function DepthCarousel({
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }
 

@@ -18,7 +18,7 @@ export async function createTestDatabase({
   for (const migration of legacyMigrations) {
     const ddl = await readFile(
       new URL(
-        "../../db/legacy-prisma/migrations/" + migration + "/migration.sql",
+        `../../db/legacy-prisma/migrations/${migration}/migration.sql`,
         import.meta.url,
       ),
       "utf8",

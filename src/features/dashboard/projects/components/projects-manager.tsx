@@ -1,63 +1,15 @@
 "use client";
 
 import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
-  ArrowSquareOutIcon,
   BriefcaseIcon,
-  CaretDownIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
-  CheckCircleIcon,
   CheckSquareIcon,
-  DotsSixVerticalIcon,
-  DotsThreeVerticalIcon,
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
-  PencilSimpleIcon,
   PlusIcon,
-  SparkleIcon,
-  TrashIcon,
 } from "@phosphor-icons/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -70,18 +22,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { toast } from "@/components/ui/toast";
@@ -92,56 +32,48 @@ import {
   DashboardSort,
   DashboardViewToggle,
 } from "@/features/dashboard/shared/components/filter-controls";
+import { DashboardPagination } from "@/features/dashboard/shared/components/pagination";
 import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
 import { useDashboardFilter } from "@/features/dashboard/shared/hooks/use-dashboard-filter";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import type { ActionResult } from "@/lib/action-result";
-import { getPageItems } from "@/lib/archive-pagination";
-import { ProjectStatus } from "@/lib/db/enums";
 import {
   getDefaultItemsPerPage,
   getItemsPerPageOptions,
   paginateItems,
 } from "@/lib/pagination";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   actionDeleteProjects,
   actionMoveProjectsToDraft,
   actionPublishProjects,
-  actionReorderProjects,
 } from "../actions";
-import { ProjectDeleteButton } from "./project-delete-button";
-
-export type DashboardProject = {
-  id: string;
-  title: string;
-  slug: string;
-  description: string | null;
-  coverImage: string | null;
-  thumbnailImageUrl: string | null;
-  isFeatured: boolean;
-  status: ProjectStatus;
-  techStack: string[];
-  order: number;
-  createdAt: Date;
-  updatedAt: Date;
-};
+import {
+  type ProjectFeaturedFilter as FeaturedFilter,
+  filterProjects,
+  type ProjectStatusFilter as StatusFilter,
+} from "../filtering";
+import { isPublished } from "../presentation";
+import type {
+  DashboardProject,
+  ProjectSortDirection as SortDirection,
+  ProjectSortField as SortMode,
+} from "../types";
+import {
+  FeaturedProjectBadge,
+  ProjectActions,
+  ProjectStatusBadge,
+  ProjectThumbnail,
+  TechPills,
+} from "./project-display";
+import { ProjectsList } from "./project-list";
+import { ProjectsBatchActionsBar } from "./projects-batch-actions";
 
 type ProjectsManagerProps = {
   projects: DashboardProject[];
 };
 
 type ViewMode = "list" | "grid";
-type StatusFilter = "all" | "published" | "draft";
-type FeaturedFilter = "all" | "featured" | "standard";
-type SortMode = "order" | "updated" | "created" | "title";
-type SortDirection = "asc" | "desc";
-
-// Header and rows share the same tracks; padding belongs to their cells.
-const PROJECT_COLUMNS = "xl:grid-cols-[minmax(0,1fr)_130px_180px_68px]";
-const PROJECT_COLUMNS_WITH_GUTTER =
-  "xl:grid-cols-[44px_minmax(0,1fr)_130px_180px_68px]";
-
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
   { value: "all", label: "All" },
   { value: "published", label: "Published" },
@@ -160,144 +92,6 @@ const sortOptions: Array<{ value: SortMode; label: string }> = [
   { value: "created", label: "Date created" },
   { value: "title", label: "Title" },
 ];
-
-export function compareProjects(
-  a: DashboardProject,
-  b: DashboardProject,
-  field: SortMode,
-  direction: SortDirection,
-) {
-  const multiplier = direction === "asc" ? 1 : -1;
-  if (field === "updated") {
-    return (
-      multiplier *
-      (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
-    );
-  }
-  if (field === "created") {
-    return (
-      multiplier *
-      (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    );
-  }
-  if (field === "title") {
-    return multiplier * a.title.localeCompare(b.title);
-  }
-  return multiplier * (a.order - b.order);
-}
-
-function isPublished(project: DashboardProject) {
-  return project.status === ProjectStatus.PUBLISHED;
-}
-
-function formatDateTime(value: Date | string | null) {
-  if (!value) {
-    return "—";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
-function ProjectStatusBadge({
-  project,
-  compact = false,
-}: {
-  project: DashboardProject;
-  compact?: boolean;
-}) {
-  const published = isPublished(project);
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 bg-surface px-2 border border-border rounded-md h-6 font-medium text-xs",
-        published ? "text-success" : "text-muted-foreground",
-        compact && "px-2",
-      )}
-    >
-      <span
-        className={cn(
-          "rounded-full size-1.5 shrink-0",
-          published ? "bg-success" : "bg-muted-foreground",
-        )}
-      />
-      {published ? "Published" : "Draft"}
-    </span>
-  );
-}
-
-function FeaturedProjectBadge() {
-  return (
-    <span className="inline-flex items-center gap-1.5 bg-surface px-2 border border-border rounded-md h-6 font-medium text-brand-soft text-xs">
-      <SparkleIcon className="size-3" aria-hidden="true" />
-      Featured
-    </span>
-  );
-}
-
-function ProjectUpdatedAt({ value }: { value: Date }) {
-  const date = new Date(value);
-  return (
-    <time
-      dateTime={date.toISOString()}
-      className="flex flex-col gap-1 whitespace-nowrap"
-    >
-      <span>
-        {new Intl.DateTimeFormat("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        }).format(date)}
-      </span>
-      <span className="text-xs">
-        {new Intl.DateTimeFormat("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        }).format(date)}
-      </span>
-    </time>
-  );
-}
-
-function ProjectThumbnail({
-  project,
-  className,
-  sizes = "(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw",
-}: {
-  project: DashboardProject;
-  className?: string;
-  sizes?: string;
-}) {
-  const [failed, setFailed] = useState(false);
-  const image = project.thumbnailImageUrl ?? project.coverImage;
-
-  return (
-    <div
-      className={cn(
-        "relative bg-muted/30 border border-border/60 rounded-xl aspect-video overflow-hidden",
-        className,
-      )}
-    >
-      {image && !failed ? (
-        <Image
-          src={image}
-          alt={project.title}
-          fill
-          className="object-cover"
-          sizes={sizes}
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        <div className="flex justify-center items-center bg-muted h-full text-muted-foreground">
-          <BriefcaseIcon className="size-8" />
-        </div>
-      )}
-    </div>
-  );
-}
 
 function FilterDropdown<T extends string>({
   label,
@@ -357,106 +151,6 @@ function ViewToggle({
   );
 }
 
-function TechPills({
-  techStack,
-  limit = 4,
-}: {
-  techStack: string[];
-  limit?: number;
-}) {
-  const visible = techStack.slice(0, limit);
-  const remaining = techStack.length - visible.length;
-
-  if (techStack.length === 0) {
-    return <span className="text-muted-foreground text-xs">No tech stack</span>;
-  }
-
-  return (
-    <div className="flex flex-wrap gap-1.5 min-w-0">
-      {visible.map((tech) => (
-        <Badge
-          key={tech}
-          variant="outline"
-          className="max-w-28 text-xs truncate"
-        >
-          {tech}
-        </Badge>
-      ))}
-      {remaining > 0 && (
-        <span className="text-muted-foreground text-xs">+{remaining} more</span>
-      )}
-    </div>
-  );
-}
-
-function ProjectActions({
-  project,
-  align = "end",
-  overlay = false,
-}: {
-  project: DashboardProject;
-  align?: "start" | "end";
-  overlay?: boolean;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            size="icon"
-            variant={overlay ? "secondary" : "ghost"}
-            className={cn(
-              "size-11",
-              overlay &&
-                "bg-popover/80 border-border shadow-sm hover:bg-surface-hover/90",
-            )}
-            aria-label={`Open actions for ${project.title}`}
-          />
-        }
-      >
-        <DotsThreeVerticalIcon />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align={align} className="w-44">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Project</DropdownMenuLabel>
-          <DropdownMenuLabel>
-            Created {formatDateTime(project.createdAt)}
-          </DropdownMenuLabel>
-          {isPublished(project) && (
-            <DropdownMenuItem
-              render={
-                <Link href={`/projects/${project.slug}`} target="_blank" />
-              }
-            >
-              <ArrowSquareOutIcon data-icon="inline-start" />
-              View live
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem
-            render={<Link href={`/dashboard/projects/${project.id}/edit`} />}
-          >
-            <PencilSimpleIcon data-icon="inline-start" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <ProjectDeleteButton
-            triggerNativeButton={false}
-            projectId={project.id}
-            title={project.title}
-            trigger={
-              <DropdownMenuItem variant="destructive" closeOnClick={false}>
-                <TrashIcon data-icon="inline-start" />
-                Delete
-              </DropdownMenuItem>
-            }
-          />
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
 function ProjectsGrid({
   projects,
   batchMode,
@@ -471,6 +165,7 @@ function ProjectsGrid({
   return (
     <div className={dashboardStyles.gridCards}>
       {projects.map((project) => (
+        /* biome-ignore lint/a11y/useKeyWithClickEvents: Pointer card selection supplements the nested checkbox; keyboard users select through that control. */
         <article
           key={project.id}
           className={cn(
@@ -486,14 +181,18 @@ function ProjectsGrid({
               className="border-0 rounded-none"
               sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
             />
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: This wrapper isolates nested checkbox/menu clicks without a duplicate keyboard target. */}
             <div
+              role="presentation"
               className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
               <ProjectActions project={project} overlay />
             </div>
             {batchMode && (
+              /* biome-ignore lint/a11y/noStaticElementInteractions: This wrapper isolates nested checkbox/menu clicks without a duplicate keyboard target. */
               <div
+                role="presentation"
                 className="top-3 left-3 z-10 absolute"
                 onClick={(event) => event.stopPropagation()}
               >
@@ -536,619 +235,6 @@ function ProjectsGrid({
           </div>
         </article>
       ))}
-    </div>
-  );
-}
-
-function ProjectListRow({
-  project,
-  dragHandle,
-  isDragging = false,
-  batchMode,
-  selected,
-  onToggleProject,
-}: {
-  project: DashboardProject;
-  dragHandle?: ReactNode;
-  isDragging?: boolean;
-  batchMode?: boolean;
-  selected?: boolean;
-  onToggleProject?: (id: string) => void;
-}) {
-  return (
-    <div
-      className={cn(
-        "xl:items-center grid min-w-0 overflow-hidden",
-        batchMode || dragHandle
-          ? "grid-cols-[44px_minmax(0,1fr)]"
-          : "grid-cols-1",
-        batchMode || dragHandle ? PROJECT_COLUMNS_WITH_GUTTER : PROJECT_COLUMNS,
-        selected && "border-brand-soft/60 bg-brand/5",
-        batchMode && "cursor-pointer",
-        isDragging &&
-          "relative z-10 border-brand-soft/60 bg-background/70 opacity-80",
-      )}
-      onClick={
-        batchMode && onToggleProject
-          ? () => onToggleProject(project.id)
-          : undefined
-      }
-    >
-      {(batchMode || dragHandle) && (
-        <div className="row-span-2 xl:row-span-1">
-          {batchMode ? (
-            <div
-              className="flex justify-center items-center border-border/50 border-r h-full min-h-24"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <Checkbox
-                checked={selected}
-                onCheckedChange={() => onToggleProject?.(project.id)}
-                aria-label={`Select ${project.title}`}
-              />
-            </div>
-          ) : (
-            dragHandle
-          )}
-        </div>
-      )}
-      <div className="flex items-start gap-3 p-4 xl:p-3 xl:pr-4 min-w-0">
-        <ProjectThumbnail
-          project={project}
-          className="hidden sm:block rounded-lg w-28 h-16 shrink-0"
-          sizes="112px"
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <span
-              className={cn(
-                "xl:hidden rounded-full size-2 shrink-0",
-                isPublished(project) ? "bg-success" : "bg-muted-foreground",
-              )}
-            />
-            <h2 className="font-sans font-semibold xl:text-sm text-base wrap-break-word line-clamp-2 leading-snug">
-              {batchMode ? (
-                project.title
-              ) : (
-                <Link
-                  href={`/dashboard/projects/${project.id}/edit`}
-                  className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring hover:text-link"
-                >
-                  {project.title}
-                </Link>
-              )}
-            </h2>
-          </div>
-          <p className="mt-1 text-muted-foreground text-xs truncate">
-            /projects/{project.slug}
-          </p>
-          <div className="xl:hidden mt-2">
-            <TechPills techStack={project.techStack} limit={2} />
-          </div>
-          <div className="hidden xl:block mt-2">
-            <TechPills techStack={project.techStack} limit={4} />
-          </div>
-        </div>
-        <div
-          className="xl:hidden shrink-0"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <ProjectActions project={project} />
-        </div>
-      </div>
-      <div className="hidden xl:flex items-center p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <ProjectStatusBadge project={project} compact />
-          {project.isFeatured && <FeaturedProjectBadge />}
-        </div>
-      </div>
-      <div className="hidden xl:block p-3 text-muted-foreground text-sm">
-        <ProjectUpdatedAt value={project.updatedAt} />
-      </div>
-      <div className="hidden xl:flex justify-center p-3">
-        <div onClick={(event) => event.stopPropagation()}>
-          <ProjectActions project={project} />
-        </div>
-      </div>
-      <div
-        className={cn(
-          "xl:hidden flex flex-wrap items-center gap-2 px-4 pb-4",
-          (batchMode || dragHandle) && "col-start-2",
-        )}
-      >
-        <ProjectStatusBadge project={project} compact />
-        {project.isFeatured && <FeaturedProjectBadge />}
-        <span className="text-muted-foreground text-xs">
-          Updated {formatDate(project.updatedAt)}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function SortableProjectListRow({
-  project,
-  disabled,
-  batchMode,
-  selected,
-  onToggleProject,
-}: {
-  project: DashboardProject;
-  disabled: boolean;
-  batchMode: boolean;
-  selected: boolean;
-  onToggleProject: (id: string) => void;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: project.id,
-    disabled,
-  });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style}>
-      <ProjectListRow
-        project={project}
-        isDragging={isDragging}
-        batchMode={batchMode}
-        selected={selected}
-        onToggleProject={onToggleProject}
-        dragHandle={
-          <Button
-            ref={setActivatorNodeRef}
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="justify-center items-center p-0 w-full h-full min-h-24 touch-none cursor-grab active:cursor-grabbing disabled:cursor-not-allowed"
-            disabled={disabled}
-            aria-label={`Drag ${project.title} to reorder`}
-            {...attributes}
-            {...listeners}
-          >
-            <DotsSixVerticalIcon />
-          </Button>
-        }
-      />
-    </div>
-  );
-}
-
-function ProjectsListHeader({ hasGutter = false }: { hasGutter?: boolean }) {
-  return (
-    <div
-      className={cn(
-        "hidden xl:grid border-border border-b font-medium text-muted-foreground text-xs",
-        hasGutter ? PROJECT_COLUMNS_WITH_GUTTER : PROJECT_COLUMNS,
-      )}
-      data-project-list-header
-    >
-      {hasGutter && <div />}
-      <div className="py-3 pr-3 pl-34">Title</div>
-      <div className="p-3">Status</div>
-      <div className="p-3">Updated at</div>
-      <div className="p-3 text-center">Actions</div>
-    </div>
-  );
-}
-
-function ProjectsList({
-  projects,
-  canReorder,
-  batchMode,
-  selectedIds,
-  onReorder,
-  onToggleProject,
-}: {
-  projects: DashboardProject[];
-  canReorder: boolean;
-  batchMode: boolean;
-  selectedIds: Set<string>;
-  onReorder: (projects: DashboardProject[]) => void;
-  onToggleProject: (id: string) => void;
-}) {
-  const [isPending, startTransition] = useTransition();
-  const router = useRouter();
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 180,
-        tolerance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
-  const itemIds = useMemo(() => projects.map((item) => item.id), [projects]);
-
-  const persistOrder = (nextProjects: DashboardProject[]) => {
-    startTransition(async () => {
-      try {
-        const result = await actionReorderProjects(
-          nextProjects.map((project, index) => ({
-            id: project.id,
-            order: index,
-          })),
-        );
-
-        if (result.success) {
-          toast.add({
-            title: result.message ?? "Project order updated.",
-            type: "success",
-          });
-          router.refresh();
-          return;
-        }
-
-        onReorder(projects);
-        toast.add({ title: result.error, type: "error" });
-      } catch {
-        onReorder(projects);
-        toast.add({
-          title: "Could not save order. Previous order restored.",
-          type: "error",
-        });
-      }
-    });
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    if (!canReorder || isPending) return;
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const oldIndex = projects.findIndex((item) => item.id === active.id);
-    const newIndex = projects.findIndex((item) => item.id === over.id);
-
-    if (oldIndex < 0 || newIndex < 0) {
-      return;
-    }
-
-    const nextProjects = arrayMove(projects, oldIndex, newIndex).map(
-      (project, index) => ({
-        ...project,
-        order: index,
-      }),
-    );
-
-    onReorder(nextProjects);
-    persistOrder(nextProjects);
-  };
-
-  if (!canReorder) {
-    return (
-      <div className={dashboardStyles.listSurface}>
-        <ProjectsListHeader hasGutter={canReorder || batchMode} />
-        <div className="flex flex-col divide-y divide-border min-w-0">
-          {projects.map((project) => (
-            <ProjectListRow
-              key={project.id}
-              project={project}
-              batchMode={batchMode}
-              selected={selectedIds.has(project.id)}
-              onToggleProject={onToggleProject}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={dashboardStyles.listSurface}>
-      <ProjectsListHeader hasGutter={canReorder || batchMode} />
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col divide-y divide-border min-w-0">
-            {projects.map((project) => (
-              <SortableProjectListRow
-                key={project.id}
-                project={project}
-                disabled={isPending}
-                batchMode={batchMode}
-                selected={selectedIds.has(project.id)}
-                onToggleProject={onToggleProject}
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-    </div>
-  );
-}
-
-function ProjectsPagination({
-  firstIndex,
-  lastIndex,
-  total,
-  page,
-  pageCount,
-  itemsPerPage,
-  itemsPerPageOptions,
-  onPageChange,
-  onItemsPerPageChange,
-}: {
-  firstIndex: number;
-  lastIndex: number;
-  total: number;
-  page: number;
-  pageCount: number;
-  itemsPerPage: number;
-  itemsPerPageOptions: readonly number[];
-  onPageChange: (page: number) => void;
-  onItemsPerPageChange: (value: number) => void;
-}) {
-  const pageControls = (
-    <div className="flex justify-center items-center gap-1">
-      <Button
-        type="button"
-        size="icon"
-        variant="outline"
-        disabled={page <= 1}
-        onClick={() => onPageChange(Math.max(1, page - 1))}
-        aria-label="Previous page"
-      >
-        <CaretLeftIcon />
-      </Button>
-      <span className="md:hidden px-2 text-sm" aria-live="polite">
-        Page {page} of {pageCount}
-      </span>
-      <div className="hidden md:flex items-center gap-1">
-        {getPageItems(page, pageCount).map((value, index) =>
-          value === "ellipsis" ? (
-            <span key={`gap-${index}`} className="px-1" aria-hidden>
-              …
-            </span>
-          ) : (
-            <Button
-              key={value}
-              type="button"
-              size="icon"
-              variant={value === page ? "default" : "outline"}
-              onClick={() => onPageChange(value)}
-              aria-label={`Page ${value}`}
-              aria-current={value === page ? "page" : undefined}
-            >
-              {value}
-            </Button>
-          ),
-        )}
-      </div>
-      <Button
-        type="button"
-        size="icon"
-        variant="outline"
-        disabled={page >= pageCount}
-        onClick={() => onPageChange(Math.min(pageCount, page + 1))}
-        aria-label="Next page"
-      >
-        <CaretRightIcon />
-      </Button>
-    </div>
-  );
-
-  return (
-    <div className="md:items-center gap-3 grid md:grid-cols-[1fr_auto_1fr] mt-4 text-muted-foreground text-sm">
-      <div className="md:contents flex justify-between items-center">
-        <p className="md:hidden">
-          {firstIndex}-{lastIndex} of {total}
-        </p>
-        <p className="hidden md:block">
-          Showing {firstIndex} to {lastIndex} of {total}{" "}
-          {total === 1 ? "item" : "items"}
-        </p>
-        <div className="md:hidden">
-          <ItemsPerPageDropdown
-            value={itemsPerPage}
-            options={itemsPerPageOptions}
-            onValueChange={onItemsPerPageChange}
-          />
-        </div>
-      </div>
-      <div className="md:col-start-2">{pageControls}</div>
-      <div className="hidden md:flex justify-end">
-        <ItemsPerPageDropdown
-          value={itemsPerPage}
-          options={itemsPerPageOptions}
-          onValueChange={onItemsPerPageChange}
-          showLabel
-        />
-      </div>
-    </div>
-  );
-}
-
-function ItemsPerPageDropdown({
-  value,
-  options,
-  onValueChange,
-  showLabel = false,
-}: {
-  value: number;
-  options: readonly number[];
-  onValueChange: (value: number) => void;
-  showLabel?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      {showLabel && (
-        <span className="text-muted-foreground text-sm">Items per page</span>
-      )}
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              aria-label="Items per page"
-            />
-          }
-        >
-          {value}
-          <CaretDownIcon className="size-3.5" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-24">
-          <DropdownMenuRadioGroup
-            value={String(value)}
-            onValueChange={(nextValue) => onValueChange(Number(nextValue))}
-          >
-            {options.map((option) => (
-              <DropdownMenuRadioItem
-                key={option}
-                value={String(option)}
-                closeOnClick={true}
-              >
-                {option}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
-}
-
-function ProjectsBatchActionsBar({
-  selectedCount,
-  selectedTitles,
-  outsideViewCount,
-  onSelectPage,
-  pageSelected,
-  isPending,
-  onPublish,
-  onMoveToDraft,
-  onDelete,
-  onCancel,
-}: {
-  selectedCount: number;
-  selectedTitles: string[];
-  outsideViewCount: number;
-  onSelectPage: () => void;
-  pageSelected: boolean;
-  isPending: boolean;
-  onPublish: () => void;
-  onMoveToDraft: () => void;
-  onDelete: () => void;
-  onCancel: () => void;
-}) {
-  return (
-    <div className="flex sm:flex-row flex-col sm:justify-between sm:items-center gap-3 bg-card/55 shadow-sm p-3 border border-border/70 rounded-2xl">
-      <div className="min-w-0">
-        <p className="font-medium text-foreground text-sm">
-          {selectedCount} {selectedCount === 1 ? "project" : "projects"}{" "}
-          selected
-        </p>
-        <p className="text-muted-foreground text-xs">
-          {outsideViewCount > 0
-            ? `${outsideViewCount} selected outside this page. `
-            : ""}
-          Selection includes all chosen pages and filters.
-        </p>
-      </div>
-      <div className="sm:flex sm:flex-wrap sm:justify-end gap-2 grid grid-cols-2">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={isPending}
-          onClick={onSelectPage}
-        >
-          {pageSelected ? "Deselect page" : "Select page"}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          disabled={isPending || selectedCount === 0}
-          onClick={onPublish}
-        >
-          <CheckCircleIcon data-icon="inline-start" />
-          Publish
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={isPending || selectedCount === 0}
-          onClick={onMoveToDraft}
-        >
-          Move to draft
-        </Button>
-        <AlertDialog>
-          <AlertDialogTrigger
-            render={
-              <Button
-                type="button"
-                size="sm"
-                variant="destructive"
-                disabled={isPending || selectedCount === 0}
-              />
-            }
-          >
-            <TrashIcon data-icon="inline-start" />
-            Delete
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete selected projects?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete {selectedCount}{" "}
-                {selectedCount === 1 ? "project" : "projects"}. This action
-                cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <ul className="space-y-1 max-h-48 overflow-y-auto text-sm">
-              {selectedTitles.map((title, index) => (
-                <li key={`${index}-${title}`} className="wrap-anywhere">
-                  {title}
-                </li>
-              ))}
-            </ul>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                variant="destructive"
-                disabled={isPending}
-                onClick={onDelete}
-              >
-                {isPending ? "Deleting..." : "Delete selected"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          disabled={isPending}
-          onClick={onCancel}
-        >
-          Cancel selection
-        </Button>
-      </div>
     </div>
   );
 }
@@ -1274,61 +360,26 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     [items],
   );
 
-  const filteredProjects = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return [...items]
-      .filter((project) => {
-        if (status === "published" && !isPublished(project)) {
-          return false;
-        }
-
-        if (status === "draft" && isPublished(project)) {
-          return false;
-        }
-
-        if (featured === "featured" && !project.isFeatured) {
-          return false;
-        }
-
-        if (featured === "standard" && project.isFeatured) {
-          return false;
-        }
-
-        if (
-          selectedTechStacks.length > 0 &&
-          !project.techStack.some((techStack) =>
-            selectedTechStacks.includes(techStack),
-          )
-        ) {
-          return false;
-        }
-
-        if (!normalizedQuery) {
-          return true;
-        }
-
-        const searchable = [
-          project.title,
-          project.slug,
-          project.description ?? "",
-          ...project.techStack,
-        ]
-          .join(" ")
-          .toLowerCase();
-
-        return searchable.includes(normalizedQuery);
-      })
-      .sort((a, b) => compareProjects(a, b, sortMode, sortDirection));
-  }, [
-    featured,
-    items,
-    query,
-    selectedTechStacks,
-    sortMode,
-    sortDirection,
-    status,
-  ]);
+  const filteredProjects = useMemo(
+    () =>
+      filterProjects(items, {
+        query,
+        status,
+        featured,
+        selectedTechStacks,
+        sortMode,
+        sortDirection,
+      }),
+    [
+      featured,
+      items,
+      query,
+      selectedTechStacks,
+      sortMode,
+      sortDirection,
+      status,
+    ],
+  );
 
   const {
     items: paginatedProjects,
@@ -1339,6 +390,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   } = paginateItems(filteredProjects, page, itemsPerPage);
   const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Refinements reset pagination; leaving reorder mode restores the previous page once.
   useEffect(() => {
     setPage(restorePage.current ?? 1);
     restorePage.current = null;
@@ -1796,7 +848,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
         {batchMode && (
           <ProjectsBatchActionsBar
             selectedCount={selectedIds.size}
-            selectedTitles={selectedProjects.map((item) => item.title)}
+            selectedProjects={selectedProjects}
             outsideViewCount={outsideViewCount}
             onSelectPage={selectPage}
             pageSelected={pageSelected}
@@ -1884,7 +936,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
             )}
 
             {!reorderMode && (
-              <ProjectsPagination
+              <DashboardPagination
                 firstIndex={firstIndex}
                 lastIndex={lastIndex}
                 total={filteredProjects.length}
