@@ -99,6 +99,9 @@ CMS contracts, and security behavior unless the task explicitly changes them.
   into equally coupled files is not an improvement.
 - Keep behavior changes separate from mechanical refactors. Retain visual
   labels, accessibility names, focus behavior and responsive geometry.
+- After a database commit, use `src/lib/revalidation.ts` for CMS path/tag
+  invalidation. Cache failures are logged separately from write failures; report
+  what was actually saved and continue attempting other invalidations.
 - Test observed outcomes and boundaries. For a regression, demonstrate failure
   before the fix; for a shared control, verify it with keyboard and pointer in
   a browser fixture. A deliberate mutation should fail the relevant test.

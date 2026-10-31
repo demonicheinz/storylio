@@ -1,7 +1,6 @@
 "use server";
 
 import { and, desc, eq, gt, gte, lt, lte, ne, sql } from "drizzle-orm";
-import { revalidatePath, updateTag } from "next/cache";
 import {
   type HomeHeroActionInput,
   type HomeSectionActionInput,
@@ -26,6 +25,7 @@ import {
   serializeHomeLogoSettings,
 } from "@/lib/home-technologies";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { revalidatePath, updateTag } from "@/lib/revalidation";
 
 type EntityActionData = { id: string };
 type OrderTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];

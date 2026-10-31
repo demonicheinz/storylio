@@ -102,6 +102,42 @@ describe("editor autosave publication regression", () => {
       expect(data(await autosave(input, created.id)).status).toBe("draft");
     });
 
+    it.each(["tag", "path"])(
+      `${name}: reports committed saves when %s revalidation fails`,
+      async (kind) => {
+        const invalidate =
+          kind === "tag" ? effects.updateTag : effects.revalidatePath;
+        invalidate.mockImplementation(() => {
+          throw new Error("Injected cache failure");
+        });
+        const log = vi.spyOn(console, "error").mockImplementation(() => {});
+        try {
+          const created = data(await create({ ...input, status: "draft" }));
+          const updated = data(
+            await autosave(
+              { ...input, content: "Saved despite cache failure." },
+              created.id,
+            ),
+          );
+          expect(updated.id).toBe(created.id);
+          const row =
+            name === "post"
+              ? await fixture.db.query.post.findFirst({
+                  where: eq(schema.post.id, created.id),
+                })
+              : await fixture.db.query.project.findFirst({
+                  where: eq(schema.project.id, created.id),
+                });
+          expect(row?.content).toBe("Saved despite cache failure.");
+          expect(log).toHaveBeenCalled();
+          expect(effects.revalidatePath).toHaveBeenCalledWith("/");
+        } finally {
+          invalidate.mockReset();
+          log.mockRestore();
+        }
+      },
+    );
+
     it(`${name}: rejects a blank autosave when another tab publishes before the write`, async () => {
       const created = data(
         await create({

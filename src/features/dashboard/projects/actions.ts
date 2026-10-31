@@ -1,7 +1,6 @@
 "use server";
 
 import { and, desc, eq, gt, gte, inArray, lt, lte, ne, sql } from "drizzle-orm";
-import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import {
   type ProjectActionInput,
@@ -19,6 +18,7 @@ import { ProjectStatus } from "@/lib/db/enums";
 import { projectScreenshot, project as projectTable } from "@/lib/db/schema";
 import { getMdxSafetyError } from "@/lib/mdx-safety";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { revalidatePath, updateTag } from "@/lib/revalidation";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 

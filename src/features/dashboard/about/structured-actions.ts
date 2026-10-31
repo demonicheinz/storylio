@@ -1,7 +1,6 @@
 "use server";
 
 import { and, desc, eq } from "drizzle-orm";
-import { revalidatePath, updateTag } from "next/cache";
 import {
   aboutReorderSchema,
   type EducationInput,
@@ -24,6 +23,7 @@ import {
   workExperience,
 } from "@/lib/db/schema";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { revalidatePath, updateTag } from "@/lib/revalidation";
 
 const tables = { workExperience, education, skillCategory, skill };
 type Model = keyof typeof tables;
