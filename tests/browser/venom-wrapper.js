@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function venomWrapper(sessionPage) {
   const context = await sessionPage.context().browser().newContext();
   const page = await context.newPage();
@@ -25,7 +26,7 @@ async function venomWrapper(sessionPage) {
       if (mode !== "ok")
         assert(
           (await page.locator("[data-venom-canvas]").count()) === 0,
-          mode + ": init failure left orphan canvas",
+          `${mode}: init failure left orphan canvas`,
         );
       else await page.locator('[data-venom-ready="true"]').waitFor();
       await page

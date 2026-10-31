@@ -86,7 +86,6 @@ async (sessionPage) => {
     });
     assert(dimensions.font.toLowerCase().includes('satoshi'),'CTA did not load Satoshi');
     assert(dimensions.fontSize==='14px'&&dimensions.weight==='500'&&dimensions.height>=44,'CTA violates typography/target rules');
-    const href=dimensions.href;
     const rect=await cta().boundingBox();
     await page.mouse.move(rect.x+rect.width+45,rect.y+55,{steps:15});
     await page.waitForFunction(()=>document.documentElement.hasAttribute('data-storylio-venom-cursor'));
@@ -156,7 +155,7 @@ async (sessionPage) => {
       await ready();
       await page.waitForFunction(()=>document.querySelector('[data-venom-canvas]')?.dataset.venomState==='running');
       const size = await widthCoverage();
-      assert(size > .85, 'CTA replayed its growth intro on resume: '+size);
+      assert(size > .85, `CTA replayed its growth intro on resume: ${size}`);
       assert(await sceneCanvas.evaluate(el => el === document.querySelector('[data-venom-canvas]')), 'Resume recreated the scene');
     };
     const paused = () => page.waitForFunction(() => {
@@ -273,7 +272,7 @@ async (sessionPage) => {
         window.__venomDeletedPrograms=0;
         const shaderSource=WebGL2RenderingContext.prototype.shaderSource;
         WebGL2RenderingContext.prototype.shaderSource=function(shader,source){
-          return shaderSource.call(this,shader,this.canvas.dataset.venomCanvas?'invalid_shader\n'+source:source);
+          return shaderSource.call(this,shader,this.canvas.dataset.venomCanvas?`invalid_shader\n${source}`:source);
         };
         const deleteProgram=WebGL2RenderingContext.prototype.deleteProgram;
         WebGL2RenderingContext.prototype.deleteProgram=function(program){
@@ -333,7 +332,7 @@ async (sessionPage) => {
       await atProjects(touch);
     } finally {await touchContext.close();}
     results.push({mode:'touch',navigation:true});
-    assert(errors.length===0,'Runtime errors: '+errors.join('; '));
+    assert(errors.length===0,`Runtime errors: ${errors.join('; ')}`);
     return {results,errors};
   } finally {await page.close();}
 }

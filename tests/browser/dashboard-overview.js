@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardOverview(sessionPage) {
   const origin = new URL(sessionPage.url()).origin;
   const context = await sessionPage.context().browser().newContext();
@@ -38,7 +39,7 @@ async function dashboardOverview(sessionPage) {
     }),
   );
   try {
-    await page.goto(origin + "/dashboard-overview-fixture-check");
+    await page.goto(`${origin}/dashboard-overview-fixture-check`);
     for (const [width, height] of [
       [1440, 1000],
       [1024, 900],
@@ -86,7 +87,7 @@ async function dashboardOverview(sessionPage) {
           parseFloat(getComputedStyle(el).fontSize),
         ),
       }));
-      assert(!dimensions.overflow, "Horizontal overflow at " + width);
+      assert(!dimensions.overflow, `Horizontal overflow at ${width}`);
       assert(
         dimensions.headings.includes("Work in progress") &&
           dimensions.headings.includes("Writing"),
@@ -155,7 +156,7 @@ async function dashboardOverview(sessionPage) {
       "Draft link not filtered",
     );
     await page.goto(
-      origin + "/dashboard-overview-fixture-check?view=posts&status=draft",
+      `${origin}/dashboard-overview-fixture-check?view=posts&status=draft`,
     );
     stage = "post filter";
     await page.getByRole("heading", { name: "Posts", exact: true }).waitFor();
@@ -202,7 +203,7 @@ async function dashboardOverview(sessionPage) {
       !(await page.getByText("Visible example", { exact: true }).count()),
       "Visible photo leaked into hidden filter",
     );
-    await page.goto(origin + "/dashboard-overview-fixture-check");
+    await page.goto(`${origin}/dashboard-overview-fixture-check`);
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.waitForFunction(
       () =>

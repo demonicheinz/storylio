@@ -392,3 +392,6 @@ diagnostics, identical executable output. See browser-lint.md.
 
 Template-only follow-up: 26 scripts covered with preserved normalized AST and CLI
 parsing; 580 selected lint files, zero diagnostics. See browser-lint.md.
+
+All 92 browser scripts now enter lint through `tests/browser/**`; combined count
+is 599 with no diagnostics. See browser-lint.md for equivalence checks and limits.

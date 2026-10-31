@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardConfirmations(sessionPage) {
   const context = await sessionPage
     .context()
@@ -132,7 +133,7 @@ async function dashboardConfirmations(sessionPage) {
     if ((await page.locator("[data-navigation-count]").textContent()) !== "2")
       throw Error("Clean navigation was blocked");
     if (native.length)
-      throw Error("Native dialogs appeared: " + native.join(", "));
+      throw Error(`Native dialogs appeared: ${native.join(", ")}`);
     if (errors.length) throw Error(errors.join("; "));
     return {
       passed: true,

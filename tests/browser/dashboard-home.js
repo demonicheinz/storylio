@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardHome(sessionPage) {
   const origin = new URL(sessionPage.url()).origin;
   const context = await sessionPage.context().browser().newContext();
@@ -281,7 +282,7 @@ async function dashboardHome(sessionPage) {
     await chooser;
     await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
-    await page.goto(origin + "/previous");
+    await page.goto(`${origin}/previous`);
     await page.getByRole("link", { name: "Open Home", exact: true }).click();
     const restoredHeadline = page.getByRole("textbox", {
       name: "Headline",

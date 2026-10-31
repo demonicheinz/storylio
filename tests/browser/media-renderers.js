@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function mediaRenderers(sessionPage) {
   const context = await sessionPage
     .context()
@@ -80,7 +81,7 @@ async function mediaRenderers(sessionPage) {
           .click();
         if (
           (await page.evaluate(() => window.rendererCopied)) !==
-          origin + "/fixture-image.svg?image=0"
+          `${origin}/fixture-image.svg?image=0`
         )
           throw Error("Renderer copied wrong image");
         await menu();

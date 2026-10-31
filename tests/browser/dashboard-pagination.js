@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardPagination(sessionPage) {
   const page = await sessionPage.context().newPage();
   const results = [];
@@ -31,6 +32,7 @@ async function dashboardPagination(sessionPage) {
       await page
         .getByRole("menuitemradio", { name: "20", exact: true })
         .click();
+      // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
       if ((await visibleTrigger().innerText()) !== "20")
         throw Error("Page size not updated");
       await page
@@ -57,12 +59,13 @@ async function dashboardPagination(sessionPage) {
         .getByRole("menuitemradio", { name: "40", exact: true })
         .focus();
       await page.keyboard.press("Enter");
+      // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
       if ((await visibleTrigger().innerText()) !== "40")
         throw Error("Keyboard page size selection failed");
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth > innerWidth,
       );
-      if (overflow) throw Error("Pagination overflows at " + width);
+      if (overflow) throw Error(`Pagination overflows at ${width}`);
       await page.screenshot({
         path: `task/code-standardization/pagination-${width}.png`,
       });

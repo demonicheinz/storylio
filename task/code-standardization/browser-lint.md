@@ -70,3 +70,18 @@ a claim of byte-identical transpilation or a fresh end-to-end run of these old
 scenarios. Lint is clean with 580 selected files; 19 browser scripts remain.
 Existing formatter exceptions keep CLI expression syntax intact. No production
 source/dependency update and no repeated full suite/build for string-only changes.
+
+## Browser coverage complete
+
+The last nineteen scripts now pass lint. The 92 scripts use one positive
+`tests/browser/**` entry instead of a long per-file list. Combined coverage is
+599 files, zero diagnostics. String/entry-point/Locator explanations follow the
+previous batches. Three small reviewed changes remove an unread href binding,
+name an intentionally unused Promise resolver, and use arrows/void forEach bodies
+in a timer fixture. The wrappers reference neither this nor arguments. A local
+before/after harness confirmed callback arguments, captured tick/cancel cleanup
+and unrelated delays remain identical. A normalized AST check retains all other
+statement/expression structure after accounting explicitly for those three edits;
+all nineteen CLI expressions parse. No checks were removed and no full-browser
+rerun of historical app scenarios is claimed. Fixtures and remaining root config
+files still need their own review; this is not whole-repo cleanup completion.
