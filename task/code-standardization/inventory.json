@@ -40,7 +40,7 @@
       "empty_catches": 0,
       "any_casts": 0,
       "ts_ignore": 0,
-      "current_lines": 1239
+      "current_lines": 927
     },
     {
       "file": "src/features/dashboard/settings/components/profile-settings-form.tsx",
