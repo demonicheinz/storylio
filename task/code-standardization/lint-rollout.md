@@ -32,3 +32,18 @@ Review: no new public API or effect, no authorization or query changes, no
 dependency updates. TypeScript and normal hooks must pass before committing.
 Other source areas are not claimed lint-clean. Broader legacy findings retain
 the baseline evidence in lint-activation-review.md.
+
+Collection layer committed as `be53852`: 162 focused tests passed, source lint
+selected 56 files without diagnostics, and normal lint/TypeScript hooks passed.
+
+## Shared foundations
+
+Expand coverage to src/lib, dashboard shared hooks and the shared top-level
+TypeScript modules. The control-character rejection in auth-redirect.ts is a
+deliberate input boundary, retained with a narrow explanatory lint exception.
+containsPattern now uses a template string with the exact same LIKE escaping.
+No authentication or database policy changes. The resulting source lint selects
+109 files with zero diagnostics. Auth/management/confirmation/deletion tests
+passed (57), plus eight schema tests including literal LIKE wildcard handling.
+Build is not repeated for annotation/equivalent string syntax alone; commit
+hooks still require TypeScript. No broad rule suppression or unsafe fix.

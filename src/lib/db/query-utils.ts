@@ -21,5 +21,5 @@ export function flattenPostTags<T extends { tags: { tag: object }[] }>(
 
 /** Match a literal substring rather than treating user input as LIKE wildcards. */
 export function containsPattern(value: string) {
-  return "%" + value.replace(/[\\%_]/g, "\\$&") + "%";
+  return `%${value.replace(/[\\%_]/g, "\\$&")}%`;
 }

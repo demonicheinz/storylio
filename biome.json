@@ -36,7 +36,10 @@
     },
     "includes": [
       "src/components/ui/**",
-      "src/features/dashboard/{projects,posts,gallery,media}/*.ts"
+      "src/features/dashboard/{projects,posts,gallery,media}/*.ts",
+      "src/lib/**",
+      "src/features/dashboard/shared/hooks/**",
+      "src/features/dashboard/shared/*.ts"
     ]
   },
   "javascript": {
