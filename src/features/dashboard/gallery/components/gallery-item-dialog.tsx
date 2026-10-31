@@ -31,7 +31,7 @@ import {
 } from "@/features/dashboard/gallery/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { confirmAction } from "@/features/dashboard/shared/confirmation";
-import type { DashboardGalleryItem } from "./gallery-item-form";
+import type { DashboardGalleryItem } from "../types";
 
 type GalleryItemDialogProps = {
   item?: DashboardGalleryItem;

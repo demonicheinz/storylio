@@ -89,32 +89,25 @@ import {
 } from "@/lib/pagination";
 import { cn, formatDate } from "@/lib/utils";
 
+import {
+  filterGalleryItems,
+  type GallerySortField as SortMode,
+  type GalleryVisibilityFilter as VisibilityFilter,
+} from "../filtering";
+import {
+  getDimensions,
+  getFileName,
+  getGalleryAspectRatio,
+  getItemTitle,
+} from "../presentation";
+import type { DashboardGalleryItem } from "../types";
 import { GalleryItemDialog } from "./gallery-item-dialog";
-
-export type DashboardGalleryItem = {
-  id: string;
-  imageUrl: string;
-  caption: string | null;
-  category: string | null;
-  description: string | null;
-  altText: string | null;
-  width: number | null;
-  height: number | null;
-  size: number | null;
-  aspectRatio: number | null;
-  blurDataUrl: string | null;
-  isVisible: boolean;
-  order: number;
-  createdAt: string;
-};
 
 type GalleryManagerProps = {
   items: DashboardGalleryItem[];
 };
 
 type ViewMode = "grid" | "list";
-type VisibilityFilter = "all" | "visible" | "hidden";
-type SortMode = "order" | "created";
 
 function GalleryThumbnail({
   imageUrl,
@@ -155,39 +148,6 @@ function GalleryThumbnail({
       onError={() => setFailed(true)}
     />
   );
-}
-
-function getItemTitle(item: DashboardGalleryItem) {
-  return item.caption || item.altText || item.category || "Untitled image";
-}
-
-function getFileName(imageUrl: string) {
-  try {
-    const pathname = new URL(imageUrl).pathname;
-    return decodeURIComponent(pathname.split("/").filter(Boolean).pop() ?? "");
-  } catch {
-    return imageUrl.split("/").filter(Boolean).pop() ?? "Unknown file";
-  }
-}
-
-function getDimensions(item: DashboardGalleryItem) {
-  if (!item.width || !item.height) {
-    return "Not stored";
-  }
-
-  return `${item.width} x ${item.height}`;
-}
-
-function getGalleryAspectRatio(item: DashboardGalleryItem) {
-  if (item.aspectRatio && item.aspectRatio > 0) {
-    return item.aspectRatio;
-  }
-
-  if (item.width && item.height && item.height > 0) {
-    return item.width / item.height;
-  }
-
-  return 1;
 }
 
 function GalleryStatusBadge({
@@ -1028,30 +988,17 @@ export function GalleryManager({ items }: GalleryManagerProps) {
     hidden: items.filter((item) => !item.isVisible).length,
     categories: categories.length,
   };
-  const filteredItems = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    return items
-      .filter(
-        (item) =>
-          (visibility === "all" ||
-            item.isVisible === (visibility === "visible")) &&
-          (category === "all" || item.category === category) &&
-          (!search ||
-            [
-              item.caption,
-              item.description,
-              item.altText,
-              item.category,
-              getFileName(item.imageUrl),
-            ].some((value) => value?.toLowerCase().includes(search))),
-      )
-      .sort(
-        (a, b) =>
-          (sortMode === "created"
-            ? Date.parse(a.createdAt) - Date.parse(b.createdAt)
-            : a.order - b.order) * (sortDirection === "asc" ? 1 : -1),
-      );
-  }, [items, query, visibility, category, sortMode, sortDirection]);
+  const filteredItems = useMemo(
+    () =>
+      filterGalleryItems(items, {
+        query,
+        visibility,
+        category,
+        sortMode,
+        sortDirection,
+      }),
+    [items, query, visibility, category, sortMode, sortDirection],
+  );
   const {
     items: paginatedItems,
     pageCount,

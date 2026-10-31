@@ -24,7 +24,7 @@
       "empty_catches": 0,
       "any_casts": 0,
       "ts_ignore": 0,
-      "current_lines": 1652
+      "current_lines": 1599
     },
     {
       "file": "src/features/dashboard/media/components/media-client.tsx",
