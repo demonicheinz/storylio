@@ -68,6 +68,12 @@ CMS contracts, and security behavior unless the task explicitly changes them.
   frozen lockfile in CI. Do not hand-edit resolutions to silence an audit.
 - Biome is the formatter/import organizer; use the repository configuration
   and local schema. Avoid an unrelated repository-wide formatting pass.
+- Source lint is being enabled incrementally through positive `linter.includes`
+  patterns. An area is covered only when it matches those patterns; a successful
+  `bun run lint` does not establish lint coverage for the rest of the repository.
+  Formatter/assist checks still apply repository-wide. Expand coverage after
+  reviewing the area's diagnostics, with narrow justified exceptions instead
+  of disabling rules globally. Never use a list containing only negative globs.
 
 ## Refactoring and verification
 

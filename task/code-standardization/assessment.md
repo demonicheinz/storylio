@@ -38,6 +38,13 @@ authentication, database schema, upload transport, or public layout was redesign
 
 ## Open findings and next batches
 
+Important verification correction: the negative-only `linter.includes` selected
+no source files. Earlier successful lint command results covered formatting and
+assist checks, not actual source linting. Full lint activation exposes existing
+findings and awaits a rollout decision; see
+[lint-activation-review.md](lint-activation-review.md). Gallery policy is committed
+as `ba2456e`; details are in [batch-twelve.md](batch-twelve.md).
+
 | Batch | Area | Concrete work and verification |
 | --- | --- | --- |
 | 2 | Public image components | Implemented shared ContentCover lifecycle and bounded fallback. Source-replacement recovery reproduced before the fix and verified afterward. See [batch-two.md](batch-two.md). |

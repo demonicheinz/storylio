@@ -34,7 +34,7 @@
       "next": "recommended",
       "react": "recommended"
     },
-    "includes": ["!src/components/ui/"]
+    "includes": ["src/components/ui/**"]
   },
   "javascript": {
     "formatter": {
