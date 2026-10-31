@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardSettings(sessionPage) {
   async function openMfaConfirmation() {
     if (
@@ -290,7 +291,7 @@ async function dashboardSettings(sessionPage) {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          url: origin + "/avatar.svg?new",
+          url: `${origin}/avatar.svg?new`,
           width: 1,
           height: 1,
         }),
@@ -652,7 +653,8 @@ async function dashboardSettings(sessionPage) {
       exact: true,
     });
     await bulkDialog.waitFor();
-    prompt = await bulkDialog.innerText();
+    // biome-ignore lint/performance/useDomNodeTextContent: This is the Playwright locator method; the check reads the visible confirmation copy.
+    const confirmationText = await bulkDialog.innerText();
     await page.screenshot({
       path: "task/dashboard-settings-review/updated-session-confirm-320.png",
       fullPage: true,
@@ -665,8 +667,8 @@ async function dashboardSettings(sessionPage) {
       "Cancel should return focus to Revoke Other Sessions",
     );
     assert(
-      prompt.includes("1 other session") &&
-        prompt.includes("This browser will remain signed in"),
+      confirmationText.includes("1 other session") &&
+        confirmationText.includes("This browser will remain signed in"),
       "Bulk confirmation should explain count and current session",
     );
     assert(

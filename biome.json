@@ -55,7 +55,11 @@
       "src/components/effects/gravity-stars.tsx",
       "scripts/**",
       "tests/helpers/**",
-      "tests/**/*.test.ts"
+      "tests/**/*.test.ts",
+      "tests/browser/dashboard-settings.js",
+      "tests/browser/dashboard-analytics.js",
+      "tests/browser/star-lifecycle.js",
+      "tests/browser/venom-context-recovery.js"
     ]
   },
   "javascript": {

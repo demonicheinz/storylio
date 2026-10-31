@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function venomContextRecovery(sessionPage) {
   const context = await sessionPage.context().browser().newContext();
   const page = await context.newPage();
@@ -20,8 +21,10 @@ async function venomContextRecovery(sessionPage) {
       if (
         this.canvas.dataset.venomCanvas &&
         locations.get(location) === "uLabelAmt"
-      )
-        (window.recoveryLabels ??= []).push(value);
+      ) {
+        window.recoveryLabels ??= [];
+        window.recoveryLabels.push(value);
+      }
       return uniform.call(this, location, value);
     };
     const create = WebGL2RenderingContext.prototype.createProgram;

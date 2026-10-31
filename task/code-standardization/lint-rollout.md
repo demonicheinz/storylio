@@ -377,3 +377,8 @@ assertions replace erased non-null assumptions; intentional mock-hook dispatcher
 and literal Markdown fixtures have statement-local explanations. Combined lint
 selects 507 files with zero diagnostics. See [vitest-lint.md](vitest-lint.md)
 for verification and remaining browser/fixture scope.
+
+Four bounded browser scripts extend positive lint to 511 files. Settings no longer
+assigns confirmation text to an unbound `prompt` name. Settings, Analytics, star
+lifecycle and isolated GPU recovery checks passed. See [browser-lint.md](browser-lint.md);
+the initial concurrent GPU timeout is recorded rather than hidden.

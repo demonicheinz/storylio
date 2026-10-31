@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function starLifecycle(sessionPage) {
   const context = await sessionPage.context().browser().newContext();
   const page = await context.newPage();
@@ -52,9 +53,9 @@ async function starLifecycle(sessionPage) {
         .length,
     });
     window.invokeLateResize = () =>
-      resizes.forEach((record) =>
-        record.callback([{ target: record.target }], {}),
-      );
+      resizes.forEach((record) => {
+        record.callback([{ target: record.target }], {});
+      });
   });
   const assert = (ok, message) => {
     if (!ok) throw Error(message);

@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardAnalytics(page) {
   const origin = "http://127.0.0.1:3202";
   const context = await page
@@ -11,7 +12,7 @@ async function dashboardAnalytics(page) {
     if (!value) throw new Error(message);
   };
   const results = [];
-  const fit = async (label) =>
+  const assertFitsViewport = async (label) =>
     check(
       await review.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
@@ -47,7 +48,7 @@ async function dashboardAnalytics(page) {
           .count()) === 1,
         "Duplicated ranking identity",
       );
-      await fit(`${width} content`);
+      await assertFitsViewport(`${width} content`);
       await review.screenshot({
         path: `task/dashboard-analytics-review/updated-content-${width}.png`,
         fullPage: true,
@@ -58,7 +59,7 @@ async function dashboardAnalytics(page) {
       await review
         .getByRole("heading", { name: "Umami traffic", exact: true })
         .waitFor();
-      await fit(`${width} traffic`);
+      await assertFitsViewport(`${width} traffic`);
       const refresh = review.getByRole("button", {
         name: "Refresh Umami",
         exact: true,
@@ -93,7 +94,7 @@ async function dashboardAnalytics(page) {
       "Daily values are incomplete",
     );
     await review.getByText("Recent activity", { exact: true }).click();
-    await fit("Expanded mobile details");
+    await assertFitsViewport("Expanded mobile details");
     await review.getByRole("tab", { name: "Content", exact: true }).focus();
     await review.keyboard.press("ArrowRight");
     if (
@@ -178,7 +179,7 @@ async function dashboardAnalytics(page) {
     );
     await review.goto(`${origin}/?empty`);
     await review.getByText("No recent views", { exact: true }).waitFor();
-    await fit("Empty content");
+    await assertFitsViewport("Empty content");
     await review.screenshot({
       path: "task/dashboard-analytics-review/updated-empty-320.png",
       fullPage: true,
@@ -209,7 +210,7 @@ async function dashboardAnalytics(page) {
         ),
       "Reduced motion skeleton animates",
     );
-    await fit("Loading");
+    await assertFitsViewport("Loading");
     await review.screenshot({
       path: "task/dashboard-analytics-review/updated-loading-320.png",
       fullPage: true,
