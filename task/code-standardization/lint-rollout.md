@@ -346,6 +346,14 @@ no shader or lifecycle changes are mixed into this lint step. Eleven focused
 resource tests, TypeScript, and the rebuilt GPU fixture passed. Broader effects
 engines and remaining CSS/scripts/tests still need their own bounded review.
 
+Public/common CSS is covered in [public-css.md](public-css.md), committed as
+`e4c6781`; the count reached 378. GravityStars lifecycle and positive lint coverage
+are recorded in [star-lifecycle.md](star-lifecycle.md), committed as `b634bdf`;
+current source coverage is 379 files. The user approved retiring the four unused
+legacy effects rather than hardening unused components. See
+[retire-unused-effects.md](retire-unused-effects.md) for dependency/verification
+evidence. Earlier baseline counts are historical, not current repository totals.
+
 ## Public/common CSS
 
 Public/common styles are now included; coverage is 378 source files with no

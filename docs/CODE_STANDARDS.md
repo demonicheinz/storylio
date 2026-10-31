@@ -83,6 +83,11 @@ CMS contracts, and security behavior unless the task explicitly changes them.
   important declarations that override animation inline styles for accessibility
   or history restoration, with declaration-local reasons. Do not change cascade
   order merely to silence lint without checking the resulting behavior.
+- FloatingDots, CanvasRevealEffect, TextGenerateEffect and Spotlight were retired
+  after confirming no application consumers. Do not recreate their export barrel
+  or reinstall Three/React Three Fiber for historical examples. Add an effect
+  only for an actual current feature requirement; active GravityStars/Venom use
+  native canvas/WebGL and do not require those packages.
 
 ## Refactoring and verification
 

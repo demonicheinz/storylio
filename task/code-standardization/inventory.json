@@ -80,7 +80,7 @@
       "empty_catches": 0,
       "any_casts": 0,
       "ts_ignore": 0,
-      "current_lines": 991
+      "current_lines": 1000
     },
     {
       "file": "src/features/dashboard/about/components/structured-manager.tsx",

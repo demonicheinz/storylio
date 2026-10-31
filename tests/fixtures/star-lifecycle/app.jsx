@@ -1,12 +1,10 @@
 import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { FloatingDots } from "@/components/effects/floating-dots";
 import GravityStars from "@/components/effects/gravity-stars";
 
 function Fixture() {
   const [mounted, setMounted] = useState(true);
   const [paused, setPaused] = useState(false);
-  const dots = new URLSearchParams(location.search).has("dots");
   return (
     <main>
       <div
@@ -32,16 +30,9 @@ function Fixture() {
           height: 260,
         }}
       >
-        {mounted &&
-          (dots ? (
-            <FloatingDots count={40} />
-          ) : (
-            <GravityStars
-              paused={paused}
-              count={40}
-              className="h-full w-full"
-            />
-          ))}
+        {mounted && (
+          <GravityStars paused={paused} count={40} className="w-full h-full" />
+        )}
       </div>
       <div style={{ height: 2000 }} />
     </main>
