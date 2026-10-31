@@ -1,5 +1,10 @@
 # Sentry triage — 2026-10-31
 
+Update: the later investigation reproduced STORYLIO-4 through the internal /index
+resume alias and fixed RouteMotion root key identity. See [home-resume.md](home-resume.md).
+The original observations below describe the initial triage; hosted validation
+after deploying the key fix is still required.
+
 Read-only Sentry inspection found four unresolved issues in the last 14 days.
 No Sentry issue state, deployment, credential or CMS record was changed.
 
