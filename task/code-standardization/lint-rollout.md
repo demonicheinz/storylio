@@ -211,6 +211,23 @@ check resolved both switches by accessible name and verified label click and
 Space toggle once each. Production build passed with 38/38 pages; source lint and
 whitespace checks passed. Fixtures do not mutate real CMS data.
 
+About coverage committed as `b9d6b8d` with normal hooks.
+
+## Complete Analytics feature coverage
+
+Cover seven Analytics files, bringing source lint to 166 clean files. The bounded
+daily-value table uses a named section and retains its justified keyboard scroll
+Tab stop. Provider metric rows remain separate stateless text: normalized country
+names can repeat, so the existing snapshot-index-qualified key has an explicit
+local exception rather than silently merging values or dropping duplicate names.
+
+Thirty Analytics/provider regression tests and standalone TypeScript passed. The
+browser suite passed all responsive widths, keyboard charts/table data, source
+tabs, retained provider data, partial errors, pending locks, disclosures and reduced
+motion loading. Build was not repeated for the named-section/comment change;
+About's preceding 38-page build is historical, and normal TypeScript hooks still
+run. Synthetic fixture data only; no real analytics provider requests.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:
