@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import {
   afterAll,
   afterEach,
+  assert,
   beforeAll,
   beforeEach,
   describe,
@@ -41,7 +42,7 @@ const applyCookies = (response: Response) => {
 const post = async (path: string, body: unknown, fixedIp?: string) =>
   applyCookies(
     await auth.handler(
-      new Request(origin + "/api/auth" + path, {
+      new Request(`${origin}/api/auth${path}`, {
         method: "POST",
         headers: {
           Origin: origin,
@@ -58,7 +59,7 @@ const login = () =>
 const session = async () =>
   (
     await auth.handler(
-      new Request(origin + "/api/auth/get-session", {
+      new Request(`${origin}/api/auth/get-session`, {
         headers: { Cookie: cookie() },
       }),
     )
@@ -69,8 +70,11 @@ const setup = async () => {
   expect(response.status).toBe(200);
   return (await response.json()) as { totpURI: string; backupCodes: string[] };
 };
-const code = (uri: string) =>
-  createOTP(base32.decode(new URL(uri).searchParams.get("secret")!)).totp();
+const code = (uri: string) => {
+  const secret = new URL(uri).searchParams.get("secret");
+  assert.exists(secret);
+  return createOTP(base32.decode(secret)).totp();
+};
 const enable = async () => {
   const data = await setup();
   expect(
@@ -175,7 +179,7 @@ describe("optional authenticator MFA", () => {
     ).toBe(200);
     expect((await session()).user.id).toBe(ownerId);
     const replay = await auth.handler(
-      new Request(origin + "/api/auth/two-factor/verify-totp", {
+      new Request(`${origin}/api/auth/two-factor/verify-totp`, {
         method: "POST",
         headers: {
           Origin: origin,
@@ -315,13 +319,15 @@ describe("optional authenticator MFA", () => {
       const credentialID = "Zml4dHVyZS1jcmVkZW50aWFs";
       const keys = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
       const jwk = keys.publicKey.export({ format: "jwk" });
+      assert.exists(jwk.x);
+      assert.exists(jwk.y);
       const cose = isoCBOR.encode(
         new Map<number, number | Uint8Array>([
           [1, 2],
           [3, -7],
           [-1, 1],
-          [-2, Buffer.from(jwk.x!, "base64url")],
-          [-3, Buffer.from(jwk.y!, "base64url")],
+          [-2, Buffer.from(jwk.x, "base64url")],
+          [-3, Buffer.from(jwk.y, "base64url")],
         ]),
       );
       await fixture.db.insert(schema.passkey).values({
@@ -336,7 +342,7 @@ describe("optional authenticator MFA", () => {
       const options = applyCookies(
         await auth.handler(
           new Request(
-            origin + "/api/auth/passkey/generate-authenticate-options",
+            `${origin}/api/auth/passkey/generate-authenticate-options`,
             { headers: { Origin: origin } },
           ),
         ),
@@ -408,13 +414,12 @@ describe("optional authenticator MFA", () => {
       );
       const start = await post("/sign-in/social", {
         provider: "github",
-        callbackURL: origin + "/dashboard",
-        errorCallbackURL: origin + "/sign-in?error=oauth",
+        callbackURL: `${origin}/dashboard`,
+        errorCallbackURL: `${origin}/sign-in?error=oauth`,
       });
       expect(start.status).toBe(200);
-      const state = new URL((await start.json()).url).searchParams.get(
-        "state",
-      )!;
+      const state = new URL((await start.json()).url).searchParams.get("state");
+      assert.exists(state);
       const callback = applyCookies(
         await auth.handler(
           new Request(

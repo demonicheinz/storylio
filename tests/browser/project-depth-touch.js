@@ -5,7 +5,7 @@ async sessionPage => {
   const page=await context.newPage();
   let step='initial tap';
   try {
-    await page.goto(origin+'/projects/storylio');
+    await page.goto(`${origin}/projects/storylio`);
     const carousel=page.getByRole('region',{name:'Project screenshots',exact:true});await carousel.waitFor();await carousel.scrollIntoViewIfNeeded();
     await page.evaluate(()=>document.fonts.ready);
     await carousel.getByRole('button',{name:'Open Storylio screenshot 1',exact:true}).tap();
@@ -44,5 +44,5 @@ async sessionPage => {
     await page.waitForFunction(y=>scrollY>y+30,before);
     if(await page.locator('[data-depth-carousel]').getAttribute('data-current-index')!=='1')throw Error('Vertical touch changed screenshot');
     return {touchSwipe:true,tapLightbox:true,verticalTouchScroll:true};
-  } catch(error) {error.message+=' Stage: '+step+' '+JSON.stringify(await page.evaluate(()=>({index:document.querySelector('[data-depth-carousel]')?.dataset.currentIndex,dialog:!!document.querySelector('[role="dialog"]'),focused:document.hasFocus()})));throw error;} finally {await context.close()}
+  } catch(error) {error.message+=` Stage: ${step} ${JSON.stringify(await page.evaluate(()=>({index:document.querySelector('[data-depth-carousel]')?.dataset.currentIndex,dialog:!!document.querySelector('[role="dialog"]'),focused:document.hasFocus()})))}`;throw error;} finally {await context.close()}
 }

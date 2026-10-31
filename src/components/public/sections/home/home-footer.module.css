@@ -137,6 +137,7 @@
 @media (prefers-reduced-motion: reduce), (max-width: 1023px),
   (max-height: 799px) {
   .curtain {
+    /* biome-ignore lint/complexity/noImportantStyles: Compact layouts and reduced motion must override scroll-driven inline footer geometry. */
     height: auto !important;
     clip-path: none;
   }
@@ -144,12 +145,15 @@
     position: relative;
   }
   .wordmark {
+    /* biome-ignore lint/complexity/noImportantStyles: Compact layouts and reduced motion must override scroll-driven inline footer geometry. */
     transform: none !important;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .top > * {
+    /* biome-ignore lint/complexity/noImportantStyles: Compact layouts and reduced motion must override scroll-driven inline footer geometry. */
     transform: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Compact layouts and reduced motion must override scroll-driven inline footer geometry. */
     opacity: 1 !important;
   }
 }

@@ -17,7 +17,7 @@ async sessionPage=>{
     if(mode==='offline'&&path.endsWith('/sign-in/email'))return route.abort('failed');
     // A successful provider response without automatic navigation preserves the
     // exact locked UI state that a real OAuth departure stores in bfcache.
-    if(mode==='social-success'&&path.endsWith('/sign-in/social'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({url:origin+'/oauth-fixture',redirect:false})});
+    if(mode==='social-success'&&path.endsWith('/sign-in/social'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({url:`${origin}/oauth-fixture`,redirect:false})});
     const status=path.endsWith('/sign-in/email')?(mode==='throttle'?429:mode==='server'?500:401):400;
     return route.fulfill({status,contentType:'application/json',body:JSON.stringify({code:status===401?'INVALID_EMAIL_OR_PASSWORD':'FIXTURE_ERROR',message:'Fixture response'})});
   });
@@ -26,12 +26,12 @@ async sessionPage=>{
   let stage='layout';
   try {
     for(const [width,height]of [[1440,1000],[1024,900],[768,1024],[390,844],[320,740],[844,390],[390,420]]){
-      stage='layout '+width+'x'+height;
-      await page.setViewportSize({width,height});await page.goto(origin+'/sign-in');
+      stage=`layout ${width}x${height}`;
+      await page.setViewportSize({width,height});await page.goto(`${origin}/sign-in`);
       await page.getByRole('heading',{name:'Sign in to Storylio',exact:true}).waitFor();await page.evaluate(()=>document.fonts.ready);
       const geometry=await page.evaluate(()=>({width:innerWidth,height:innerHeight,overflow:document.documentElement.scrollWidth>innerWidth+1,top:document.querySelector('main a').getBoundingClientRect().top,main:document.querySelectorAll('main').length,formWidth:document.querySelector('form').getBoundingClientRect().width,controls:[...document.querySelectorAll('input,button:not([data-nextjs-dialog-close])')].filter(el=>el.closest('main')).map(el=>({height:el.getBoundingClientRect().height,label:el.getAttribute('aria-label')||el.textContent})),native:!document.documentElement.classList.contains('lenis')}));
-      assert(!geometry.overflow&&geometry.top>=0&&geometry.main===1&&geometry.formWidth<=401&&geometry.native,'Layout invalid '+JSON.stringify(geometry));
-      assert(geometry.controls.every(item=>item.height>=44),'Small controls '+JSON.stringify(geometry));
+      assert(!geometry.overflow&&geometry.top>=0&&geometry.main===1&&geometry.formWidth<=401&&geometry.native,`Layout invalid ${JSON.stringify(geometry)}`);
+      assert(geometry.controls.every(item=>item.height>=44),`Small controls ${JSON.stringify(geometry)}`);
       assert(await page.getByLabel('Password',{exact:true}).getAttribute('type')==='password','Password absent or unmasked');
       assert(await page.getByLabel('Password',{exact:true}).getAttribute('autocomplete')==='current-password','Password manager hint missing');
       assert((await page.locator('meta[name="robots"]').getAttribute('content')).includes('noindex'),'Sign-in indexable');
@@ -41,7 +41,7 @@ async sessionPage=>{
       assert(back.y>=0&&back.y+back.height<=height+1,'Back link unreachable');
       results.push(geometry);
     }
-    stage='validation';await page.setViewportSize({width:390,height:844});await page.goto(origin+'/sign-in?callbackUrl=%2Fdashboard%2Fsettings%3Ftab%3Dsecurity');
+    stage='validation';await page.setViewportSize({width:390,height:844});await page.goto(`${origin}/sign-in?callbackUrl=%2Fdashboard%2Fsettings%3Ftab%3Dsecurity`);
     await submit().click();await page.getByText('Enter a valid email address.',{exact:true}).waitFor();
     await page.getByText('Enter your password.',{exact:true}).waitFor();
     assert(await page.getByLabel('Email',{exact:true}).getAttribute('aria-invalid')==='true','Field error not exposed');
@@ -60,7 +60,7 @@ async sessionPage=>{
     }
     stage='cancelled passkey';await page.getByRole('button',{name:'Sign in with passkey',exact:true}).click();
     await page.getByRole('alert').filter({hasText:/Passkey sign-in was cancelled/}).waitFor();assert(await submit().isEnabled(),'Passkey cancellation locks form');
-    stage='unsafe callback';mode='credentials';await page.goto(origin+'/sign-in?callbackUrl=javascript%3Aalert(1)');
+    stage='unsafe callback';mode='credentials';await page.goto(`${origin}/sign-in?callbackUrl=javascript%3Aalert(1)`);
     await page.getByLabel('Email',{exact:true}).fill('fixture@example.test');await page.getByLabel('Password',{exact:true}).fill('fixture-password');await submit().click();
     await page.getByRole('alert').filter({hasText:'Email or password is incorrect.'}).waitFor();
     assert(requests.filter(r=>r.path.endsWith('/sign-in/email')).at(-1).body.callbackURL==='/dashboard','Unsafe callback escaped');
@@ -81,6 +81,6 @@ async sessionPage=>{
     }
     assert(errors.length===0,errors.join('\n'));
     return {results,validation:true,errorRecovery:true,githubTested:await github.count()>0,passkeyCancelled:true,callbackSafe:true,bfcacheTested,errors};
-  }catch(error){error.message+=' Stage: '+stage;throw error}
+  }catch(error){error.message+=` Stage: ${stage}`;throw error}
   finally{await context.close()}
 }

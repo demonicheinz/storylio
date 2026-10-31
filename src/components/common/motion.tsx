@@ -45,7 +45,8 @@ export function RouteMotion({
 
   return (
     <motion.div
-      key={pathname}
+      // Next can resume the root shell through /index; its key must stay canonical.
+      key={pathname === "/index" ? "/" : pathname}
       data-route-motion
       initial={reduceMotion ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}

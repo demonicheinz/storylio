@@ -7,7 +7,8 @@ vi.mock("@/components/common/tilted-card", () => ({
   TiltedCard: ({ children }: { children: React.ReactNode }) => children,
 }));
 vi.mock("@/components/public/sections/blog/blog-cover", () => ({
-  BlogCover: () => createElement("div", { "data-cover": true }),
+  BlogCover: ({ src }: { src: string | null }) =>
+    createElement("div", { "data-cover": src ?? "placeholder" }),
 }));
 const post = {
   id: "test",
@@ -43,6 +44,6 @@ describe("writing archive cards", () => {
     );
     expect(html).toContain(title);
     expect(html).toContain(excerpt);
-    expect(html).not.toContain("data-cover");
+    expect(html).toContain('data-cover="placeholder"');
   });
 });

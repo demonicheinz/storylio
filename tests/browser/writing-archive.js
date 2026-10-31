@@ -6,15 +6,15 @@ async sessionPage=>{
   try {
     await page.emulateMedia({reducedMotion:'reduce'});
     for(const width of [1440,1024,768,390,320]) {
-      await page.setViewportSize({width,height:1000});await page.goto(origin+'/blog');await page.getByRole('heading',{name:'Writing',exact:true}).waitFor();
+      await page.setViewportSize({width,height:1000});await page.goto(`${origin}/blog`);await page.getByRole('heading',{name:'Writing',exact:true}).waitFor();
       await page.locator('#writing-list').waitFor();await page.evaluate(()=>document.fonts.ready);
       const data=await page.evaluate(()=>({width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+1,cards:[...document.querySelectorAll('[data-post-card]')].map(card=>({width:card.getBoundingClientRect().width,title:getComputedStyle(card.querySelector('h2')).fontSize,lines:getComputedStyle(card.querySelector('h2')).webkitLineClamp,cta:card.querySelector('[data-flow-button]')?.textContent.trim()}))}));
-      assert(!data.overflow,'Page overflows: '+width);assert(data.cards.length<=6,'Unbounded page');
+      assert(!data.overflow,`Page overflows: ${width}`);assert(data.cards.length<=6,'Unbounded page');
       assert(data.cards.every(card=>card.title==='22px'&&card.lines==='2'&&card.cta==='Read article'),'Card hierarchy changed');
-      if(width===1440||width===390)await page.screenshot({path:'task/writing-notes/archive-'+width+'.png',fullPage:true});
+      if(width===1440||width===390)await page.screenshot({path:`task/writing-notes/archive-${width}.png`,fullPage:true});
       results.push(data);
     }
-    await page.goto(origin+'/blog?keep=writing-check&page=999');await page.locator('#writing-list').waitFor();
+    await page.goto(`${origin}/blog?keep=writing-check&page=999`);await page.locator('#writing-list').waitFor();
     const trigger=page.getByRole('button',{name:'Filter topic',exact:true});
     await trigger.click();
     const list=page.getByRole('listbox',{name:'Topics',exact:true});
@@ -43,7 +43,7 @@ async sessionPage=>{
     await page.getByRole('navigation',{name:'Writing formats'}).getByRole('link',{name:'Notes',exact:true}).click();
     await page.waitForURL(url=>url.searchParams.get('tag')==='notes');await page.getByRole('heading',{name:'Notes from building',exact:true}).waitFor();
     assert(await page.getByRole('button',{name:'Filter topic',exact:true}).count()===0,'Article topic control leaked to Notes');
-    await page.goto(origin+'/blog?tag=unknown-writing-fixture');await page.locator('#writing-list').waitFor();
+    await page.goto(`${origin}/blog?tag=unknown-writing-fixture`);await page.locator('#writing-list').waitFor();
     assert(await page.locator('[data-post-card]').count()===0,'Unknown tag exposes articles');
     return {results,singleTopic:true,notesArchive:true,unknownTagEmpty:true};
   } finally {await page.close()}

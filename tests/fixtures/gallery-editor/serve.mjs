@@ -19,7 +19,7 @@ const replacements = {
     export const actionUpdateGalleryItem=(id,values)=>save(values,id);
   `,
   "@/features/dashboard/shared/utils/upload": `export async function uploadFile(){const f=window.galleryEditor;f.uploadCalls++;await new Promise(resolve=>f.releaseUpload=resolve);if(f.failUpload)throw new Error('Fixture upload failed.');return {url:location.origin+'/fixture.svg',width:12,height:8,size:100,aspectRatio:1.5};}`,
-  "next/navigation": `export const useRouter=()=>({refresh(){window.galleryEditor.refreshes++;}});`,
+  "next/navigation": `export const usePathname=()=>location.pathname;export const useRouter=()=>({refresh(){window.galleryEditor.refreshes++;}});`,
   "next/image": `export default function Image({src,unoptimized,fill,priority,...props}){return <img src={typeof src==='string'?src:src.src} {...props} style={fill?{position:'absolute',inset:0,width:'100%',height:'100%',...props.style}:props.style}/>;}`,
 };
 const bundle = await build({
@@ -46,7 +46,7 @@ const bundle = await build({
           resolveDir: process.cwd(),
         }));
         b.onLoad({ filter: /\.svg$/ }, async (args) => ({
-          contents: `export default {src:${JSON.stringify("data:image/svg+xml;base64," + Buffer.from(await readFile(args.path)).toString("base64"))}};`,
+          contents: `export default {src:${JSON.stringify(`data:image/svg+xml;base64,${Buffer.from(await readFile(args.path)).toString("base64")}`)}};`,
           loader: "js",
         }));
       },

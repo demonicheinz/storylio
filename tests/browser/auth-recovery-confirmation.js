@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function recoveryConfirmation(sessionPage) {
   const origin = new URL(sessionPage.url()).origin;
   const context = await sessionPage.context().browser().newContext();
@@ -21,7 +22,7 @@ async function recoveryConfirmation(sessionPage) {
         width,
         height: width === 1440 ? 1000 : 844,
       });
-      await page.goto(origin + "/forgot-password");
+      await page.goto(`${origin}/forgot-password`);
       await page
         .getByLabel("Email", { exact: true })
         .fill("fixture@example.test");

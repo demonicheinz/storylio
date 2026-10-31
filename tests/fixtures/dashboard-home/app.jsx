@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { HomeContentManager } from "@/features/dashboard/home/components/home-section-form";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
 
 const svg =
   "data:image/svg+xml," +
@@ -143,4 +144,9 @@ function App() {
     </main>
   );
 }
-createRoot(document.getElementById("root")).render(<App />);
+createRoot(document.getElementById("root")).render(
+  <>
+    <DashboardConfirmationHost />
+    {<App />}
+  </>,
+);

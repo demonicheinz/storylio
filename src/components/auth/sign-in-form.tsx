@@ -184,7 +184,7 @@ export function SignInForm({
         ) {
           setPending("redirect");
           router.replace(
-            "/two-factor?" + new URLSearchParams({ callbackUrl: redirectTo }),
+            `/two-factor?${new URLSearchParams({ callbackUrl: redirectTo })}`,
           );
         } else navigate();
         success = true;
@@ -207,7 +207,7 @@ export function SignInForm({
       const result = await authClient.signIn.social({
         provider: "github",
         callbackURL: redirectTo,
-        errorCallbackURL: "/sign-in?" + query.toString(),
+        errorCallbackURL: `/sign-in?${query.toString()}`,
       });
       if (!isCurrent(attempt)) return;
       if (result.error || !result.data?.url)
@@ -301,7 +301,7 @@ export function SignInForm({
               autoComplete="current-password"
               required
               disabled={pending !== null}
-              className={styles.input + " " + styles.passwordInput}
+              className={`${styles.input} ${styles.passwordInput}`}
               aria-invalid={Boolean(errors.password)}
               aria-describedby={errors.password ? "password-error" : undefined}
             />

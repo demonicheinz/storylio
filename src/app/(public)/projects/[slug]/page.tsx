@@ -1,8 +1,4 @@
-import {
-  ArrowLeftIcon,
-  ArrowUpRightIcon,
-  GithubLogoIcon,
-} from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeftIcon, GithubLogoIcon } from "@phosphor-icons/react/dist/ssr";
 import { and, asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
@@ -21,6 +17,7 @@ import { ProjectScreenshots } from "@/components/public/sections/projects/projec
 import { ProjectToc } from "@/components/public/sections/projects/project-toc";
 import { db } from "@/lib/db";
 import { ProjectStatus } from "@/lib/db/enums";
+import { IMAGE_QUALITY, PUBLIC_COVER_IMAGE_SIZES } from "@/lib/image-policy";
 import { getProjectContribution } from "@/lib/project-contribution";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 import { renderPublicMDX } from "@/lib/public-mdx";
@@ -253,7 +250,8 @@ async function ProjectDetailContent({ params }: ProjectDetailPageProps) {
               className="aspect-video"
               fetchPriority="high"
               loading="eager"
-              sizes="(min-width:1328px) 1280px, 96vw"
+              sizes={PUBLIC_COVER_IMAGE_SIZES}
+              quality={IMAGE_QUALITY.detail}
             />
           </div>
           <dl className={projectStyles.facts}>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Toaster } from "@/components/ui/toast";
 import { GalleryManager } from "@/features/dashboard/gallery/components/gallery-item-form";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
 import shell from "@/features/dashboard/shell/dashboard-shell.module.css";
 
 const cover = (width, height, color) =>
@@ -48,4 +49,9 @@ function Fixture() {
     </Toaster>
   );
 }
-createRoot(document.getElementById("root")).render(<Fixture />);
+createRoot(document.getElementById("root")).render(
+  <>
+    <DashboardConfirmationHost />
+    {<Fixture />}
+  </>,
+);

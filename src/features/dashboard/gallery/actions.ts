@@ -1,7 +1,6 @@
 "use server";
 
 import { and, desc, eq, gt, gte, inArray, lt, lte, ne, sql } from "drizzle-orm";
-import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import { GALLERY_BATCH_LIMIT } from "@/features/dashboard/gallery/constants";
 import {
@@ -16,6 +15,7 @@ import { getActionSession } from "@/lib/auth-session";
 import { db } from "@/lib/db";
 import { galleryItem as galleryItemTable } from "@/lib/db/schema";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { revalidatePath, updateTag } from "@/lib/revalidation";
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 

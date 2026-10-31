@@ -16,6 +16,14 @@ const signIn = (method) => {
     : Promise.resolve(fixture.result);
 };
 export const authClient = {
+  requestPasswordReset: async (input) => {
+    fixture.recoveryInput = input;
+    return signIn("request-reset");
+  },
+  resetPassword: async (input) => {
+    fixture.recoveryInput = input;
+    return signIn("reset-password");
+  },
   signIn: {
     email: () => signIn("password"),
     social: () => signIn("github"),

@@ -1,0 +1,85 @@
+import { Activity, StrictMode, useState } from "react";
+import { createRoot } from "react-dom/client";
+import NewPostPage from "@/app/(dashboard)/dashboard/posts/new/page";
+import NewProjectPage from "@/app/(dashboard)/dashboard/projects/new/page";
+import { PublicPageSkeleton } from "@/components/common/public-page-skeleton";
+import { PostCard } from "@/components/public/sections/blog/post-card";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
+import { ConfirmationsFixture } from "./confirmations";
+import { Controls } from "./controls";
+import { CoversFixture } from "./covers";
+import { PaginationFixture } from "./pagination";
+
+window.fixture = { id: "first", fail: false, calls: [] };
+function App() {
+  const kind = new URLSearchParams(location.search).get("kind") ?? "posts";
+  const [visible, setVisible] = useState(true);
+  const [id, setId] = useState("first");
+  const visit = (fresh) => {
+    if (fresh) setId(crypto.randomUUID());
+    setVisible(true);
+  };
+  window.fixture.router = {
+    bfcacheId: id,
+    replace(path) {
+      window.fixture.destination = path;
+      setVisible(false);
+    },
+    refresh() {},
+  };
+  const variant = new URLSearchParams(location.search).get("variant");
+  if (kind === "controls") return <Controls />;
+  if (kind === "confirmation") return <ConfirmationsFixture />;
+  if (kind === "covers") return <CoversFixture />;
+  if (kind === "pagination") return <PaginationFixture />;
+  if (variant) return <PublicPageSkeleton variant={variant} />;
+  if (kind === "cover")
+    return (
+      <div
+        style={{ width: "min(400px, calc(100% - 32px))", margin: "80px auto" }}
+      >
+        <PostCard
+          post={{
+            id: "test",
+            slug: "test",
+            title: "An article without a cover",
+            excerpt: "The cover area should retain its aspect ratio.",
+            content: "Text",
+            coverImage: null,
+            publishedAt: null,
+            createdAt: new Date("2026-01-01"),
+            tags: [],
+            viewCount: 0,
+          }}
+        />
+      </div>
+    );
+  return (
+    <main style={{ padding: 24 }}>
+      <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
+        <button type="button" onClick={() => setVisible(false)}>
+          Collection
+        </button>
+        <button type="button" onClick={() => visit(true)}>
+          New item
+        </button>
+        <button type="button" onClick={() => visit(false)}>
+          Back to draft
+        </button>
+      </div>
+      <Activity mode={visible ? "visible" : "hidden"}>
+        {kind === "posts" ? <NewPostPage /> : <NewProjectPage />}
+      </Activity>
+    </main>
+  );
+}
+createRoot(document.getElementById("root")).render(
+  <>
+    <DashboardConfirmationHost />
+    {
+      <StrictMode>
+        <App />
+      </StrictMode>
+    }
+  </>,
+);

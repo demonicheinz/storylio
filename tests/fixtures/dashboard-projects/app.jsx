@@ -11,17 +11,18 @@ import { ToastProvider } from "@/components/ui/toast";
 import { ProjectEditor } from "@/features/dashboard/projects/components/project-editor";
 import { ProjectsManager } from "@/features/dashboard/projects/components/projects-manager";
 import { ScreenshotsUpload } from "@/features/dashboard/projects/components/screenshots-upload";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
 import shell from "@/features/dashboard/shell/dashboard-shell.module.css";
 
 const projects = Array.from({ length: 85 }, (_, i) => ({
-  id: "project-" + i,
+  id: `project-${i}`,
   title:
     i === 0
       ? "Nebula Commerce with a deliberately long project name"
       : i === 1
         ? "Storylio"
-        : "Project " + i,
-  slug: "project-" + i,
+        : `Project ${i}`,
+  slug: `project-${i}`,
   description: "A portfolio case study for an accessible web application.",
   coverImage: null,
   thumbnailImageUrl: null,
@@ -122,7 +123,9 @@ function UploadFixture() {
   const [disabled, setDisabled] = useState(false);
   return (
     <>
-      <button onClick={() => setDisabled(!disabled)}>Toggle disabled</button>
+      <button type="button" onClick={() => setDisabled(!disabled)}>
+        Toggle disabled
+      </button>
       <ScreenshotsUpload
         value={value}
         onChange={setValue}
@@ -132,23 +135,28 @@ function UploadFixture() {
   );
 }
 createRoot(document.getElementById("root")).render(
-  <ToastProvider>
-    <main
-      className={shell.shell}
-      style={{ maxWidth: 1280, margin: "auto", padding: 16 }}
-    >
-      {params.has("handle") ? (
-        <DrawerFixture />
-      ) : params.has("upload") ? (
-        <UploadFixture />
-      ) : params.has("editor") ? (
-        <ProjectEditor
-          mode={params.get("editor") === "create" ? "create" : "edit"}
-          {...(params.get("editor") === "create" ? {} : { project })}
-        />
-      ) : (
-        <ProjectsManager projects={projects} />
-      )}
-    </main>
-  </ToastProvider>,
+  <>
+    <DashboardConfirmationHost />
+    {
+      <ToastProvider>
+        <main
+          className={shell.shell}
+          style={{ maxWidth: 1280, margin: "auto", padding: 16 }}
+        >
+          {params.has("handle") ? (
+            <DrawerFixture />
+          ) : params.has("upload") ? (
+            <UploadFixture />
+          ) : params.has("editor") ? (
+            <ProjectEditor
+              mode={params.get("editor") === "create" ? "create" : "edit"}
+              {...(params.get("editor") === "create" ? {} : { project })}
+            />
+          ) : (
+            <ProjectsManager projects={projects} />
+          )}
+        </main>
+      </ToastProvider>
+    }
+  </>,
 );

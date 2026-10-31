@@ -1,9 +1,7 @@
 import { desc } from "drizzle-orm";
 import { connection } from "next/server";
-import {
-  type DashboardPost,
-  PostsManager,
-} from "@/features/dashboard/posts/components/posts-manager";
+import { PostsManager } from "@/features/dashboard/posts/components/posts-manager";
+import type { DashboardPost } from "@/features/dashboard/posts/types";
 import { DashboardRouteBoundary } from "@/features/dashboard/shared/components/route-boundary";
 import { db } from "@/lib/db";
 import { flattenPostTags, orderPostTagsByName } from "@/lib/db/query-utils";

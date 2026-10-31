@@ -1,0 +1,110 @@
+{
+  "tracked_code_files": 554,
+  "source_files": 332,
+  "large_source_files": [
+    {
+      "file": "src/components/effects/venom/engine.js",
+      "lines": 2674,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 2674
+    },
+    {
+      "file": "src/features/dashboard/projects/components/projects-manager.tsx",
+      "lines": 1970,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 1025
+    },
+    {
+      "file": "src/features/dashboard/gallery/components/gallery-item-form.tsx",
+      "lines": 1820,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 1599
+    },
+    {
+      "file": "src/features/dashboard/media/components/media-client.tsx",
+      "lines": 1795,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 786
+    },
+    {
+      "file": "src/features/dashboard/posts/components/posts-manager.tsx",
+      "lines": 1684,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 927
+    },
+    {
+      "file": "src/features/dashboard/settings/components/profile-settings-form.tsx",
+      "lines": 1411,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 1418
+    },
+    {
+      "file": "src/components/common/gooey-nav.tsx",
+      "lines": 1155,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 1155
+    },
+    {
+      "file": "src/features/dashboard/home/components/home-section-form.tsx",
+      "lines": 1131,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 1100
+    },
+    {
+      "file": "src/features/dashboard/projects/components/project-editor.tsx",
+      "lines": 1000,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 1006
+    },
+    {
+      "file": "src/components/effects/gravity-stars.tsx",
+      "lines": 991,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 1000
+    },
+    {
+      "file": "src/features/dashboard/about/components/structured-manager.tsx",
+      "lines": 963,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 970
+    },
+    {
+      "file": "src/features/dashboard/posts/components/post-editor.tsx",
+      "lines": 911,
+      "empty_catches": 2,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 917
+    },
+    {
+      "file": "src/components/common/live-orb.tsx",
+      "lines": 816,
+      "empty_catches": 0,
+      "any_casts": 0,
+      "ts_ignore": 0,
+      "current_lines": 816
+    }
+  ]
+}

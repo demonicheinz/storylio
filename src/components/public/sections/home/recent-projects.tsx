@@ -66,10 +66,13 @@ export function RecentProjectsSection({
                         </span>
                       ))}
                       {project.techStack.length > 3 && (
-                        <span
-                          aria-label={`${project.techStack.length - 3} more technologies`}
-                        >
-                          +{project.techStack.length - 3}
+                        <span>
+                          <span aria-hidden="true">
+                            +{project.techStack.length - 3}
+                          </span>
+                          <span className="sr-only">
+                            {project.techStack.length - 3} more technologies
+                          </span>
                         </span>
                       )}
                     </div>

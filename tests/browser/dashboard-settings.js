@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardSettings(sessionPage) {
   async function openMfaConfirmation() {
     if (
@@ -290,7 +291,7 @@ async function dashboardSettings(sessionPage) {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          url: origin + "/avatar.svg?new",
+          url: `${origin}/avatar.svg?new`,
           width: 1,
           height: 1,
         }),
@@ -431,8 +432,14 @@ async function dashboardSettings(sessionPage) {
     await page
       .getByRole("heading", { name: "Dashboard session", exact: true })
       .waitFor({ state: "hidden" });
-    page.once("dialog", (dialog) => dialog.dismiss());
+
     await tab("Account");
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-cancel"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(
       (await page
         .getByRole("tab", { name: "Security", exact: true })
@@ -463,10 +470,16 @@ async function dashboardSettings(sessionPage) {
           (x) => x.name === "generateBackupCodes",
         ).length,
     );
-    page.once("dialog", (dialog) => dialog.dismiss());
+
     await page
       .getByRole("button", { name: "Regenerate backup codes", exact: true })
       .click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-cancel"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(
       (await page.evaluate(
         () =>
@@ -476,15 +489,27 @@ async function dashboardSettings(sessionPage) {
       )) === before,
       "Cancelled regeneration called API",
     );
-    page.once("dialog", (dialog) => dialog.accept());
+
     await page
       .getByRole("button", { name: "Regenerate backup codes", exact: true })
       .click();
     await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
+    await page
       .getByRole("list", { name: "Backup codes", exact: true })
       .waitFor();
-    page.once("dialog", (dialog) => dialog.accept());
+
     await tab("Account");
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await tab("Security");
     assert(
       (await page
@@ -584,13 +609,18 @@ async function dashboardSettings(sessionPage) {
       (await remove.getAttribute("data-variant")) === "destructive",
       "Delete should use destructive styling",
     );
-    let prompt = "";
-    page.once("dialog", async (dialog) => {
-      prompt = dialog.message();
-      await dialog.dismiss();
-    });
     await remove.click();
-    assert(prompt.includes(keyName), "Delete confirmation should name the key");
+    const deletePrompt = page.getByRole("alertdialog", {
+      name: "Delete passkey?",
+      exact: true,
+    });
+    await deletePrompt.waitFor();
+    assert(
+      (await deletePrompt.textContent()).includes(keyName),
+      "Delete confirmation should name the key",
+    );
+    await deletePrompt.locator('[data-slot="alert-dialog-cancel"]').click();
+    await deletePrompt.waitFor({ state: "hidden" });
     assert(
       (await page.evaluate(
         () =>
@@ -600,8 +630,14 @@ async function dashboardSettings(sessionPage) {
       )) === 0,
       "Cancelled delete called auth",
     );
-    page.once("dialog", (dialog) => dialog.accept());
+
     await remove.click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await page.getByText(keyName, { exact: true }).waitFor({ state: "hidden" });
     const revokeOthers = page.getByRole("button", {
       name: "Revoke Other Sessions",
@@ -617,7 +653,8 @@ async function dashboardSettings(sessionPage) {
       exact: true,
     });
     await bulkDialog.waitFor();
-    prompt = await bulkDialog.innerText();
+    // biome-ignore lint/performance/useDomNodeTextContent: This is the Playwright locator method; the check reads the visible confirmation copy.
+    const confirmationText = await bulkDialog.innerText();
     await page.screenshot({
       path: "task/dashboard-settings-review/updated-session-confirm-320.png",
       fullPage: true,
@@ -630,8 +667,8 @@ async function dashboardSettings(sessionPage) {
       "Cancel should return focus to Revoke Other Sessions",
     );
     assert(
-      prompt.includes("1 other session") &&
-        prompt.includes("This browser will remain signed in"),
+      confirmationText.includes("1 other session") &&
+        confirmationText.includes("This browser will remain signed in"),
       "Bulk confirmation should explain count and current session",
     );
     assert(

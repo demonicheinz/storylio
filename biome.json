@@ -34,7 +34,15 @@
       "next": "recommended",
       "react": "recommended"
     },
-    "includes": ["!src/components/ui/"]
+    "includes": [
+      "src/**/*.{ts,tsx,js,css}",
+      "scripts/**",
+      "tests/helpers/**",
+      "tests/**/*.test.ts",
+      "tests/browser/**",
+      "tests/fixtures/**",
+      "*.{ts,mts,mjs,cjs}"
+    ]
   },
   "javascript": {
     "formatter": {
@@ -62,5 +70,22 @@
     "formatter": {
       "enabled": false
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.module.css"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnknownPseudoClass": {
+              "level": "error",
+              "options": {
+                "ignore": ["global", "local"]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

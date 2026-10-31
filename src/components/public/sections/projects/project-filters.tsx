@@ -54,9 +54,9 @@ export function ProjectFilters({
   };
 
   return (
-    <div
+    <fieldset
       className={styles.filterBar}
-      role="group"
+      style={{ minWidth: 0 }}
       aria-label="Filter projects by stack"
     >
       <p
@@ -97,7 +97,7 @@ export function ProjectFilters({
           </MultiSelectContent>
         </MultiSelect>
       </div>
-    </div>
+    </fieldset>
   );
 }
 

@@ -32,10 +32,6 @@ const normalizedStringArraySchema = z
     ),
   );
 
-const normalizedUrlArraySchema = normalizedStringArraySchema.pipe(
-  z.array(z.string().url("Use valid screenshot URLs")),
-);
-
 export const screenshotItemSchema = z.object({
   id: z.string().optional(),
   imageUrl: z.string().url("Screenshot URL is required"),

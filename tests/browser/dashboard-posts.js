@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardPosts(sessionPage) {
   const context = await sessionPage
     .context()
@@ -9,11 +10,6 @@ async function dashboardPosts(sessionPage) {
     if (!ok) throw Error(message);
   };
   const fresh = async (path = "") => {
-    await page
-      .evaluate(() => {
-        window.confirm = () => true;
-      })
-      .catch(() => {});
     await page.goto(origin + path);
   };
   const select = async (name, option) => {
@@ -147,10 +143,16 @@ async function dashboardPosts(sessionPage) {
     await page
       .getByRole("textbox", { name: "Title", exact: true })
       .fill("Unsaved changes");
-    await page.evaluate(() => (window.confirm = () => false));
+
     await page
       .getByRole("link", { name: "Back to Posts", exact: true })
       .click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-cancel"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(
       page.url().includes("editor=create"),
       "Dirty link navigation was not guarded",

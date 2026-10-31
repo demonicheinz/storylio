@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { TwoFactorForm } from "@/components/auth/two-factor-form";
 import { Toaster } from "@/components/ui/toast";
 import { SettingsManager } from "@/features/dashboard/settings/components/profile-settings-form";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
 import shell from "@/features/dashboard/shell/dashboard-shell.module.css";
 
 const profile = {
@@ -18,37 +19,43 @@ const profile = {
   publicEmail: "hello@example.test",
 };
 createRoot(document.getElementById("root")).render(
-  <Toaster>
-    <main className={shell.shell}>
-      <div className={shell.content}>
-        <header className="mb-6">
-          <h1 className="font-heading">Settings</h1>
-          <p className="mt-2 text-muted-foreground text-sm leading-6">
-            Manage your public profile, sign-in methods, and account security.
-          </p>
-        </header>
-        {new URLSearchParams(location.search).get("view") === "totp" ? (
-          <TwoFactorForm />
-        ) : (
-          <SettingsManager
-            profile={profile}
-            linkedAccounts={[
-              {
-                id: "github",
-                providerId: "github",
-                accountId: "example",
-                createdAt: new Date("2026-10-30T00:00:00Z"),
-              },
-            ]}
-          />
-        )}
-        <a
-          href="/elsewhere"
-          className="inline-flex items-center mt-6 min-h-11 text-link"
-        >
-          Leave Settings fixture
-        </a>
-      </div>
-    </main>
-  </Toaster>,
+  <>
+    <DashboardConfirmationHost />
+    {
+      <Toaster>
+        <main className={shell.shell}>
+          <div className={shell.content}>
+            <header className="mb-6">
+              <h1 className="font-heading">Settings</h1>
+              <p className="mt-2 text-muted-foreground text-sm leading-6">
+                Manage your public profile, sign-in methods, and account
+                security.
+              </p>
+            </header>
+            {new URLSearchParams(location.search).get("view") === "totp" ? (
+              <TwoFactorForm />
+            ) : (
+              <SettingsManager
+                profile={profile}
+                linkedAccounts={[
+                  {
+                    id: "github",
+                    providerId: "github",
+                    accountId: "example",
+                    createdAt: new Date("2026-10-30T00:00:00Z"),
+                  },
+                ]}
+              />
+            )}
+            <a
+              href="/elsewhere"
+              className="inline-flex items-center mt-6 min-h-11 text-link"
+            >
+              Leave Settings fixture
+            </a>
+          </div>
+        </main>
+      </Toaster>
+    }
+  </>,
 );

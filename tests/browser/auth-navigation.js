@@ -125,7 +125,7 @@ async (page) => {
         await page.evaluate(() => { window.authFixture.logout = "success"; });
         await page.getByRole("button", { name: "Account menu" }).click();
         await page.getByRole("menuitem", { name: "Sign out", exact: true }).click();
-        await page.waitForURL(origin + "/sign-in");
+        await page.waitForURL(`${origin}/sign-in`);
         await ready();
       });
     }
@@ -134,7 +134,7 @@ async (page) => {
       await page.evaluate(() => { window.authFixture.oldDocument = true; });
       await page.getByRole("button", { name: "Account menu" }).click();
       await page.getByRole("menuitem", { name: "Sign out", exact: true }).click();
-      await page.waitForURL(origin + "/sign-in");
+      await page.waitForURL(`${origin}/sign-in`);
       await ready();
       assert(await page.evaluate(() => !window.authFixture.oldDocument), "Logout reused the authenticated document");
     });

@@ -1,5 +1,9 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { ProjectEditor } from "@/features/dashboard/projects/components/project-editor";
 
 export default function NewProjectPage() {
-  return <ProjectEditor mode="create" />;
+  const { bfcacheId } = useRouter();
+  return <ProjectEditor key={bfcacheId} mode="create" />;
 }

@@ -10,8 +10,8 @@ describe("public route loading layout", () => {
   it.each([
     ["/projects/storylio", "project-detail"],
     ["/blog/building-storylio", "post-detail"],
-    ["/projects", "collection"],
-    ["/blog", "collection"],
+    ["/projects", "projects"],
+    ["/blog", "blog"],
     ["/about", "about"],
     ["/gallery", "gallery"],
   ])("uses the detail skeleton for %s", (pathname, variant) => {

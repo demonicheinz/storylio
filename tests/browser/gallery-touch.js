@@ -5,7 +5,7 @@ async sessionPage => {
   const assert=(condition,message)=>{if(!condition)throw Error(message)};
   let stage='open';
   try {
-    await page.goto(origin+'/gallery');const card=page.locator('[data-gallery-photo]').first();await card.waitFor();
+    await page.goto(`${origin}/gallery`);const card=page.locator('[data-gallery-photo]').first();await card.waitFor();
     await page.waitForFunction(()=>document.querySelector('[data-gallery-photo]').getBoundingClientRect().width>300);
     const count=await page.locator('[data-gallery-photo]').count();
     await card.tap();const dialog=page.getByRole('dialog',{name:'Lightbox',exact:true});await dialog.waitFor();
@@ -51,7 +51,7 @@ async sessionPage => {
     assert(await dialog.count()===0,'Vertical pan opened lightbox');
     return {touchSwipe:true,zoom:true,nativePagePan:true};
   } catch(error) {
-    error.message+=' Stage: '+stage+' '+JSON.stringify(await page.evaluate(()=>({scrollY,classes:document.documentElement.className,transform:document.querySelector('.yarl__slide_current .yarl__slide_wrapper')?.getAttribute('style'),zoomButtons:[...document.querySelectorAll('button[aria-label^="Zoom"]')].map(el=>({label:el.getAttribute('aria-label'),disabled:el.disabled})),dialog:!!document.querySelector('[role="dialog"]')})));
+    error.message+=` Stage: ${stage} ${JSON.stringify(await page.evaluate(()=>({scrollY,classes:document.documentElement.className,transform:document.querySelector('.yarl__slide_current .yarl__slide_wrapper')?.getAttribute('style'),zoomButtons:[...document.querySelectorAll('button[aria-label^="Zoom"]')].map(el=>({label:el.getAttribute('aria-label'),disabled:el.disabled})),dialog:!!document.querySelector('[role="dialog"]')})))}`;
     throw error;
   } finally {await context.close()}
 }

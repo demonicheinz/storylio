@@ -6,6 +6,7 @@ import { build } from "esbuild";
 import postcss from "postcss";
 
 const replacements = {
+  "next/navigation": "export const usePathname=()=>location.pathname;",
   "../actions":
     "const before=async(name,ids=[])=>{window.mediaCalls.push({name,ids});if(window.mediaReject===name)throw Error('Fixture transport failure');if(window.mediaHold===name)await new Promise(resolve=>window.mediaRelease=resolve);return window.mediaFailure===name?{success:false,error:'Fixture action failed.'}:null;};export const actionCheckMediaUsage=async ids=>{const error=await before('usage',ids);if(error)return error;return {success:true,data:{canDelete:window.mediaRows.filter(item=>ids.includes(item.id)&&Number(item.id.split('-')[1])%3!==0).map(item=>({id:item.id,filename:item.filename,references:[]})),blocked:window.mediaRows.filter(item=>ids.includes(item.id)&&Number(item.id.split('-')[1])%3===0).map(item=>({id:item.id,filename:item.filename,references:[{label:'post cover',count:1}]}))}};};export const actionRenameMedia=async(id,filename)=>{const error=await before('rename',[id]);return error??{success:true,data:{id,filename}};};export const actionDeleteMedia=async id=>{const error=await before('delete',[id]);if(error)return error;if(Number(id.split('-')[1])%3===0)return {success:false,error:'Media is still in use by 1 post cover.'};return {success:true};};export const actionDeleteMediaBatch=async ids=>{const error=await before('batch',ids);if(error)return error;const failedIds=window.mediaFailedIds??[];return {success:true,data:{deletedIds:ids.filter(id=>!failedIds.includes(id)),failedItems:window.mediaRows.filter(item=>ids.includes(item.id)&&failedIds.includes(item.id)).map(item=>({id:item.id,filename:item.filename,error:'Fixture provider failure'}))}};};",
   "next/image":
@@ -23,18 +24,23 @@ const bundle = await build({
     {
       name: "review-fixture",
       setup(b) {
-        b.onResolve({ filter: /.*/ }, (a) =>
-          replacements[a.path]
-            ? { path: a.path, namespace: "fixture" }
-            : undefined,
-        );
+        b.onResolve({ filter: /.*/ }, (a) => {
+          const path =
+            a.path === "./actions" &&
+            a.importer.endsWith("use-media-deletion.ts")
+              ? "../actions"
+              : a.path;
+          return replacements[path]
+            ? { path, namespace: "fixture" }
+            : undefined;
+        });
         b.onLoad({ filter: /.*/, namespace: "fixture" }, (a) => ({
           contents: replacements[a.path],
           loader: "jsx",
           resolveDir: process.cwd(),
         }));
         b.onLoad({ filter: /\.svg$/ }, async (a) => ({
-          contents: `export default {src:${JSON.stringify("data:image/svg+xml;base64," + Buffer.from(await readFile(a.path)).toString("base64"))}};`,
+          contents: `export default {src:${JSON.stringify(`data:image/svg+xml;base64,${Buffer.from(await readFile(a.path)).toString("base64")}`)}};`,
           loader: "js",
         }));
       },

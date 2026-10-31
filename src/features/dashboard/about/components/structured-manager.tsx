@@ -10,7 +10,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FormEvent, ReactNode } from "react";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,6 +71,7 @@ import {
 } from "@/features/dashboard/about/validations";
 import { DashboardSelect } from "@/features/dashboard/shared/components/filter-controls";
 import { DashboardSortableList } from "@/features/dashboard/shared/components/sortable-list";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { cn } from "@/lib/utils";
 import { useAboutDraftGuard } from "./use-about-draft-guard";
@@ -209,6 +210,7 @@ function EditDialog({
   categories?: AboutStructuredData["categories"];
 }) {
   const router = useRouter();
+  const controlId = useId();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -219,14 +221,20 @@ function EditDialog({
   const [dirty, setDirty] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(categoryId ?? "");
   useAboutDraftGuard(open && dirty);
-  const close = (next: boolean) => {
-    if (pending) return;
-    if (
-      !next &&
-      dirty &&
-      !window.confirm("Discard unsaved changes to this item?")
-    )
+  const close = (next: boolean, details?: { cancel: () => void }) => {
+    if (pending) {
+      details?.cancel();
       return;
+    }
+    if (!next && dirty) {
+      details?.cancel();
+      void confirmAction("Discard unsaved changes to this item?").then(
+        (approved) => {
+          if (approved) setOpen(false);
+        },
+      );
+      return;
+    }
     setOpen(next);
   };
   const config = configs[kind];
@@ -323,7 +331,9 @@ function EditDialog({
   };
   return (
     <>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: The nested button or menu item is the keyboard trigger; this wrapper initializes the edit draft on its bubbled click. */}
       <div
+        role="presentation"
         className="contents"
         onClick={() => {
           setFieldErrors({});
@@ -462,8 +472,12 @@ function EditDialog({
                       />
                     )}
                     {field === "endDate" && (
-                      <label className="flex items-center gap-3">
+                      <label
+                        htmlFor={`${controlId}-current`}
+                        className="flex items-center gap-3"
+                      >
                         <Switch
+                          id={`${controlId}-current`}
                           name="isCurrent"
                           defaultChecked={Boolean(item?.isCurrent)}
                           disabled={pending}
@@ -494,8 +508,12 @@ function EditDialog({
                   </div>
                 ))}
               </div>
-              <label className="flex items-center gap-3">
+              <label
+                htmlFor={`${controlId}-visible`}
+                className="flex items-center gap-3"
+              >
                 <Switch
+                  id={`${controlId}-visible`}
                   name="isVisible"
                   defaultChecked={item?.isVisible ?? true}
                   disabled={pending}
@@ -788,10 +806,12 @@ function ManagedList({
                 deleting &&
                 startTransition(async () => {
                   const result = await deleteAction(deleting.id);
-                  result.success
-                    ? (toast.add({ title: result.message, type: "success" }),
-                      router.refresh())
-                    : toast.add({ title: result.error, type: "error" });
+                  if (result.success) {
+                    toast.add({ title: result.message, type: "success" });
+                    router.refresh();
+                  } else {
+                    toast.add({ title: result.error, type: "error" });
+                  }
                   setDeleting(null);
                 })
               }

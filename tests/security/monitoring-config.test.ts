@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, assert, describe, expect, it, vi } from "vitest";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -12,7 +12,8 @@ describe("Sentry deployment configuration", () => {
     const { default: config } = await import("../../next.config");
     expect(config.cacheComponents).toBe(true);
     expect(config.partialPrefetching).toBe(true);
-    const headers = await config.headers!();
+    assert.exists(config.headers);
+    const headers = await config.headers();
     const csp = headers[0].headers.find(
       (header) => header.key === "Content-Security-Policy",
     )?.value;
@@ -29,7 +30,8 @@ describe("Sentry deployment configuration", () => {
     const { default: config } = await import("../../next.config");
     expect(config.cacheComponents).toBe(true);
     expect(config.partialPrefetching).toBe(true);
-    const headers = await config.headers!();
+    assert.exists(config.headers);
+    const headers = await config.headers();
     const csp = headers[0].headers.find(
       (header) => header.key === "Content-Security-Policy",
     )?.value;

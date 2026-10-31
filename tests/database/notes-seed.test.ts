@@ -114,4 +114,20 @@ describe("Storylio work notes seed", () => {
       "Preserve my profile",
     );
   });
+  it.each(["projects", "posts", "notes"] as const)(
+    "rejects a missing owner before writing earlier groups for %s",
+    async (part) => {
+      vi.stubEnv("OWNER_EMAIL", "missing-owner@example.test");
+      const before = await fixture.db.query.homeSection.findMany();
+      await expect(
+        runSeedPlan(fixture.db as unknown as Database, {
+          parts: ["home", part],
+          updateProfile: false,
+        }),
+      ).rejects.toThrow("Seed the owner account first");
+      expect(await fixture.db.query.homeSection.findMany()).toEqual(before);
+      expect(await fixture.db.query.post.findMany()).toEqual([]);
+      expect(await fixture.db.query.project.findMany()).toEqual([]);
+    },
+  );
 });

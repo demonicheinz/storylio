@@ -3,9 +3,6 @@
 import {
   ArrowSquareOutIcon,
   CalendarBlankIcon,
-  CaretDownIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
   CheckSquareIcon,
   CopyIcon,
   DotsThreeVerticalIcon,
@@ -55,8 +52,6 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -77,6 +72,7 @@ import {
   DashboardSort,
   DashboardViewToggle,
 } from "@/features/dashboard/shared/components/filter-controls";
+import { DashboardPagination } from "@/features/dashboard/shared/components/pagination";
 import {
   DashboardSortableList,
   verticalListSortingStrategy,
@@ -85,7 +81,7 @@ import { DashboardSummary } from "@/features/dashboard/shared/components/summary
 import { useDashboardFilter } from "@/features/dashboard/shared/hooks/use-dashboard-filter";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import type { ActionResult } from "@/lib/action-result";
-import { getPageItems } from "@/lib/archive-pagination";
+import { formatBytes } from "@/lib/format-bytes";
 import {
   getDefaultItemsPerPage,
   getItemsPerPageOptions,
@@ -93,32 +89,25 @@ import {
 } from "@/lib/pagination";
 import { cn, formatDate } from "@/lib/utils";
 
+import {
+  filterGalleryItems,
+  type GallerySortField as SortMode,
+  type GalleryVisibilityFilter as VisibilityFilter,
+} from "../filtering";
+import {
+  getDimensions,
+  getFileName,
+  getGalleryAspectRatio,
+  getItemTitle,
+} from "../presentation";
+import type { DashboardGalleryItem } from "../types";
 import { GalleryItemDialog } from "./gallery-item-dialog";
-
-export type DashboardGalleryItem = {
-  id: string;
-  imageUrl: string;
-  caption: string | null;
-  category: string | null;
-  description: string | null;
-  altText: string | null;
-  width: number | null;
-  height: number | null;
-  size: number | null;
-  aspectRatio: number | null;
-  blurDataUrl: string | null;
-  isVisible: boolean;
-  order: number;
-  createdAt: string;
-};
 
 type GalleryManagerProps = {
   items: DashboardGalleryItem[];
 };
 
 type ViewMode = "grid" | "list";
-type VisibilityFilter = "all" | "visible" | "hidden";
-type SortMode = "order" | "created";
 
 function GalleryThumbnail({
   imageUrl,
@@ -134,6 +123,7 @@ function GalleryThumbnail({
   imageClassName?: string;
 }) {
   const [failed, setFailed] = useState(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: A new image source must clear the previous failure state.
   useEffect(() => setFailed(false), [imageUrl]);
 
   if (!imageUrl || failed) {
@@ -159,55 +149,6 @@ function GalleryThumbnail({
       onError={() => setFailed(true)}
     />
   );
-}
-
-function getItemTitle(item: DashboardGalleryItem) {
-  return item.caption || item.altText || item.category || "Untitled image";
-}
-
-function getFileName(imageUrl: string) {
-  try {
-    const pathname = new URL(imageUrl).pathname;
-    return decodeURIComponent(pathname.split("/").filter(Boolean).pop() ?? "");
-  } catch {
-    return imageUrl.split("/").filter(Boolean).pop() ?? "Unknown file";
-  }
-}
-
-function getDimensions(item: DashboardGalleryItem) {
-  if (!item.width || !item.height) {
-    return "Not stored";
-  }
-
-  return `${item.width} x ${item.height}`;
-}
-
-function getGalleryAspectRatio(item: DashboardGalleryItem) {
-  if (item.aspectRatio && item.aspectRatio > 0) {
-    return item.aspectRatio;
-  }
-
-  if (item.width && item.height && item.height > 0) {
-    return item.width / item.height;
-  }
-
-  return 1;
-}
-
-function formatBytes(bytes: number | null) {
-  if (!bytes) {
-    return "Not stored";
-  }
-
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
-
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function GalleryStatusBadge({
@@ -427,6 +368,7 @@ function GalleryGrid({
               altText={item.altText}
             />
             <button
+              tabIndex={batchMode ? -1 : 0}
               type="button"
               disabled={selectionPending}
               className="absolute inset-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset cursor-pointer"
@@ -438,8 +380,10 @@ function GalleryGrid({
               }}
             />
             {batchMode && (
+              /* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only stops nested control clicks from bubbling; keyboard interaction stays on the controls. */
               <div
-                className="top-3 left-3 z-10 absolute flex justify-center items-center bg-popover border border-border rounded-md size-11"
+                role="presentation"
+                className="top-3 left-3 z-10 absolute"
                 onClick={(event) => event.stopPropagation()}
               >
                 <Checkbox
@@ -451,7 +395,9 @@ function GalleryGrid({
                 />
               </div>
             )}
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only stops nested control clicks from bubbling; keyboard interaction stays on the controls. */}
             <div
+              role="presentation"
               className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
@@ -480,6 +426,7 @@ function GalleryGrid({
                 title={getItemTitle(item)}
               >
                 <button
+                  tabIndex={batchMode ? -1 : 0}
                   type="button"
                   className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring max-w-full hover:text-link text-left truncate"
                   disabled={selectionPending}
@@ -577,7 +524,9 @@ function GalleryListRow({
       {hasRail && (
         <div className="row-span-2 xl:row-span-1">
           {batchMode ? (
+            /* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only stops nested control clicks from bubbling; keyboard interaction stays on the controls. */
             <div
+              role="presentation"
               className="flex justify-center items-center border-border/50 border-r h-full min-h-20"
               onClick={(event) => event.stopPropagation()}
             >
@@ -595,6 +544,7 @@ function GalleryListRow({
         </div>
       )}
       <button
+        tabIndex={batchMode ? -1 : 0}
         type="button"
         className="flex items-center gap-3 p-3 min-w-0 text-left disabled:cursor-pointer"
         disabled={selectionPending}
@@ -655,162 +605,15 @@ function GalleryListRow({
             {formatDate(item.createdAt)}
           </span>
         </div>
-        <div className="ml-auto" onClick={(event) => event.stopPropagation()}>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only stops nested control clicks from bubbling; keyboard interaction stays on the controls. */}
+        <div
+          role="presentation"
+          className="ml-auto"
+          onClick={(event) => event.stopPropagation()}
+        >
           <GalleryItemActions item={item} disabled={selectionPending} />
         </div>
       </div>
-    </div>
-  );
-}
-
-function GalleryPagination({
-  firstIndex,
-  lastIndex,
-  total,
-  page,
-  pageCount,
-  itemsPerPage,
-  itemsPerPageOptions,
-  onPageChange,
-  onItemsPerPageChange,
-}: {
-  firstIndex: number;
-  lastIndex: number;
-  total: number;
-  page: number;
-  pageCount: number;
-  itemsPerPage: number;
-  itemsPerPageOptions: readonly number[];
-  onPageChange: (page: number) => void;
-  onItemsPerPageChange: (value: number) => void;
-}) {
-  const pageControls = (
-    <div className="flex justify-center items-center gap-1">
-      <Button
-        type="button"
-        size="icon"
-        variant="outline"
-        disabled={page <= 1}
-        onClick={() => onPageChange(Math.max(1, page - 1))}
-        aria-label="Previous page"
-      >
-        <CaretLeftIcon />
-      </Button>
-      <span className="md:hidden px-2 text-sm" aria-live="polite">
-        Page {page} of {pageCount}
-      </span>
-      <div className="hidden md:flex items-center gap-1">
-        {getPageItems(page, pageCount).map((value, index) =>
-          value === "ellipsis" ? (
-            <span key={`gap-${index}`} className="px-1" aria-hidden>
-              …
-            </span>
-          ) : (
-            <Button
-              key={value}
-              type="button"
-              size="icon"
-              variant={value === page ? "default" : "outline"}
-              onClick={() => onPageChange(value)}
-              aria-label={`Page ${value}`}
-              aria-current={value === page ? "page" : undefined}
-            >
-              {value}
-            </Button>
-          ),
-        )}
-      </div>
-      <Button
-        type="button"
-        size="icon"
-        variant="outline"
-        disabled={page >= pageCount}
-        onClick={() => onPageChange(Math.min(pageCount, page + 1))}
-        aria-label="Next page"
-      >
-        <CaretRightIcon />
-      </Button>
-    </div>
-  );
-
-  return (
-    <div className="md:items-center gap-3 grid md:grid-cols-[1fr_auto_1fr] mt-4 text-muted-foreground text-sm">
-      <div className="md:contents flex justify-between items-center">
-        <p className="md:hidden">
-          {firstIndex}-{lastIndex} of {total}
-        </p>
-        <p className="hidden md:block">
-          Showing {firstIndex} to {lastIndex} of {total}{" "}
-          {total === 1 ? "item" : "items"}
-        </p>
-        <div className="md:hidden">
-          <ItemsPerPageDropdown
-            value={itemsPerPage}
-            options={itemsPerPageOptions}
-            onValueChange={onItemsPerPageChange}
-          />
-        </div>
-      </div>
-      <div className="md:col-start-2">{pageControls}</div>
-      <div className="hidden md:flex justify-end">
-        <ItemsPerPageDropdown
-          value={itemsPerPage}
-          options={itemsPerPageOptions}
-          onValueChange={onItemsPerPageChange}
-          showLabel
-        />
-      </div>
-    </div>
-  );
-}
-
-function ItemsPerPageDropdown({
-  value,
-  options,
-  onValueChange,
-  showLabel = false,
-}: {
-  value: number;
-  options: readonly number[];
-  onValueChange: (value: number) => void;
-  showLabel?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      {showLabel && (
-        <span className="text-muted-foreground text-sm">Items per page</span>
-      )}
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              aria-label="Items per page"
-            />
-          }
-        >
-          {value}
-          <CaretDownIcon className="size-3.5" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-24">
-          <DropdownMenuRadioGroup
-            value={String(value)}
-            onValueChange={(nextValue) => onValueChange(Number(nextValue))}
-          >
-            {options.map((option) => (
-              <DropdownMenuRadioItem
-                key={option}
-                value={String(option)}
-                closeOnClick={true}
-              >
-                {option}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 }
@@ -996,7 +799,11 @@ function GalleryDetailDrawer({
       label: "File name",
       value: getFileName(item.imageUrl),
     },
-    { icon: <FolderIcon />, label: "Size", value: formatBytes(item.size) },
+    {
+      icon: <FolderIcon />,
+      label: "Size",
+      value: item.size ? formatBytes(item.size) : "Not stored",
+    },
     { icon: <RulerIcon />, label: "Dimensions", value: getDimensions(item) },
   ];
 
@@ -1196,30 +1003,17 @@ export function GalleryManager({ items }: GalleryManagerProps) {
     hidden: items.filter((item) => !item.isVisible).length,
     categories: categories.length,
   };
-  const filteredItems = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    return items
-      .filter(
-        (item) =>
-          (visibility === "all" ||
-            item.isVisible === (visibility === "visible")) &&
-          (category === "all" || item.category === category) &&
-          (!search ||
-            [
-              item.caption,
-              item.description,
-              item.altText,
-              item.category,
-              getFileName(item.imageUrl),
-            ].some((value) => value?.toLowerCase().includes(search))),
-      )
-      .sort(
-        (a, b) =>
-          (sortMode === "created"
-            ? Date.parse(a.createdAt) - Date.parse(b.createdAt)
-            : a.order - b.order) * (sortDirection === "asc" ? 1 : -1),
-      );
-  }, [items, query, visibility, category, sortMode, sortDirection]);
+  const filteredItems = useMemo(
+    () =>
+      filterGalleryItems(items, {
+        query,
+        visibility,
+        category,
+        sortMode,
+        sortDirection,
+      }),
+    [items, query, visibility, category, sortMode, sortDirection],
+  );
   const {
     items: paginatedItems,
     pageCount,
@@ -1240,6 +1034,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
     Number(category !== "all") +
     Number(sortMode !== "order" || sortDirection !== "asc");
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Category, visibility, query, sort and page size are deliberate pagination-reset triggers.
   useEffect(() => {
     setPage(1);
   }, [category, itemsPerPage, query, sortMode, sortDirection, visibility]);
@@ -1765,7 +1560,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
           </div>
         )}
         {!reorderMode && filteredItems.length > 0 && (
-          <GalleryPagination
+          <DashboardPagination
             firstIndex={firstIndex}
             lastIndex={lastIndex}
             total={filteredItems.length}

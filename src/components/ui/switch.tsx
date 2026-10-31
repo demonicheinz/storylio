@@ -16,7 +16,7 @@ function Switch({
       data-size={size}
       className={(state) =>
         cn(
-          "group/switch peer inline-flex after:absolute relative after:-inset-x-3 after:-inset-y-2 items-center data-checked:bg-primary data-unchecked:bg-input/90 data-disabled:opacity-50 border-2 data-checked:border-primary data-unchecked:border-transparent aria-invalid:border-destructive focus-visible:border-ring dark:aria-invalid:border-destructive/50 rounded-full outline-none aria-invalid:ring-3 aria-invalid:ring-destructive/20 focus-visible:ring-3 focus-visible:ring-ring/30 dark:aria-invalid:ring-destructive/40 data-[size=default]:w-11 data-[size=sm]:w-7 data-[size=default]:h-5 data-[size=sm]:h-4 transition-all data-disabled:cursor-not-allowed shrink-0",
+          "group/switch peer inline-flex after:absolute relative after:-inset-x-3 after:-inset-y-2 items-center data-checked:bg-primary data-unchecked:bg-input/90 data-disabled:opacity-50 border-2 data-checked:border-primary data-unchecked:border-transparent aria-invalid:border-destructive focus-visible:border-ring dark:aria-invalid:border-destructive/50 rounded-full outline-none aria-invalid:ring-3 aria-invalid:ring-destructive/20 focus-visible:ring-3 focus-visible:ring-ring/30 dark:aria-invalid:ring-destructive/40 data-[size=default]:w-11 data-[size=sm]:w-7 data-[size=default]:h-5 data-[size=sm]:h-4 transition-all cursor-pointer data-disabled:cursor-not-allowed shrink-0",
           typeof className === "function" ? className(state) : className,
         )
       }

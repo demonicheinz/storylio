@@ -60,6 +60,10 @@ Never trigger a fake production outage to test the integration.
   breadcrumbs, headers, cookies, request bodies and URL queries/fragments.
   It redacts recognizable secret assignments, bearer/JWT tokens and email
   addresses in messages, removes frame variables and preserves source lines.
+- Request errors retain four bounded diagnostic tags: `next.route_type`,
+  `next.render_source`, `next.revalidate_reason`, and `next.resume`. Values are
+  allowlisted enums/booleans; the resume header contributes only true/false.
+  Unknown tag values are removed. This adds no request payload or identity.
 - Client reports, breadcrumbs and automatic browser/process session telemetry
   are disabled. The local SDK transport test
   confirms the resulting error envelope, not only the helper's return value.

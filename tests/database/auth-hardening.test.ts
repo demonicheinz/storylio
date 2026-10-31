@@ -1,6 +1,6 @@
 import { hashPassword } from "better-auth/crypto";
 import { eq } from "drizzle-orm";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, assert, beforeAll, describe, expect, it, vi } from "vitest";
 import * as schema from "@/lib/db/schema";
 import { createTestDatabase } from "../helpers/database";
 
@@ -17,7 +17,7 @@ const request = (
   authenticated = false,
 ) =>
   auth.handler(
-    new Request(origin + "/api/auth" + path, {
+    new Request(`${origin}/api/auth${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -117,8 +117,8 @@ describe("auth hardening with a local PostgreSQL fixture", () => {
     const url = /href="([^"]+)"/
       .exec(approval.html)?.[1]
       ?.replaceAll("&amp;", "&");
-    expect(url).toBeTruthy();
-    await auth.handler(new Request(url!));
+    assert.isOk(url);
+    await auth.handler(new Request(url));
     expect(deliverEmail).toHaveBeenCalledTimes(2);
     expect(deliverEmail.mock.calls[1][0].to).toBe("new@example.test");
     const user = await fixture.db.query.user.findFirst({
@@ -128,8 +128,8 @@ describe("auth hardening with a local PostgreSQL fixture", () => {
     const verificationUrl = /href="([^"]+)"/
       .exec(deliverEmail.mock.calls[1][0].html)?.[1]
       ?.replaceAll("&amp;", "&");
-    expect(verificationUrl).toBeTruthy();
-    await auth.handler(new Request(verificationUrl!));
+    assert.isOk(verificationUrl);
+    await auth.handler(new Request(verificationUrl));
     const changed = await fixture.db.query.user.findFirst({
       where: eq(schema.user.id, ownerId),
     });

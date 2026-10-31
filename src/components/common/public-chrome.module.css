@@ -20,11 +20,14 @@
 /* Recovery UI must stay readable in SSR, even if route-animation JS fails. */
 .chrome :global([data-route-motion]):has(:global([data-space-state])),
 .chrome :global([data-route-motion]):has(:global([data-error-boundary])) {
+  /* biome-ignore lint/complexity/noImportantStyles: Recovery and history layout must override route entrance transforms and visibility. */
   opacity: 1 !important;
+  /* biome-ignore lint/complexity/noImportantStyles: Recovery and history layout must override route entrance transforms and visibility. */
   transform: none !important;
 }
 /* History restoration must measure the final layout, not entrance translations. */
 :global(html[data-public-history]) .chrome :global([data-route-motion]),
 :global(html[data-public-history]) .chrome :global([data-motion-reveal]) {
+  /* biome-ignore lint/complexity/noImportantStyles: Recovery and history layout must override route entrance transforms and visibility. */
   transform: none !important;
 }

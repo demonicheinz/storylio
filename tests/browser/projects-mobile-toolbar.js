@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function projectsMobileToolbar(sessionPage) {
   const context = await sessionPage.context().browser().newContext();
   const page = await context.newPage();
@@ -76,6 +77,7 @@ async function projectsMobileToolbar(sessionPage) {
       "Active filter count changes button width",
     );
     assert(
+      // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
       (await active.innerText()).trim() === "1",
       "Active filter count is not visible",
     );

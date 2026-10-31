@@ -14,6 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { IMAGE_QUALITY } from "@/lib/image-policy";
 import styles from "./depth-carousel.module.css";
 
 export type DepthCarouselImage = {
@@ -53,10 +54,7 @@ export function DepthCarousel({
   const select = (next: number) =>
     onIndexChange((next + items.length) % items.length);
 
-  const finishDrag = (
-    event: PointerEvent<HTMLDivElement>,
-    cancelled = false,
-  ) => {
+  const finishDrag = (event: PointerEvent<HTMLElement>, cancelled = false) => {
     const gesture = drag.current;
     drag.current = null;
     event.currentTarget.style.removeProperty("--drag-x");
@@ -80,9 +78,8 @@ export function DepthCarousel({
   };
 
   return (
-    <div
+    <section
       className={styles.carousel}
-      role="region"
       aria-roledescription="carousel"
       aria-label="Project screenshots"
       onKeyDown={(event) => {
@@ -158,6 +155,7 @@ export function DepthCarousel({
           const depth = (itemIndex - current + items.length) % items.length;
           return (
             <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: Duplicate screenshot URLs are allowed and deck positions are their local identity.
               key={`${item.src}-${itemIndex}`}
               className={styles.card}
               data-depth={depth}
@@ -213,7 +211,7 @@ export function DepthCarousel({
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -264,6 +262,7 @@ function CarouselImage({ item }: { item: DepthCarouselImage }) {
       width={item.width || 1600}
       height={item.height || 900}
       draggable={false}
+      quality={IMAGE_QUALITY.detail}
       sizes="(min-width:1120px) 968px, (min-width:768px) calc(100vw - 120px), calc(100vw - 60px)"
       onError={() => setFailed(true)}
       {...(item.blurDataUrl

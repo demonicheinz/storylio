@@ -32,6 +32,7 @@ export function CollectionPagination({
   const pathname = usePathname();
   const search = useSearchParams().toString();
   const initiated = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: A completed page navigation must scroll/focus its collection once.
   useEffect(() => {
     if (!initiated.current) return;
     initiated.current = false;
@@ -64,18 +65,18 @@ export function CollectionPagination({
               <CaretLeftIcon size={18} aria-hidden="true" />
             </Link>
           ) : (
-            <span
-              className={styles.pageLink}
-              aria-disabled="true"
-              aria-label={`Previous ${label.toLowerCase()} page`}
-            >
+            <span className={styles.pageLink} aria-disabled="true">
               <CaretLeftIcon size={18} aria-hidden="true" />
+              <span className="sr-only">
+                Previous {label.toLowerCase()} page
+              </span>
             </span>
           )}
         </PaginationItem>
         {getPageItems(pagination.page, pagination.pageCount).map(
           (item, index) => (
             <PaginationItem
+              // biome-ignore lint/suspicious/noArrayIndexKey: This item sequence includes distinct stateless ellipsis gaps, not mutable data rows.
               key={`${item}-${index}`}
               className={
                 item === pagination.page ? undefined : styles.otherPage
@@ -84,14 +85,15 @@ export function CollectionPagination({
               {item === "ellipsis" ? (
                 <PaginationEllipsis />
               ) : item === pagination.page ? (
-                <span
-                  className={styles.pageLink}
-                  aria-current="page"
-                  aria-label={`Page ${item} of ${pagination.pageCount}`}
-                >
-                  <span className={styles.desktopPage}>{item}</span>
-                  <span className={styles.mobilePage}>
+                <span className={styles.pageLink} aria-current="page">
+                  <span className={styles.desktopPage} aria-hidden="true">
+                    {item}
+                  </span>
+                  <span className={styles.mobilePage} aria-hidden="true">
                     {item} / {pagination.pageCount}
+                  </span>
+                  <span className="sr-only">
+                    Page {item} of {pagination.pageCount}
                   </span>
                 </span>
               ) : (
@@ -120,12 +122,9 @@ export function CollectionPagination({
               <CaretRightIcon size={18} aria-hidden="true" />
             </Link>
           ) : (
-            <span
-              className={styles.pageLink}
-              aria-disabled="true"
-              aria-label={`Next ${label.toLowerCase()} page`}
-            >
+            <span className={styles.pageLink} aria-disabled="true">
               <CaretRightIcon size={18} aria-hidden="true" />
+              <span className="sr-only">Next {label.toLowerCase()} page</span>
             </span>
           )}
         </PaginationItem>
