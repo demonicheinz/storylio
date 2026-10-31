@@ -84,6 +84,29 @@ should become an additional Enter/Space target. The latter changes tab order.
 That UI decision is pending; no blanket accessibility suppression or new card
 tab stop has been introduced. Other source areas remain outside lint coverage.
 
+## Collection keyboard decision and first view coverage
+
+The user chose existing checkboxes/menus as keyboard targets, with no additional
+focusable card wrapper. Cover Projects list/display and Posts collection/display
+modules, bringing source lint to **133 files with zero diagnostics**.
+
+Layout wrappers that stop bubbling from nested controls are marked presentational
+and have element-specific noStaticElementInteractions exceptions explaining their
+event-isolation purpose. Pointer-selectable Posts articles keep only the narrow
+useKeyWithClickEvents exception: keyboard selection belongs to their checkbox.
+The Project row exception explains the same explicit keyboard contract. No new
+card tabIndex, button role or handler was added; click behavior is unchanged.
+
+Fifty-four focused collection/display/filter/clock tests passed, and standalone
+TypeScript passed. A new reusable browser check passed for both Projects and
+Posts, grid/list, at 1440/320px: no focusable card ancestor, Space selects/unselects
+once, Enter opens the menu, Escape restores trigger focus, and selection does not
+navigate. Existing synthetic fixture data/actions are used; no CMS data changed.
+Production build result is recorded below. Known low deepmerge audit remains.
+
+The selection-view production build passed (38/38 pages). Final lint passed;
+the later comment edit's line endings were normalized by Biome before committing.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:

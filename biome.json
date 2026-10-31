@@ -42,7 +42,9 @@
       "src/features/dashboard/shared/*.ts",
       "src/features/dashboard/settings/**",
       "src/features/dashboard/home/**",
-      "src/features/dashboard/shell/**"
+      "src/features/dashboard/shell/**",
+      "src/features/dashboard/projects/components/{project-list,project-display}.tsx",
+      "src/features/dashboard/posts/components/{post-collection-view,post-display}.tsx"
     ]
   },
   "javascript": {

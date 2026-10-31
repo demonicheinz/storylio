@@ -60,7 +60,9 @@ function ProjectListRow({
   onToggleProject?: (id: string) => void;
 }) {
   return (
+    /* biome-ignore lint/a11y/noStaticElementInteractions: Pointer row selection supplements the nested checkbox; keyboard users select through that control. */
     <div
+      role="presentation"
       className={cn(
         "xl:items-center grid min-w-0 overflow-hidden",
         batchMode || dragHandle
@@ -81,7 +83,9 @@ function ProjectListRow({
       {(batchMode || dragHandle) && (
         <div className="row-span-2 xl:row-span-1">
           {batchMode ? (
+            /* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only isolates nested checkbox/menu clicks; keyboard interaction stays on those controls. */
             <div
+              role="presentation"
               className="flex justify-center items-center border-border/50 border-r h-full min-h-24"
               onClick={(event) => event.stopPropagation()}
             >
@@ -133,7 +137,9 @@ function ProjectListRow({
             <TechPills techStack={project.techStack} limit={4} />
           </div>
         </div>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only isolates nested checkbox/menu clicks; keyboard interaction stays on those controls. */}
         <div
+          role="presentation"
           className="xl:hidden shrink-0"
           onClick={(event) => event.stopPropagation()}
         >
@@ -150,7 +156,8 @@ function ProjectListRow({
         <ProjectUpdatedAt value={project.updatedAt} />
       </div>
       <div className="hidden xl:flex justify-center p-3">
-        <div onClick={(event) => event.stopPropagation()}>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only isolates nested checkbox/menu clicks; keyboard interaction stays on those controls. */}
+        <div role="presentation" onClick={(event) => event.stopPropagation()}>
           <ProjectActions project={project} />
         </div>
       </div>

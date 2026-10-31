@@ -17,6 +17,7 @@ bunx --no-install playwright-cli -s=projects-polish open http://127.0.0.1:3197 -
 bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/dashboard-projects.js
 bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/projects-reorder.js
 bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/projects-batch-actions.js
+bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/collection-selection-keyboard.js
 bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/drawer-handle.js
 bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/project-list-presentation.js
 bunx --no-install playwright-cli -s=projects-polish run-code --filename=tests/browser/projects-mobile-toolbar.js

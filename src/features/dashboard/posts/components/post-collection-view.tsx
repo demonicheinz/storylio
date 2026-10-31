@@ -28,6 +28,7 @@ export function PostsGrid({
   return (
     <div className={dashboardStyles.gridCards}>
       {posts.map((post) => (
+        /* biome-ignore lint/a11y/useKeyWithClickEvents: Batch keyboard selection is provided by the nested checkbox; do not add a duplicate card tab stop. */
         <article
           key={post.id}
           className={cn(
@@ -40,7 +41,9 @@ export function PostsGrid({
           <div className="relative">
             <PostThumbnail post={post} className="border-0 rounded-none" />
             {batchMode && (
+              /* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only isolates nested checkbox/menu clicks; keyboard interaction stays on those controls. */
               <div
+                role="presentation"
                 className="top-3 left-3 z-10 absolute"
                 onClick={(event) => event.stopPropagation()}
               >
@@ -51,7 +54,9 @@ export function PostsGrid({
                 />
               </div>
             )}
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only isolates nested checkbox/menu clicks; keyboard interaction stays on those controls. */}
             <div
+              role="presentation"
               className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
@@ -226,6 +231,7 @@ export function PostsList({
         )}
       >
         {posts.map((post) => (
+          /* biome-ignore lint/a11y/useKeyWithClickEvents: Batch keyboard selection is provided by the nested checkbox; do not add a duplicate card tab stop. */
           <article
             key={post.id}
             className={cn(
@@ -242,6 +248,7 @@ export function PostsList({
               )}
             >
               <div
+                role="presentation"
                 className={cn(
                   "grid overflow-hidden transition-[width,opacity,transform] duration-200 ease-out",
                   batchMode
@@ -285,7 +292,9 @@ export function PostsList({
                   {isNote(post) ? "Note" : "Article"} · {post.slug}
                 </p>
               </div>
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only isolates nested checkbox/menu clicks; keyboard interaction stays on those controls. */}
               <div
+                role="presentation"
                 onClick={(event) => event.stopPropagation()}
                 onPointerDown={(event) => event.stopPropagation()}
               >
