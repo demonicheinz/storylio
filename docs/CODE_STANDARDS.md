@@ -72,12 +72,13 @@ CMS contracts, and security behavior unless the task explicitly changes them.
   frozen lockfile in CI. Do not hand-edit resolutions to silence an audit.
 - Biome is the formatter/import organizer; use the repository configuration
   and local schema. Avoid an unrelated repository-wide formatting pass.
-- Source lint is being enabled incrementally through positive `linter.includes`
-  patterns. An area is covered only when it matches those patterns; a successful
-  `bun run lint` does not establish lint coverage for the rest of the repository.
-  Formatter/assist checks still apply repository-wide. Expand coverage after
-  reviewing the area's diagnostics, with narrow justified exceptions instead
-  of disabling rules globally. Never use a list containing only negative globs.
+- Lint uses positive `linter.includes` patterns for application TS/TSX/JS/CSS,
+  scripts, Vitest tests/helpers, browser scripts/fixtures and root TS/MTS/MJS/CJS
+  configuration. Keep new executable code within this scope or review and add
+  its area explicitly. Raw SVG assets, documentation and other file types are not
+  covered by that lint claim. Formatter/assist checks apply repository-wide to
+  supported files. Retain narrow justified exceptions instead of disabling rules
+  globally. Never use a list containing only negative globs.
 - CSS Modules may use `:global`/`:local`; the Biome override allows these names
   only in `.module.css` files and still checks other pseudo-classes. Retain
   important declarations that override animation inline styles for accessibility

@@ -35,29 +35,13 @@
       "react": "recommended"
     },
     "includes": [
-      "src/components/ui/**",
-      "src/lib/**",
-      "src/features/dashboard/settings/**",
-      "src/features/dashboard/home/**",
-      "src/features/dashboard/shell/**",
-      "src/features/dashboard/posts/**",
-      "src/features/dashboard/projects/**",
-      "src/features/dashboard/gallery/**",
-      "src/features/dashboard/media/**",
-      "src/features/dashboard/about/**",
-      "src/features/dashboard/analytics/**",
-      "src/components/auth/**",
-      "src/features/dashboard/shared/**",
-      "src/app/**/*.{ts,tsx,css}",
-      "src/components/public/**",
-      "src/hooks/**",
-      "src/components/common/**",
-      "src/components/effects/gravity-stars.tsx",
+      "src/**/*.{ts,tsx,js,css}",
       "scripts/**",
       "tests/helpers/**",
       "tests/**/*.test.ts",
       "tests/browser/**",
-      "tests/fixtures/**"
+      "tests/fixtures/**",
+      "*.{ts,mts,mjs,cjs}"
     ]
   },
   "javascript": {

@@ -398,3 +398,11 @@ is 599 with no diagnostics. See browser-lint.md for equivalence checks and limit
 
 All 64 lintable fixture files now enter positive coverage: 663 selected files,
 zero diagnostics. See [fixture-lint.md](fixture-lint.md). Overview/root remain.
+
+## Executable lint rollout complete
+
+Source TS/TSX/JS/CSS, scripts, tests/helpers/browser/fixtures and root executable
+configuration now select 684 lintable files, zero diagnostics. Repository check
+formats/organizes 932 files. Overview loading semantics have a red/green regression;
+11 focused tests and a 38-page production build passed. See
+[overview-lint.md](overview-lint.md) for limits and outstanding upstream advisory.
