@@ -258,7 +258,7 @@ export function AboutContentForm({
               />
             </div>
 
-            <div
+            <section
               className="gap-3 grid sm:grid-cols-2"
               aria-label="Translation completeness"
             >
@@ -295,7 +295,7 @@ export function AboutContentForm({
                   </div>
                 );
               })}
-            </div>
+            </section>
 
             <p className="text-muted-foreground text-xs">
               Fields are optional. An empty translation uses the other language

@@ -45,7 +45,8 @@
       "src/features/dashboard/posts/**",
       "src/features/dashboard/projects/**",
       "src/features/dashboard/gallery/**",
-      "src/features/dashboard/media/**"
+      "src/features/dashboard/media/**",
+      "src/features/dashboard/about/**"
     ]
   },
   "javascript": {

@@ -193,6 +193,24 @@ Production build generated 38/38 pages, final source lint remained clean on 153
 files and whitespace checks passed. No new dependencies. This full run covers
 the approved asset Tab behavior and the later asset lint annotations/fixes.
 
+Asset lint coverage committed as `97ff942` with normal hooks.
+
+## Complete About feature coverage
+
+Cover all six About feature modules (159 source files total). Associate Current
+role/Visible publicly labels explicitly with stable useId-based switch IDs.
+The translation completeness block becomes a named section. Replace the delete
+result comma/ternary expression with equivalent if/else calls. The existing
+bubbled edit-trigger wrapper is presentational with a local exception: its nested
+button/menu item remains the keyboard trigger and initializes the same draft.
+
+Thirty-six About/PGlite/MDX tests passed. The About browser suite passed
+1440/768/360/320px, including bilingual draft retention, save/discard, categories,
+dirty-dialog cancellation and failed keyboard reorder rollback. A focused browser
+check resolved both switches by accessible name and verified label click and
+Space toggle once each. Production build passed with 38/38 pages; source lint and
+whitespace checks passed. Fixtures do not mutate real CMS data.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:
