@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardMedia(sessionPage) {
   const context = await sessionPage
     .context()
@@ -101,6 +102,7 @@ async function dashboardMedia(sessionPage) {
     const firstExtension = await page
       .locator("[data-media-extension]")
       .first()
+      // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
       .innerText();
     assert(firstExtension === ".jpg", "Format ascending order is incorrect");
     await page
@@ -108,6 +110,7 @@ async function dashboardMedia(sessionPage) {
       .filter({ visible: true })
       .click();
     assert(
+      // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
       (await page.locator("[data-media-extension]").first().innerText()) ===
         ".webp",
       "Format descending order is incorrect",

@@ -386,3 +386,6 @@ the initial concurrent GPU timeout is recorded rather than hidden.
 CLI entry-point follow-up: 33 further browser scripts covered, 544 selected files
 with no diagnostics. Their compiled executable output is unchanged; function
 expression parsing was verified. Remaining browser scripts and fixtures are pending.
+
+Locator/literal follow-up: ten more CLI scripts covered; 554 files selected, no
+diagnostics, identical executable output. See browser-lint.md.

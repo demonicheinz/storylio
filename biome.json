@@ -92,7 +92,17 @@
       "tests/browser/star-paused-twinkle.js",
       "tests/browser/venom-fallback.js",
       "tests/browser/venom-wrapper-recovery.js",
-      "tests/browser/webgl-lifecycle.js"
+      "tests/browser/webgl-lifecycle.js",
+      "tests/browser/asset-selection-keyboard.js",
+      "tests/browser/collection-selection-keyboard.js",
+      "tests/browser/dashboard-media.js",
+      "tests/browser/dashboard-projects.js",
+      "tests/browser/dashboard-sort.js",
+      "tests/browser/filter-prefetch.js",
+      "tests/browser/mdx-source.js",
+      "tests/browser/posts-batch-selection.js",
+      "tests/browser/projects-batch-actions.js",
+      "tests/browser/projects-mobile-toolbar.js"
     ]
   },
   "javascript": {

@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function collectionSelectionKeyboard(sessionPage) {
   const context = await sessionPage.context().browser().newContext();
   const page = await context.newPage();
@@ -14,6 +15,7 @@ async function collectionSelectionKeyboard(sessionPage) {
         await page.goto(origin);
         await page.getByLabel(mode, { exact: true }).click();
         await page.setViewportSize({ width, height: 900 });
+        // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
         const title = await page.getByRole("heading", { level: 1 }).innerText();
         const noun = title === "Projects" ? "project" : "post";
         await page.getByRole("button", { name: "Select", exact: true }).click();

@@ -45,3 +45,14 @@ function expression. TypeScript compilation with comments removed produces
 byte-identical output to HEAD for every entry. Lint now selects 544 files without
 diagnostics. No repeated full suite/build/browser run is claimed for comment-only
 changes. This reduces the browser backlog to 55 scripts; fixtures remain pending.
+
+## Locator API and literal-fixture follow-up
+
+Ten additional scripts retain Playwright Locator.innerText(), whose method calls
+were flagged by a DOM-property performance rule. Local explanations preserve
+visible-label assertions and normalization; converting them to nullable raw text
+would change test semantics. The MDX source fixture deliberately keeps literal
+JavaScript interpolation. Only comments/configuration changed, all ten CLI entry
+points parse and their comment-free compiled output is byte-identical to HEAD.
+Lint now selects 554 files without diagnostics. Browser backlog: 45 scripts;
+fixture lint is separate. No new browser rerun is claimed for these comments.

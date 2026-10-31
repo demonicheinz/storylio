@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function projectsBatchActions(sessionPage) {
   const context = await sessionPage.context().browser().newContext();
   const page = await context.newPage();
@@ -45,6 +46,7 @@ async function projectsBatchActions(sessionPage) {
       const dialog = page.getByRole("alertdialog");
       await dialog.waitFor();
       assert(
+        // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
         (await dialog.innerText()).includes(
           "Nebula Commerce with a deliberately long project name",
         ),

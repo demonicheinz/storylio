@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function assetSelectionKeyboard(sessionPage) {
   const context = await sessionPage.context().browser().newContext();
   const page = await context.newPage();
@@ -13,6 +14,7 @@ async function assetSelectionKeyboard(sessionPage) {
         await page.setViewportSize({ width: 1440, height: 950 });
         await page.goto(origin);
         const gallery =
+          // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
           (await page.getByRole("heading", { level: 1 }).innerText()) ===
           "Gallery";
         await page.getByRole("button", { name: mode, exact: true }).click();
