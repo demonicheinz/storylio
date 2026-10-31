@@ -41,9 +41,11 @@ authentication, database schema, upload transport, or public layout was redesign
 Important verification correction: the negative-only `linter.includes` selected
 no source files. Earlier successful lint command results covered formatting and
 assist checks, not actual source linting. Full lint activation exposes existing
-findings and awaits a rollout decision; see
+findings. The user selected incremental activation; see
 [lint-activation-review.md](lint-activation-review.md). Gallery policy is committed
 as `ba2456e`; details are in [batch-twelve.md](batch-twelve.md).
+Current positive coverage and verification are tracked in
+[lint-rollout.md](lint-rollout.md).
 
 | Batch | Area | Concrete work and verification |
 | --- | --- | --- |

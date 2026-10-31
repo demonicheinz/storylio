@@ -34,7 +34,10 @@
       "next": "recommended",
       "react": "recommended"
     },
-    "includes": ["src/components/ui/**"]
+    "includes": [
+      "src/components/ui/**",
+      "src/features/dashboard/{projects,posts,gallery,media}/*.ts"
+    ]
   },
   "javascript": {
     "formatter": {
