@@ -159,7 +159,9 @@ export function MediaCard({
           onClick={activate}
         />
         {isSelectionMode && (
+          /* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only stops nested control clicks from bubbling; keyboard interaction stays on the controls. */
           <div
+            role="presentation"
             className="top-3 left-3 z-10 absolute"
             onClick={(event) => event.stopPropagation()}
           >

@@ -36,17 +36,16 @@
     },
     "includes": [
       "src/components/ui/**",
-      "src/features/dashboard/{projects,posts,gallery,media}/*.ts",
       "src/lib/**",
       "src/features/dashboard/shared/hooks/**",
       "src/features/dashboard/shared/*.ts",
       "src/features/dashboard/settings/**",
       "src/features/dashboard/home/**",
       "src/features/dashboard/shell/**",
-      "src/features/dashboard/projects/components/{project-list,project-display}.tsx",
-      "src/features/dashboard/posts/components/{post-collection-view,post-display}.tsx",
       "src/features/dashboard/posts/**",
-      "src/features/dashboard/projects/**"
+      "src/features/dashboard/projects/**",
+      "src/features/dashboard/gallery/**",
+      "src/features/dashboard/media/**"
     ]
   },
   "javascript": {

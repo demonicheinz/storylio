@@ -12,6 +12,10 @@ CMS contracts, and security behavior unless the task explicitly changes them.
   database clients, and environment access when used by client components.
 - Use the checked-in `src/components/ui/` primitives. Change common behavior
   there instead of repeating overrides in each screen.
+- Batch selection uses each item's checkbox and action menu as sequential
+  keyboard targets. Do not add a focusable card wrapper. Existing Gallery/Media
+  preview/title buttons leave the Tab order only during batch mode; retain
+  pointer interaction and restore ordinary preview tab stops on exit.
 - Default route components to the server. Add a client boundary for browser
   state or client hooks, and keep database/auth modules out of that boundary.
 - Do not introduce a wrapper that only renames another function. An extraction

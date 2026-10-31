@@ -123,6 +123,7 @@ function GalleryThumbnail({
   imageClassName?: string;
 }) {
   const [failed, setFailed] = useState(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: A new image source must clear the previous failure state.
   useEffect(() => setFailed(false), [imageUrl]);
 
   if (!imageUrl || failed) {
@@ -379,7 +380,9 @@ function GalleryGrid({
               }}
             />
             {batchMode && (
+              /* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only stops nested control clicks from bubbling; keyboard interaction stays on the controls. */
               <div
+                role="presentation"
                 className="top-3 left-3 z-10 absolute"
                 onClick={(event) => event.stopPropagation()}
               >
@@ -392,7 +395,9 @@ function GalleryGrid({
                 />
               </div>
             )}
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only stops nested control clicks from bubbling; keyboard interaction stays on the controls. */}
             <div
+              role="presentation"
               className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
@@ -519,7 +524,9 @@ function GalleryListRow({
       {hasRail && (
         <div className="row-span-2 xl:row-span-1">
           {batchMode ? (
+            /* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only stops nested control clicks from bubbling; keyboard interaction stays on the controls. */
             <div
+              role="presentation"
               className="flex justify-center items-center border-border/50 border-r h-full min-h-20"
               onClick={(event) => event.stopPropagation()}
             >
@@ -598,7 +605,12 @@ function GalleryListRow({
             {formatDate(item.createdAt)}
           </span>
         </div>
-        <div className="ml-auto" onClick={(event) => event.stopPropagation()}>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: This layout wrapper only stops nested control clicks from bubbling; keyboard interaction stays on the controls. */}
+        <div
+          role="presentation"
+          className="ml-auto"
+          onClick={(event) => event.stopPropagation()}
+        >
           <GalleryItemActions item={item} disabled={selectionPending} />
         </div>
       </div>
@@ -1022,6 +1034,7 @@ export function GalleryManager({ items }: GalleryManagerProps) {
     Number(category !== "all") +
     Number(sortMode !== "order" || sortDirection !== "asc");
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Category, visibility, query, sort and page size are deliberate pagination-reset triggers.
   useEffect(() => {
     setPage(1);
   }, [category, itemsPerPage, query, sortMode, sortDirection, visibility]);

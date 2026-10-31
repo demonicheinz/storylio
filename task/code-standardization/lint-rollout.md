@@ -167,6 +167,32 @@ elements, Gallery's nested list rail, accessible names including image alt text,
 and responsive exit-button names; no product behavior was changed for those
 test assumptions. Production build passed with 38/38 pages. No service writes.
 
+Approved asset Tab-order change committed as `cdb3c87` with normal hooks.
+
+## Complete Gallery and Media feature coverage
+
+Cover both complete asset features. Consolidate the now-redundant narrower glob
+patterns without changing coverage. Source lint selects **153 files**, reporting
+zero errors, warnings or infos. Remove two unused Media imports. Preserve deliberate
+source-change thumbnail recovery, record-change rename reset and collection
+pagination triggers using local dependency explanations. Event-isolation wrappers
+retain the approved nested-control keyboard contract. The immutable upload-rejection
+batch renders stateless text; its index-qualified key retains a narrow documented
+exception because distinct files can share both name and error. No mutation or
+validation policy changed.
+
+Browser checks passed for both features' Tab contract, the Media grid/list renderer
+checks (preview, copy, download, selection), the full Media regression suite and
+Gallery regression suite at six widths, including upload/delete/rename recovery,
+selection scope/limits, preview reconciliation and reorder rollback. Actions and
+uploads are fixture mocks; no real assets were mutated. Full-suite/build results
+are appended when complete. No blanket lint rule was disabled.
+
+Final combined verification: **103 files / 781 tests passed**, 331.43 seconds.
+Production build generated 38/38 pages, final source lint remained clean on 153
+files and whitespace checks passed. No new dependencies. This full run covers
+the approved asset Tab behavior and the later asset lint annotations/fixes.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:

@@ -10,7 +10,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Drawer,
   DrawerContent,
@@ -22,7 +21,6 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
-import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/toast";
 import toolbarStyles from "@/features/dashboard/shared/components/collection-toolbar.module.css";
 import {
@@ -296,6 +294,7 @@ export function MediaLibraryClient({ initialMedia }: MediaLibraryClientProps) {
   ).length;
   const filterCount = Number(sortMode !== "date" || sortDirection !== "desc");
   const refined = filterCount > 0 || !!query.trim();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Each query, sort or page-size change must reset pagination.
   useEffect(() => setPage(1), [itemsPerPage, query, sortMode, sortDirection]);
   const changeView = (value: ViewMode) => {
     setViewMode(value);

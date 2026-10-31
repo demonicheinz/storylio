@@ -15,6 +15,7 @@ export function MediaThumbnail({
   sizes?: string;
 }) {
   const [failed, setFailed] = useState(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: A changed image URL must clear the previous source failure.
   useEffect(() => setFailed(false), [item.url]);
   if (failed)
     return (

@@ -124,8 +124,8 @@ export function MediaUploadPanel({
           className="flex flex-col gap-2 mt-4 text-destructive text-sm"
         >
           {queue.rejections.map((rejection, index) => (
-            // Repeated names can represent different files rejected by the same batch.
             <li
+              // biome-ignore lint/suspicious/noArrayIndexKey: Immutable rejection batches contain stateless text; duplicate filenames may represent distinct files.
               key={`${index}-${rejection.filename}`}
               className="wrap-anywhere"
             >

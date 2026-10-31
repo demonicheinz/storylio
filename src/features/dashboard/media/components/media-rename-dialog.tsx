@@ -30,6 +30,7 @@ export function MediaRenameDialog({
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
   const locked = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Switching records must reset the rename draft and error even when their filenames match.
   useEffect(() => {
     setValue(item?.filename ?? "");
     setError(undefined);
