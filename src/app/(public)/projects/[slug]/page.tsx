@@ -1,8 +1,4 @@
-import {
-  ArrowLeftIcon,
-  ArrowUpRightIcon,
-  GithubLogoIcon,
-} from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeftIcon, GithubLogoIcon } from "@phosphor-icons/react/dist/ssr";
 import { and, asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";

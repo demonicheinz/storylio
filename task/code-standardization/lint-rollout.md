@@ -277,6 +277,19 @@ it now confirms the actual dialog and waits for stored draft status/date. The
 product withdrawal behavior was unchanged. Diagnostic picker screenshots briefly
 overwrote historical evidence; restored exactly from HEAD before commit.
 
+Shared coverage committed as `d95a8e7` with normal hooks.
+
+## Application route coverage
+
+Cover the app's 50 TypeScript/TSX/CSS files (241 source files total). Generated
+favicon assets are not treated as application JSX. Remove one unused detail-route
+icon import. Retain three explained important declarations: Lenis must override
+native smooth scrolling while mounted, and reduced-motion reveal visibility and
+transform must override animated inline styles. No color/font/spacing changes.
+Sixty-one shell/cache/404/auth-redirect tests, standalone TypeScript, lint and
+whitespace checks passed. The preceding shared production build remains the latest
+build; no new build claim is made for this annotation/import-only route batch.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:
