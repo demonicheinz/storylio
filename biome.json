@@ -56,7 +56,8 @@
       "scripts/**",
       "tests/helpers/**",
       "tests/**/*.test.ts",
-      "tests/browser/**"
+      "tests/browser/**",
+      "tests/fixtures/**"
     ]
   },
   "javascript": {

@@ -395,3 +395,6 @@ parsing; 580 selected lint files, zero diagnostics. See browser-lint.md.
 
 All 92 browser scripts now enter lint through `tests/browser/**`; combined count
 is 599 with no diagnostics. See browser-lint.md for equivalence checks and limits.
+
+All 64 lintable fixture files now enter positive coverage: 663 selected files,
+zero diagnostics. See [fixture-lint.md](fixture-lint.md). Overview/root remain.

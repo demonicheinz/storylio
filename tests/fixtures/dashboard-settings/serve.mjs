@@ -45,7 +45,7 @@ const result = await build({
           resolveDir: process.cwd(),
         }));
         b.onLoad({ filter: /\.svg$/ }, async (a) => ({
-          contents: `export default {src:${JSON.stringify("data:image/svg+xml;base64," + Buffer.from(await readFile(a.path)).toString("base64"))}}`,
+          contents: `export default {src:${JSON.stringify(`data:image/svg+xml;base64,${Buffer.from(await readFile(a.path)).toString("base64")}`)}}`,
           loader: "js",
         }));
       },

@@ -15,14 +15,14 @@ import { DashboardConfirmationHost } from "@/features/dashboard/shared/component
 import shell from "@/features/dashboard/shell/dashboard-shell.module.css";
 
 const projects = Array.from({ length: 85 }, (_, i) => ({
-  id: "project-" + i,
+  id: `project-${i}`,
   title:
     i === 0
       ? "Nebula Commerce with a deliberately long project name"
       : i === 1
         ? "Storylio"
-        : "Project " + i,
-  slug: "project-" + i,
+        : `Project ${i}`,
+  slug: `project-${i}`,
   description: "A portfolio case study for an accessible web application.",
   coverImage: null,
   thumbnailImageUrl: null,
@@ -123,7 +123,9 @@ function UploadFixture() {
   const [disabled, setDisabled] = useState(false);
   return (
     <>
-      <button onClick={() => setDisabled(!disabled)}>Toggle disabled</button>
+      <button type="button" onClick={() => setDisabled(!disabled)}>
+        Toggle disabled
+      </button>
       <ScreenshotsUpload
         value={value}
         onChange={setValue}

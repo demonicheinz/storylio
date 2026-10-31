@@ -16,14 +16,14 @@ const cover =
 const params = new URLSearchParams(location.search),
   future = new Date(Date.now() + 7 * 86400000).toISOString();
 const posts = Array.from({ length: 65 }, (_, i) => ({
-  id: "post-" + i,
+  id: `post-${i}`,
   title:
     i === 0
       ? "An article title with a deliberately long accessible interface description"
       : i === 1
         ? "A note on project details"
-        : "Post " + i,
-  slug: "post-" + i,
+        : `Post ${i}`,
+  slug: `post-${i}`,
   status: i % 4 === 0 ? "DRAFT" : "PUBLISHED",
   coverImage: i < 3 ? cover : null,
   createdAt: "2026-06-18T06:00:00Z",
