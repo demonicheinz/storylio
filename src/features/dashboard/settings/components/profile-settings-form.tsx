@@ -27,7 +27,6 @@ import {
 } from "react";
 import { useForm } from "react-hook-form";
 import { ProfileAvatar } from "@/components/common/profile-avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,7 +45,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
@@ -66,6 +64,7 @@ import {
 } from "@/features/dashboard/settings/validations";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { useUnsavedChangesGuard } from "@/features/dashboard/shared/hooks/use-unsaved-changes-guard";
 import type { ActionResult } from "@/lib/action-result";
 import { authClient } from "@/lib/auth-client";
@@ -305,12 +304,12 @@ function PasswordStrengthMeter({ password }: { password: string }) {
       aria-atomic="true"
     >
       <div className="flex items-center gap-1.5" aria-hidden="true">
-        {Array.from({ length: 5 }).map((_, index) => (
+        {[1, 2, 3, 4, 5].map((level) => (
           <span
-            key={index}
+            key={level}
             className={cn(
               "flex-1 bg-muted rounded-full h-1.5 transition-colors",
-              index < strength.score && strength.className,
+              level <= strength.score && strength.className,
             )}
           />
         ))}
@@ -1235,7 +1234,7 @@ export function SettingsManager({
     setMfaOverride(enabled);
     setSecurityVersion((value) => value + 1);
   }, []);
-  const changeTab = (next: unknown) => {
+  const changeTab = async (next: unknown) => {
     if (typeof next !== "string" || next === tab) return;
     if (tab === "security" && securityFlow.current.pending) {
       toast.add({
@@ -1247,11 +1246,17 @@ export function SettingsManager({
     if (
       tab === "security" &&
       securityFlow.current.dirty &&
-      !window.confirm(
+      !(await confirmAction(
         "Leave Security? Incomplete setup or unsaved backup codes will be cleared from this view. This does not undo changes already made to your account.",
-      )
+        {
+          title: "Leave Security?",
+          confirmLabel: "Leave Security",
+          cancelLabel: "Cancel",
+        },
+      ))
     )
       return;
+    if (securityFlow.current.pending) return;
     securityFlow.current = { dirty: false, pending: false };
     setTab(next);
   };

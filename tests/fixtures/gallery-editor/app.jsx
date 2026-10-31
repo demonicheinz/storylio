@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { Button } from "@/components/ui/button";
 import { ToastProvider } from "@/components/ui/toast";
 import { GalleryItemDialog } from "@/features/dashboard/gallery/components/gallery-item-dialog";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
 import { ImageUpload } from "@/features/dashboard/shared/components/image-upload";
 import shell from "@/features/dashboard/shell/dashboard-shell.module.css";
 
@@ -48,4 +49,9 @@ function Fixture() {
     </ToastProvider>
   );
 }
-createRoot(document.getElementById("root")).render(<Fixture />);
+createRoot(document.getElementById("root")).render(
+  <>
+    <DashboardConfirmationHost />
+    {<Fixture />}
+  </>,
+);

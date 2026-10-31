@@ -155,6 +155,7 @@ function UmamiMetricList({
         <ul className="mt-3 divide-y divide-border/60">
           {items.map((item, index) => (
             <li
+              // biome-ignore lint/suspicious/noArrayIndexKey: This provider snapshot renders stateless text; normalized location names may repeat and must remain distinct rows.
               key={`${item.name}-${index}`}
               className="flex justify-between items-start gap-4 py-2 text-sm"
             >

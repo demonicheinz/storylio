@@ -1,5 +1,6 @@
 // Run against the populated dashboard fixture in an isolated Playwright CLI session.
 // Route: /dashboard-overview-fixture-check?view=posts
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function postsBatchSelection(page) {
   const origin = new URL(page.url()).origin;
   const viewport = page.viewportSize();
@@ -37,6 +38,7 @@ async function postsBatchSelection(page) {
       .first();
     const title = row.locator("h2");
     await title.getByRole("link").waitFor();
+    // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
     const titleText = await title.innerText();
     const href = await title.getByRole("link").getAttribute("href");
     const url = page.url();
@@ -47,6 +49,7 @@ async function postsBatchSelection(page) {
       "Batch title is plain text",
     );
     assert(
+      // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
       (await title.innerText()) === titleText,
       "Batch title retains its text",
     );
@@ -75,6 +78,7 @@ async function postsBatchSelection(page) {
       "Cancel restores editor link",
     );
     assert(
+      // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
       (await title.innerText()) === titleText,
       "Cancel retains title text",
     );

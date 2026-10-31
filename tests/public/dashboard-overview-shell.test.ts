@@ -12,6 +12,7 @@ describe("dashboard overview streaming shell", () => {
     const html = renderToStaticMarkup(Dashboard());
     expect(html).toContain(">Overview</h1>");
     expect(html).toContain('aria-label="Loading dashboard overview"');
+    expect(html).toContain('role="status"');
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain(">New</span>");
     expect(html).toContain('aria-haspopup="menu"');

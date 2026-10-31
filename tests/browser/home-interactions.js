@@ -16,12 +16,12 @@ async sessionPage => {
     await page.addInitScript(()=>{
       const schedule=window.setTimeout, cancel=window.clearTimeout;
       window.__stackTimer=null;
-      window.setTimeout=function(callback,delay,...args){
+      window.setTimeout=(callback,delay,...args)=>{
         const id=schedule(callback,delay,...args);
         if(delay===5000&&typeof callback==='function')window.__stackTimer={id,tick:()=>{cancel(id);window.__stackTimer=null;callback(...args)}};
         return id;
       };
-      window.clearTimeout=function(id){
+      window.clearTimeout=id=>{
         if(window.__stackTimer?.id===id)window.__stackTimer=null;
         return cancel(id);
       };
@@ -29,10 +29,12 @@ async sessionPage => {
     await page.emulateMedia({reducedMotion:'reduce'});
     await page.goto(origin);
     await page.locator('[data-home-page]').waitFor();
+    // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
     assert(await page.locator('#home-title').innerText()==='I’m Heinz. I build web apps.','Old hero headline');
     assert(await page.locator('[data-venom-link]').getAttribute('href')==='#selected-projects','CTA is not the selected-projects anchor');
     assert(await page.locator('a[href="#selected-projects"]').count()===1,'Duplicate hero project link');
     assert(await page.getByText('See my projects',{exact:true}).count()===0,'Old secondary link remains');
+    // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
     assert((await page.locator('[data-home-footer] h2').innerText()).replace(/\s+/g,' ')==='Got something in mind? Let’s talk.','Footer invitation differs');
     assert(await stack().locator('button').count()===0,'Stack has visible navigation controls');
     const total=Number(await stack().getAttribute('data-total'));
@@ -49,9 +51,9 @@ async sessionPage => {
           const items=[...el.querySelectorAll('li')].filter(item=>getComputedStyle(item).display!=='none');
           return {labels:items.map(item=>item.textContent.trim()),tops:items.map(item=>item.getBoundingClientRect().top),height:el.getBoundingClientRect().height};
         });
-        state.labels.forEach(label=>seen.add(label));heights.push(state.height);
-        assert(state.labels.length===Math.min(total,capacity),'Wrong visible count at '+width);
-        assert(Math.max(...state.tops)-Math.min(...state.tops)<2,'Stack wraps at '+width);
+        state.labels.forEach(label=>{seen.add(label)});heights.push(state.height);
+        assert(state.labels.length===Math.min(total,capacity),`Wrong visible count at ${width}`);
+        assert(Math.max(...state.tops)-Math.min(...state.tops)<2,`Stack wraps at ${width}`);
         if(pages>1){
           const previous=await stack().getAttribute('data-page');
           await windowElement().focus();await page.keyboard.press('ArrowRight');
@@ -59,7 +61,7 @@ async sessionPage => {
           await page.waitForTimeout(40);
         }
       }
-      assert(seen.size===total,'Some configured technologies are inaccessible at '+width);
+      assert(seen.size===total,`Some configured technologies are inaccessible at ${width}`);
       assert(Math.max(...heights)-Math.min(...heights)<2,'Stack height shifts between groups');
       assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Horizontal overflow');
       await stoppedTimer();
@@ -126,12 +128,12 @@ async sessionPage => {
       await card.locator('[data-tilt-active]').waitFor({state:'attached'});
       await page.waitForTimeout(450);
       const angles=await card.locator('[data-tilted-cover] > div').evaluate(el=>[...el.style.transform.matchAll(/rotate[XY]\(([-.\d]+)deg\)/g)].map(match=>Math.abs(Number(match[1]))));
-      assert(angles.some(angle=>angle>.1)&&angles.every(angle=>angle<=limit+.1),'Incorrect tilt at '+kind);
+      assert(angles.some(angle=>angle>.1)&&angles.every(angle=>angle<=limit+.1),`Incorrect tilt at ${kind}`);
       const after=await title.boundingBox();
       assert(Math.abs(before.x-after.x)<1&&Math.abs(before.y-after.y)<1,'Text moves with cover tilt');
       assert(await card.locator('button,[role="button"],a').count()===0,'Card nests an interactive control');
       await page.emulateMedia({reducedMotion:'reduce'});
-      await page.waitForFunction(selector=>getComputedStyle(document.querySelector(selector+' [data-tilted-cover] > div')).transform==='none',`[data-home-grid="${kind}"] > a`);
+      await page.waitForFunction(selector=>getComputedStyle(document.querySelector(`${selector} [data-tilted-cover] > div`)).transform==='none',`[data-home-grid="${kind}"] > a`);
       await page.emulateMedia({reducedMotion:'no-preference'});
       await page.mouse.move(1,1);
     }
@@ -144,7 +146,7 @@ async sessionPage => {
     await stoppedTimer();
     results.push({coverTilt:true,textStable:true,reducedTiltDisabled:true,clientNavigation:true});
     await page.setViewportSize({width:390,height:844});
-    await page.goto(origin+'/projects');
+    await page.goto(`${origin}/projects`);
     await page.evaluate(()=>window.scrollTo({top:600,behavior:'instant'}));
     const floatingTop=page.getByRole('button',{name:'Scroll to top',exact:true});
     await floatingTop.waitFor();await floatingTop.focus();await page.keyboard.press('Enter');

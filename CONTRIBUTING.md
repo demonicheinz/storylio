@@ -60,7 +60,7 @@ of test fixtures; database integration tests use PGlite.
 
 ## Branch Convention
 
-Follow the branch naming convention documented in [`BRANCH_CONVENTION.md`](BRANCH_CONVENTION.md).
+Follow the branch naming convention documented in [`.github/BRANCH_CONVENTION.md`](.github/BRANCH_CONVENTION.md).
 
 ```text
 <type>/<description>
@@ -70,7 +70,8 @@ fix/toc-active-state
 docs/environment-setup
 ```
 
-Always branch from the latest `main`.
+Branch routine changes from the latest `staging` and target `staging` in the PR.
+Production hotfixes start from `main`; sync them back to `staging` afterward.
 
 ## Commit Messages
 
@@ -103,6 +104,9 @@ in `.impeccable/`. These local directories are ignored by Git.
 Pull requests that skip the template, bundle unrelated changes, or fail CI checks will be closed without review.
 
 ## Code Standards
+
+Read [`docs/CODE_STANDARDS.md`](docs/CODE_STANDARDS.md) for module boundaries,
+shared UI contracts, dependency placement, and verification expectations.
 
 | Tool | Purpose |
 |------|---------|

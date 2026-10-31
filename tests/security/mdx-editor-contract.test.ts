@@ -11,6 +11,7 @@ describe("editor Markdown contract", () => {
     expect(await getMdxSafetyError(source)).toBeNull();
   });
   it.each([
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: This Markdown fixture must preserve JavaScript interpolation as literal source.
     "```js\nfunction sapa(nama) {\n return `Halo, ${nama}!`;\n}\n```",
     "```\n{example}\n<Contoh />\n```",
     "Kurung sebagai teks: \\{contoh\\}.",

@@ -17,9 +17,11 @@ describe("rich-text Markdown serialization", () => {
   });
   it("leaves inline and fenced code braces untouched", async () => {
     const source =
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: This Markdown fixture must preserve JavaScript interpolation as literal source.
       "`{inline}`\n\n```js\nfunction sapa(nama) {\n return `Halo, ${nama}!`;\n}\n```\n\n```\n<Contoh />\n{contoh}\n```";
     const exported = toMarkdown(fromMarkdown(source), editorMarkdownOptions);
     expect(exported).toContain("`{inline}`");
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: This Markdown fixture must preserve JavaScript interpolation as literal source.
     expect(exported).toContain("${nama}");
     expect(exported).not.toContain("\\{nama}");
     expect(await getMdxSafetyError(exported)).toBeNull();

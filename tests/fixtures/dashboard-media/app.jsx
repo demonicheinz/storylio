@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { Toaster } from "@/components/ui/toast";
 import { MediaLibraryClient } from "@/features/dashboard/media/components/media-client";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
 import shell from "@/features/dashboard/shell/dashboard-shell.module.css";
 
 window.mediaRows = Array.from({ length: 85 }, (_, i) => ({
@@ -21,18 +22,23 @@ window.mediaRows = Array.from({ length: 85 }, (_, i) => ({
 }));
 window.mediaCalls = [];
 createRoot(document.getElementById("root")).render(
-  <Toaster>
-    <main
-      className={shell.shell}
-      style={{ maxWidth: 1280, margin: "auto", padding: 16 }}
-    >
-      <MediaLibraryClient initialMedia={window.mediaRows} />
-      <a
-        className="inline-flex items-center mt-6 min-h-11 text-link"
-        href="/elsewhere"
-      >
-        Leave library fixture
-      </a>
-    </main>
-  </Toaster>,
+  <>
+    <DashboardConfirmationHost />
+    {
+      <Toaster>
+        <main
+          className={shell.shell}
+          style={{ maxWidth: 1280, margin: "auto", padding: 16 }}
+        >
+          <MediaLibraryClient initialMedia={window.mediaRows} />
+          <a
+            className="inline-flex items-center mt-6 min-h-11 text-link"
+            href="/elsewhere"
+          >
+            Leave library fixture
+          </a>
+        </main>
+      </Toaster>
+    }
+  </>,
 );

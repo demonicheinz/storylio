@@ -18,6 +18,7 @@ bunx --no-install playwright-cli -s=posts-polish open http://127.0.0.1:3198 --co
 bunx --no-install playwright-cli -s=posts-polish run-code --filename=tests/browser/dashboard-posts.js
 bunx --no-install playwright-cli -s=posts-polish run-code --filename=tests/browser/post-scheduling.js
 bunx --no-install playwright-cli -s=posts-polish run-code --filename=tests/browser/posts-publication-clock.js
+bunx --no-install playwright-cli -s=posts-polish run-code --filename=tests/browser/collection-selection-keyboard.js
 bunx --no-install playwright-cli -s=posts-polish close
 ```
 

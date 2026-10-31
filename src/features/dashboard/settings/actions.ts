@@ -1,7 +1,6 @@
 "use server";
 
 import { and, desc, eq, gt, ne } from "drizzle-orm";
-import { revalidatePath, updateTag } from "next/cache";
 import { headers } from "next/headers";
 import {
   type AccountPasswordActionInput,
@@ -20,6 +19,7 @@ import { db } from "@/lib/db";
 import { session as sessionTable, user as userTable } from "@/lib/db/schema";
 import { isOwnerEmail } from "@/lib/owner-guard";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { revalidatePath, updateTag } from "@/lib/revalidation";
 
 type ProfileSettingsActionData = {
   id: string;

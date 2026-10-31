@@ -1,3 +1,5 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: Vendor MDXEditor rules and inline toolbar styles require these scoped project-theme overrides; user approved preserving the existing cascade. */
+/* biome-ignore-all lint/style/noDescendingSpecificity: Source/WYSIWYG, portal and toolbar state selectors intentionally override one another in this vendor integration stylesheet. */
 .storylio-mdx-editor.dark-theme {
   --baseBase: var(--background);
   --baseBgSubtle: color-mix(in oklch, var(--surface) 72%, black);

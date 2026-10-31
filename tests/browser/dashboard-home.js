@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardHome(sessionPage) {
   const origin = new URL(sessionPage.url()).origin;
   const context = await sessionPage.context().browser().newContext();
@@ -105,10 +106,16 @@ async function dashboardHome(sessionPage) {
       (await headline.inputValue()) === "Unsaved headline retained across tabs",
       "Tab switch lost draft",
     );
-    page.once("dialog", (dialog) => dialog.accept());
+
     await page
       .getByRole("button", { name: "Discard changes", exact: true })
       .click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(
       (await headline.inputValue()) === "I build thoughtful web applications.",
       "Discard must restore saved headline",
@@ -239,8 +246,14 @@ async function dashboardHome(sessionPage) {
     await page
       .getByRole("textbox", { name: "Logo name", exact: true })
       .fill("React");
-    page.once("dialog", (d) => d.dismiss());
+
     await page.keyboard.press("Escape");
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-cancel"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(await dialog.isVisible(), "Cancelling discard must preserve dialog");
     assert(
       (await page
@@ -269,7 +282,7 @@ async function dashboardHome(sessionPage) {
     await chooser;
     await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
-    await page.goto(origin + "/previous");
+    await page.goto(`${origin}/previous`);
     await page.getByRole("link", { name: "Open Home", exact: true }).click();
     const restoredHeadline = page.getByRole("textbox", {
       name: "Headline",
@@ -292,10 +305,16 @@ async function dashboardHome(sessionPage) {
         "Headline survives browser history",
       "History navigation lost draft",
     );
-    page.once("dialog", (d) => d.accept());
+
     await page
       .getByRole("button", { name: "Discard changes", exact: true })
       .click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await page.getByRole("tab", { name: "Tech stack", exact: true }).click();
     await page
       .getByRole("button", { name: "Open actions for Next.js", exact: true })
@@ -325,11 +344,17 @@ async function dashboardHome(sessionPage) {
         .inputValue()) === "React",
       "History navigation lost section draft",
     );
-    page.once("dialog", (d) => d.accept());
+
     await page
       .getByRole("dialog")
       .getByRole("button", { name: "Cancel", exact: true })
       .click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await page.getByRole("dialog").waitFor({ state: "hidden" });
     assert(errors.length === 0, errors.join("\n"));
     return {

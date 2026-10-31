@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardGallery(sessionPage) {
   const context = await sessionPage
     .context()
@@ -87,14 +88,26 @@ async function dashboardGallery(sessionPage) {
     await page.getByRole("button", { name: "Add image", exact: true }).click();
     const caption = page.getByRole("textbox", { name: /^Caption/ });
     await caption.fill("Keep this draft");
-    page.once("dialog", (dialog) => dialog.dismiss());
+
     await page.keyboard.press("Escape");
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-cancel"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     assert(
       (await caption.inputValue()) === "Keep this draft",
       "Dirty cancel lost draft",
     );
-    page.once("dialog", (dialog) => dialog.accept());
+
     await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await page
+      .getByRole("alertdialog")
+      .last()
+      .locator('[data-slot="alert-dialog-action"]')
+      .click();
+    await page.getByRole("alertdialog").last().waitFor({ state: "hidden" });
     await page
       .getByRole("dialog", { name: "Add Gallery Item", exact: true })
       .waitFor({ state: "hidden" });

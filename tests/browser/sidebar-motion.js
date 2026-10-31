@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function sidebarMotion(page) {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.evaluate(() => localStorage.removeItem("storylio.sidebar"));

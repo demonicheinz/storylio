@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardSort(sessionPage) {
   const context = await sessionPage
     .context()
@@ -21,6 +22,7 @@ async function dashboardSort(sessionPage) {
           page.locator(`a[href*="/dashboard/${cfg.link}/"][href$="/edit"]`),
         )
           .first()
+          // biome-ignore lint/performance/useDomNodeTextContent: Playwright Locator.innerText() reads the rendered label under test; this is not a DOM property access.
           .innerText()
       : page
           .getByRole("button", { name: /^Preview / })

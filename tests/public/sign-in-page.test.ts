@@ -4,7 +4,7 @@ import SignInPage from "@/app/sign-in/page";
 const mocks = vi.hoisted(() => ({
   session: vi.fn(),
   redirect: vi.fn((path: string): never => {
-    throw new Error("redirect:" + path);
+    throw new Error(`redirect:${path}`);
   }),
 }));
 vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));

@@ -7,6 +7,8 @@ const stubs = {
   "next/link": `export default function Link({href,children,...props}) { return <a href={href} {...props}>{children}</a>; }`,
   "@/components/common/logo": `export const Logo=()=> <span>Storylio</span>;`,
   "@/components/common/profile-avatar": `export const ProfileAvatar=()=> <span aria-hidden="true"/>;`,
+  "@/components/auth/auth-background": `export const AuthBackground=()=>null;`,
+  "./auth-background": `export const AuthBackground=()=>null;`,
 };
 const bundle = await build({
   entryPoints: ["tests/fixtures/auth-navigation/app.jsx"],

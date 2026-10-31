@@ -187,11 +187,11 @@ export function AnalyticsLocalView({ data }: { data: AnalyticsData }) {
               View daily values
               <CaretDownIcon className={styles.chevron} aria-hidden />
             </summary>
-            <div
+            <section
               className="max-h-72 overflow-auto"
               data-lenis-prevent="true"
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: This bounded table needs a Tab stop so keyboard users can scroll all daily values.
               tabIndex={0}
-              role="region"
               aria-label="Daily view values"
             >
               <table className="w-full text-sm">
@@ -221,7 +221,7 @@ export function AnalyticsLocalView({ data }: { data: AnalyticsData }) {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </section>
           </details>
         </CardContent>
       </Card>

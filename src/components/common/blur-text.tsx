@@ -6,6 +6,7 @@ import styles from "./blur-text.module.css";
 /** Word-based blur from the supplied BlurText, keeping native text flow and SSR. */
 export function BlurText({ text }: { text: string }) {
   const rootRef = useRef<HTMLSpanElement>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: New text replaces the animated word tree and requires a fresh completion observer.
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -52,6 +53,7 @@ export function BlurText({ text }: { text: string }) {
           part
         ) : (
           <span
+            // biome-ignore lint/suspicious/noArrayIndexKey: Word positions are fixed within the parent keyed by full text, including repeated words.
             key={index}
             className={styles.word}
             data-blur-word

@@ -2,23 +2,13 @@
 
 import {
   ArticleIcon,
-  CaretDownIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
   CheckCircleIcon,
   CheckSquareIcon,
-  ClockIcon,
-  DotsThreeVerticalIcon,
-  EyeIcon,
-  FileTextIcon,
   FunnelSimpleIcon,
   MagnifyingGlassIcon,
-  PencilSimpleIcon,
   PlusIcon,
-  TagIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
@@ -33,10 +23,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Drawer,
   DrawerContent,
@@ -46,18 +34,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { toast } from "@/components/ui/toast";
@@ -66,8 +42,6 @@ import {
   actionMovePostsToDraft,
   actionPublishPosts,
 } from "@/features/dashboard/posts/actions";
-import { PostDeleteButton } from "@/features/dashboard/posts/components/post-delete-button";
-import { getPostPublicationState } from "@/features/dashboard/posts/publication-state";
 import toolbarStyles from "@/features/dashboard/shared/components/collection-toolbar.module.css";
 import {
   DashboardMultiFilter,
@@ -75,40 +49,36 @@ import {
   DashboardSort,
   DashboardViewToggle,
 } from "@/features/dashboard/shared/components/filter-controls";
+import { DashboardPagination } from "@/features/dashboard/shared/components/pagination";
 import { DashboardSummary } from "@/features/dashboard/shared/components/summary";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { useDashboardFilter } from "@/features/dashboard/shared/hooks/use-dashboard-filter";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import type { ActionResult } from "@/lib/action-result";
-import { getPageItems } from "@/lib/archive-pagination";
 import {
   getDefaultItemsPerPage,
   getItemsPerPageOptions,
   paginateItems,
 } from "@/lib/pagination";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import {
+  filterPosts,
+  type PostStatusFilter as StatusFilter,
+} from "../filtering";
+import { getPostViews, isPublished, isScheduled } from "../presentation";
+import type {
+  DashboardPost,
+  PostSortDirection as SortDirection,
+  PostSortField as SortMode,
+} from "../types";
+import { PostsGrid, PostsList } from "./post-collection-view";
 import { usePublicationClock } from "./use-publication-clock";
-
-export type DashboardPost = {
-  id: string;
-  title: string;
-  slug: string;
-  status: "PUBLISHED" | "DRAFT";
-  coverImage: string | null;
-  createdAt: string;
-  updatedAt: string;
-  publishedAt: string | null;
-  viewCount: number;
-  tags: Array<{ name: string }>;
-};
 
 type PostsManagerProps = {
   posts: DashboardPost[];
 };
 
 type ViewMode = "list" | "grid";
-type StatusFilter = "all" | "published" | "draft" | "scheduled";
-type SortMode = "newest" | "updated" | "views" | "title" | "published";
-type SortDirection = "asc" | "desc";
 
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
   { value: "all", label: "All" },
@@ -124,117 +94,6 @@ const sortOptions: Array<{ value: SortMode; label: string }> = [
   { value: "title", label: "Title" },
   { value: "published", label: "Publication date" },
 ];
-
-function isPublished(post: DashboardPost, now: number) {
-  return (
-    getPostPublicationState(post.status, post.publishedAt, now) === "published"
-  );
-}
-
-function isScheduled(post: DashboardPost, now: number) {
-  return (
-    getPostPublicationState(post.status, post.publishedAt, now) === "scheduled"
-  );
-}
-
-function isNote(post: DashboardPost) {
-  return post.tags.some((tag) => tag.name === "notes");
-}
-
-function postHref(post: DashboardPost) {
-  return isNote(post)
-    ? `/blog?tag=notes&note=${encodeURIComponent(post.slug)}`
-    : `/blog/${post.slug}`;
-}
-
-function getPostViews(post: DashboardPost, now: number) {
-  return isPublished(post, now) ? post.viewCount : 0;
-}
-
-function formatDateTime(value: string | null) {
-  if (!value) {
-    return "—";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
-
-function StatusBadge({
-  post,
-  now,
-  compact = false,
-}: {
-  post: DashboardPost;
-  now: number;
-  compact?: boolean;
-}) {
-  const published = isPublished(post, now);
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 bg-surface px-2 border border-border rounded-md h-6 font-medium text-xs",
-        published
-          ? "text-success"
-          : isScheduled(post, now)
-            ? "text-brand-soft"
-            : "text-muted-foreground",
-        compact && "px-2",
-      )}
-    >
-      {isScheduled(post, now) ? (
-        <ClockIcon className="size-3" aria-hidden />
-      ) : (
-        <span
-          className={cn(
-            "rounded-full size-1.5 shrink-0",
-            published ? "bg-success" : "bg-muted-foreground",
-          )}
-        />
-      )}
-      {isScheduled(post, now) ? "Scheduled" : published ? "Published" : "Draft"}
-    </span>
-  );
-}
-
-function PostThumbnail({
-  post,
-  className,
-  sizes = "(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw",
-}: {
-  post: DashboardPost;
-  className?: string;
-  sizes?: string;
-}) {
-  const [failed, setFailed] = useState(false);
-
-  return (
-    <div
-      className={cn(
-        "relative bg-muted/30 border border-border/60 rounded-xl aspect-video overflow-hidden",
-        className,
-      )}
-    >
-      {post.coverImage && !failed ? (
-        <Image
-          src={post.coverImage}
-          alt={post.title}
-          fill
-          className="object-cover"
-          sizes={sizes}
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        <div className="flex justify-center items-center h-full text-muted-foreground">
-          <ArticleIcon className="size-8" />
-        </div>
-      )}
-    </div>
-  );
-}
 
 function FilterDropdown<T extends string>({
   label,
@@ -294,415 +153,9 @@ function ViewToggle({
   );
 }
 
-function PostActions({
-  post,
-  now,
-  align = "end",
-  overlay = false,
-}: {
-  post: DashboardPost;
-  now: number;
-  align?: "start" | "end";
-  overlay?: boolean;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            type="button"
-            size="icon"
-            variant={overlay ? "secondary" : "ghost"}
-            className={cn(
-              "size-11",
-              overlay &&
-                "bg-popover/80 border-border shadow-sm hover:bg-surface-hover/90",
-            )}
-            aria-label={`Open actions for ${post.title}`}
-          />
-        }
-      >
-        <DotsThreeVerticalIcon />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align={align} className="w-44">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Post</DropdownMenuLabel>
-          <DropdownMenuLabel>
-            Created {formatDateTime(post.createdAt)}
-          </DropdownMenuLabel>
-          {isPublished(post, now) && (
-            <DropdownMenuItem
-              render={<Link href={postHref(post)} target="_blank" />}
-            >
-              <EyeIcon data-icon="inline-start" />
-              View live
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem
-            render={<Link href={`/dashboard/posts/${post.id}/edit`} />}
-          >
-            <PencilSimpleIcon data-icon="inline-start" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <PostDeleteButton
-            triggerNativeButton={false}
-            postId={post.id}
-            title={post.title}
-            trigger={
-              <DropdownMenuItem variant="destructive" closeOnClick={false}>
-                <TrashIcon data-icon="inline-start" />
-                Delete
-              </DropdownMenuItem>
-            }
-          />
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function TagPills({
-  tags,
-  limit = 3,
-}: {
-  tags: Array<{ name: string }>;
-  limit?: number;
-}) {
-  const visibleTags = tags.slice(0, limit);
-  const remaining = tags.length - visibleTags.length;
-
-  if (tags.length === 0) {
-    return (
-      <Badge variant="outline" className="text-muted-foreground text-xs">
-        No tags
-      </Badge>
-    );
-  }
-
-  return (
-    <div className="flex flex-wrap gap-1.5 min-w-0">
-      {visibleTags.map((tag) => (
-        <Badge
-          key={tag.name}
-          variant="secondary"
-          className="max-w-32 text-xs truncate"
-        >
-          {tag.name}
-        </Badge>
-      ))}
-      {remaining > 0 && (
-        <Badge variant="outline" className="text-xs">
-          +{remaining}
-        </Badge>
-      )}
-    </div>
-  );
-}
-
-function PostsGrid({
-  posts,
-  now,
-  batchMode,
-  selectedIds,
-  onTogglePost,
-}: {
-  posts: DashboardPost[];
-  now: number;
-  batchMode: boolean;
-  selectedIds: Set<string>;
-  onTogglePost: (id: string) => void;
-}) {
-  return (
-    <div className={dashboardStyles.gridCards}>
-      {posts.map((post) => (
-        <article
-          key={post.id}
-          className={cn(
-            "group flex flex-col bg-card border border-border hover:border-border-hover rounded-lg min-w-0 overflow-hidden transition-colors",
-            selectedIds.has(post.id) && "border-brand-soft/60 bg-brand/5",
-            batchMode && "cursor-pointer",
-          )}
-          onClick={batchMode ? () => onTogglePost(post.id) : undefined}
-        >
-          <div className="relative">
-            <PostThumbnail post={post} className="border-0 rounded-none" />
-            {batchMode && (
-              <div
-                className="top-3 left-3 z-10 absolute"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <Checkbox
-                  checked={selectedIds.has(post.id)}
-                  onCheckedChange={() => onTogglePost(post.id)}
-                  aria-label={`Select ${post.title}`}
-                />
-              </div>
-            )}
-            <div
-              className="top-3 right-3 absolute"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <PostActions now={now} post={post} overlay />
-            </div>
-          </div>
-          <div className="flex flex-col flex-1 gap-3 p-4">
-            <div className="flex flex-wrap gap-2">
-              <StatusBadge now={now} post={post} compact />
-              <span className="text-muted-foreground text-xs">
-                {isNote(post) ? "Note" : "Article"}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <h2 className="font-sans font-semibold text-base line-clamp-2 leading-snug">
-                {batchMode ? (
-                  post.title
-                ) : (
-                  <Link
-                    href={`/dashboard/posts/${post.id}/edit`}
-                    className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring hover:text-link"
-                  >
-                    {post.title}
-                  </Link>
-                )}
-              </h2>
-              <p className="mt-1 text-muted-foreground text-xs truncate">
-                {isNote(post) ? "Note" : "Article"} · {post.slug}
-              </p>
-            </div>
-            <TagPills tags={post.tags} />
-            <div className="flex justify-between items-center gap-3 mt-auto text-muted-foreground text-xs">
-              <span className="truncate">
-                {post.publishedAt ? formatDate(post.publishedAt) : "—"}
-              </span>
-              <span className="inline-flex items-center gap-1 shrink-0">
-                <EyeIcon className="size-3.5" />
-                {getPostViews(post, now).toLocaleString("en-US")} views
-              </span>
-            </div>
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function PostsList({
-  posts,
-  now,
-  selectedIds,
-  batchMode,
-  onTogglePost,
-  onTogglePage,
-  onMobilePostClick,
-}: {
-  posts: DashboardPost[];
-  now: number;
-  selectedIds: Set<string>;
-  batchMode: boolean;
-  onTogglePost: (id: string) => void;
-  onTogglePage: () => void;
-  onMobilePostClick: (id: string) => void;
-}) {
-  const allSelected =
-    posts.length > 0 && posts.every((post) => selectedIds.has(post.id));
-  const desktopGridColumns = batchMode
-    ? "grid-cols-[44px_minmax(0,1fr)_130px_90px_180px_68px]"
-    : "grid-cols-[minmax(0,1fr)_130px_90px_180px_68px]";
-
-  return (
-    <>
-      <div className={cn(dashboardStyles.listSurface, "hidden xl:block")}>
-        <div
-          className={cn(
-            "grid border-border border-b font-medium text-muted-foreground text-xs",
-            desktopGridColumns,
-          )}
-        >
-          {batchMode && (
-            <div className="flex justify-center items-center self-stretch">
-              <Checkbox
-                checked={allSelected}
-                onCheckedChange={onTogglePage}
-                aria-label="Select visible posts"
-              />
-            </div>
-          )}
-          <div className="py-3 pr-3 pl-34">Title</div>
-          <div className="p-3">Status</div>
-          <div className="p-3">Views</div>
-          <div className="p-3">Updated at</div>
-          <div className="p-3 text-center">Actions</div>
-        </div>
-        <div className={dashboardStyles.listRows}>
-          {posts.map((post) => (
-            <div
-              key={post.id}
-              className={cn("items-center grid min-w-0", desktopGridColumns)}
-            >
-              {batchMode && (
-                <div className="flex justify-center items-center self-stretch">
-                  <Checkbox
-                    checked={selectedIds.has(post.id)}
-                    onCheckedChange={() => onTogglePost(post.id)}
-                    aria-label={`Select ${post.title}`}
-                  />
-                </div>
-              )}
-              <div className="flex items-center gap-3 p-3 pr-4 min-w-0">
-                <PostThumbnail
-                  post={post}
-                  className="rounded-xl w-28 h-16 shrink-0"
-                  sizes="112px"
-                />
-                <div className="min-w-0">
-                  <h2 className="font-sans font-semibold text-sm line-clamp-2 leading-snug">
-                    {batchMode ? (
-                      post.title
-                    ) : (
-                      <Link
-                        href={`/dashboard/posts/${post.id}/edit`}
-                        className="rounded-sm focus-visible:outline-2 focus-visible:outline-ring hover:text-link"
-                      >
-                        {post.title}
-                      </Link>
-                    )}
-                  </h2>
-                  <p className="mt-1 text-muted-foreground text-xs truncate">
-                    {isNote(post) ? "Note" : "Article"} · {post.slug}
-                  </p>
-                  <div className="mt-2">
-                    <TagPills tags={post.tags} limit={4} />
-                  </div>
-                </div>
-              </div>
-              <div className="p-3">
-                <StatusBadge now={now} post={post} />
-              </div>
-              <div className="p-3 text-muted-foreground text-sm">
-                {getPostViews(post, now).toLocaleString("en-US")}
-              </div>
-              <div className="p-3 text-muted-foreground text-sm">
-                <time
-                  dateTime={post.updatedAt}
-                  className="flex flex-col gap-1 whitespace-nowrap"
-                >
-                  <span>
-                    {new Intl.DateTimeFormat("en-US", {
-                      dateStyle: "medium",
-                    }).format(new Date(post.updatedAt))}
-                  </span>
-                  <span className="text-xs">
-                    {new Intl.DateTimeFormat("en-US", {
-                      timeStyle: "short",
-                    }).format(new Date(post.updatedAt))}
-                  </span>
-                </time>
-              </div>
-              <div className="flex justify-center p-3">
-                <PostActions now={now} post={post} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div
-        className={cn(
-          dashboardStyles.listSurface,
-          "xl:hidden divide-y divide-border",
-        )}
-      >
-        {posts.map((post) => (
-          <article
-            key={post.id}
-            className={cn(
-              "p-4 min-w-0 transition-colors",
-              selectedIds.has(post.id) && "border-brand-soft/50 bg-brand/5",
-              batchMode && "cursor-pointer",
-            )}
-            onClick={batchMode ? () => onMobilePostClick(post.id) : undefined}
-          >
-            <div
-              className={cn(
-                "flex items-start min-w-0 transition-[gap] duration-200",
-                batchMode ? "gap-3" : "gap-0",
-              )}
-            >
-              <div
-                className={cn(
-                  "grid overflow-hidden transition-[width,opacity,transform] duration-200 ease-out",
-                  batchMode
-                    ? "w-5 translate-x-0 opacity-100"
-                    : "w-0 -translate-x-2 opacity-0",
-                )}
-                onClick={(event) => event.stopPropagation()}
-                onPointerDown={(event) => event.stopPropagation()}
-                aria-hidden={!batchMode}
-              >
-                <Checkbox
-                  checked={selectedIds.has(post.id)}
-                  onCheckedChange={() => onTogglePost(post.id)}
-                  className="mt-1 shrink-0"
-                  disabled={!batchMode}
-                  tabIndex={batchMode ? 0 : -1}
-                  aria-label={`Select ${post.title}`}
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span
-                    className={cn(
-                      "rounded-full size-2 shrink-0",
-                      isPublished(post, now)
-                        ? "bg-success"
-                        : "bg-muted-foreground",
-                    )}
-                  />
-                  <h2 className="font-sans font-semibold text-base line-clamp-2 leading-snug">
-                    {batchMode ? (
-                      post.title
-                    ) : (
-                      <Link href={`/dashboard/posts/${post.id}/edit`}>
-                        {post.title}
-                      </Link>
-                    )}
-                  </h2>
-                </div>
-                <p className="mt-1 text-muted-foreground text-xs truncate">
-                  {isNote(post) ? "Note" : "Article"} · {post.slug}
-                </p>
-              </div>
-              <div
-                onClick={(event) => event.stopPropagation()}
-                onPointerDown={(event) => event.stopPropagation()}
-              >
-                <PostActions now={now} post={post} />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 mt-3">
-              <StatusBadge now={now} post={post} compact />
-              <span className="inline-flex items-center gap-1 text-muted-foreground text-xs">
-                <EyeIcon className="size-3.5" />
-                {getPostViews(post, now).toLocaleString("en-US")} views
-              </span>
-              <span className="text-muted-foreground text-xs">
-                Updated {formatDate(post.updatedAt)}
-              </span>
-            </div>
-            <div className="mt-3">
-              <TagPills tags={post.tags} limit={2} />
-            </div>
-          </article>
-        ))}
-      </div>
-    </>
-  );
-}
-
 function BatchActionsBar({
   selectedCount,
-  selectedTitles,
+  selectedPosts,
   outsideViewCount,
   onTogglePage,
   isPending,
@@ -712,7 +165,7 @@ function BatchActionsBar({
   onClear,
 }: {
   selectedCount: number;
-  selectedTitles: string[];
+  selectedPosts: Pick<DashboardPost, "id" | "title">[];
   outsideViewCount: number;
   onTogglePage: () => void;
   isPending: boolean;
@@ -786,9 +239,9 @@ function BatchActionsBar({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <ul className="space-y-1 max-h-48 overflow-y-auto text-sm">
-              {selectedTitles.map((title, index) => (
-                <li key={`${index}-${title}`} className="wrap-anywhere">
-                  {title}
+              {selectedPosts.map((post) => (
+                <li key={post.id} className="wrap-anywhere">
+                  {post.title}
                 </li>
               ))}
             </ul>
@@ -814,158 +267,6 @@ function BatchActionsBar({
           Cancel selection
         </Button>
       </div>
-    </div>
-  );
-}
-
-function PostsPagination({
-  firstIndex,
-  lastIndex,
-  total,
-  page,
-  pageCount,
-  itemsPerPage,
-  itemsPerPageOptions,
-  onPageChange,
-  onItemsPerPageChange,
-}: {
-  firstIndex: number;
-  lastIndex: number;
-  total: number;
-  page: number;
-  pageCount: number;
-  itemsPerPage: number;
-  itemsPerPageOptions: readonly number[];
-  onPageChange: (page: number) => void;
-  onItemsPerPageChange: (value: number) => void;
-}) {
-  const pageControls = (
-    <div className="flex justify-center items-center gap-1">
-      <Button
-        type="button"
-        size="icon"
-        variant="outline"
-        disabled={page <= 1}
-        onClick={() => onPageChange(Math.max(1, page - 1))}
-        aria-label="Previous page"
-      >
-        <CaretLeftIcon />
-      </Button>
-      <span className="md:hidden px-2 text-sm" aria-live="polite">
-        Page {page} of {pageCount}
-      </span>
-      <div className="hidden md:flex items-center gap-1">
-        {getPageItems(page, pageCount).map((value, index) =>
-          value === "ellipsis" ? (
-            <span key={`gap-${index}`} className="px-1" aria-hidden>
-              …
-            </span>
-          ) : (
-            <Button
-              key={value}
-              type="button"
-              size="icon"
-              variant={value === page ? "default" : "outline"}
-              onClick={() => onPageChange(value)}
-              aria-label={`Page ${value}`}
-              aria-current={value === page ? "page" : undefined}
-            >
-              {value}
-            </Button>
-          ),
-        )}
-      </div>
-      <Button
-        type="button"
-        size="icon"
-        variant="outline"
-        disabled={page >= pageCount}
-        onClick={() => onPageChange(Math.min(pageCount, page + 1))}
-        aria-label="Next page"
-      >
-        <CaretRightIcon />
-      </Button>
-    </div>
-  );
-
-  return (
-    <div className="md:items-center gap-3 grid md:grid-cols-[1fr_auto_1fr] mt-4 text-muted-foreground text-sm">
-      <div className="md:contents flex justify-between items-center">
-        <p className="md:hidden">
-          {firstIndex}-{lastIndex} of {total}
-        </p>
-        <p className="hidden md:block">
-          Showing {firstIndex} to {lastIndex} of {total}{" "}
-          {total === 1 ? "item" : "items"}
-        </p>
-        <div className="md:hidden">
-          <ItemsPerPageDropdown
-            value={itemsPerPage}
-            options={itemsPerPageOptions}
-            onValueChange={onItemsPerPageChange}
-          />
-        </div>
-      </div>
-      <div className="md:col-start-2">{pageControls}</div>
-      <div className="hidden md:flex justify-end">
-        <ItemsPerPageDropdown
-          value={itemsPerPage}
-          options={itemsPerPageOptions}
-          onValueChange={onItemsPerPageChange}
-          showLabel
-        />
-      </div>
-    </div>
-  );
-}
-
-function ItemsPerPageDropdown({
-  value,
-  options,
-  onValueChange,
-  showLabel = false,
-}: {
-  value: number;
-  options: readonly number[];
-  onValueChange: (value: number) => void;
-  showLabel?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      {showLabel && (
-        <span className="text-muted-foreground text-sm">Items per page</span>
-      )}
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              aria-label="Items per page"
-            />
-          }
-        >
-          {value}
-          <CaretDownIcon className="size-3.5" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-24">
-          <DropdownMenuRadioGroup
-            value={String(value)}
-            onValueChange={(nextValue) => onValueChange(Number(nextValue))}
-          >
-            {options.map((option) => (
-              <DropdownMenuRadioItem
-                key={option}
-                value={String(option)}
-                closeOnClick={true}
-              >
-                {option}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 }
@@ -1021,78 +322,15 @@ export function PostsManager({ posts }: PostsManagerProps) {
     };
   }, [posts, now]);
 
-  const filteredPosts = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return [...posts]
-      .filter((post) => {
-        if (status === "published" && !isPublished(post, now)) {
-          return false;
-        }
-
-        if (status === "draft" && post.status !== "DRAFT") {
-          return false;
-        }
-
-        if (status === "scheduled" && !isScheduled(post, now)) return false;
-
-        if (
-          selectedTags.length > 0 &&
-          !post.tags.some((tag) => selectedTags.includes(tag.name))
-        ) {
-          return false;
-        }
-
-        if (!normalizedQuery) {
-          return true;
-        }
-
-        return [
-          post.title,
-          post.slug,
-          isScheduled(post, now)
-            ? "scheduled"
-            : isPublished(post, now)
-              ? "published"
-              : "draft",
-          isNote(post) ? "note" : "article",
-          ...post.tags.map((tag) => tag.name),
-        ].some((value) => value.toLowerCase().includes(normalizedQuery));
-      })
-      .sort((a, b) => {
-        const direction = sortDirection === "asc" ? 1 : -1;
-        if (sortMode === "updated") {
-          return (
-            direction *
-            (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
-          );
-        }
-
-        if (sortMode === "views") {
-          return direction * (getPostViews(a, now) - getPostViews(b, now));
-        }
-
-        if (sortMode === "title") {
-          return direction * a.title.localeCompare(b.title);
-        }
-
-        if (sortMode === "published") {
-          // Undated posts stay last in either direction.
-          if (!a.publishedAt) return b.publishedAt ? 1 : 0;
-          if (!b.publishedAt) return -1;
-          return (
-            direction *
-            (new Date(a.publishedAt).getTime() -
-              new Date(b.publishedAt).getTime())
-          );
-        }
-
-        return (
-          direction *
-          (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        );
-      });
-  }, [posts, query, selectedTags, sortMode, sortDirection, status, now]);
+  const filteredPosts = useMemo(
+    () =>
+      filterPosts(
+        posts,
+        { query, status, selectedTags, sortMode, sortDirection },
+        now,
+      ),
+    [posts, query, selectedTags, sortMode, sortDirection, status, now],
+  );
 
   const {
     items: paginatedPosts,
@@ -1103,6 +341,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
   } = paginateItems(filteredPosts, page, itemsPerPage);
   const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Changing any refinement or page size must return the collection to its first page.
   useEffect(() => {
     setPage(1);
   }, [itemsPerPage, query, selectedTags, sortMode, sortDirection, status]);
@@ -1291,11 +530,16 @@ export function PostsManager({ posts }: PostsManagerProps) {
     runBatchAction(actionPublishPosts, "Selected posts published.");
   };
 
-  const moveSelectedPostsToDraft = () => {
+  const moveSelectedPostsToDraft = async () => {
     if (
-      !window.confirm(
+      !(await confirmAction(
         "Move selected posts to draft? Public posts will be hidden and schedules cancelled.",
-      )
+        {
+          title: "Move selected posts to draft?",
+          confirmLabel: "Move to draft",
+          cancelLabel: "Cancel",
+        },
+      ))
     )
       return;
     runBatchAction(actionMovePostsToDraft, "Selected posts moved to draft.");
@@ -1543,7 +787,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
         {batchMode && (
           <BatchActionsBar
             selectedCount={selectedIds.size}
-            selectedTitles={selectedPosts.map((post) => post.title)}
+            selectedPosts={selectedPosts}
             outsideViewCount={outsideViewCount}
             onTogglePage={togglePageSelection}
             isPending={isBatchPending}
@@ -1603,7 +847,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
               />
             )}
 
-            <PostsPagination
+            <DashboardPagination
               firstIndex={firstIndex}
               lastIndex={lastIndex}
               total={filteredPosts.length}

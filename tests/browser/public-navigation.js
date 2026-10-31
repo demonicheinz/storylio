@@ -41,7 +41,7 @@ async (page) => {
         const before = requests.length;
         await page.evaluate(() => { window.__publicNavigationProbe.loading = []; });
         await page.getByRole("link", { name, exact: true }).first().click();
-        const path = name === "Home" ? "/" : "/" + name.toLowerCase();
+        const path = name === "Home" ? "/" : `/${name.toLowerCase()}`;
         await page.waitForURL((url) => url.pathname === path);
         await page.waitForTimeout(1000);
         await page.locator('[aria-label="Loading page"]').waitFor({ state: "hidden" });
@@ -50,7 +50,7 @@ async (page) => {
         const navigationRequests = requests.slice(before).filter((request) => !request.prefetch && request.path === path);
         results.push({ round, path, skeletonShown: loading.length > 0, navigationRequests: navigationRequests.length });
         if (round === 2 && (loading.length > 0 || navigationRequests.length > 0)) {
-          throw new Error("Visited public route was not reused: " + JSON.stringify(results));
+          throw new Error(`Visited public route was not reused: ${JSON.stringify(results)}`);
         }
       }
     }

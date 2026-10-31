@@ -41,7 +41,7 @@ afterAll(async () => {
 });
 
 function request(slug: string, type: string, cookie?: string) {
-  return new NextRequest("https://storylio.test/api/views/" + slug, {
+  return new NextRequest(`https://storylio.test/api/views/${slug}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function sidebarLayout(sessionPage) {
   const context = await sessionPage.context().browser().newContext();
   await context.addInitScript(() =>
@@ -63,7 +64,7 @@ async function sidebarLayout(sessionPage) {
       assert(geometry.buttons.length >= 11, "Missing actual sidebar controls");
       assert(
         geometry.buttons.every((b) => b.buttonOffset <= 1 && b.iconOffset <= 1),
-        "Collapsed icons off center: " + JSON.stringify(geometry),
+        `Collapsed icons off center: ${JSON.stringify(geometry)}`,
       );
       assert(
         geometry.buttons.every(

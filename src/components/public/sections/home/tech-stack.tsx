@@ -96,6 +96,7 @@ export function TechStackSection({ logos }: { logos: HomeLogo[] }) {
   const [wave, setWave] = useState(0);
   const group = getTechnologyPage(logos, capacity, page);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Changed logo count must refresh breakpoint pagination and visibility observation.
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -139,6 +140,7 @@ export function TechStackSection({ logos }: { logos: HomeLogo[] }) {
     }
   }, [visible]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Each manual/automatic wipe wave restarts the next rotation timeout.
   useEffect(() => {
     if (reduced || hovered || focused || !visible || !activeDocument) return;
     const timeout = setTimeout(() => {
@@ -182,6 +184,7 @@ export function TechStackSection({ logos }: { logos: HomeLogo[] }) {
           </SectionHeading>
           <p>For the interface and the systems behind it.</p>
         </div>
+        {/* biome-ignore lint/a11y/useSemanticElements: This keyboard-controlled carousel is a named group, not a group of form fields. */}
         <div
           className={styles.stackWindow}
           data-tech-window
@@ -226,6 +229,7 @@ export function TechStackSection({ logos }: { logos: HomeLogo[] }) {
           <ul className={styles.logos} aria-live="off">
             {group.items.map((logo, index) => (
               <LogoSlot
+                // biome-ignore lint/suspicious/noArrayIndexKey: Fixed visual slots intentionally retain animation state while logo content rotates.
                 key={index}
                 logo={logo}
                 index={index}

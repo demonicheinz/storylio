@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function imageUploadDrop(sessionPage) {
   const context = await sessionPage.context().browser().newContext();
   const page = await context.newPage();
@@ -49,7 +50,7 @@ async function imageUploadDrop(sessionPage) {
     const dropped = observed.events.filter((e) => e.type === "drop");
     assert(
       dropped.some((e) => e.trusted && e.prevented),
-      "Native pending drop must be prevented: " + JSON.stringify(observed),
+      `Native pending drop must be prevented: ${JSON.stringify(observed)}`,
     );
     await page.evaluate(() => window.uploadFixture.resolve());
     await page

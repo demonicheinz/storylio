@@ -24,6 +24,7 @@ import {
   aboutContentActionSchema,
 } from "@/features/dashboard/about/validations";
 import { DashboardSelect } from "@/features/dashboard/shared/components/filter-controls";
+import { confirmAction } from "@/features/dashboard/shared/confirmation";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import { useAboutDraftGuard } from "./use-about-draft-guard";
 
@@ -257,7 +258,7 @@ export function AboutContentForm({
               />
             </div>
 
-            <div
+            <section
               className="gap-3 grid sm:grid-cols-2"
               aria-label="Translation completeness"
             >
@@ -294,7 +295,7 @@ export function AboutContentForm({
                   </div>
                 );
               })}
-            </div>
+            </section>
 
             <p className="text-muted-foreground text-xs">
               Fields are optional. An empty translation uses the other language
@@ -416,8 +417,9 @@ export function AboutContentForm({
             type="button"
             variant="outline"
             disabled={!isDirty || isPending}
-            onClick={() => {
-              if (window.confirm("Discard unsaved About content?")) reset();
+            onClick={async () => {
+              if (await confirmAction("Discard unsaved About content?"))
+                reset();
             }}
           >
             Discard changes

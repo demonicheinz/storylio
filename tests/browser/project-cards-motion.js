@@ -7,7 +7,7 @@ async sessionPage => {
   try{
     await page.setViewportSize({width:1440,height:1000});
     await page.emulateMedia({reducedMotion:'no-preference'});
-    await page.goto(origin+'/projects');await page.locator('[data-project-card]').first().waitFor();await page.evaluate(()=>document.fonts.ready);
+    await page.goto(`${origin}/projects`);await page.locator('[data-project-card]').first().waitFor();await page.evaluate(()=>document.fonts.ready);
     // Measure tilt after the route/reveal entrance has reached its final position.
     await page.waitForTimeout(700);
     const card=page.locator('[data-project-card]').first();const title=card.locator('h2');
@@ -30,10 +30,10 @@ async sessionPage => {
     await page.mouse.move(1,1);await flow.focus();await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');
     assert(await flow.evaluate(el=>el.matches(':focus-visible')),'No visible keyboard focus');
     await page.screenshot({path:'.playwright-cli/project-cards-uniform-desktop.png'});
-    await page.setViewportSize({width:390,height:844});await page.goto(origin+'/projects');
+    await page.setViewportSize({width:390,height:844});await page.goto(`${origin}/projects`);
     await page.locator('[data-project-card]').first().waitFor();await page.screenshot({path:'.playwright-cli/project-cards-uniform-mobile.png'});
     assert(await page.getByRole('navigation',{name:'Project pages',exact:true}).count()===0,'Pagination should hide for three projects');
-    await page.goto(origin+'/projects?page=999&keep=page-test');await page.locator('[data-project-card]').first().waitFor();
+    await page.goto(`${origin}/projects?page=999&keep=page-test`);await page.locator('[data-project-card]').first().waitFor();
     assert(await page.locator('[data-project-card]').count()===3,'Out of range page did not clamp to available results');
     await page.getByRole('button',{name:'Filter stack',exact:true}).click();await page.getByRole('combobox',{name:'Search technologies'}).fill('Next.js');
     await page.getByRole('option',{name:'Next.js',exact:true}).click();await page.waitForURL(url=>url.searchParams.has('tech')&&!url.searchParams.has('page'));

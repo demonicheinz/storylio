@@ -28,5 +28,13 @@ export const onRequestError: Instrumentation.onRequestError = async (
 ) => {
   if (!enabled() || isExpectedNavigationError(error)) return;
   const Sentry = await import("@sentry/nextjs");
-  Sentry.captureRequestError(error, request, context);
+  Sentry.withScope((scope) => {
+    scope.setTags({
+      "next.route_type": context.routeType,
+      "next.render_source": context.renderSource ?? "unknown",
+      "next.revalidate_reason": context.revalidateReason ?? "none",
+      "next.resume": request.headers["next-resume"] === "1" ? "true" : "false",
+    });
+    Sentry.captureRequestError(error, request, context);
+  });
 };

@@ -4,10 +4,13 @@ import NewPostPage from "@/app/(dashboard)/dashboard/posts/new/page";
 import NewProjectPage from "@/app/(dashboard)/dashboard/projects/new/page";
 import { PublicPageSkeleton } from "@/components/common/public-page-skeleton";
 import { PostCard } from "@/components/public/sections/blog/post-card";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
+import { ConfirmationsFixture } from "./confirmations";
 import { Controls } from "./controls";
+import { CoversFixture } from "./covers";
+import { PaginationFixture } from "./pagination";
 
 window.fixture = { id: "first", fail: false, calls: [] };
-window.confirm = () => true;
 function App() {
   const kind = new URLSearchParams(location.search).get("kind") ?? "posts";
   const [visible, setVisible] = useState(true);
@@ -26,6 +29,9 @@ function App() {
   };
   const variant = new URLSearchParams(location.search).get("variant");
   if (kind === "controls") return <Controls />;
+  if (kind === "confirmation") return <ConfirmationsFixture />;
+  if (kind === "covers") return <CoversFixture />;
+  if (kind === "pagination") return <PaginationFixture />;
   if (variant) return <PublicPageSkeleton variant={variant} />;
   if (kind === "cover")
     return (
@@ -68,7 +74,12 @@ function App() {
   );
 }
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+  <>
+    <DashboardConfirmationHost />
+    {
+      <StrictMode>
+        <App />
+      </StrictMode>
+    }
+  </>,
 );

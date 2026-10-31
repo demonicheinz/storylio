@@ -342,6 +342,7 @@ describe("Media deletion safety", () => {
     vi.spyOn(fixture.db, "$count").mockImplementation((source, filter) => {
       const query = originalCount(source, filter);
       const execute = query.then.bind(query);
+      // biome-ignore lint/suspicious/noThenProperty: The database mock implements the query builder thenable contract.
       query.then = (onfulfilled, onrejected) => {
         peak = Math.max(peak, ++active);
         return execute(onfulfilled, onrejected).finally(() => {

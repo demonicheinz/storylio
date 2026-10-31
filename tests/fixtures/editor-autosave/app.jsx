@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { PostEditor } from "@/features/dashboard/posts/components/post-editor";
 import { ProjectEditor } from "@/features/dashboard/projects/components/project-editor";
+import { DashboardConfirmationHost } from "@/features/dashboard/shared/components/confirmation-dialog";
 
 const params = new URLSearchParams(location.search);
 const kind = params.get("kind") ?? "post";
@@ -67,13 +68,16 @@ window.editorFixture = {
 
 const create = params.get("mode") === "create";
 createRoot(document.getElementById("root")).render(
-  kind === "post" ? (
-    <PostEditor
-      {...(create ? { mode: "create" } : { mode: "edit", post: record })}
-    />
-  ) : (
-    <ProjectEditor
-      {...(create ? { mode: "create" } : { mode: "edit", project: record })}
-    />
-  ),
+  <>
+    <DashboardConfirmationHost />
+    {kind === "post" ? (
+      <PostEditor
+        {...(create ? { mode: "create" } : { mode: "edit", post: record })}
+      />
+    ) : (
+      <ProjectEditor
+        {...(create ? { mode: "create" } : { mode: "edit", project: record })}
+      />
+    )}
+  </>,
 );

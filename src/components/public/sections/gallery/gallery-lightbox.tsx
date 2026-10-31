@@ -36,7 +36,7 @@ export function GalleryLightbox({
     photo?.caption || photo?.description || photo?.category,
   );
   // Keep the actual image viewport separate from the scrollable description.
-  const measureDetails = useCallback((node: HTMLDivElement | null) => {
+  const measureDetails = useCallback((node: HTMLElement | null) => {
     if (!node) return;
     const observer = new ResizeObserver(() => {
       setDetailsHeight(node.getBoundingClientRect().height);
@@ -97,13 +97,13 @@ export function GalleryLightbox({
               {index + 1} <span aria-hidden="true">/</span> {photos.length}
             </p>
             {hasDetails && (
-              <div
+              <section
                 ref={measureDetails}
                 className={styles.details}
                 data-gallery-details
                 data-lenis-prevent
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: Bounded image details need a focus stop for keyboard scrolling inside the lightbox.
                 tabIndex={0}
-                role="region"
                 aria-label="Image details"
                 onPointerDown={(event) => event.stopPropagation()}
                 onWheel={(event) => event.stopPropagation()}
@@ -117,7 +117,7 @@ export function GalleryLightbox({
                     <p className={styles.description}>{photo.description}</p>
                   )}
                 </div>
-              </div>
+              </section>
             )}
           </>
         ),

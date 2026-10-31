@@ -5,14 +5,13 @@ import {
   CaretRightIcon,
   DotsThreeIcon,
 } from "@phosphor-icons/react";
-import * as React from "react";
+import type * as React from "react";
 import { type Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
     <nav
-      role="navigation"
       aria-label="pagination"
       data-slot="pagination"
       className={cn("flex justify-center mx-auto w-full", className)}

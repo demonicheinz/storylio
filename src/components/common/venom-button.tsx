@@ -33,6 +33,7 @@ export function VenomButton({ href, children, className }: VenomButtonProps) {
     let active = false;
     let focused = true;
     let scene: VenomScene | null = null;
+    let recovering = false;
     let cleanup: (() => void) | undefined;
 
     const stop = () => {
@@ -41,6 +42,8 @@ export function VenomButton({ href, children, className }: VenomButtonProps) {
       cleanup?.();
       cleanup = undefined;
       scene = null;
+      recovering = false;
+      delete link.dataset.venomRecovery;
     };
 
     const sync = async () => {
@@ -50,6 +53,9 @@ export function VenomButton({ href, children, className }: VenomButtonProps) {
         stop();
         return;
       }
+      // Keep the lost canvas attached until its restore event; blur/offscreen
+      // transitions must not create a second renderer while recovery is pending.
+      if (recovering) return;
       if (paused) {
         if (scene) scene.pause({ keepVisible: visible });
         else stop();
@@ -81,17 +87,54 @@ export function VenomButton({ href, children, className }: VenomButtonProps) {
         canvas.dataset.venomCanvas = "true";
         // Share the navbar's stacking context; a body portal would escape it.
         (link.closest("[data-public-chrome]") ?? document.body).append(canvas);
-        scene = renderer.createVenomScene(canvas, link);
-        if (!scene) {
-          canvas.remove();
+        let mountedScene: VenomScene | null = null;
+        const createScene = (restored: boolean) => {
+          mountedScene = renderer.createVenomScene(canvas, link);
+          scene = mountedScene;
+          if (!mountedScene) {
+            stop();
+            return;
+          }
+          active = true;
+          if (restored) {
+            // The renderer's existing rest/resume path clears pointer forces and
+            // holds its label/body fully formed; no numerical engine fork needed.
+            mountedScene.pause();
+            if (visible && !document.hidden && focused) mountedScene.resume();
+          }
+        };
+        const onLost = (event: Event) => {
+          event.preventDefault();
+          recovering = true;
+          link.dataset.venomRecovery = "true";
+          mountedScene?.dispose();
+          mountedScene = null;
+          scene = null;
           active = false;
-          return;
-        }
-        const mountedScene = scene;
+        };
+        const onRestored = () => {
+          if (disposed || !recovering) return;
+          recovering = false;
+          if (motion.matches || !pointer.matches) {
+            stop();
+            return;
+          }
+          canvas.dataset.venomRetained = "true";
+          try {
+            createScene(true);
+          } catch {
+            stop();
+          }
+        };
         cleanup = () => {
-          mountedScene.dispose();
+          canvas.removeEventListener("webglcontextlost", onLost);
+          canvas.removeEventListener("webglcontextrestored", onRestored);
+          mountedScene?.dispose();
           canvas.remove();
         };
+        canvas.addEventListener("webglcontextlost", onLost);
+        canvas.addEventListener("webglcontextrestored", onRestored);
+        createScene(false);
       } catch {
         // The server-rendered link is the fallback for unavailable GPU/font/chunks.
         if (ticket === generation) stop();
