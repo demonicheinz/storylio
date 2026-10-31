@@ -150,6 +150,7 @@ function HeroHeadlineForm({
   useEffect(() => {
     if (error && !pending) textarea.current?.focus();
   }, [error, pending]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: A controlled value change must trigger a fresh textarea height measurement.
   useEffect(() => {
     if (!textarea.current) return;
     textarea.current.style.height = "auto";

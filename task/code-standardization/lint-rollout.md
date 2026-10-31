@@ -60,3 +60,34 @@ at 1440/1024/768/390/360/320px, including empty/typed strength, profile recovery
 provider unlink across tabs, session errors, MFA locks/codes and login TOTP.
 Production build passed with 38/38 pages. All service calls were fixture mocks;
 no real accounts, sessions or providers changed.
+
+Settings committed as `e43d049`; normal hooks passed.
+
+## Home and dashboard shell
+
+Cover the 11 Home/shell files, bringing the actual source lint count to 129 with
+zero diagnostics. Preserve the controlled Hero textarea's value-triggered height
+measurement with an explained dependency exception. Rename the breadcrumb model
+to avoid shadowing its imported UI component and key crumbs by their unique full
+route paths rather than indices. No draft, navigation or account policy changed.
+Eighty-six Home/Settings tests passed, standalone TypeScript passed, and the Home
+browser suite passed 21 layout checks plus draft/history recovery, keyboard upload
+and reorder retry. The preceding combined Settings build passed 38/38 pages;
+these later annotation/key/type-name edits use scoped verification and hooks.
+
+## Next interaction decision
+
+Collection card lint highlights clickable wrappers around existing checkboxes
+and menus. Before changing focus behavior, asked whether keyboard selection
+should remain through those native controls (recommended) or whether every card
+should become an additional Enter/Space target. The latter changes tab order.
+That UI decision is pending; no blanket accessibility suppression or new card
+tab stop has been introduced. Other source areas remain outside lint coverage.
+
+Review: each scope is positive and verified independently; existing formatter
+coverage is unchanged, and no global diagnostic rules were disabled. Known
+exceptions preserve intentional browser/security behavior. Self-evaluation:
+accuracy 4/5 (verified counts/tests; no full-repo lint-clean claim), completeness
+4/5 (129 files covered, backlog remains), clarity 4/5 (coverage boundaries explicit),
+actionability 4/5 (reproducible CLI/browser fixtures), conciseness 4/5 (small fixes,
+no generic abstraction). No push.

@@ -40,7 +40,9 @@
       "src/lib/**",
       "src/features/dashboard/shared/hooks/**",
       "src/features/dashboard/shared/*.ts",
-      "src/features/dashboard/settings/**"
+      "src/features/dashboard/settings/**",
+      "src/features/dashboard/home/**",
+      "src/features/dashboard/shell/**"
     ]
   },
   "javascript": {
