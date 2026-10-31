@@ -70,8 +70,12 @@ import {
   actionMoveProjectsToDraft,
   actionPublishProjects,
 } from "../actions";
+import {
+  type ProjectFeaturedFilter as FeaturedFilter,
+  filterProjects,
+  type ProjectStatusFilter as StatusFilter,
+} from "../filtering";
 import { isPublished } from "../presentation";
-import { compareProjects } from "../sorting";
 import type {
   DashboardProject,
   ProjectSortDirection as SortDirection,
@@ -91,9 +95,6 @@ type ProjectsManagerProps = {
 };
 
 type ViewMode = "list" | "grid";
-type StatusFilter = "all" | "published" | "draft";
-type FeaturedFilter = "all" | "featured" | "standard";
-
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
   { value: "all", label: "All" },
   { value: "published", label: "Published" },
@@ -496,61 +497,26 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
     [items],
   );
 
-  const filteredProjects = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return [...items]
-      .filter((project) => {
-        if (status === "published" && !isPublished(project)) {
-          return false;
-        }
-
-        if (status === "draft" && isPublished(project)) {
-          return false;
-        }
-
-        if (featured === "featured" && !project.isFeatured) {
-          return false;
-        }
-
-        if (featured === "standard" && project.isFeatured) {
-          return false;
-        }
-
-        if (
-          selectedTechStacks.length > 0 &&
-          !project.techStack.some((techStack) =>
-            selectedTechStacks.includes(techStack),
-          )
-        ) {
-          return false;
-        }
-
-        if (!normalizedQuery) {
-          return true;
-        }
-
-        const searchable = [
-          project.title,
-          project.slug,
-          project.description ?? "",
-          ...project.techStack,
-        ]
-          .join(" ")
-          .toLowerCase();
-
-        return searchable.includes(normalizedQuery);
-      })
-      .sort((a, b) => compareProjects(a, b, sortMode, sortDirection));
-  }, [
-    featured,
-    items,
-    query,
-    selectedTechStacks,
-    sortMode,
-    sortDirection,
-    status,
-  ]);
+  const filteredProjects = useMemo(
+    () =>
+      filterProjects(items, {
+        query,
+        status,
+        featured,
+        selectedTechStacks,
+        sortMode,
+        sortDirection,
+      }),
+    [
+      featured,
+      items,
+      query,
+      selectedTechStacks,
+      sortMode,
+      sortDirection,
+      status,
+    ],
+  );
 
   const {
     items: paginatedProjects,
