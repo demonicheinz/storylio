@@ -762,6 +762,7 @@ const GooeyNav = ({
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
+      // biome-ignore lint/correctness/useHookAtTopLevel: WebGL useProgram binds a GPU program, not a React hook.
       gl.useProgram(program);
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.enableVertexAttribArray(position);
@@ -1102,6 +1103,7 @@ const GooeyNav = ({
     engineRef.current?.go(current);
   }, [current]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Theme/material/geometry props must refresh the existing engine after their settings ref updates.
   useEffect(() => {
     engineRef.current?.refresh();
   }, [pillColor, palette, gooeyness, size, frame]);
@@ -1187,6 +1189,7 @@ const GooeyNav = ({
       {frame && <span className={RIM} />}
       <div ref={stageRef} className="relative max-w-full">
         <canvas
+          tabIndex={-1}
           ref={canvasRef}
           className="top-0 left-0 absolute pointer-events-none"
           aria-hidden="true"

@@ -331,6 +331,21 @@ and ordinary arrow/Home/End behavior. Public Lenis suite passed public routes,
 TOC focus, lightbox locking, native sidebar scrolling, history and absence of
 Lenis on auth/dashboard/preview destinations. Other source remains outside scope.
 
+Common/hook coverage committed as `8a0e487`. The user then approved lifecycle
+hardening for GooeyNav/LiveOrb, committed as `81e49fd`; its separate evidence and
+GPU fixture are in webgl-lifecycle.md (792 full-suite tests, 38-page build).
+
+## WebGL lint coverage
+
+Include both engines in source lint (352 files total, zero diagnostics). Remove
+erased non-null assertions from known palette entries, document WebGL useProgram
+calls as non-React API calls, and retain the material/theme refresh triggers.
+The decorative Nav canvas has explicit negative tabindex. Compiled module output
+is identical to the hardening commit except that explicit canvas attribute;
+no shader or lifecycle changes are mixed into this lint step. Eleven focused
+resource tests, TypeScript, and the rebuilt GPU fixture passed. Broader effects
+engines and remaining CSS/scripts/tests still need their own bounded review.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:

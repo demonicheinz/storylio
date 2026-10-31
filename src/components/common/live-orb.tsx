@@ -270,7 +270,7 @@ export function resolveVariant(
     eye = BLACK.eyeColor;
   } else if (preset === "webgl") {
     palette = colors && colors.length > 0 ? colors : WEBGL_COLORS;
-    body = palette[1] ?? WEBGL_COLORS[1]!;
+    body = palette[1] ?? WEBGL_COLORS[1];
     eye = "#0C0C10";
     mode = 1;
   } else if (preset === "custom") {
@@ -390,6 +390,7 @@ export function createLiveOrb(
       }
       return false;
     }
+    // biome-ignore lint/correctness/useHookAtTopLevel: WebGL useProgram selects a GPU program; it is not a React hook.
     gl.useProgram(prog);
 
     buf = gl.createBuffer();
@@ -567,7 +568,7 @@ export function createLiveOrb(
     const eye = hexToRgb(resolved.eye);
     const palette = [0, 1, 2].map((i) =>
       hexToRgb(
-        resolved.palette[i % resolved.palette.length] ?? WEBGL_COLORS[i]!,
+        resolved.palette[i % resolved.palette.length] ?? WEBGL_COLORS[i],
       ),
     );
 
@@ -581,9 +582,9 @@ export function createLiveOrb(
     gl.uniform1f(uMode, resolved.mode);
     gl.uniform3f(uBody, body[0], body[1], body[2]);
     gl.uniform3f(uEye, eye[0], eye[1], eye[2]);
-    gl.uniform3f(uC1, palette[0]![0], palette[0]![1], palette[0]![2]);
-    gl.uniform3f(uC2, palette[1]![0], palette[1]![1], palette[1]![2]);
-    gl.uniform3f(uC3, palette[2]![0], palette[2]![1], palette[2]![2]);
+    gl.uniform3f(uC1, palette[0][0], palette[0][1], palette[0][2]);
+    gl.uniform3f(uC2, palette[1][0], palette[1][1], palette[1][2]);
+    gl.uniform3f(uC3, palette[2][0], palette[2][1], palette[2][2]);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     if (live && !destroyed) raf = requestAnimationFrame(tick);

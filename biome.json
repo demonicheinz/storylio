@@ -51,8 +51,7 @@
       "src/app/**/*.{ts,tsx,css}",
       "src/components/public/**/*.{ts,tsx}",
       "src/hooks/**",
-      "src/components/common/**/*.{ts,tsx}",
-      "!src/components/common/{gooey-nav,live-orb}.tsx"
+      "src/components/common/**/*.{ts,tsx}"
     ]
   },
   "javascript": {
