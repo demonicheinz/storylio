@@ -1,10 +1,8 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
-import {
-  type DashboardPost,
-  PostsManager,
-} from "@/features/dashboard/posts/components/posts-manager";
+import { PostsManager } from "@/features/dashboard/posts/components/posts-manager";
+import type { DashboardPost } from "@/features/dashboard/posts/types";
 
 const sorting = vi.hoisted(() => ({ field: "newest", direction: "desc" }));
 vi.mock("react", async (importOriginal) => {

@@ -62,7 +62,6 @@ import {
   actionPublishPosts,
 } from "@/features/dashboard/posts/actions";
 import { PostDeleteButton } from "@/features/dashboard/posts/components/post-delete-button";
-import { getPostPublicationState } from "@/features/dashboard/posts/publication-state";
 import toolbarStyles from "@/features/dashboard/shared/components/collection-toolbar.module.css";
 import {
   DashboardMultiFilter,
@@ -82,29 +81,29 @@ import {
   paginateItems,
 } from "@/lib/pagination";
 import { cn, formatDate } from "@/lib/utils";
+import {
+  filterPosts,
+  type PostStatusFilter as StatusFilter,
+} from "../filtering";
+import {
+  getPostViews,
+  isNote,
+  isPublished,
+  isScheduled,
+  postHref,
+} from "../presentation";
+import type {
+  DashboardPost,
+  PostSortDirection as SortDirection,
+  PostSortField as SortMode,
+} from "../types";
 import { usePublicationClock } from "./use-publication-clock";
-
-export type DashboardPost = {
-  id: string;
-  title: string;
-  slug: string;
-  status: "PUBLISHED" | "DRAFT";
-  coverImage: string | null;
-  createdAt: string;
-  updatedAt: string;
-  publishedAt: string | null;
-  viewCount: number;
-  tags: Array<{ name: string }>;
-};
 
 type PostsManagerProps = {
   posts: DashboardPost[];
 };
 
 type ViewMode = "list" | "grid";
-type StatusFilter = "all" | "published" | "draft" | "scheduled";
-type SortMode = "newest" | "updated" | "views" | "title" | "published";
-type SortDirection = "asc" | "desc";
 
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
   { value: "all", label: "All" },
@@ -120,32 +119,6 @@ const sortOptions: Array<{ value: SortMode; label: string }> = [
   { value: "title", label: "Title" },
   { value: "published", label: "Publication date" },
 ];
-
-function isPublished(post: DashboardPost, now: number) {
-  return (
-    getPostPublicationState(post.status, post.publishedAt, now) === "published"
-  );
-}
-
-function isScheduled(post: DashboardPost, now: number) {
-  return (
-    getPostPublicationState(post.status, post.publishedAt, now) === "scheduled"
-  );
-}
-
-function isNote(post: DashboardPost) {
-  return post.tags.some((tag) => tag.name === "notes");
-}
-
-function postHref(post: DashboardPost) {
-  return isNote(post)
-    ? `/blog?tag=notes&note=${encodeURIComponent(post.slug)}`
-    : `/blog/${post.slug}`;
-}
-
-function getPostViews(post: DashboardPost, now: number) {
-  return isPublished(post, now) ? post.viewCount : 0;
-}
 
 function formatDateTime(value: string | null) {
   if (!value) {
@@ -865,78 +838,15 @@ export function PostsManager({ posts }: PostsManagerProps) {
     };
   }, [posts, now]);
 
-  const filteredPosts = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return [...posts]
-      .filter((post) => {
-        if (status === "published" && !isPublished(post, now)) {
-          return false;
-        }
-
-        if (status === "draft" && post.status !== "DRAFT") {
-          return false;
-        }
-
-        if (status === "scheduled" && !isScheduled(post, now)) return false;
-
-        if (
-          selectedTags.length > 0 &&
-          !post.tags.some((tag) => selectedTags.includes(tag.name))
-        ) {
-          return false;
-        }
-
-        if (!normalizedQuery) {
-          return true;
-        }
-
-        return [
-          post.title,
-          post.slug,
-          isScheduled(post, now)
-            ? "scheduled"
-            : isPublished(post, now)
-              ? "published"
-              : "draft",
-          isNote(post) ? "note" : "article",
-          ...post.tags.map((tag) => tag.name),
-        ].some((value) => value.toLowerCase().includes(normalizedQuery));
-      })
-      .sort((a, b) => {
-        const direction = sortDirection === "asc" ? 1 : -1;
-        if (sortMode === "updated") {
-          return (
-            direction *
-            (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
-          );
-        }
-
-        if (sortMode === "views") {
-          return direction * (getPostViews(a, now) - getPostViews(b, now));
-        }
-
-        if (sortMode === "title") {
-          return direction * a.title.localeCompare(b.title);
-        }
-
-        if (sortMode === "published") {
-          // Undated posts stay last in either direction.
-          if (!a.publishedAt) return b.publishedAt ? 1 : 0;
-          if (!b.publishedAt) return -1;
-          return (
-            direction *
-            (new Date(a.publishedAt).getTime() -
-              new Date(b.publishedAt).getTime())
-          );
-        }
-
-        return (
-          direction *
-          (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        );
-      });
-  }, [posts, query, selectedTags, sortMode, sortDirection, status, now]);
+  const filteredPosts = useMemo(
+    () =>
+      filterPosts(
+        posts,
+        { query, status, selectedTags, sortMode, sortDirection },
+        now,
+      ),
+    [posts, query, selectedTags, sortMode, sortDirection, status, now],
+  );
 
   const {
     items: paginatedPosts,
