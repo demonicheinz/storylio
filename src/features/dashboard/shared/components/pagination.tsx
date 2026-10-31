@@ -54,7 +54,12 @@ export function DashboardPagination({
       <div className="hidden md:flex items-center gap-1">
         {getPageItems(page, pageCount).map((value, index) =>
           value === "ellipsis" ? (
-            <span key={`gap-${index}`} className="px-1" aria-hidden>
+            <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: Ellipses are stateless decorative gaps; interactive page controls are keyed by page number.
+              key={`gap-${index}`}
+              className="px-1"
+              aria-hidden
+            >
               …
             </span>
           ) : (

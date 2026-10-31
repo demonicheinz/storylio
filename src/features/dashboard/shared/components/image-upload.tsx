@@ -309,7 +309,7 @@ export function ImageUpload({
 
   if (value) {
     return (
-      <div
+      <fieldset
         className={cn("relative", className)}
         role={labelledBy ? "group" : undefined}
         aria-labelledby={labelledBy}
@@ -339,13 +339,13 @@ export function ImageUpload({
             onRemove={onRemove}
           />
         )}
-      </div>
+      </fieldset>
     );
   }
 
   return (
     <div
-      className={className}
+      className={cn("min-w-0", className)}
       onDragOverCapture={(event) => event.preventDefault()}
       onDropCapture={(event) => event.preventDefault()}
     >

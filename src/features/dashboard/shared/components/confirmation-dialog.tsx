@@ -26,6 +26,7 @@ function ConfirmationDialog() {
   const shown = request ?? previous.current;
   const cancel = useRef<HTMLButtonElement | null>(null);
   useLayoutEffect(() => confirmationController.mount(), []);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: A route change must cancel any pending request owned by the previous screen.
   useLayoutEffect(() => () => confirmationController.cancel(), [pathname]);
   return (
     <AlertDialog

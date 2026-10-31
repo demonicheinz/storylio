@@ -222,6 +222,7 @@ export function DateTimePicker({
                 Enter or Space to select a date.
               </p>
               <table
+                // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: WAI-ARIA APG datepicker calendars use a table grid with roving date-button focus.
                 role="grid"
                 aria-labelledby={monthId}
                 aria-describedby={instructionsId}
@@ -245,6 +246,7 @@ export function DateTimePicker({
                         const isActive =
                           calendarDate.toDateString() === day.toDateString();
                         return (
+                          /* biome-ignore lint/a11y/useAriaPropsSupportedByRole: td inherits gridcell semantics from its calendar table grid, per WAI-ARIA APG. */
                           <td
                             key={day.toISOString()}
                             aria-selected={isSelected}
@@ -294,11 +296,13 @@ export function DateTimePicker({
                       )
                     }
                   >
-                    {Array.from({ length: 24 }, (_, hour) => (
-                      <option key={hour} value={hour}>
-                        {pad(hour)}
-                      </option>
-                    ))}
+                    {Array.from({ length: 24 }, (_, hour) => hour).map(
+                      (hour) => (
+                        <option key={hour} value={hour}>
+                          {pad(hour)}
+                        </option>
+                      ),
+                    )}
                   </select>
                 </div>
                 <div>
@@ -314,11 +318,13 @@ export function DateTimePicker({
                       )
                     }
                   >
-                    {Array.from({ length: 60 }, (_, minute) => (
-                      <option key={minute} value={minute}>
-                        {pad(minute)}
-                      </option>
-                    ))}
+                    {Array.from({ length: 60 }, (_, minute) => minute).map(
+                      (minute) => (
+                        <option key={minute} value={minute}>
+                          {pad(minute)}
+                        </option>
+                      ),
+                    )}
                   </select>
                 </div>
               </div>

@@ -37,8 +37,6 @@
     "includes": [
       "src/components/ui/**",
       "src/lib/**",
-      "src/features/dashboard/shared/hooks/**",
-      "src/features/dashboard/shared/*.ts",
       "src/features/dashboard/settings/**",
       "src/features/dashboard/home/**",
       "src/features/dashboard/shell/**",
@@ -48,7 +46,8 @@
       "src/features/dashboard/media/**",
       "src/features/dashboard/about/**",
       "src/features/dashboard/analytics/**",
-      "src/components/auth/**"
+      "src/components/auth/**",
+      "src/features/dashboard/shared/**"
     ]
   },
   "javascript": {

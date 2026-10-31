@@ -89,13 +89,24 @@ async function postScheduling(sessionPage) {
       ),
       "Publish now did not clear future scheduling",
     );
-    await page.evaluate(() => (window.confirm = () => true));
     await page
       .getByRole("button", { name: "Publishing options", exact: true })
       .click();
     await page
       .getByRole("menuitem", { name: "Move to draft…", exact: true })
       .click();
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", {
+        name: "Move to draft",
+        exact: true,
+      })
+      .click();
+    await page.waitForFunction(
+      () =>
+        window.persistedPost?.status === "draft" &&
+        window.persistedPost.publishedAt === null,
+    );
     await page.getByText("All changes saved", { exact: true }).waitFor();
     assert(
       (await page.evaluate(() => window.persistedPost)).publishedAt === null,

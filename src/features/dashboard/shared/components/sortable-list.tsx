@@ -44,6 +44,7 @@ type DashboardSortableListProps<TItem extends SortableItemBase> = {
   className?: string;
   itemClassName?: string;
   strategy?: SortingStrategy;
+  // biome-ignore lint/suspicious/noConfusingVoidType: Existing sync/async callbacks may return no value; explicit false requests optimistic rollback.
   onReorder: (items: TItem[]) => void | Promise<boolean | void>;
   getItemLabel?: (item: TItem) => string;
   handleVariant?: "rail" | "button";

@@ -248,6 +248,35 @@ stub initially pulled Next Image into the non-Next fixture; both import spelling
 are now stubbed and the complete browser run passed without page errors. Fixture
 auth writes are memory-only, with no real emails, accounts or WebAuthn ceremonies.
 
+Auth coverage committed as `e16fa5e`. A subsequent reproduced stale image-upload
+limit fix was committed separately as `eb7c6b7`; see image-upload-validation.md.
+
+## Shared component coverage and preserved editor CSS
+
+Cover all shared components/CSS (191 source files total). Preserve route-change
+confirmation cancellation through an explained dependency trigger. The upload
+preview group becomes a native fieldset for forwarded label/description props.
+Calendar semantics follow the APG table-grid pattern: td inherits gridcell meaning
+and existing day buttons retain roving focus. Hour/minute options are keyed by
+their actual values. Stateless pagination ellipses retain a local index exception;
+the reorder callback's void/false promise contract is explained without changing
+its rollback API.
+
+Reference: [APG date picker](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/examples/datepicker-dialog/).
+The user approved preserving existing MDX vendor overrides. Two file-scoped CSS
+exceptions retain 73 important declarations and deliberate state-selector ordering
+in mdx-editor.css only; all other rules still apply. No cascade rewrite or global
+lint-rule disable. Non-MDX shared styles remain normally linted.
+
+Thirty focused tests initially passed; final rerun of the changed shared contracts
+passed 29 tests plus standalone TypeScript. Production build passed 38/38 pages.
+Posts responsive editor suite, image limit/native-drop checks and scheduling
+browser checks passed. The scheduling test still bypassed window.confirm after
+the earlier styled-confirmation migration and then read a stale saved indicator;
+it now confirms the actual dialog and waits for stored draft status/date. The
+product withdrawal behavior was unchanged. Diagnostic picker screenshots briefly
+overwrote historical evidence; restored exactly from HEAD before commit.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:
