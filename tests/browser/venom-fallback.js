@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function venomFallback(sessionPage) {
   const browser = sessionPage.context().browser(),
     origin = new URL(sessionPage.url()).origin,

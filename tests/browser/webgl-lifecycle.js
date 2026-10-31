@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function webglLifecycle(sessionPage) {
   const context = await sessionPage.context().browser().newContext();
   const origin = new URL(sessionPage.url()).origin;

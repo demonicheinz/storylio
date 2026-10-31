@@ -35,3 +35,13 @@ Self-evaluation: accuracy 4/5 (real fixture passes; initial GPU timeout recorded
 completeness 4/5 (four scripts only; backlog explicit), clarity 4/5 (CLI entry
 contract documented locally), actionability 4/5 (ordinary lint enforces scope),
 conciseness 4/5 (local names/blocks, no test framework replacement). Overall 4.0/5.
+
+## CLI entry-point follow-up
+
+Another 33 scripts enter positive lint coverage: four had no diagnostics, and
+29 only needed the statement-local entry-point explanation. No function bodies,
+assertions, locators, URLs or timers changed. All 33 still parse as the CLI's
+function expression. TypeScript compilation with comments removed produces
+byte-identical output to HEAD for every entry. Lint now selects 544 files without
+diagnostics. No repeated full suite/build/browser run is claimed for comment-only
+changes. This reduces the browser backlog to 55 scripts; fixtures remain pending.

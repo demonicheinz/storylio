@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function controlCursors(sessionPage) {
   const page = await sessionPage.context().newPage();
   const results = [];

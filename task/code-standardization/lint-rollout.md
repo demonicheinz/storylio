@@ -382,3 +382,7 @@ Four bounded browser scripts extend positive lint to 511 files. Settings no long
 assigns confirmation text to an unbound `prompt` name. Settings, Analytics, star
 lifecycle and isolated GPU recovery checks passed. See [browser-lint.md](browser-lint.md);
 the initial concurrent GPU timeout is recorded rather than hidden.
+
+CLI entry-point follow-up: 33 further browser scripts covered, 544 selected files
+with no diagnostics. Their compiled executable output is unchanged; function
+expression parsing was verified. Remaining browser scripts and fixtures are pending.

@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardSystem(sessionPage) {
   const origin = new URL(sessionPage.url()).origin;
   const context = await sessionPage.context().browser().newContext();

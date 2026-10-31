@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function dashboardAbout(page) {
   const assert = (value, message) => {
     if (!value) throw new Error(message);

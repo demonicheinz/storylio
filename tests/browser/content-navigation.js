@@ -1,3 +1,4 @@
+// biome-ignore lint/correctness/noUnusedVariables: Playwright CLI evaluates and invokes this function as its entry point.
 async function contentNavigation(sessionPage) {
   const page = await sessionPage.context().newPage();
   page.on("dialog", (dialog) => dialog.accept());
