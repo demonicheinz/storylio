@@ -81,7 +81,7 @@ describe("Better Auth Drizzle adapter on legacy PostgreSQL tables", () => {
 
   it("authenticates the existing password hash and produces a usable signed session", async () => {
     const response = await auth.handler(
-      new Request(origin + "/api/auth/sign-in/email", {
+      new Request(`${origin}/api/auth/sign-in/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: origin },
         body: JSON.stringify({
@@ -97,7 +97,7 @@ describe("Better Auth Drizzle adapter on legacy PostgreSQL tables", () => {
       .join("; ");
     expect(cookies).toContain("session_token");
     const session = await auth.handler(
-      new Request(origin + "/api/auth/get-session", {
+      new Request(`${origin}/api/auth/get-session`, {
         headers: { Cookie: cookies },
       }),
     );
@@ -158,7 +158,7 @@ describe("Better Auth Drizzle adapter on legacy PostgreSQL tables", () => {
       },
     ]);
     const login = await auth.handler(
-      new Request(origin + "/api/auth/sign-in/email", {
+      new Request(`${origin}/api/auth/sign-in/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: origin },
         body: JSON.stringify({
@@ -174,7 +174,7 @@ describe("Better Auth Drizzle adapter on legacy PostgreSQL tables", () => {
       .join("; ");
     const unlink = (accountId: string) =>
       auth.handler(
-        new Request(origin + "/api/auth/unlink-account", {
+        new Request(`${origin}/api/auth/unlink-account`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -209,7 +209,7 @@ describe("Better Auth Drizzle adapter on legacy PostgreSQL tables", () => {
 
   it("still blocks public registration and foreign origins", async () => {
     const blocked = await auth.handler(
-      new Request(origin + "/api/auth/sign-up/email", {
+      new Request(`${origin}/api/auth/sign-up/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: origin },
         body: JSON.stringify({
@@ -221,7 +221,7 @@ describe("Better Auth Drizzle adapter on legacy PostgreSQL tables", () => {
     );
     expect(blocked.status).toBe(400);
     const foreign = await auth.handler(
-      new Request(origin + "/api/auth/sign-in/email", {
+      new Request(`${origin}/api/auth/sign-in/email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

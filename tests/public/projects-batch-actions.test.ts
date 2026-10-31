@@ -1,6 +1,6 @@
 import type { Element, RootContent } from "hast";
 import { fromHtml } from "hast-util-from-html";
-import { toString } from "hast-util-to-string";
+import { toString as hastToString } from "hast-util-to-string";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -41,10 +41,10 @@ describe("Projects batch action controls", () => {
       outsideViewCount: 2,
       selectedCount: 3,
     });
-    expect(toString(document)).toContain("3 projects selected");
-    expect(toString(document)).toContain("2 selected outside this page.");
-    expect(toString(document)).toContain("Deselect page");
-    expect(toString(document)).not.toContain("Select page");
+    expect(hastToString(document)).toContain("3 projects selected");
+    expect(hastToString(document)).toContain("2 selected outside this page.");
+    expect(hastToString(document)).toContain("Deselect page");
+    expect(hastToString(document)).not.toContain("Select page");
     expect(buttons(document.children)[0]?.properties.ariaLabel).toBeUndefined();
   });
 
@@ -52,9 +52,9 @@ describe("Projects batch action controls", () => {
     const controls = buttons(render({ selectedCount: 0 }).children);
     for (const button of controls) {
       const shouldDisable = ["Publish", "Move to draft", "Delete"].includes(
-        toString(button).trim(),
+        hastToString(button).trim(),
       );
-      expect(Boolean(button.properties.disabled), toString(button)).toBe(
+      expect(Boolean(button.properties.disabled), hastToString(button)).toBe(
         shouldDisable,
       );
     }
@@ -69,12 +69,12 @@ describe("Projects batch action controls", () => {
 
   it("keeps the singular label and destructive confirmation trigger", () => {
     const document = render();
-    expect(toString(document)).toContain("1 project selected");
-    expect(toString(document)).toContain("Select page");
+    expect(hastToString(document)).toContain("1 project selected");
+    expect(hastToString(document)).toContain("Select page");
     const trigger = buttons(document.children).find(
       (button) => button.properties.dataSlot === "alert-dialog-trigger",
     );
-    expect(trigger && toString(trigger).trim()).toBe("Delete");
+    expect(trigger && hastToString(trigger).trim()).toBe("Delete");
     expect(trigger?.properties.ariaHasPopup).toBe("dialog");
   });
 });

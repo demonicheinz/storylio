@@ -54,7 +54,8 @@
       "src/components/common/**",
       "src/components/effects/gravity-stars.tsx",
       "scripts/**",
-      "tests/helpers/**"
+      "tests/helpers/**",
+      "tests/**/*.test.ts"
     ]
   },
   "javascript": {

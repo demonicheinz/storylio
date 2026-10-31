@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, assert, describe, expect, it, vi } from "vitest";
 import { createLiveOrb } from "@/components/common/live-orb";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -177,9 +177,9 @@ function activeOrb() {
     theme: "dark",
     onHasGl: ready,
   });
-  expect(orb).not.toBeNull();
+  assert.exists(orb);
   return {
-    orb: orb!,
+    orb,
     gl,
     shaders,
     programs,

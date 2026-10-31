@@ -1,6 +1,14 @@
 import { Children, createElement, isValidElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  assert,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { PasskeySettings } from "@/features/dashboard/settings/components/passkey-settings";
 import { SessionSettings } from "@/features/dashboard/settings/components/session-settings";
 
@@ -45,7 +53,7 @@ vi.mock("@/features/dashboard/settings/actions", () => ({
 vi.mock("@/components/ui/toast", () => ({ toast: { add: mocks.toast } }));
 vi.mock("@/components/ui/button", () => ({
   Button: ({ children, ...props }: NodeProps) =>
-    createElement("button", props, children),
+    createElement("button", { type: "button", ...props }, children),
 }));
 vi.mock("@/components/ui/input", () => ({
   Input: (props: NodeProps) => createElement("input", props),
@@ -86,9 +94,11 @@ vi.mock("react", async (original) => {
   const react = await original<typeof import("react")>();
   return {
     ...react,
+    // biome-ignore lint/correctness/useHookAtTopLevel: The test dispatcher delegates to React outside its controlled render; these are mock hook implementations.
     useId: () => (hooks.current ? "passkey-test" : react.useId()),
     useState: (initial: unknown) => {
       const state = hooks.current;
+      // biome-ignore lint/correctness/useHookAtTopLevel: The test dispatcher delegates to React outside its controlled render; these are mock hook implementations.
       if (!state) return react.useState(initial);
       const i = state.index++;
       if (!(i in state.values))
@@ -103,6 +113,7 @@ vi.mock("react", async (original) => {
     },
     useRef: (initial: unknown) => {
       const state = hooks.current;
+      // biome-ignore lint/correctness/useHookAtTopLevel: The test dispatcher delegates to React outside its controlled render; these are mock hook implementations.
       if (!state) return react.useRef(initial);
       const i = state.index++;
       state.values[i] ??= { current: initial };
@@ -113,6 +124,7 @@ vi.mock("react", async (original) => {
       deps?: readonly unknown[],
     ) => {
       const state = hooks.current;
+      // biome-ignore lint/correctness/useHookAtTopLevel: The test dispatcher delegates to React outside its controlled render; these are mock hook implementations.
       if (!state) return react.useEffect(effect, deps);
       const i = state.index++;
       const previous = state.effects[i];
@@ -199,15 +211,17 @@ function passkeyDialog(
   };
   const submit = () => {
     const form = dialog.all().find((node) => node.type === "form");
+    assert.exists(form);
     return (
-      form?.props.onSubmit as (event: {
+      form.props.onSubmit as (event: {
         preventDefault: () => void;
       }) => Promise<void>
     )({ preventDefault() {} });
   };
   const setName = (value: string) => {
     const input = dialog.all().find((node) => node.props.id === "passkey-test");
-    (input?.props.onChange as (event: { target: { value: string } }) => void)({
+    assert.exists(input);
+    (input.props.onChange as (event: { target: { value: string } }) => void)({
       target: { value },
     });
     dialog.render();
@@ -242,7 +256,7 @@ const key = {
 const session = (id: string, isCurrent = false) => ({
   id,
   isCurrent,
-  userAgent: "Browser/" + "x".repeat(180),
+  userAgent: `Browser/${"x".repeat(180)}`,
   ipAddress: "2001:db8:0000:0000:0000:0000:0000:0001",
   createdAt: "2026-10-01T00:00:00Z",
   updatedAt: "2026-10-02T00:00:00Z",
@@ -305,8 +319,8 @@ describe("settings security", () => {
           node.props.open === true &&
           typeof node.props.onOpenChange === "function",
       );
-    expect(dialog).toBeDefined();
-    (dialog!.props.onOpenChange as (value: boolean) => void)(false);
+    assert.exists(dialog);
+    (dialog.props.onOpenChange as (value: boolean) => void)(false);
     view.render();
     expect(mocks.revokeOthers).not.toHaveBeenCalled();
     await view.button("Revoke Other Sessions").onClick?.();

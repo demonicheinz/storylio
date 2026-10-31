@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import {
   afterAll,
+  assert,
   beforeAll,
   beforeEach,
   describe,
@@ -86,9 +87,9 @@ describe("public detail HTTP guard", () => {
   ])("rewrites %s to the 404 UI before rendering", async (path) => {
     const response = await proxy(request(path));
     expect(response.status).toBe(404);
-    expect(
-      new URL(response.headers.get("x-middleware-rewrite")!).pathname,
-    ).toBe("/not-found");
+    const rewrite = response.headers.get("x-middleware-rewrite");
+    assert.exists(rewrite);
+    expect(new URL(rewrite).pathname).toBe("/not-found");
     expect(response.headers.get("x-robots-tag")).toBe("noindex, nofollow");
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(state.session).not.toHaveBeenCalled();

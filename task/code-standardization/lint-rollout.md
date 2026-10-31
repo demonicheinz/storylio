@@ -369,3 +369,11 @@ accuracy 4/5 (verified counts/tests; no full-repo lint-clean claim), completenes
 4/5 (129 files covered, backlog remains), clarity 4/5 (coverage boundaries explicit),
 actionability 4/5 (reproducible CLI/browser fixtures), conciseness 4/5 (small fixes,
 no generic abstraction). No push.
+
+## Vitest tests
+
+Positive coverage now includes all 104 `tests/**/*.test.ts` files. Runtime
+assertions replace erased non-null assumptions; intentional mock-hook dispatchers
+and literal Markdown fixtures have statement-local explanations. Combined lint
+selects 507 files with zero diagnostics. See [vitest-lint.md](vitest-lint.md)
+for verification and remaining browser/fixture scope.

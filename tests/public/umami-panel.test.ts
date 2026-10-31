@@ -25,6 +25,7 @@ vi.mock("react", async (original) => {
   return {
     ...react,
     useState: (initial: unknown) => {
+      // biome-ignore lint/correctness/useHookAtTopLevel: The test dispatcher delegates to React outside its controlled render; these are mock hook implementations.
       if (!hooks.active) return react.useState(initial);
       const index = hooks.stateIndex++;
       if (!(index in hooks.states)) hooks.states[index] = initial;
@@ -37,6 +38,7 @@ vi.mock("react", async (original) => {
       ];
     },
     useRef: (initial: unknown) => {
+      // biome-ignore lint/correctness/useHookAtTopLevel: The test dispatcher delegates to React outside its controlled render; these are mock hook implementations.
       if (!hooks.active) return react.useRef(initial);
       const index = hooks.refIndex++;
       hooks.refs[index] ??= { current: initial };

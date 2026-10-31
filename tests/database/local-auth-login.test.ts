@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import {
   afterAll,
+  assert,
   beforeAll,
   beforeEach,
   describe,
@@ -62,7 +63,7 @@ afterAll(async () => {
 });
 const post = (path: string, body: unknown) =>
   auth.handler(
-    new Request(origin + "/api/auth" + path, {
+    new Request(`${origin}/api/auth${path}`, {
       method: "POST",
       headers: {
         Origin: origin,
@@ -84,7 +85,7 @@ describe("production-mode local authentication", () => {
   it("sends an HTTP reset link and redirects to the local reset form", async () => {
     const response = await post("/request-password-reset", {
       email,
-      redirectTo: origin + "/reset-password",
+      redirectTo: `${origin}/reset-password`,
     });
     expect(response.status).toBe(200);
     expect(mail).toHaveBeenCalledTimes(1);
@@ -94,11 +95,13 @@ describe("production-mode local authentication", () => {
         /href="(https?:\/\/[^"\s]+\/api\/auth\/reset-password\/[^"\s]+)"/,
       )?.[1]
       ?.replaceAll("&amp;", "&");
-    expect(url).toBeDefined();
+    assert.exists(url);
     expect(url).toMatch(/^http:\/\/localhost:3000\//);
-    const callback = await auth.handler(new Request(url!));
+    const callback = await auth.handler(new Request(url));
     expect(callback.status).toBe(302);
-    const redirect = new URL(callback.headers.get("location")!);
+    const location = callback.headers.get("location");
+    assert.exists(location);
+    const redirect = new URL(location);
     expect(redirect.origin).toBe(origin);
     expect(redirect.pathname).toBe("/reset-password");
     expect(redirect.searchParams.get("token")).toBeTruthy();
@@ -118,10 +121,11 @@ describe("production-mode local authentication", () => {
   });
   it("restores legacy seeded email login by repairing only the credential identifier", async () => {
     const original = await fixture.db.query.account.findFirst();
+    assert.exists(original);
     await fixture.db
       .update(account)
       .set({ accountId: "" })
-      .where(eq(account.id, original!.id));
+      .where(eq(account.id, original.id));
     expect((await post("/sign-in/email", { email, password })).status).toBe(
       401,
     );

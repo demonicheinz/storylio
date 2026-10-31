@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, assert, beforeAll, describe, expect, it, vi } from "vitest";
 
 const scheduled = vi.hoisted(() => vi.fn());
 vi.mock("next/server", () => ({ after: scheduled }));
@@ -23,11 +23,15 @@ describe("authentication background task rejection timing", () => {
     });
     const caught = vi.spyOn(task, "catch");
     try {
-      auth.options.advanced!.backgroundTasks!.handler!(task);
+      const handler = auth.options.advanced?.backgroundTasks?.handler;
+      assert.exists(handler);
+      handler(task);
       // Do not invoke an after-response callback: the response is still open.
       reject(new Error("Fixture mail transport failure"));
       expect(caught).toHaveBeenCalledOnce();
-      const passed = scheduled.mock.calls.at(-1)![0];
+      const call = scheduled.mock.calls.at(-1);
+      assert.exists(call);
+      const passed = call[0];
       expect(passed).toBeInstanceOf(Promise);
       await expect(passed).resolves.toBeUndefined();
       expect(log).toHaveBeenCalledWith(
