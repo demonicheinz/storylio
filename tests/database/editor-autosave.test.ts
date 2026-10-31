@@ -102,6 +102,74 @@ describe("editor autosave publication regression", () => {
       expect(data(await autosave(input, created.id)).status).toBe("draft");
     });
 
+    it(`${name}: rejects a blank autosave when another tab publishes before the write`, async () => {
+      const created = data(
+        await create({
+          ...input,
+          status: "draft",
+          tags: ["original"],
+          structuredScreenshots: [
+            { imageUrl: "https://example.test/original.webp", order: 0 },
+          ],
+        }),
+      );
+      const transaction = fixture.db.transaction.bind(fixture.db);
+      const interleave = vi
+        .spyOn(fixture.db, "transaction")
+        .mockImplementationOnce(async (callback, config) => {
+          if (name === "post") {
+            await fixture.db
+              .update(schema.post)
+              .set({ status: "PUBLISHED", publishedAt: new Date() })
+              .where(eq(schema.post.id, created.id));
+          } else {
+            await fixture.db
+              .update(schema.project)
+              .set({ status: "PUBLISHED" })
+              .where(eq(schema.project.id, created.id));
+          }
+          return transaction(callback, config);
+        });
+      try {
+        const result = await autosave(
+          {
+            ...input,
+            status: "draft",
+            content: "",
+            tags: ["changed"],
+            structuredScreenshots: [],
+          },
+          created.id,
+        );
+        expect(result.success).toBe(false);
+        if (name === "post") {
+          const row = await fixture.db.query.post.findFirst({
+            where: eq(schema.post.id, created.id),
+            with: { tags: { with: { tag: true } } },
+          });
+          expect(row).toMatchObject({
+            status: "PUBLISHED",
+            content: input.content,
+          });
+          expect(row?.tags.map(({ tag }) => tag.name)).toEqual(["original"]);
+        } else {
+          const row = await fixture.db.query.project.findFirst({
+            where: eq(schema.project.id, created.id),
+            with: { structuredScreenshots: true },
+          });
+          expect(row).toMatchObject({
+            status: "PUBLISHED",
+            content: input.content,
+          });
+          expect(row?.structuredScreenshots.map((s) => s.imageUrl)).toEqual([
+            "https://example.test/original.webp",
+          ]);
+        }
+      } finally {
+        interleave.mockRestore();
+      }
+    });
+
     it(`${name}: requires authentication, validates MDX, and refuses blank live content`, async () => {
       const created = data(await create(input));
       expect(

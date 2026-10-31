@@ -322,7 +322,15 @@ async function updatePost(
                 ),
               }),
         })
-        .where(eq(postTable.id, postId))
+        // Check at the write so a publish in another tab cannot accept blank live content.
+        .where(
+          and(
+            eq(postTable.id, postId),
+            preservePublication && !parsed.data.content.trim()
+              ? eq(postTable.status, PostStatus.DRAFT)
+              : undefined,
+          ),
+        )
         .returning({
           id: postTable.id,
           slug: postTable.slug,

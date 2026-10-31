@@ -352,7 +352,15 @@ async function updateProject(
           // Undefined columns are omitted by Drizzle, preserving the stored status.
           ...(preservePublication ? { status: undefined } : {}),
         })
-        .where(eq(projectTable.id, projectId))
+        // Check at the write so a publish in another tab cannot accept blank live content.
+        .where(
+          and(
+            eq(projectTable.id, projectId),
+            preservePublication && !parsed.data.content.trim()
+              ? eq(projectTable.status, ProjectStatus.DRAFT)
+              : undefined,
+          ),
+        )
         .returning({
           id: projectTable.id,
           slug: projectTable.slug,
