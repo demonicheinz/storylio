@@ -148,17 +148,20 @@ export function ImageUpload({
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const validateFile = (file: File) => {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      return "Invalid file type. Use jpg, png, webp, or gif.";
-    }
+  const validateFile = useCallback(
+    (file: File) => {
+      if (!ACCEPTED_TYPES.includes(file.type)) {
+        return "Invalid file type. Use jpg, png, webp, or gif.";
+      }
 
-    if (file.size > maxSizeBytes) {
-      return `File too large. Maximum ${maxSizeLabel}.`;
-    }
+      if (file.size > maxSizeBytes) {
+        return `File too large. Maximum ${maxSizeLabel}.`;
+      }
 
-    return null;
-  };
+      return null;
+    },
+    [maxSizeBytes, maxSizeLabel],
+  );
 
   const uploadFile = useCallback(
     async (file: File) => {
@@ -191,7 +194,7 @@ export function ImageUpload({
         onUploadingChange?.(false);
       }
     },
-    [onChange, disabled, onUploadingChange],
+    [onChange, disabled, onUploadingChange, validateFile],
   );
 
   const prepareFile = useCallback(
@@ -224,7 +227,7 @@ export function ImageUpload({
 
       uploadFile(file);
     },
-    [cropAspect, uploadFile, disabled],
+    [cropAspect, uploadFile, disabled, validateFile],
   );
 
   const handleDrop = useCallback(

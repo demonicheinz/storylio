@@ -15,12 +15,17 @@ In a second terminal:
 ```powershell
 bunx --no-install playwright-cli -s=upload-drop-review open http://127.0.0.1:3196 --config=playwright-cli.config.json
 bunx --no-install playwright-cli -s=upload-drop-review run-code --filename=tests/browser/image-upload-drop.js
+bunx --no-install playwright-cli -s=upload-drop-review run-code --filename=tests/browser/image-upload-limits.js
 bunx --no-install playwright-cli -s=upload-drop-review close
 ```
 
 Stop the fixture with Ctrl+C. The server bundles the real ImageUpload component,
 replaces its upload transport with a deferred local promise, and binds only to
 loopback. It never sends files to Cloudinary or the application API.
+
+`?limits` adds controls that change maxSizeBytes/maxSizeLabel while keeping
+onChange stable. The limits check rejects a file after tightening the limit,
+updates its validation label, then permits one upload after relaxing the limit.
 
 The browser test uses CDP Input.dispatchDragEvent with real temporary file paths,
 not a synthetic DOM dispatchEvent. It verifies trusted drop events are prevented,
