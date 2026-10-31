@@ -8,7 +8,9 @@ export function usePublicationClock(
 ) {
   const [now, setNow] = useState(() => Date.now());
   const key = dates.filter(Boolean).join("|");
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Changed publication dates require a fresh clock sample, even when only the trigger key is read by React.
   useEffect(() => setNow(Date.now()), [key]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Each clock tick must reschedule the next deadline and refresh the focus listeners.
   useEffect(() => {
     const refresh = () => setNow(Date.now());
     const next = key

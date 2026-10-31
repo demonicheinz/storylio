@@ -107,6 +107,23 @@ Production build result is recorded below. Known low deepmerge audit remains.
 The selection-view production build passed (38/38 pages). Final lint passed;
 the later comment edit's line endings were normalized by Biome before committing.
 
+Selection-view scope committed as `596b98a` with normal hooks.
+
+## Complete Posts feature coverage
+
+Cover all 14 Posts feature files (138 source files now covered repo-wide).
+Preserve intentional pagination reset and clock rescheduling dependencies with
+local explanations rather than removing triggers. Give the save-action group a
+native fieldset so its existing accessible name is supported. Pass selected post
+IDs/titles to the private batch bar and key delete-confirmation rows by ID; equal
+titles remain distinct records. No new selection behavior or mutation policy.
+
+Source lint is clean. Seventy-two focused editor/autosave/publication/collection
+tests passed. Existing Posts browser suite passed six widths, and due-time
+publication/filter/menu checks passed. Production build passed with 38/38 pages.
+Browser writes are synthetic; no real CMS content changed. Earlier full suite
+results are not presented as a new full run for this scoped feature change.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:

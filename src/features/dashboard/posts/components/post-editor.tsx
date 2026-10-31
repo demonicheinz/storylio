@@ -538,7 +538,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
           </div>
         </div>
       </div>
-      <div
+      <fieldset
         className="top-14 z-20 sticky flex flex-wrap items-center gap-2 bg-background py-3 border-border border-y min-w-0"
         aria-label="Post save actions"
       >
@@ -608,7 +608,7 @@ export function PostEditor({ mode, post }: PostEditorProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-      </div>
+      </fieldset>
       <p className="text-muted-foreground text-xs" role="note">
         {mode === "create"
           ? "Save your first draft to enable preview."

@@ -155,7 +155,7 @@ function ViewToggle({
 
 function BatchActionsBar({
   selectedCount,
-  selectedTitles,
+  selectedPosts,
   outsideViewCount,
   onTogglePage,
   isPending,
@@ -165,7 +165,7 @@ function BatchActionsBar({
   onClear,
 }: {
   selectedCount: number;
-  selectedTitles: string[];
+  selectedPosts: Pick<DashboardPost, "id" | "title">[];
   outsideViewCount: number;
   onTogglePage: () => void;
   isPending: boolean;
@@ -239,9 +239,9 @@ function BatchActionsBar({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <ul className="space-y-1 max-h-48 overflow-y-auto text-sm">
-              {selectedTitles.map((title, index) => (
-                <li key={`${index}-${title}`} className="wrap-anywhere">
-                  {title}
+              {selectedPosts.map((post) => (
+                <li key={post.id} className="wrap-anywhere">
+                  {post.title}
                 </li>
               ))}
             </ul>
@@ -341,6 +341,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
   } = paginateItems(filteredPosts, page, itemsPerPage);
   const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Changing any refinement or page size must return the collection to its first page.
   useEffect(() => {
     setPage(1);
   }, [itemsPerPage, query, selectedTags, sortMode, sortDirection, status]);
@@ -786,7 +787,7 @@ export function PostsManager({ posts }: PostsManagerProps) {
         {batchMode && (
           <BatchActionsBar
             selectedCount={selectedIds.size}
-            selectedTitles={selectedPosts.map((post) => post.title)}
+            selectedPosts={selectedPosts}
             outsideViewCount={outsideViewCount}
             onTogglePage={togglePageSelection}
             isPending={isBatchPending}
