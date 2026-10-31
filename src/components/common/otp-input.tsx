@@ -45,6 +45,7 @@ export function OtpInput({
             <div className={styles.group} key={group}>
               {slots.slice(group * 3, group * 3 + 3).map((slot, index) => (
                 <div
+                  // biome-ignore lint/suspicious/noArrayIndexKey: OTP slots keep their fixed spatial identity while characters change.
                   key={index}
                   data-otp-slot
                   data-active={slot.isActive || undefined}

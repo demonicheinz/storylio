@@ -310,6 +310,27 @@ and closed with Escape. These read-only checks used existing dev content; no CMS
 writes or seeds were performed. Public CSS and common/effect engines remain
 separate review surfaces, not claimed lint-clean here.
 
+Public TS component coverage committed as `2a76f3c` with normal hooks.
+
+## Non-WebGL common components and hooks
+
+Cover common TS/TSX and src/hooks, with GooeyNav/LiveOrb explicitly held as their
+own rendering-engine review surface. Total source coverage is 350 files. Preserve
+text/page/route-triggered BlurText, pagination focus and Lenis ownership effects;
+retain content-keyed tag normalization while removing its redundant derived-key
+dependency. OTP, word, skeleton, carousel-position and ellipsis identity exceptions
+describe fixed visual positions rather than claiming record identities.
+
+Carousel uses a named native section with compatible pointer event typing.
+Inactive/current pagination text exposes real screen-reader content instead of
+labels on generic spans. No new clickable current-page target or design CSS.
+Thirty-seven pagination/OTP/loading/scroll/editor tests passed. Production build
+passed 38/38 pages. Projects editor/upload regression suite passed five widths.
+Read-only local-build carousel checks preserved all 16 modified-key combinations
+and ordinary arrow/Home/End behavior. Public Lenis suite passed public routes,
+TOC focus, lightbox locking, native sidebar scrolling, history and absence of
+Lenis on auth/dashboard/preview destinations. Other source remains outside scope.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:

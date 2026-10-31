@@ -49,7 +49,10 @@
       "src/components/auth/**",
       "src/features/dashboard/shared/**",
       "src/app/**/*.{ts,tsx,css}",
-      "src/components/public/**/*.{ts,tsx}"
+      "src/components/public/**/*.{ts,tsx}",
+      "src/hooks/**",
+      "src/components/common/**/*.{ts,tsx}",
+      "!src/components/common/{gooey-nav,live-orb}.tsx"
     ]
   },
   "javascript": {
