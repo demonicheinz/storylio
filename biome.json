@@ -51,7 +51,8 @@
       "src/app/**/*.{ts,tsx,css}",
       "src/components/public/**",
       "src/hooks/**",
-      "src/components/common/**"
+      "src/components/common/**",
+      "src/components/effects/gravity-stars.tsx"
     ]
   },
   "javascript": {
