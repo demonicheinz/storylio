@@ -1,10 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const sdk = vi.hoisted(() => ({ init: vi.fn(), captureRequestError: vi.fn() }));
+const sdk = vi.hoisted(() => ({
+  init: vi.fn(),
+  captureRequestError: vi.fn(),
+  setTags: vi.fn(),
+  withScope: vi.fn(),
+}));
 vi.mock("@sentry/nextjs", () => sdk);
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
+  sdk.withScope.mockImplementation((callback) =>
+    callback({ setTags: sdk.setTags }),
+  );
   vi.stubEnv("NODE_ENV", "production");
   vi.stubEnv("NEXT_PUBLIC_SENTRY_ENABLED", "true");
   vi.stubEnv(
@@ -44,6 +52,31 @@ describe("server error instrumentation", () => {
     expect(options.enableOpenTelemetrySetup).toBe(false);
     expect(options.beforeSend).toBeTypeOf("function");
     expect(options.tracesSampleRate).toBeUndefined();
+  });
+  it("records only bounded render diagnostics for resume failures", async () => {
+    const { onRequestError } = await import("@/instrumentation");
+    await onRequestError(
+      new Error("Resume failed"),
+      {
+        path: "/?token=private",
+        method: "POST",
+        headers: { "next-resume": "1", cookie: "private" },
+      },
+      {
+        routerKind: "App Router",
+        routePath: "/",
+        routeType: "render",
+        renderSource: "server-rendering",
+        revalidateReason: "stale",
+      },
+    );
+    expect(sdk.setTags).toHaveBeenCalledWith({
+      "next.route_type": "render",
+      "next.render_source": "server-rendering",
+      "next.revalidate_reason": "stale",
+      "next.resume": "true",
+    });
+    expect(JSON.stringify(sdk.setTags.mock.calls)).not.toContain("private");
   });
   it("ignores navigation control flow and forwards unexpected request errors", async () => {
     const { onRequestError } = await import("@/instrumentation");

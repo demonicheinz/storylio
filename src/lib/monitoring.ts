@@ -100,10 +100,28 @@ export function scrubErrorEvent(event: ErrorEvent): ErrorEvent | null {
       ? { message: safeText(event.logentry.message) }
       : {};
   }
-  if (event.tags)
-    event.tags = event.tags.boundary
+  if (event.tags) {
+    const tags: NonNullable<ErrorEvent["tags"]> = event.tags.boundary
       ? { boundary: safeText(String(event.tags.boundary)) }
       : {};
+    const allowed: Record<string, readonly string[]> = {
+      "next.route_type": ["render", "route", "action", "proxy"],
+      "next.render_source": [
+        "react-server-components",
+        "react-server-components-payload",
+        "server-rendering",
+        "unknown",
+      ],
+      "next.revalidate_reason": ["on-demand", "stale", "none"],
+      "next.resume": ["true", "false"],
+    };
+    for (const [key, values] of Object.entries(allowed)) {
+      const value = event.tags[key];
+      if (typeof value === "string" && values.includes(value))
+        tags[key] = value;
+    }
+    event.tags = tags;
+  }
   for (const exception of event.exception?.values ?? []) {
     if (exception.value) exception.value = safeText(exception.value);
     for (const frame of exception.stacktrace?.frames ?? []) {

@@ -90,6 +90,33 @@ describe("Sentry error-only privacy policy", () => {
       }),
     ).toBeNull();
   });
+  it("retains only allowlisted render diagnostic values", () => {
+    const event: ErrorEvent = {
+      type: undefined,
+      tags: {
+        "next.route_type": "render",
+        "next.render_source": "server-rendering",
+        "next.revalidate_reason": "stale",
+        "next.resume": "true",
+        secret: "private",
+      },
+    };
+    expect(scrubErrorEvent(event)?.tags).toEqual({
+      "next.route_type": "render",
+      "next.render_source": "server-rendering",
+      "next.revalidate_reason": "stale",
+      "next.resume": "true",
+    });
+    expect(
+      scrubErrorEvent({
+        type: undefined,
+        tags: {
+          "next.route_type": "password=private",
+          "next.resume": "private",
+        },
+      })?.tags,
+    ).toEqual({});
+  });
   it("strips request payloads, identity, context dumps and breadcrumbs", () => {
     const event: ErrorEvent = {
       type: undefined,
