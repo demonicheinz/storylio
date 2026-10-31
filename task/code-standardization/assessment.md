@@ -41,7 +41,7 @@ authentication, database schema, upload transport, or public layout was redesign
 | Batch | Area | Concrete work and verification |
 | --- | --- | --- |
 | 2 | Public image components | Implemented shared ContentCover lifecycle and bounded fallback. Source-replacement recovery reproduced before the fix and verified afterward. See [batch-two.md](batch-two.md). |
-| 3 | Dashboard collection managers | Media covered in [batch three](batch-three.md), [four](batch-four.md) and [five](batch-five.md). Projects type/sorting, presentation and sortable list covered in [batch six](batch-six.md); pure filter policy in [batch seven](batch-seven.md). Projects batch state and other managers remain queued. |
+| 3 | Dashboard collection managers | Media covered in [batch three](batch-three.md), [four](batch-four.md) and [five](batch-five.md). Projects type/sorting, presentation and sortable list covered in [batch six](batch-six.md); pure filter policy in [batch seven](batch-seven.md); batch action UI in [batch eight](batch-eight.md). Projects batch state and other managers remain queued. |
 | 4 | Editors and About/Home forms | Audit autosave/manual-save races, draft guards, field schemas and rich editor integration. Do not merge draft/publication validation or heading/record slug helpers simply because they look similar. |
 | 5 | Settings/auth and data actions | Review lock lifecycle, provider refresh, error diagnostics, revalidation-after-commit and authorization with security/PGlite fixtures. No line-by-line security verdict is claimed yet. |
 | 6 | UI lint and tooling | Review the blanket src/components/ui lint exclusion; enable rules incrementally with specific justified exceptions. Inspect generated fixtures and graph freshness independently of application code. |
@@ -61,6 +61,10 @@ Ignored generated Prisma files were not removed from the developer workspace.
 - Upstream shadcn 4.23.0 still declares deepmerge ^4.3.1; no upgrade was applied.
 - The GitHub advisory currently lists no patched version:
   https://github.com/advisories/GHSA-gcqx-w48m-w2h4
+- On 2026-10-31, the audit additionally reported moderate glob/minimatch
+  advisories. Their patched releases are now resolved explicitly; see
+  [dependency-security.md](dependency-security.md) for compatibility evidence
+  and the remaining low finding. No advisory suppression was added.
 
 ## Verification
 
