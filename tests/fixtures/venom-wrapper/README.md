@@ -15,3 +15,7 @@ actual three-pass renderer/project CSS, then run `venom-context-recovery.js` the
 The real test uses WEBGL_lose_context for two recovery cycles, verifies one rebuild,
 full label on every recovered frame, no startup crossfade, paused restore and
 cursor cleanup. These are local synthetic links; no CMS or navigation write.
+
+The `--real` mode serves the project's Satoshi font and CSS. Run
+`tests/browser/venom-fallback.js` against port 3215 for 1440/390/320px fallback,
+focus/navigation and reduced-motion checks; screenshots go to task/venom-fallback/.

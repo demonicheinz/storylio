@@ -46,23 +46,32 @@ const bundle = await build({
     },
   ],
 });
-const css = real
-  ? (
-      await postcss([tailwind()]).process(
-        await readFile("src/app/globals.css", "utf8"),
-        { from: resolve("src/app/globals.css") },
-      )
-    ).css +
-    "\n" +
-    bundle.outputFiles
-      .filter((file) => file.path.endsWith(".css"))
-      .map((file) => file.text)
-      .join("\n")
-  : "";
+const css =
+  (real
+    ? (
+        await postcss([tailwind()]).process(
+          await readFile("src/app/globals.css", "utf8"),
+          { from: resolve("src/app/globals.css") },
+        )
+      ).css +
+      "\n" +
+      bundle.outputFiles
+        .filter((file) => file.path.endsWith(".css"))
+        .map((file) => file.text)
+        .join("\n")
+    : "") +
+  (real
+    ? '\n@font-face{font-family:Satoshi;src:url("/satoshi.woff2") format("woff2");font-weight:100 900;font-display:swap}html{--font-sans:Satoshi,sans-serif;font-family:var(--font-sans)}'
+    : "");
 const js = bundle.outputFiles.find((file) => file.path.endsWith(".js")).text;
 const html =
   '<!doctype html><html class="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body style="background:#070c15;color:#edf7ff"><div id="root"></div><script src="/app.js"></script></body></html>';
-createServer((request, response) => {
+createServer(async (request, response) => {
+  if (request.url === "/satoshi.woff2") {
+    response.writeHead(200, { "Content-Type": "font/woff2" });
+    response.end(await readFile("src/assets/fonts/Satoshi-Variable.woff2"));
+    return;
+  }
   const script = request.url === "/app.js";
   const style = request.url === "/style.css";
   response.writeHead(200, {

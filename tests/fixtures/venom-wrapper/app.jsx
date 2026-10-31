@@ -13,12 +13,14 @@ function Fixture() {
   const [mounted, setMounted] = useState(true);
   return (
     <main style={{ padding: 80 }}>
-      <button type="button" onClick={() => setMounted(false)}>
-        Unmount CTA
-      </button>
-      <button type="button" onClick={() => setMounted(true)}>
-        Mount CTA
-      </button>
+      <div style={{ marginBottom: 32 }}>
+        <button type="button" onClick={() => setMounted(false)}>
+          Unmount CTA
+        </button>
+        <button type="button" onClick={() => setMounted(true)}>
+          Mount CTA
+        </button>
+      </div>
       {mounted && <VenomButton href="#target">Selected projects</VenomButton>}
       <section id="target" style={{ marginTop: 1000 }}>
         Target

@@ -30,6 +30,22 @@ async function venomContextRecovery(sessionPage) {
         window.recoveryBuilds = (window.recoveryBuilds ?? 0) + 1;
       return create.call(this);
     };
+    const shaderSource = WebGL2RenderingContext.prototype.shaderSource;
+    WebGL2RenderingContext.prototype.shaderSource = function (shader, source) {
+      return shaderSource.call(
+        this,
+        shader,
+        this.canvas.dataset.venomCanvas && window.recoveryFailShader
+          ? `invalid_shader\n${source}`
+          : source,
+      );
+    };
+    const deleteProgram = WebGL2RenderingContext.prototype.deleteProgram;
+    WebGL2RenderingContext.prototype.deleteProgram = function (program) {
+      if (this.canvas.dataset.venomCanvas && window.recoveryFailShader)
+        window.recoveryDeleted = (window.recoveryDeleted ?? 0) + 1;
+      return deleteProgram.call(this, program);
+    };
   });
   const assert = (ok, message) => {
     if (!ok) throw Error(message);
@@ -100,6 +116,26 @@ async function venomContextRecovery(sessionPage) {
         "Restore replayed initial crossfade",
       );
     }
+    await lose();
+    await page.waitForFunction(
+      () => !document.querySelector("[data-venom-ready]"),
+    );
+    await page.evaluate(() => {
+      window.recoveryFailShader = true;
+      window.recoveryExtension.restoreContext();
+    });
+    await page.waitForFunction(() => window.recoveryDeleted >= 3);
+    assert(
+      (await page.locator("[data-venom-ready]").count()) === 0,
+      "Failed shader recovery hid the fallback",
+    );
+    assert(
+      (await page
+        .locator("[data-venom-link]")
+        .evaluate((element) => getComputedStyle(element).color)) !==
+        "rgba(0, 0, 0, 0)",
+      "Failed recovery label is transparent",
+    );
     await page
       .getByRole("button", { name: "Unmount CTA", exact: true })
       .click();
@@ -124,6 +160,7 @@ async function venomContextRecovery(sessionPage) {
         "full label from first recovered frame",
         "no startup crossfade",
         "unmount cursor cleanup",
+        "failed shader restoration fallback and disposal",
       ],
     };
   } finally {
