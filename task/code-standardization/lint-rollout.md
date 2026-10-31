@@ -228,6 +228,26 @@ motion loading. Build was not repeated for the named-section/comment change;
 About's preceding 38-page build is historical, and normal TypeScript hooks still
 run. Synthetic fixture data only; no real analytics provider requests.
 
+Analytics coverage committed as `c7d65b9` with normal hooks.
+
+## Auth component coverage
+
+Cover seven auth component/CSS files (173 source files total). Narrow the reset
+token with an explicit condition instead of a non-null assertion; the existing
+invalid-link guard still prevents requests. Remove a one-child fragment and use
+equivalent template strings for auth navigation/classes. Preserve intentional
+CSS Modules :global and floating-label state ordering with local explanations.
+
+Thirty-three auth recovery/policy/redirect tests passed. Production build passed
+with 38/38 pages. The existing 13 auth navigation/logout restoration browser
+scenarios passed. Extend that isolated fixture to render RecoveryForm: invalid
+tokens make no call; mismatched passwords make no call; the exact token reaches
+reset; successful reset clears its URL; forgot-password confirmation stays generic
+and its retry works. Those new scenarios passed. A missing relative background
+stub initially pulled Next Image into the non-Next fixture; both import spellings
+are now stubbed and the complete browser run passed without page errors. Fixture
+auth writes are memory-only, with no real emails, accounts or WebAuthn ceremonies.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:
