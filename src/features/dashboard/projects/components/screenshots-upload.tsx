@@ -240,6 +240,7 @@ export function ScreenshotsUpload({
         />
       )}
 
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: This wrapper prevents native file-drop navigation; keyboard upload uses the nested button. */}
       <div
         onDrop={handleDrop}
         onDragOver={(event) => {

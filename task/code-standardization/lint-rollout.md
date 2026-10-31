@@ -124,6 +124,31 @@ publication/filter/menu checks passed. Production build passed with 38/38 pages.
 Browser writes are synthetic; no real CMS content changed. Earlier full suite
 results are not presented as a new full run for this scoped feature change.
 
+Posts coverage committed as `16d101c` with normal hooks.
+
+## Complete Projects feature coverage
+
+Cover all 13 Projects files, bringing total source lint coverage to **143 files**
+without diagnostics. Remove unused dropdown/status imports; key delete-review
+rows by project ID; use a native fieldset for the named save actions. Pointer
+grid selection follows the user's checkbox/menu-only keyboard contract, with
+element-specific event-boundary explanations. Keep the refinement-triggered
+page reset/reorder restoration effect; do not remove its dependency triggers.
+The screenshot drop wrapper retains a local exception because it prevents native
+file navigation while keyboard upload is provided by its nested button.
+
+Forty-five focused sorting/filter/list/batch/publication/autosave tests passed.
+Browser checks passed for keyboard selection/menu focus at 1440/320px, exact
+batch-action IDs and cancelled deletion, and the five-width Projects manager/
+editor suite including disabled/concurrent drops. Production build passed with
+38/38 pages; whitespace and source lint passed. Browser actions are mocked.
+
+Media/Gallery already have native preview/title buttons that become selection
+actions during batch mode. Asked whether to remove those existing buttons from
+Tab order only during batch selection, leaving pointer and ordinary preview
+behavior intact. That follow-up preference remains pending; no changes were made
+to those features' focus contracts in these commits.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:

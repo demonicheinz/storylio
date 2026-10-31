@@ -12,7 +12,7 @@ function render(
   const html = renderToStaticMarkup(
     createElement(ProjectsBatchActionsBar, {
       selectedCount: 1,
-      selectedTitles: ["Storylio"],
+      selectedProjects: [{ id: "storylio", title: "Storylio" }],
       outsideViewCount: 0,
       pageSelected: false,
       isPending: false,

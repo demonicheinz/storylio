@@ -45,7 +45,8 @@
       "src/features/dashboard/shell/**",
       "src/features/dashboard/projects/components/{project-list,project-display}.tsx",
       "src/features/dashboard/posts/components/{post-collection-view,post-display}.tsx",
-      "src/features/dashboard/posts/**"
+      "src/features/dashboard/posts/**",
+      "src/features/dashboard/projects/**"
     ]
   },
   "javascript": {

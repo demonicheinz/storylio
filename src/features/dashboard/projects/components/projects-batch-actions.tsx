@@ -11,10 +11,11 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import type { DashboardProject } from "../types";
 
 export function ProjectsBatchActionsBar({
   selectedCount,
-  selectedTitles,
+  selectedProjects,
   outsideViewCount,
   onSelectPage,
   pageSelected,
@@ -25,7 +26,7 @@ export function ProjectsBatchActionsBar({
   onCancel,
 }: {
   selectedCount: number;
-  selectedTitles: string[];
+  selectedProjects: Pick<DashboardProject, "id" | "title">[];
   outsideViewCount: number;
   onSelectPage: () => void;
   pageSelected: boolean;
@@ -101,9 +102,9 @@ export function ProjectsBatchActionsBar({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <ul className="space-y-1 max-h-48 overflow-y-auto text-sm">
-              {selectedTitles.map((title, index) => (
-                <li key={`${index}-${title}`} className="wrap-anywhere">
-                  {title}
+              {selectedProjects.map((project) => (
+                <li key={project.id} className="wrap-anywhere">
+                  {project.title}
                 </li>
               ))}
             </ul>

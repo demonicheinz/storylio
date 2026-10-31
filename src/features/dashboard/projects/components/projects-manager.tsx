@@ -22,14 +22,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { toast } from "@/components/ui/toast";
@@ -45,7 +37,6 @@ import { DashboardSummary } from "@/features/dashboard/shared/components/summary
 import { useDashboardFilter } from "@/features/dashboard/shared/hooks/use-dashboard-filter";
 import { dashboardStyles } from "@/features/dashboard/shared/styles";
 import type { ActionResult } from "@/lib/action-result";
-import { ProjectStatus } from "@/lib/db/enums";
 import {
   getDefaultItemsPerPage,
   getItemsPerPageOptions,
@@ -174,6 +165,7 @@ function ProjectsGrid({
   return (
     <div className={dashboardStyles.gridCards}>
       {projects.map((project) => (
+        /* biome-ignore lint/a11y/useKeyWithClickEvents: Pointer card selection supplements the nested checkbox; keyboard users select through that control. */
         <article
           key={project.id}
           className={cn(
@@ -189,14 +181,18 @@ function ProjectsGrid({
               className="border-0 rounded-none"
               sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
             />
+            {/* biome-ignore lint/a11y/noStaticElementInteractions: This wrapper isolates nested checkbox/menu clicks without a duplicate keyboard target. */}
             <div
+              role="presentation"
               className="top-3 right-3 absolute"
               onClick={(event) => event.stopPropagation()}
             >
               <ProjectActions project={project} overlay />
             </div>
             {batchMode && (
+              /* biome-ignore lint/a11y/noStaticElementInteractions: This wrapper isolates nested checkbox/menu clicks without a duplicate keyboard target. */
               <div
+                role="presentation"
                 className="top-3 left-3 z-10 absolute"
                 onClick={(event) => event.stopPropagation()}
               >
@@ -394,6 +390,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
   } = paginateItems(filteredProjects, page, itemsPerPage);
   const itemsPerPageOptions = getItemsPerPageOptions(viewMode);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Refinements reset pagination; leaving reorder mode restores the previous page once.
   useEffect(() => {
     setPage(restorePage.current ?? 1);
     restorePage.current = null;
@@ -851,7 +848,7 @@ export function ProjectsManager({ projects }: ProjectsManagerProps) {
         {batchMode && (
           <ProjectsBatchActionsBar
             selectedCount={selectedIds.size}
-            selectedTitles={selectedProjects.map((item) => item.title)}
+            selectedProjects={selectedProjects}
             outsideViewCount={outsideViewCount}
             onSelectPage={selectPage}
             pageSelected={pageSelected}
