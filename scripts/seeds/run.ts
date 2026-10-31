@@ -11,6 +11,9 @@ import { seedOwner } from "./owner";
 import { seedPosts } from "./posts";
 import { seedProjects } from "./projects";
 
+const OWNER_REQUIRED =
+  "Seed the owner account first, or include owner in the selected groups.";
+
 export async function runSeedPlan(db: Database, plan: SeedPlan) {
   let owner: { id: string } | undefined;
   if (plan.parts.includes("owner"))
@@ -31,18 +34,17 @@ export async function runSeedPlan(db: Database, plan: SeedPlan) {
           columns: { id: true },
         })
       : undefined;
-    if (!owner)
-      throw new SeedInputError(
-        "Seed the owner account first, or include owner in the selected groups.",
-      );
+    if (!owner) throw new SeedInputError(OWNER_REQUIRED);
   }
   for (const part of plan.parts) {
     if (part === "home") await seedHomeSections(db);
     else if (part === "about") await seedAboutContent(db);
-    else if (part === "projects")
-      await seedProjects({ db, ownerId: owner!.id });
-    else if (part === "posts") await seedPosts({ db, ownerId: owner!.id });
     else if (part === "gallery") await seedGallery({ db });
-    else if (part === "notes") await seedNotes({ db, ownerId: owner!.id });
+    else if (part === "projects" || part === "posts" || part === "notes") {
+      if (!owner) throw new SeedInputError(OWNER_REQUIRED);
+      if (part === "projects") await seedProjects({ db, ownerId: owner.id });
+      else if (part === "posts") await seedPosts({ db, ownerId: owner.id });
+      else await seedNotes({ db, ownerId: owner.id });
+    }
   }
 }

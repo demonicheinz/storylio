@@ -51,9 +51,9 @@ export async function collectSeedPlan({
   dryRun?: boolean;
 }): Promise<SeedPlan | null> {
   write(`Storylio seed menu — environment: ${environment}`);
-  seedChoices.forEach((choice, index) =>
-    write(`${index + 1}. ${choice.label}`),
-  );
+  seedChoices.forEach((choice, index) => {
+    write(`${index + 1}. ${choice.label}`);
+  });
   write("all. All listed seed groups\n0. Cancel");
   let parts: SeedPart[];
   while (true) {
