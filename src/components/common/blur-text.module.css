@@ -25,8 +25,11 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .word {
+    /* biome-ignore lint/complexity/noImportantStyles: Reduced motion must override any in-flight word animation styles. */
     transform: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Reduced motion must override any in-flight word animation styles. */
     filter: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Reduced motion must override any in-flight word animation styles. */
     opacity: 1 !important;
   }
 }

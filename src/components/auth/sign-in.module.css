@@ -15,7 +15,6 @@
   pointer-events: none;
   opacity: 0.2;
 }
-/* biome-ignore lint/correctness/noUnknownPseudoClass: CSS Modules uses :global for the root theme class. */
 :global(.dark) .background {
   opacity: 1;
 }

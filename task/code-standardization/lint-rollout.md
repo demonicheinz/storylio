@@ -346,6 +346,14 @@ no shader or lifecycle changes are mixed into this lint step. Eleven focused
 resource tests, TypeScript, and the rebuilt GPU fixture passed. Broader effects
 engines and remaining CSS/scripts/tests still need their own bounded review.
 
+## Public/common CSS
+
+Public/common styles are now included; coverage is 378 source files with no
+diagnostics. CSS Modules global/local names are allowed only in module files;
+intentional accessibility/recovery/geometry priorities retain local explanations.
+All changed stylesheet ASTs are equivalent. Build/TypeScript and the invalid-name
+probe passed. See [public-css.md](public-css.md) for evidence and limits.
+
 Review: each scope is positive and verified independently; existing formatter
 coverage is unchanged, and no global diagnostic rules were disabled. Known
 exceptions preserve intentional browser/security behavior. Self-evaluation:

@@ -78,6 +78,11 @@ CMS contracts, and security behavior unless the task explicitly changes them.
   Formatter/assist checks still apply repository-wide. Expand coverage after
   reviewing the area's diagnostics, with narrow justified exceptions instead
   of disabling rules globally. Never use a list containing only negative globs.
+- CSS Modules may use `:global`/`:local`; the Biome override allows these names
+  only in `.module.css` files and still checks other pseudo-classes. Retain
+  important declarations that override animation inline styles for accessibility
+  or history restoration, with declaration-local reasons. Do not change cascade
+  order merely to silence lint without checking the resulting behavior.
 
 ## Refactoring and verification
 

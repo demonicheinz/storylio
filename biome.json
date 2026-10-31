@@ -49,9 +49,9 @@
       "src/components/auth/**",
       "src/features/dashboard/shared/**",
       "src/app/**/*.{ts,tsx,css}",
-      "src/components/public/**/*.{ts,tsx}",
+      "src/components/public/**",
       "src/hooks/**",
-      "src/components/common/**/*.{ts,tsx}"
+      "src/components/common/**"
     ]
   },
   "javascript": {
@@ -80,5 +80,22 @@
     "formatter": {
       "enabled": false
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.module.css"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnknownPseudoClass": {
+              "level": "error",
+              "options": {
+                "ignore": ["global", "local"]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

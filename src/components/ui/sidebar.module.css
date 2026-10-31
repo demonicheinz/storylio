@@ -30,8 +30,6 @@
 .menuButton > :nth-child(3) {
   margin-inline: 8px 12px;
 }
-
-/* biome-ignore lint/correctness/noUnknownPseudoClass: CSS Modules uses :global to match the external sidebar state. */
 :global([data-collapsible="icon"]) .menuButton > :not(:first-child) {
   opacity: 0;
   visibility: hidden;
