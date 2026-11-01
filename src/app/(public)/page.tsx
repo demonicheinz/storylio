@@ -19,12 +19,16 @@ import { HOME_NOTES_TAG, homePostWhere } from "@/lib/home-content";
 import { HOME_HERO_ID, resolveHomeHero } from "@/lib/home-hero";
 import { selectHomeTechnologies } from "@/lib/home-technologies";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/" },
   title: "Heinz — Full Stack Developer | Storylio",
   description:
     "Web applications, projects and writing by Heinz, a full stack web developer based in Central Java, Indonesia.",
   openGraph: {
+    siteName: SITE_NAME,
+    url: "/",
     title: "Heinz — Full Stack Developer | Storylio",
     description: "Web projects and the decisions behind them, by Heinz.",
     type: "website",
@@ -162,6 +166,19 @@ export default async function HomePage({
 
   return (
     <main className={`${styles.surface} ${styles.page}`} data-home-page>
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD escapes every < so data cannot terminate the script element.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "@id": `${SITE_URL}/#website`,
+            name: SITE_NAME,
+            url: `${SITE_URL}/`,
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <HeroSection {...hero} />
       <div className={styles.content}>
         <RecentProjectsSection projects={recentProjects} />
