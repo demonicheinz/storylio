@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { fontVariables } from "@/lib/font";
+import { SITE_URL } from "@/lib/site";
 import "@/app/globals.css";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: new URL(SITE_URL),
   title: "Storylio",
   description: "A personal journey through code, creativity, and craft.",
 };

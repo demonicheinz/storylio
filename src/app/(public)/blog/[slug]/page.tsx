@@ -23,6 +23,7 @@ import { HOME_NOTES_TAG, homePostWhere } from "@/lib/home-content";
 import { buildNotePermalink } from "@/lib/note-links";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 import { renderPublicMDX } from "@/lib/public-mdx";
+import { SITE_NAME } from "@/lib/site";
 import { slugify } from "@/lib/utils";
 
 type BlogPostPageProps = {
@@ -181,15 +182,20 @@ export async function generateMetadata({
     post.excerpt ?? `Read ${post.title}, an article by Heinz on Storylio.`;
   const image =
     post.coverImage ?? `/og?title=${encodeURIComponent(post.title)}&type=post`;
+  const canonical = post.tags.some((tag) => tag.name === HOME_NOTES_TAG)
+    ? "/blog?tag=notes"
+    : `/blog/${post.slug}`;
 
   return {
     title: `${post.title} — Storylio`,
+    alternates: { canonical },
     description,
     openGraph: {
       title: `${post.title} — Storylio`,
       description,
       type: "article",
-      siteName: "Storylio",
+      siteName: SITE_NAME,
+      url: canonical,
       publishedTime: post.publishedAt?.toISOString(),
       images: [image],
     },
@@ -234,7 +240,7 @@ async function BlogPostContent({ params }: BlogPostPageProps) {
     <main className={page.page} data-public-page="article">
       <ArticleProgress />
       <article className={`${page.container} ${detail.article}`}>
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap justify-between items-center gap-4">
           <Link href="/blog" className={page.link}>
             <ArrowLeftIcon size={16} aria-hidden="true" /> Back to writing
           </Link>

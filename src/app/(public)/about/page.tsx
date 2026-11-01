@@ -22,6 +22,7 @@ import { db } from "@/lib/db";
 import { skill } from "@/lib/db/schema";
 import { renderMDX } from "@/lib/mdx";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { SITE_NAME } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const sectionSpacing = aboutStyles.section;
@@ -43,13 +44,15 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = getMetadataDescription(aboutContent?.introEn);
 
   return {
+    alternates: { canonical: "/about" },
     title: "About Heinz — Storylio",
     description,
     openGraph: {
       title: "About Heinz — Storylio",
       description,
       type: "profile",
-      siteName: "Storylio",
+      siteName: SITE_NAME,
+      url: "/about",
       images: ["/og?title=About%20Heinz&type=page"],
     },
     twitter: {

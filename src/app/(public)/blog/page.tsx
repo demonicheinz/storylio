@@ -11,6 +11,7 @@ import { EmptyPosts } from "@/components/public/sections/blog/empty-posts";
 import { PostList } from "@/components/public/sections/blog/post-list";
 import { getPage } from "@/lib/archive-pagination";
 import { getPublicWriting } from "@/lib/public-writing";
+import { SITE_NAME } from "@/lib/site";
 import { getWritingTag } from "@/lib/writing-filters";
 
 type BlogPageProps = {
@@ -20,11 +21,12 @@ type BlogPageProps = {
     note?: string | string[];
   }>;
 };
-export const metadata: Metadata = {
+const metadata: Metadata = {
   title: "Writing — Storylio",
   description:
     "Notes on web development, interface craft, systems thinking, and product building by Ahmad Haizul Amany.",
   openGraph: {
+    siteName: SITE_NAME,
     title: "Writing — Storylio",
     description:
       "Read notes on web development, interface craft, and product building by Heinz.",
@@ -39,6 +41,22 @@ export const metadata: Metadata = {
     images: ["/og?title=Writing&type=page"],
   },
 };
+export async function generateMetadata({
+  searchParams,
+}: BlogPageProps): Promise<Metadata> {
+  const query = await searchParams;
+  const params = new URLSearchParams();
+  const tag = getWritingTag(query.tag);
+  const { pagination } = await getPublicWriting(tag, getPage(query.page));
+  if (tag) params.set("tag", tag);
+  if (pagination.page > 1) params.set("page", String(pagination.page));
+  const canonical = `/blog${params.size ? `?${params}` : ""}`;
+  return {
+    ...metadata,
+    alternates: { canonical },
+    openGraph: { ...metadata.openGraph, url: canonical },
+  };
+}
 export default function BlogPage(props: BlogPageProps) {
   return (
     <PublicRouteBoundary variant="blog">

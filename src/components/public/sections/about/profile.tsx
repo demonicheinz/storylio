@@ -1,8 +1,8 @@
 import { GlobeIcon, TranslateIcon } from "@phosphor-icons/react/dist/ssr";
-import { ProfileAvatar } from "@/components/common/profile-avatar";
 import { person } from "@/components/public/sections/about/data";
 import { cn } from "@/lib/utils";
 import styles from "./about.module.css";
+import { ProfilePhoto } from "./profile-photo";
 
 interface ProfileSectionProps {
   profile?: {
@@ -17,11 +17,9 @@ export function ProfileSection({ profile }: ProfileSectionProps) {
   return (
     <aside className={styles.profile}>
       <div className={styles.profileMeta}>
-        <ProfileAvatar
+        <ProfilePhoto
           src={profile?.image}
           name={name}
-          size={144}
-          animated
           className={cn(styles.avatar, "border border-brand-soft/40")}
         />
 

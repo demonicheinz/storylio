@@ -4,7 +4,7 @@ import { MotionReveal } from "@/components/common/motion";
 import { SectionHeading } from "@/components/common/section-heading";
 import { TiltedCard } from "@/components/common/tilted-card";
 import { BlogCover } from "@/components/public/sections/blog/blog-cover";
-import { calculateReadingTime, formatDate } from "@/lib/utils";
+import { calculateReadingTime } from "@/lib/utils";
 import styles from "./home.module.css";
 
 export type HomeRecentPost = {
@@ -47,14 +47,6 @@ export function RecentPostsSection({ posts }: { posts: HomeRecentPost[] }) {
                 </TiltedCard>
                 <div className={styles.cardBody}>
                   <div className={styles.metadata}>
-                    <time
-                      dateTime={(
-                        post.publishedAt ?? post.createdAt
-                      ).toISOString()}
-                    >
-                      {formatDate(post.publishedAt ?? post.createdAt)}
-                    </time>
-                    <span aria-hidden="true">/</span>
                     <span>{calculateReadingTime(post.content)} min read</span>
                   </div>
                   <h3 className={styles.cardTitle}>{post.title}</h3>

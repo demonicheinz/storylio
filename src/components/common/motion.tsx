@@ -22,7 +22,7 @@ export function MotionReveal({
   return (
     <motion.div
       data-motion-reveal
-      initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+      initial={reduceMotion ? false : { opacity: 1, y: 24 }}
       whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{ duration: 0.55, delay, ease }}
@@ -48,7 +48,7 @@ export function RouteMotion({
       // Next can resume the root shell through /index; its key must stay canonical.
       key={pathname === "/index" ? "/" : pathname}
       data-route-motion
-      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+      initial={reduceMotion ? false : { opacity: 1, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease }}
       className={className}
