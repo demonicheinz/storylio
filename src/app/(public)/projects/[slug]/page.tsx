@@ -21,6 +21,7 @@ import { IMAGE_QUALITY, PUBLIC_COVER_IMAGE_SIZES } from "@/lib/image-policy";
 import { getProjectContribution } from "@/lib/project-contribution";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
 import { renderPublicMDX } from "@/lib/public-mdx";
+import { SITE_NAME } from "@/lib/site";
 import { calculateReadingTime, formatDate, slugify } from "@/lib/utils";
 
 type ProjectDetailPageProps = {
@@ -154,12 +155,14 @@ export async function generateMetadata({
 
   return {
     title: `${project.title} — Storylio`,
+    alternates: { canonical: `/projects/${project.slug}` },
     description,
     openGraph: {
       title: `${project.title} — Storylio`,
       description,
       type: "article",
-      siteName: "Storylio",
+      siteName: SITE_NAME,
+      url: `/projects/${project.slug}`,
       images: [image],
     },
     twitter: {

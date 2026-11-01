@@ -10,6 +10,7 @@ import {
 } from "@/components/public/sections/gallery";
 import { db } from "@/lib/db";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
+import { SITE_NAME } from "@/lib/site";
 
 type GalleryPageProps = {
   searchParams: Promise<{
@@ -23,10 +24,13 @@ const fallbackImageDimensions = {
 } as const;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/gallery" },
   title: "Gallery — Storylio",
   description:
     "A visual gallery of interface details, work-in-progress fragments, places, and moments from Heinz.",
   openGraph: {
+    siteName: SITE_NAME,
+    url: "/gallery",
     title: "Gallery — Storylio",
     description:
       "Browse visual notes, interface details, and moments from the Storylio archive.",

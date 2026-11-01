@@ -11,6 +11,7 @@ import { ProjectsPagination } from "@/components/public/sections/projects/projec
 import { normalizeProjectTechnologies } from "@/lib/project-filters";
 import { getProjectPage } from "@/lib/project-pagination";
 import { getPublicProjects } from "@/lib/public-projects";
+import { SITE_NAME } from "@/lib/site";
 
 type ProjectsPageProps = {
   searchParams: Promise<{
@@ -19,11 +20,12 @@ type ProjectsPageProps = {
   }>;
 };
 
-export const metadata: Metadata = {
+const metadata: Metadata = {
   title: "Projects — Storylio",
   description:
     "Selected web projects, full-stack builds, and interface experiments by Ahmad Haizul Amany.",
   openGraph: {
+    siteName: SITE_NAME,
     title: "Projects — Storylio",
     description:
       "Browse selected works from Heinz: polished interfaces, full-stack systems, and web experiments.",
@@ -38,6 +40,26 @@ export const metadata: Metadata = {
     images: ["/og?title=Projects&type=page"],
   },
 };
+
+export async function generateMetadata({
+  searchParams,
+}: ProjectsPageProps): Promise<Metadata> {
+  const query = await searchParams;
+  const params = new URLSearchParams();
+  const technologies = normalizeProjectTechnologies(query.tech);
+  const { pagination } = await getPublicProjects(
+    technologies,
+    getProjectPage(query.page),
+  );
+  for (const technology of technologies) params.append("tech", technology);
+  if (pagination.page > 1) params.set("page", String(pagination.page));
+  const canonical = `/projects${params.size ? `?${params}` : ""}`;
+  return {
+    ...metadata,
+    alternates: { canonical },
+    openGraph: { ...metadata.openGraph, url: canonical },
+  };
+}
 
 export default function ProjectsPage(props: ProjectsPageProps) {
   return (
