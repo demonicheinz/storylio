@@ -40,6 +40,10 @@ describe("project screenshot carousel", () => {
     expect(html).toContain('aria-label="Previous screenshot"');
     expect(html).toContain('aria-label="Next screenshot"');
     expect(html).toContain('aria-label="Screenshot 1 of 2"');
+    expect(
+      html.match(/<img\b[^>]*alt="Dashboard screen"[^>]*>/),
+    ).not.toBeNull();
+    expect(html).toMatch(/<p\b[^>]*>Overview<\/p>/);
     expect(screenshots[0].imageUrl).toBe("/second.png");
   });
 
@@ -61,7 +65,7 @@ describe("project screenshot carousel", () => {
     ).toBe("");
   });
 
-  it("only mounts the active image and two rear previews for a large gallery", () => {
+  it("includes every screenshot in the initial HTML while hiding slides beyond the rear previews", () => {
     const html = renderWithImages(
       createElement(ProjectScreenshots, {
         title: "Fixture",
@@ -71,8 +75,33 @@ describe("project screenshot carousel", () => {
         })),
       }),
     );
-    expect(html.match(/<img\b/g)).toHaveLength(3);
+    expect(html.match(/<img\b/g)).toHaveLength(20);
+    expect(html.match(/hidden=""/g)).toHaveLength(17);
+    expect(html.match(/loading="lazy"/g)).toHaveLength(20);
+    expect(html.match(/aria-hidden="false"/g)).toHaveLength(1);
+    expect(
+      html.match(/<img\b[^>]*alt="Fixture screenshot 20"[^>]*>/),
+    ).not.toBeNull();
     expect(html).toContain('aria-label="Screenshot 1 of 20"');
     expect(html.match(/aria-label="Open /g)).toHaveLength(1);
   });
+
+  it.each([
+    ["   ", "Screen settings", "Screen settings"],
+    [null, null, "Fixture screenshot 1"],
+  ])(
+    "keeps a useful image alternative when CMS alt text is missing or blank",
+    (altText, caption, expectedAlt) => {
+      const html = renderWithImages(
+        createElement(ProjectScreenshots, {
+          title: "Fixture",
+          structuredScreenshots: [
+            { imageUrl: "/fallback.png", altText, caption, order: 0 },
+          ],
+        }),
+      );
+      const image = html.match(/<img\b[^>]*>/)?.[0];
+      expect(image).toContain(`alt="${expectedAlt}"`);
+    },
+  );
 });

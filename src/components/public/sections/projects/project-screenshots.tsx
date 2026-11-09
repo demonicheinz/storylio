@@ -40,7 +40,10 @@ export function ProjectScreenshots({
 
   const slides = items.map((item, index) => ({
     src: item.imageUrl,
-    alt: item.altText || item.caption || `${title} screenshot ${index + 1}`,
+    alt:
+      item.altText?.trim() ||
+      item.caption?.trim() ||
+      `${title} screenshot ${index + 1}`,
     description: item.caption || `Screenshot ${index + 1} of ${items.length}`,
   }));
 
@@ -56,6 +59,7 @@ export function ProjectScreenshots({
         items={items.map((item, index) => ({
           src: item.imageUrl,
           alt: slides[index].alt,
+          caption: item.caption?.trim() || undefined,
           width: item.width,
           height: item.height,
           blurDataUrl: item.blurDataUrl,
