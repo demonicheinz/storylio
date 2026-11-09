@@ -20,6 +20,7 @@ import styles from "./depth-carousel.module.css";
 export type DepthCarouselImage = {
   src: string;
   alt: string;
+  caption?: string | null;
   width?: number | null;
   height?: number | null;
   blurDataUrl?: string | null;
@@ -51,6 +52,7 @@ export function DepthCarousel({
   const current = Math.max(0, Math.min(index, items.length - 1));
   if (!items.length) return null;
   const active = items[current];
+  const captionId = `${stageId}-caption`;
   const select = (next: number) =>
     onIndexChange((next + items.length) % items.length);
 
@@ -159,7 +161,8 @@ export function DepthCarousel({
               key={`${item.src}-${itemIndex}`}
               className={styles.card}
               data-depth={depth}
-              aria-hidden="true"
+              aria-hidden={depth !== 0}
+              hidden={depth >= 3}
               style={
                 {
                   "--depth": Math.min(depth, 3),
@@ -169,7 +172,12 @@ export function DepthCarousel({
                 } as CSSProperties
               }
             >
-              {depth < 3 && <CarouselImage item={item} />}
+              <CarouselImage
+                item={item}
+                describedBy={
+                  depth === 0 && active.caption ? captionId : undefined
+                }
+              />
             </div>
           );
         })}
@@ -211,11 +219,22 @@ export function DepthCarousel({
           </div>
         </div>
       )}
+      {active.caption && (
+        <p id={captionId} className={styles.caption}>
+          {active.caption}
+        </p>
+      )}
     </section>
   );
 }
 
-function CarouselImage({ item }: { item: DepthCarouselImage }) {
+function CarouselImage({
+  item,
+  describedBy,
+}: {
+  item: DepthCarouselImage;
+  describedBy?: string;
+}) {
   const [failed, setFailed] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -258,7 +277,8 @@ function CarouselImage({ item }: { item: DepthCarouselImage }) {
     <Image
       ref={imageRef}
       src={item.src}
-      alt=""
+      alt={item.alt}
+      aria-describedby={describedBy}
       width={item.width || 1600}
       height={item.height || 900}
       draggable={false}

@@ -11,6 +11,7 @@ import { BioSection } from "@/components/public/sections/about/bio";
 import {
   aboutStoryFallback,
   introCopy,
+  person,
 } from "@/components/public/sections/about/data";
 import { EducationSection } from "@/components/public/sections/about/education";
 import { ExperienceSection } from "@/components/public/sections/about/experience";
@@ -18,11 +19,12 @@ import type { AboutLanguage } from "@/components/public/sections/about/language-
 import { ProfileSection } from "@/components/public/sections/about/profile";
 import { SkillsSection } from "@/components/public/sections/about/skills";
 import { getAboutContent } from "@/features/about/data";
+import { resolveAvatarSource } from "@/lib/avatar";
 import { db } from "@/lib/db";
 import { skill } from "@/lib/db/schema";
 import { renderMDX } from "@/lib/mdx";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache-tags";
-import { SITE_NAME } from "@/lib/site";
+import { ABOUT_LANGUAGE_PATHS, SITE_NAME, SITE_URL } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const sectionSpacing = aboutStyles.section;
@@ -39,27 +41,48 @@ function getMetadataDescription(value?: string | null) {
     : description;
 }
 
-export async function generateMetadata(): Promise<Metadata> {
-  const aboutContent = await getAboutContent();
-  const description = getMetadataDescription(aboutContent?.introEn);
+export async function generateMetadata({
+  searchParams,
+}: AboutPageProps): Promise<Metadata> {
+  const [aboutContent, profile, query] = await Promise.all([
+    getAboutContent(),
+    getAboutProfile(),
+    searchParams,
+  ]);
+  const language = getLanguage(query.lang, aboutContent?.defaultLanguage);
+  const canonical = ABOUT_LANGUAGE_PATHS[language];
+  const description = getMetadataDescription(
+    getLocalizedContent(
+      language,
+      aboutContent?.introEn,
+      aboutContent?.introId,
+      introCopy[language],
+    ),
+  );
+  const title =
+    language === "id" ? "Tentang Heinz — Storylio" : "About Heinz — Storylio";
+  const source = resolveAvatarSource(profile?.image);
+  const images = source ? [new URL(source, `${SITE_URL}/`).href] : undefined;
 
   return {
-    alternates: { canonical: "/about" },
-    title: "About Heinz — Storylio",
+    alternates: { canonical, languages: ABOUT_LANGUAGE_PATHS },
+    title,
     description,
     openGraph: {
-      title: "About Heinz — Storylio",
+      title,
       description,
       type: "profile",
       siteName: SITE_NAME,
-      url: "/about",
-      images: ["/og?title=About%20Heinz&type=page"],
+      url: canonical,
+      locale: language === "id" ? "id_ID" : "en_US",
+      alternateLocale: language === "id" ? "en_US" : "id_ID",
+      ...(images ? { images } : {}),
     },
     twitter: {
       card: "summary_large_image",
-      title: "About Heinz — Storylio",
+      title,
       description,
-      images: ["/og?title=About%20Heinz&type=page"],
+      ...(images ? { images } : {}),
     },
   };
 }
@@ -231,6 +254,28 @@ async function AboutContent({ searchParams }: AboutPageProps) {
     renderAboutMdx(whatIValue, aboutStoryFallback.whatIValue),
   ]);
   const publicProfile = profile ?? undefined;
+  const image = resolveAvatarSource(profile?.image);
+  const profilePage = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "@id": `${SITE_URL}${ABOUT_LANGUAGE_PATHS[language]}#profile`,
+    url: `${SITE_URL}${ABOUT_LANGUAGE_PATHS[language]}`,
+    inLanguage: language,
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    mainEntity: {
+      "@type": "Person",
+      "@id": `${SITE_URL}/about#person`,
+      name: profile?.name ?? person.name,
+      alternateName: SITE_NAME,
+      url: `${SITE_URL}/about`,
+      jobTitle: profile?.tagline ?? person.role,
+      description: getMetadataDescription(intro),
+      ...(image ? { image: new URL(image, `${SITE_URL}/`).href } : {}),
+      sameAs: [profile?.github, profile?.instagram, profile?.twitter].filter(
+        Boolean,
+      ),
+    },
+  };
   const workingPrinciples =
     language === "id"
       ? {
@@ -255,7 +300,14 @@ async function AboutContent({ searchParams }: AboutPageProps) {
         };
 
   return (
-    <main className={pageStyles.page} data-public-page="about">
+    <main className={pageStyles.page} data-public-page="about" lang={language}>
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Escaping < prevents CMS text from terminating JSON-LD.
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(profilePage).replace(/</g, "\\u003c"),
+        }}
+      />
       <div className={cn(pageStyles.container, aboutStyles.layout)}>
         <aside className={aboutStyles.sidebar} data-lenis-prevent>
           <ProfileSection profile={publicProfile} />
