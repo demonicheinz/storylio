@@ -100,7 +100,12 @@ it("associates public photos with their landing pages, normalizes URLs and exclu
   const entries = await sitemap();
   const images = (path: string) =>
     entries.find(({ url }) => url === `${SITE_URL}${path}`)?.images;
-  expect(images("/about")).toEqual([`${SITE_URL}/uploads/portrait.webp`]);
+  expect(images("/about?lang=en")).toEqual([
+    `${SITE_URL}/uploads/portrait.webp`,
+  ]);
+  expect(images("/about?lang=id")).toEqual([
+    `${SITE_URL}/uploads/portrait.webp`,
+  ]);
   expect(images("/blog/article")).toEqual([`${SITE_URL}/uploads/article.webp`]);
   expect(images("/projects")).toEqual([
     `${SITE_URL}/uploads/project-thumb.webp`,
@@ -122,7 +127,8 @@ it("lists only public destination URLs and reports actual edits rather than site
   const entries = await sitemap();
   expect(entries.map(({ url }) => url)).toEqual([
     SITE_URL,
-    `${SITE_URL}/about`,
+    `${SITE_URL}/about?lang=en`,
+    `${SITE_URL}/about?lang=id`,
     `${SITE_URL}/projects`,
     `${SITE_URL}/projects/project`,
     `${SITE_URL}/blog`,
@@ -137,7 +143,23 @@ it("lists only public destination URLs and reports actual edits rather than site
   ).toEqual(updatedAt);
   expect(
     entries.filter(({ lastModified }) => lastModified === undefined),
-  ).toHaveLength(5);
+  ).toHaveLength(6);
+});
+
+it("publishes reciprocal language references on both canonical About URLs", async () => {
+  const entries = await sitemap();
+  for (const language of ["en", "id"]) {
+    const entry = entries.find(
+      ({ url }) => url === `${SITE_URL}/about?lang=${language}`,
+    );
+    expect(entry?.alternates?.languages).toEqual({
+      en: `${SITE_URL}/about?lang=en`,
+      id: `${SITE_URL}/about?lang=id`,
+      "x-default": `${SITE_URL}/about`,
+    });
+  }
+  const xml = resolveSitemap(entries);
+  expect(xml).toContain(`hreflang="id" href="${SITE_URL}/about?lang=id"`);
 });
 
 it("escapes image URLs in the installed Next.js XML serializer without altering signed query values", async () => {
