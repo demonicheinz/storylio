@@ -11,8 +11,7 @@ export function ProjectToc({ items }: ProjectTocProps) {
   return (
     <ContentToc
       items={items}
-      eyebrow="Case study"
-      description="Jump between the decisions behind this project."
+      eyebrow="On this page"
       ariaLabel="Project case study table of contents"
       indicator="line"
       collapsible

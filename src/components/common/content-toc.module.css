@@ -1,6 +1,42 @@
 .toggle {
   display: none;
 }
+.item {
+  align-items: flex-start;
+  gap: 12px;
+  padding-block: 8px;
+  line-height: 1.5;
+}
+.title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.marker {
+  position: relative;
+  align-self: stretch;
+  flex-shrink: 0;
+  width: 16px;
+}
+.marker::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 2px;
+  width: 12px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.7;
+}
+.item[aria-current="true"] .marker::before {
+  top: 0;
+  bottom: 0;
+  left: 8px;
+  width: 1px;
+  height: auto;
+  min-height: 20px;
+  opacity: 1;
+}
 @media (max-width: 1199px) {
   aside.responsive {
     display: block;

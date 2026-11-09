@@ -11,7 +11,7 @@ async sessionPage=>{
         const body=document.querySelector('.storylio-article-content'),p=body.querySelector('p'),header=document.querySelector('article header'),meta=[...header.parentElement.children].find(el=>el.querySelector('time')),cover=header.parentElement.querySelector('img');
         const box=el=>el?.getBoundingClientRect();return {width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth+1,bodyFont:getComputedStyle(p).fontSize,textWidth:box(p).width,headerWidth:box(header).width,coverWidth:box(cover)?.width,metaWidth:box(meta)?.width,headerOffset:box(header).left-box(cover)?.left,metaOffset:box(meta)?.left-box(cover)?.left,coverTop:box(cover)?.top,coverBottom:box(cover)?.bottom,metaTop:box(meta)?.top,copy:box(body.querySelector('[data-heading-link]'))?.height};
       });
-      assert(!data.overflow&&data.textWidth<=641,`Article reading measure: ${JSON.stringify(data)}`);
+      assert(!data.overflow&&data.textWidth<=681,`Article reading measure: ${JSON.stringify(data)}`);
       assert(Math.abs(data.headerWidth-data.coverWidth)<1&&Math.abs(data.metaWidth-data.coverWidth)<1&&Math.abs(data.headerOffset)<1&&Math.abs(data.metaOffset)<1,`Article opening does not align with the full-width cover: ${JSON.stringify(data)}`);
       assert(data.bodyFont===(width<768?'16px':'18px')&&data.copy>=43.99,'Type or copy target changed');
       if(width<768)assert(data.coverBottom<=data.metaTop,'Mobile metadata precedes cover');
@@ -20,8 +20,8 @@ async sessionPage=>{
       if(width<1200) {await toggle.click();await toc.waitFor();}
       const last=toc.getByRole('button').last();await last.click();
       await page.waitForFunction(()=>document.activeElement?.id===decodeURIComponent(location.hash.slice(1))&&Math.abs(document.activeElement.getBoundingClientRect().top-112)<3);
-      const row=await toc.getByRole('button').first().evaluate(button=>{const center=el=>{const b=el.getBoundingClientRect();return b.top+b.height/2};return {text:getComputedStyle(button).textAlign,label:center(button.children[1])-center(button),marker:center(button.children[0])-center(button),gap:getComputedStyle(button.closest('ol')).rowGap}});
-      assert(row.text==='left'&&Math.abs(row.label)<1&&Math.abs(row.marker)<1&&row.gap==='4px','TOC alignment differs');
+      const row=await toc.getByRole('button').first().evaluate(button=>{const top=el=>el.getBoundingClientRect().top;return {text:getComputedStyle(button).textAlign,label:top(button.children[1])-top(button),marker:top(button.children[0])-top(button),gap:getComputedStyle(button.closest('ol')).rowGap}});
+      assert(row.text==='left'&&Math.abs(row.label-8)<1&&Math.abs(row.marker-8)<1&&row.gap==='8px','TOC alignment differs');
       if(width===1440||width===390) {await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.screenshot({path:`task/writing-notes/article-${width}.png`});}
       results.push(data);
     }

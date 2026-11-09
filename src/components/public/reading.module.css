@@ -1,28 +1,22 @@
 div.layout {
   display: grid;
-  grid-template-columns: minmax(0, 720px) 224px;
+  grid-template-columns: minmax(0, 840px) 272px;
   grid-template-areas: "body toc";
-  gap: 64px;
+  gap: 48px;
   align-items: start;
-  max-width: 1008px;
+  max-width: 1160px;
   margin-inline: auto;
 }
 .layout > aside {
   grid-area: toc;
 }
 .layout > aside nav > ol {
-  row-gap: 4px;
-}
-.layout > aside nav button {
-  align-items: center;
-}
-.layout > aside nav button > span:first-child {
-  margin-top: 0;
+  row-gap: 8px;
 }
 .layout:not([data-has-toc]) {
-  grid-template-columns: minmax(0, 720px);
+  grid-template-columns: minmax(0, 840px);
   grid-template-areas: "body";
-  max-width: 720px;
+  max-width: 840px;
 }
 .prose {
   grid-area: body;
@@ -46,7 +40,7 @@ div.layout {
   margin-top: 0;
 }
 .prose > :is(p, ul, ol, blockquote) {
-  max-width: min(100%, 640px);
+  max-width: min(100%, 680px);
   font-size: inherit;
   line-height: 1.8;
 }
@@ -79,7 +73,7 @@ div.layout {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "toc" "body";
     gap: 32px;
-    max-width: 720px;
+    max-width: 840px;
   }
 }
 @media (max-width: 767px) {
