@@ -29,6 +29,7 @@ export function ProfilePhoto({
       width={144}
       height={144}
       sizes="(max-width: 767px) 96px, 144px"
+      loading="eager"
       // Other avatar hosts retain direct delivery without expanding the optimizer allowlist.
       unoptimized={
         !(

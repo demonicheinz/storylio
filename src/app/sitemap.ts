@@ -4,7 +4,7 @@ import { resolveAvatarSource } from "@/lib/avatar";
 import { db } from "@/lib/db";
 import { PostStatus, ProjectStatus } from "@/lib/db/enums";
 import { HOME_NOTES_TAG } from "@/lib/home-content";
-import { SITE_URL as siteUrl } from "@/lib/site";
+import { ABOUT_LANGUAGE_PATHS, SITE_URL as siteUrl } from "@/lib/site";
 
 function imageUrls(values: (string | null | undefined)[]) {
   const urls = values.flatMap((value) => {
@@ -74,12 +74,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 1,
     },
-    {
-      url: `${siteUrl}/about`,
+    ...(["en", "id"] as const).map((language) => ({
+      url: `${siteUrl}${ABOUT_LANGUAGE_PATHS[language]}`,
+      alternates: {
+        languages: Object.fromEntries(
+          Object.entries(ABOUT_LANGUAGE_PATHS).map(([language, path]) => [
+            language,
+            `${siteUrl}${path}`,
+          ]),
+        ),
+      },
       images: imageUrls([resolveAvatarSource(owner?.image)]),
-      changeFrequency: "monthly",
+      changeFrequency: "monthly" as const,
       priority: 0.8,
-    },
+    })),
     {
       url: `${siteUrl}/projects`,
       images: imageUrls(

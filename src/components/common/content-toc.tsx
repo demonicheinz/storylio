@@ -141,8 +141,8 @@ export function ContentToc({
                   aria-current={isActive ? "true" : undefined}
                   onClick={() => scrollTo(item.id)}
                   className={cn(
-                    "flex items-start outline-none w-full hover:text-brand-soft focus-visible:text-brand-soft text-sm text-left leading-6 transition-colors cursor-pointer",
-                    indicator === "line" ? "gap-2" : "gap-3",
+                    responsive.item,
+                    "flex outline-none w-full hover:text-brand-soft focus-visible:text-brand-soft text-sm text-left transition-colors cursor-pointer",
                     item.level === 3 &&
                       (indicator === "line" ? "pl-4" : "pl-7"),
                     isActive
@@ -153,12 +153,7 @@ export function ContentToc({
                   )}
                 >
                   {indicator === "line" ? (
-                    <span
-                      className={cn(
-                        "bg-muted-foreground mt-3 w-3 h-px transition-all shrink-0",
-                        isActive && "w-5 bg-brand-soft",
-                      )}
-                    />
+                    <span aria-hidden="true" className={responsive.marker} />
                   ) : (
                     item.level === 2 && (
                       <span
@@ -171,7 +166,7 @@ export function ContentToc({
                       </span>
                     )
                   )}
-                  <span>{item.title}</span>
+                  <span className={responsive.title}>{item.title}</span>
                 </button>
               </li>
             );

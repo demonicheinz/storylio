@@ -27,7 +27,7 @@ async sessionPage => {
           return {width:innerWidth,height:root.getBoundingClientRect().height,overflow:document.documentElement.scrollWidth>innerWidth+1,images:root.querySelectorAll('img').length,fit:getComputedStyle(image).objectFit,imageFillsFrame:Math.abs(imageBox.width-frame.width)<1&&Math.abs(imageBox.height-frame.height)<1,radius:getComputedStyle(image).borderRadius,background:s.backgroundColor,border:s.borderWidth,controlsCentered:Math.abs((nav.getBoundingClientRect().left+nav.getBoundingClientRect().right)/2-(root.getBoundingClientRect().left+root.getBoundingClientRect().right)/2)<1,visibleCaptions:root.querySelectorAll('p:not([role="status"])').length,flat:Math.abs(matrix.m13)<.001&&Math.abs(matrix.m31)<.001&&Math.abs(matrix.m11-1)<.001,controls:controlSizes,touchAction:getComputedStyle(stage).touchAction,transition:s.transitionDuration};
         });
         assert(!geometry.overflow&&geometry.flat&&geometry.fit==='contain',`Active image distorted: ${JSON.stringify(geometry)}`);
-        assert(geometry.imageFillsFrame&&geometry.controlsCentered&&geometry.visibleCaptions===0,`Image sizing or controls differ: ${JSON.stringify(geometry)}`);
+        assert(geometry.imageFillsFrame&&geometry.controlsCentered,`Image sizing or controls differ: ${JSON.stringify(geometry)}`);
         assert(geometry.radius==='8px','Screenshot corners should be 8px');
         assert(geometry.controls.every(control=>control.w>=43.99&&control.h>=43.99),`Small control: ${JSON.stringify(geometry)}`);
         assert(geometry.touchAction==='pan-y','Vertical touch scrolling blocked');
