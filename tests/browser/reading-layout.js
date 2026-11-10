@@ -41,7 +41,7 @@ async sessionPage => {
         assert(!geometry.overflow, `Horizontal overflow: ${JSON.stringify({ path, width, geometry })}`);
         assert(geometry.heading === 'On this page' && !geometry.helper, 'TOC heading/helper copy differs');
         assert(geometry.paragraph <= 681, 'Paragraph measure too wide');
-        assert(geometry.gap >= 8 && geometry.markers.every(marker => marker.width === 16 && marker.content !== 'none' && marker.height >= 44), 'TOC markers, spacing, or target sizes failed');
+        assert(geometry.gap >= 8 && geometry.markers.every(marker => marker.width === 20 && marker.content !== 'none' && marker.height >= 44), 'TOC markers, spacing, or target sizes failed');
         if (width >= 1200) {
           assert(Math.abs(geometry.frame - Math.min(1160, width - 48)) < 1 && Math.abs(geometry.toc - 272) < 1, `Reading frame is too narrow: ${JSON.stringify({ path, width, geometry })}`);
         }
@@ -62,8 +62,8 @@ async sessionPage => {
           const before = getComputedStyle(marker, '::before');
           return { active: button.getAttribute('aria-current') === 'true', width: parseFloat(before.width), height: parseFloat(before.height) };
         }));
-        assert(markers.some(marker => marker.active && marker.width === 1 && marker.height >= 20), 'Active marker is not vertical');
-        assert(markers.filter(marker => !marker.active).every(marker => marker.width > 1 && marker.height === 1), 'Inactive markers were removed');
+        assert(markers.some(marker => marker.active && marker.width === 20 && marker.height === 1), 'Active marker is not the original longer horizontal line');
+        assert(markers.filter(marker => !marker.active).every(marker => marker.width === 12 && marker.height === 1), 'Inactive markers are not horizontal lines');
         if (width < 1200) {
           await first.focus(); await page.keyboard.press('Escape');
           assert(await toggle.getAttribute('aria-expanded') === 'false' && await toggle.evaluate(el => el === document.activeElement), 'Mobile TOC escape/focus failed');
